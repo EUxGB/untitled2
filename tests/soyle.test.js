@@ -405,6 +405,18 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.context().close(); eq(r, ['rgb(17, 22, 27)', 'rgb(26, 33, 41)']);
   });
 
+  await test('сообщения ссылаются только на существующие кнопки и разделы', async () => {
+    // каждое «название» в тексте должно встречаться в коде как настоящая надпись (вне кавычек-ёлочек)
+    const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8');
+    const outside = src.replace(/«[^»]*»/g, '');
+    const words = ['Свободно','Звуки','Фразы','На слух','Прогресс','Сказать','Дальше','Сравнить','Эхо','Носитель','Синтез','Видео'];
+    const quoted = [...new Set([...src.matchAll(/«([^»]{2,30})»/g)].map(m => m[1].trim()))]
+      .filter(q => /^[\p{Extended_Pictographic}⇄→⚡⭐🔊🎙]/u.test(q) || words.includes(q));
+    const bad = quoted.filter(q => !outside.includes(q.replace(/^[^\p{L}]+/u, '').trim()));
+    eq(bad, []);
+    ok(!/Любая фраза|В видео|Минимальные пары/.test(src.replace(/<!--[\s\S]*?-->/g, '')), 'старые названия в тексте');
+  });
+
   console.log('Интерфейс');
   await test('кнопки не сдвигаются при смене слов и нажатиях', async () => {
     const pos = () => p.evaluate(() => [...document.querySelectorAll('#card .btngrid .btn')].map(b => { const r = b.getBoundingClientRect(); return Math.round(r.y + scrollY) + ',' + Math.round(r.x); }).join(' '));

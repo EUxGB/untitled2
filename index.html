@@ -695,7 +695,7 @@ function next(){
   if(!item){
     $("target").classList.add("phrase");
     $("target").textContent = setId==="mine" ? "Пока пусто" : setId==="srs" ? "На сегодня всё повторено" : "Записей не найдено";
-    $("meaning").textContent = setId==="mine" ? "Скажите фразу во вкладке «Любая фраза» и нажмите «⭐ В мои фразы»."
+    $("meaning").textContent = setId==="mine" ? "Скажите фразу в разделе «Свободно» и нажмите «⭐ В мои фразы»."
       : setId==="srs" ? "Каждая фраза, которую вы тренируете, вернётся сюда в нужный день: через 1, 3, 7, 16 и 35 дней." : "";
     $("partner").hidden = true; $("tip").textContent = ""; return;
   }
@@ -1014,7 +1014,7 @@ function pickVoice(){
   sel.innerHTML = vs.map(v=>`<option value="${esc(v.name)}"${v===trVoice?" selected":""}>${esc(v.name)}${voiceRank(v)<=1?" ★":""}</option>`).join("") || "<option>нет турецких голосов</option>";
   sel.disabled = !vs.length;
   $("play").disabled = !trVoice;
-  if(trVoice && voiceRank(trVoice)>1) showHintWarn("Синтез на этом устройстве звучит механически. Живую речь дают «👤 Носитель» и «🎬 В видео». Самый естественный синтез — в Microsoft Edge (голоса Emel и Ahmet, Natural).");
+  if(trVoice && voiceRank(trVoice)>1) showHintWarn("Синтез на этом устройстве звучит механически. Живую речь дают «👤 Носитель» и «🎬 Видео». Самый естественный синтез — в Microsoft Edge (голоса Emel и Ahmet, Natural).");
 }
 $("voice").onchange = e => {
   trVoice = speechSynthesis.getVoices().find(v=>v.name===e.target.value) || trVoice;
@@ -1132,7 +1132,7 @@ async function startListening(){
   recognizer.onend = () => {
     if(ended) return; ended = true; clearTimeout(watchdog);
     if(!got){
-      if(recordOn && IS_ANDROID){ disableRecording(); setResult("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше распознавание работает само, а себя можно записать кнопкой «🎙 Записать себя» во вкладке «Любая фраза». Скажите ещё раз."); }
+      if(recordOn && IS_ANDROID){ disableRecording(); setResult("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше распознавание работает само, а себя можно записать кнопкой «🎙 Записать себя» в разделе «Свободно». Скажите ещё раз."); }
       else setResult("info", "Ничего не распознано. Говорите сразу после нажатия, ближе к микрофону.");
     }
     listening = false; stopRecording();
@@ -1187,7 +1187,7 @@ function playNative(){
   const recs = nativeCache.get(clean(item.target));
   const a = $("nativeAudio");
   if(!recs){ st.textContent = "Записи носителей ещё загружаются, нажмите через секунду."; return; }
-  if(!recs.length){ st.textContent = "Записи носителя для этого слова нет. Живая речь — «🎬 В видео», синтез — «🔊 Синтез»."; return; }
+  if(!recs.length){ st.textContent = "Записи носителя для этого слова нет. Живая речь — «🎬 Видео», синтез — «🔊 Синтез»."; return; }
   speechSynthesis && speechSynthesis.cancel();
   const i = nativeIdx % recs.length; nativeIdx++;
   st.textContent = recs.length > 1 ? `Носитель ${i+1} из ${recs.length}: ${recs[i].who}` : `Носитель: ${recs[i].who}`;
