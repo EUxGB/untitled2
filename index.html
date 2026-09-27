@@ -280,7 +280,9 @@ function renderWordDiff(expected, heard, notes){
 function renderChips(){
   const chips = $("chips");
   if(mode==="phrases"){
-    chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("");
+    const nLabel = nativeSet ? `🎧 с записями (${nativeSet.length})` : nativeSetLoading ? "🎧 загружаю…" : "🎧 с записями";
+    chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
+      + `<button class="chip" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`;
     chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
     return;
   }
@@ -302,8 +304,76 @@ function pickPair(){
   } while(key===lastKey && ++guard<10);
   lastKey = key; return cand;
 }
+// ---------- набор «с записями»: всё, что есть у носителей на Wikimedia ----------
+let nativeSet = null, nativeSetLoading = null;
+const CATS = ["Category:Lingua Libre pronunciation-tur", "Category:Turkish pronunciation"];
+function wordFromTitle(t){
+  let m = t.match(/^File:LL-Q256 \(tur\)-(.+?)-(.+)\.(wav|ogg|oga|mp3|flac)$/i);
+  if(m) return { word:m[2], who:m[1] };
+  m = t.match(/^File:Tr-(.+)\.(ogg|oga|wav|mp3|flac)$/i);
+  if(m) return { word:m[1].replace(/_/g," "), who:"Wiktionary" };
+  return null;
+}
+async function loadNativeSet(){
+  const byWord = new Map();
+  for(const cat of CATS){
+    let cont = "", pages = 0;
+    do {
+      const url = `${API}&generator=categorymembers&gcmtype=file&gcmlimit=500&gcmtitle=${encodeURIComponent(cat)}${cont}`;
+      const r = await fetch(url).then(x=>x.json());
+      Object.values(r.query?.pages || {}).forEach(pg => {
+        const w = wordFromTitle(pg.title), u = pg.imageinfo?.[0]?.url;
+        if(!w || !u) return;
+        const key = clean(w.word);
+        if(!key) return;
+        if(!byWord.has(key)) byWord.set(key, { tr:w.word, recs:[] });
+        const e = byWord.get(key);
+        if(!e.recs.some(x=>x.url===u)) e.recs.push({ url:u, who:w.who });
+      });
+      cont = r.continue ? "&" + new URLSearchParams(r.continue).toString() : "";
+    } while(cont && ++pages < 20); // до 10 000 файлов на категорию
+  }
+  const items = [];
+  byWord.forEach((e, key) => {
+    const prev = nativeCache.get(key) || [];
+    const merged = prev.concat(e.recs.filter(r => !prev.some(p=>p.url===r.url)));
+    nativeCache.set(key, merged);
+    items.push({ tr:e.tr, tl:"", ru:"", focus:"Послушайте носителя («👤 Носитель», каждое нажатие — другой голос) и повторите.", n:merged.length });
+  });
+  items.sort((a,b)=>b.n-a.n);
+  return items;
+}
+function ensureNativeSet(){
+  if(nativeSet || nativeSetLoading) return nativeSetLoading;
+  nativeSetLoading = loadNativeSet().then(items => { nativeSet = items; }).catch(() => { nativeSet = null; })
+    .finally(() => { nativeSetLoading = null; if(mode==="phrases") renderChips(); if(mode==="phrases" && setId==="native") next(); });
+  return nativeSetLoading;
+}
+
+// Значение слова из Викисловаря (турецкая статья, толкование на английском)
+const descCache = new Map();
+async function describeNative(word){
+  const key = clean(word), show = txt => { if(item && item.target === word) $("meaning").textContent = txt; };
+  if(descCache.has(key)) return show(descCache.get(key));
+  let txt = "Значение не найдено — нажмите «перевод».";
+  try {
+    const r = await fetch(`https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(word.replace(/ /g,"_"))}`);
+    if(r.ok){
+      const j = await r.json();
+      const defs = (j.tr || []).flatMap(x => (x.definitions || []).map(d => ({ pos:x.partOfSpeech, text:d.definition.replace(/<[^>]+>/g,"").trim() }))).filter(d=>d.text).slice(0,3);
+      if(defs.length) txt = "Значение (англ.): " + defs.map(d => `${d.text}`).join("; ");
+    }
+  } catch(e){}
+  descCache.set(key, txt); show(txt);
+}
+
 function pickPhrase(){
   let p, guard=0;
+  if(setId === "native"){
+    if(!nativeSet || !nativeSet.length) return null;
+    do { p = nativeSet[Math.floor(Math.random()*nativeSet.length)]; } while(p.tr===lastKey && ++guard<10);
+    lastKey = p.tr; return { target:p.tr, translit:"", meaning:"", tip:p.focus, gid:"ph-native", native:true };
+  }
   const list = PHRASE_SETS.find(g=>g.id===setId).items;
   do { p = list[Math.floor(Math.random()*list.length)]; } while(p.tr===lastKey && ++guard<10);
   lastKey = p.tr; return { target:p.tr, translit:p.tl, meaning:p.ru, tip:p.focus, gid:"ph-"+setId };
@@ -311,9 +381,16 @@ function pickPhrase(){
 
 function next(){
   stopListening();
+  if(mode==="phrases" && setId==="native" && !nativeSet){
+    ensureNativeSet();
+    $("target").textContent = nativeSetLoading ? "Загружаю записи носителей…" : "Не удалось загрузить записи";
+    $("target").classList.add("phrase"); $("meaning").textContent = "Источник: Wikimedia Commons (Lingua Libre, Wiktionary)";
+    $("partner").hidden = true; $("tip").textContent = ""; return;
+  }
   item = mode==="pairs" ? pickPair() : pickPhrase();
+  if(!item){ $("target").textContent = "Записей не найдено"; return; }
   const t = $("target");
-  t.classList.toggle("phrase", mode==="phrases");
+  t.classList.toggle("phrase", mode==="phrases" && (!item.native || /\s/.test(item.target) || item.target.length > 12));
   if(mode==="pairs"){
     const a = Array.from(item.target), b = Array.from(item.partner);
     t.innerHTML = a.map((c,i)=> c!==b[i] ? `<mark>${esc(c)}</mark>` : esc(c)).join("");
@@ -321,7 +398,9 @@ function next(){
     $("partner").hidden = false;
   } else {
     t.textContent = item.target;
-    $("partner").innerHTML = `[${esc(item.translit)}]`;
+    $("partner").innerHTML = item.native
+      ? `Записей носителей: ${(nativeCache.get(clean(item.target))||[]).length} · <a href="https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(item.target)}" target="_blank" rel="noopener">перевод</a>`
+      : `[${esc(item.translit)}]`;
     $("partner").hidden = false;
   }
   const q = encodeURIComponent(item.target.replace(/[.,!?]/g,"").trim());
@@ -329,6 +408,7 @@ function next(){
   prefetchNative();
   $("yg").href = `https://youglish.com/pronounce/${q}/turkish`;
   $("meaning").textContent = item.meaning;
+  if(item.native){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
   $("mine").hidden = true;
@@ -341,7 +421,7 @@ function setResult(kind, verdict, extra=""){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), {id:"free",label:"любая фраза"}];
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), {id:"ph-native",label:"с записями"}, {id:"free",label:"любая фраза"}];
   $("stats").innerHTML = rows.map(r => {
     const s = stats[r.id] || {t:0, ok:0};
     const pct = s.t ? Math.round(s.ok/s.t*100) : 0;
@@ -536,38 +616,19 @@ function speakerOf(title){
   return m ? m[1] : "Wiktionary";
 }
 
-// Все варианты озвучки текущего слова: записи носителей, затем все турецкие голоса устройства
-function voiceVariants(){
-  const recs = nativeCache.get(clean(item.target)) || [];
-  const list = recs.map(r => ({ kind:"rec", url:r.url, label:r.who }));
-  trVoices.forEach(v => list.push({ kind:"tts", voice:v, rate:0.85, label:shortVoice(v) }));
-  if(trVoices.length === 1) list.push({ kind:"tts", voice:trVoices[0], rate:0.55, label:shortVoice(trVoices[0]) + ", медленно" });
-  return list;
-}
-function shortVoice(v){ return v.name.replace(/^(Microsoft|Google)\s*/i,"").replace(/\s*[-–(].*$/,"").trim() || v.name; }
-
-async function playNative(){
-  // Каждое нажатие — следующий вариант озвучки этого же слова; записи носителей идут первыми
-  if(nativePending && nativeIdx === 0){
-    await Promise.race([nativePending, new Promise(r => setTimeout(r, 2000))]);
-  }
-  const btn = $("native");
-  const vars = voiceVariants();
+function playNative(){
+  // Только записи живых носителей; синтез — только на кнопке «Синтез»
+  const btn = $("native"), st = $("nativeStatus");
+  const recs = nativeCache.get(clean(item.target));
+  const a = $("nativeAudio");
+  if(!recs){ st.textContent = "Записи носителей ещё загружаются, нажмите через секунду."; return; }
+  if(!recs.length){ st.textContent = "Записи носителя для этого слова нет. Живая речь — «🎬 В видео», синтез — «🔊 Синтез»."; return; }
   speechSynthesis && speechSynthesis.cancel();
-  const a = $("nativeAudio"); a.pause();
-  if(!vars.length){ btn.textContent = "👤 Нет голосов"; return; }
-  const i = nativeIdx % vars.length, v = vars[i];
-  nativeIdx++;
-  btn.textContent = `👤 ${i+1}/${vars.length} · ${v.kind==="rec" ? "носитель" : "синтез"}`;
-  btn.title = v.label;
-  if(v.kind === "rec"){
-    a.src = v.url;
-    a.play().catch(()=> playNative()); // запись не играет — сразу следующий вариант
-  } else {
-    const u = new SpeechSynthesisUtterance(item.target);
-    u.voice = v.voice; u.lang = v.voice.lang; u.rate = v.rate;
-    speechSynthesis.speak(u);
-  }
+  const i = nativeIdx % recs.length; nativeIdx++;
+  btn.textContent = recs.length > 1 ? `👤 Носитель ${i+1}/${recs.length}` : "👤 Носитель";
+  btn.title = recs[i].who;
+  a.pause(); a.src = recs[i].url;
+  a.play().catch(()=> { st.textContent = "Не удалось воспроизвести запись. Нажмите ещё раз — будет следующий носитель."; });
 }
 let nativePending = null;
 function prefetchNative(){
@@ -577,7 +638,7 @@ function prefetchNative(){
     if(item.target !== target) return;
     const btn = $("native");
     if(recs === null){ st.textContent = "Записи носителей: не удалось связаться с Wikimedia (проверьте интернет)."; return; }
-    st.textContent = recs.length ? `Записи носителей: найдено ${recs.length}` : "Записей носителей этого слова в открытой базе нет — будет синтез.";
+    st.textContent = recs.length ? `Записи носителей: найдено ${recs.length}` : "Записей носителей этого слова в открытой базе нет.";
     btn.textContent = recs.length ? `👤 Носитель ×${recs.length}` : "👤 Носитель";
     if(recs.length){ const a = $("nativeAudio"); a.preload = "auto"; a.src = recs[0].url; }
   }).finally(() => { nativePending = null; });
