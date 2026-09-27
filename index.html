@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Söyle — тренажёр произношения</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --line:#dde2dc; --ink:#1b232c; --muted:#5d6a72;
+  --accent:#2451a6; --accent-soft:#e3eaf7; --ok:#2c7a4b; --ok-soft:#e1f1e7;
+  --bad:#b23d2b; --bad-soft:#f8e3de; --near:#9a6a0f; --near-soft:#f6ecd4;
+  --display:"Unbounded", "Arial Black", system-ui, sans-serif;
+  --body:"Onest", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#11161b; --surface:#1a2129; --line:#2c3640; --ink:#e6ebee; --muted:#9aa7b0;
+    --accent:#86a8ec; --accent-soft:#1f2e48; --ok:#6fcf97; --ok-soft:#173826;
+    --bad:#f08a78; --bad-soft:#44221c; --near:#e7bb5c; --near-soft:#3d3118;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg); color:var(--ink); font:16px/1.5 var(--body); padding-inline:16px; padding-block:24px 48px}
+.wrap{max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
+header{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap}
+h1{font:700 28px/1.1 var(--display); margin:0; letter-spacing:-.01em}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted); font-size:14px; margin:0}
+.warn{background:var(--near-soft); color:var(--ink); border-radius:10px; padding:10px 14px; font-size:14px}
+.tabs,.chips{display:flex; gap:8px; flex-wrap:wrap}
+button{font:inherit; color:inherit; cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.tab{background:none; border:0; border-bottom:2px solid transparent; padding:6px 2px; font-weight:600; color:var(--muted)}
+.tab[aria-selected="true"]{color:var(--ink); border-color:var(--accent)}
+.chip{background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:6px 14px; font:600 14px var(--mono)}
+.chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--bg)}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:28px 24px; display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center}
+.target{font:700 clamp(44px,12vw,76px)/1 var(--display); letter-spacing:.01em; margin:0; word-break:break-word}
+.target.phrase{font-size:clamp(22px,5.5vw,32px); line-height:1.3; font-weight:500}
+.target mark{background:none; color:var(--accent); text-decoration:underline; text-decoration-thickness:4px; text-underline-offset:8px}
+.meaning{color:var(--muted); margin:0}
+.partner{font-size:14px; color:var(--muted); margin:0}
+.partner b{font-family:var(--mono); color:var(--ink)}
+.row{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+.btn{border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:10px 16px; font-weight:600}
+a.btn{text-decoration:none; color:inherit; display:inline-block}
+.btn.native{border-color:var(--accent); color:var(--accent)}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--bg); padding:12px 22px}
+.btn.primary.listening{animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px var(--accent-soft)}}
+@media (prefers-reduced-motion: reduce){.btn.primary.listening{animation:none; outline:3px solid var(--accent-soft)}}
+.result{width:100%; border-radius:12px; padding:14px 16px; text-align:left; display:flex; flex-direction:column; gap:8px}
+.result.ok{background:var(--ok-soft)} .result.bad{background:var(--bad-soft)} .result.near{background:var(--near-soft)} .result.info{background:var(--accent-soft)}
+.verdict{font-weight:600}
+.result.ok .verdict{color:var(--ok)} .result.bad .verdict{color:var(--bad)} .result.near .verdict{color:var(--near)}
+.diff{font:600 22px/1.4 var(--mono); display:flex; flex-wrap:wrap; gap:4px 14px}
+.diff .w-ok{color:var(--ok)}
+.diff .c-sub,.diff .c-del{color:var(--bad); text-decoration:underline wavy; text-underline-offset:5px}
+.diff .c-del{opacity:.6}
+.diff .w-miss{color:var(--bad); opacity:.6; text-decoration:line-through}
+.alts{font:13px var(--mono); color:var(--muted)}
+.hint{font-size:13px; color:var(--muted); text-align:center; margin:0}
+kbd{font:12px var(--mono); border:1px solid var(--line); border-radius:4px; padding:1px 5px; background:var(--surface)}
+.tip{font-size:14px; color:var(--muted); margin:0; max-width:60ch}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px}
+.stat{border-top:2px solid var(--line); padding-top:8px; display:flex; flex-direction:column; gap:4px}
+.stat .lab{font:600 14px var(--mono)}
+.stat .num{font-variant-numeric:tabular-nums; font-size:14px; color:var(--muted)}
+.bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden}
+.bar i{display:block; height:100%; background:var(--ok)}
+h2{font:600 13px var(--body); text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0}
+select{font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:4px 8px; max-width:100%}
+.opt{font-size:14px; color:var(--muted); display:flex; gap:8px; align-items:center; justify-content:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>S<span>ö</span>yle</h1>
+    <p class="sub">Тренажёр турецкого произношения для русскоговорящих</p>
+  </header>
+
+  <div id="warn" class="warn" hidden></div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-pairs" aria-selected="true">Минимальные пары</button>
+    <button class="tab" role="tab" id="tab-phrases" aria-selected="false">Фразы</button>
+  </div>
+
+  <div class="chips" id="chips"></div>
+
+  <section class="card" id="card">
+    <p class="target" id="target"></p>
+    <p class="meaning" id="meaning"></p>
+    <p class="partner" id="partner"></p>
+    <div class="row">
+      <a class="btn native" id="forvo" target="_blank" rel="noopener">👤 Носитель</a>
+      <a class="btn native" id="yg" target="_blank" rel="noopener">🎬 В видео</a>
+      <button class="btn" id="play">🔊 Синтез</button>
+      <button class="btn" id="playSlow">🐢 Медленно</button>
+      <button class="btn primary" id="speak">🎤 Сказать</button>
+      <button class="btn" id="mine" hidden>▶ Моя запись</button>
+      <button class="btn" id="next">Дальше →</button>
+    </div>
+    <div class="result info" id="result">
+      <span class="verdict">Нажмите «Сказать» и произнесите слово.</span>
+    </div>
+    <p class="tip" id="tip"></p>
+  </section>
+
+  <p class="hint"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>L</kbd> — послушать</p>
+  <label class="opt">Голос синтеза: <select id="voice"></select></label>
+  <label class="opt"><input type="checkbox" id="recToggle"> Записывать мой голос, чтобы сравнить с образцом</label>
+
+  <section>
+    <h2>Статистика</h2>
+    <div class="stats" id="stats"></div>
+  </section>
+</div>
+
+<audio id="myAudio"></audio>
+
+<script>
+"use strict";
+const GROUPS = [
+  { id:"o", label:"o · ö",
+    tip:"ö: скажите «э» и округлите губы, как для «о». Язык остаётся впереди, как на «э».",
+    pairs:[["on","десять","ön","перед"],["ol","будь","öl","умри"],["kor","раскалённые угли","kör","слепой"],["koy","бухта; положи","köy","деревня"],["bol","обильный","böl","раздели"]] },
+  { id:"u", label:"u · ü",
+    tip:"ü: скажите «и» и вытяните губы трубочкой, как для «у». Язык назад не отодвигайте.",
+    pairs:[["uç","кончик","üç","три"],["kul","раб","kül","пепел"],["un","мука","ün","слава"],["sus","молчи","süs","украшение"],["duş","душ","düş","сон; падай"]] },
+  { id:"i", label:"ı · i",
+    tip:"ı — это русское «ы». i — чистое «и», согласный перед ним смягчается: kır ≈ «кыр», kir ≈ «кир».",
+    pairs:[["kır","поле; ломай","kir","грязь"],["kıl","волос","kil","глина"],["dış","внешний","diş","зуб"],["ılık","тёплый","ilik","костный мозг"]] },
+  { id:"c", label:"c · ç · ş",
+    tip:"c = «дж», ç = «ч», ş = «ш». Буква c никогда не читается как «ц» или «с».",
+    pairs:[["cam","стекло","çam","сосна"],["kaç","сколько","kaş","бровь"],["koç","баран","koş","беги"],["çark","колесо","şark","восток"]] },
+];
+const PHRASE_SETS = [
+  { id:"basic", label:"основные", items:[
+    { tr:"Okula gidiyorum.", tl:"окула гидийорум", ru:"Я иду в школу.", focus:"Все «о» полные: о-ку-ла, а не «акула»." },
+    { tr:"Türkçe öğreniyorum.", tl:"тюркче ёэренийорум", ru:"Я учу турецкий.", focus:"ü и ö округлые; ğ не произносится, удлиняет ö." },
+    { tr:"Üç kardeşim var.", tl:"юч кардешим вар", ru:"У меня трое братьев и сестёр.", focus:"üç, а не uç; r в конце var — глухое." },
+    { tr:"Köyde büyüdüm.", tl:"кёйде бюйюдюм", ru:"Я вырос в деревне.", focus:"köy, а не koy; ü в büyüdüm дважды." },
+    { tr:"Bugün hava çok güzel.", tl:"бугюн хава чок гюзель", ru:"Сегодня очень хорошая погода.", focus:"Ударение на последний слог: bugǘn, güzél." },
+    { tr:"Gözlerin çok güzel.", tl:"гёзлерин чок гюзель", ru:"У тебя очень красивые глаза.", focus:"göz, а не goz; «о» в çok не редуцировать." },
+    { tr:"Dün akşam dışarı çıkmadık.", tl:"дюн акшам дышары чыкмадык", ru:"Вчера вечером мы не выходили.", focus:"ı = «ы»; ударение перед -ma: çíkmadık." },
+    { tr:"Bu doğru değil mi?", tl:"бу доору дэиль ми", ru:"Разве это не так?", focus:"doğru = «доору»; mi без ударения." },
+    { tr:"Şu köşe yaz köşesi, şu köşe kış köşesi, ortada su şişesi.", tl:"шу кёше яз кёшеси, шу кёше кыш кёшеси, ортада су шишеси", ru:"Скороговорка: этот угол летний, этот зимний, посередине бутылка воды.", focus:"ş/s и ö/o в быстром темпе." },
+  ]},
+  { id:"hotel", label:"отель", items:[
+    { tr:"İyi akşamlar, rezervasyonum var.", tl:"ийи акшамлар, резервасйонум вар", ru:"Добрый вечер, у меня бронь.", focus:"rezervasyonum: «о» полное, не «резервасьянум»." },
+    { tr:"Boş odanız var mı?", tl:"бош оданыз вар мы", ru:"Есть свободные номера?", focus:"ı в odanız и mı — русское «ы»; mı безударное." },
+    { tr:"İki gece için bir oda istiyorum.", tl:"ики гедже ичин бир ода истийорум", ru:"Мне нужен номер на две ночи.", focus:"gece = «гедже»: c всегда «дж»." },
+    { tr:"Gecelik fiyatı ne kadar?", tl:"геджелик фийаты не кадар", ru:"Сколько стоит ночь?", focus:"Ударение: ne kadár." },
+    { tr:"Kahvaltı dahil mi?", tl:"кахвалты дахиль ми", ru:"Завтрак включён?", focus:"h в kahvaltı и dahil звучит, как лёгкий выдох." },
+    { tr:"Oda kaçıncı katta?", tl:"ода качынджы катта", ru:"На каком этаже номер?", focus:"Двойное tt в katta — с паузой: кат-та." },
+    { tr:"Asansör nerede?", tl:"асансёр нэреде", ru:"Где лифт?", focus:"ö в asansör; ударение в nérede на первый слог." },
+    { tr:"İnternet şifresi ne?", tl:"интернет шифреси не", ru:"Какой пароль от интернета?", focus:"ş = «ш», e открытое." },
+    { tr:"Kahvaltı saat kaçta?", tl:"кахвалты саат качта", ru:"Во сколько завтрак?", focus:"saat — два «а», тянем: са-ат." },
+    { tr:"Havlu alabilir miyim?", tl:"хавлу алабилир мийим", ru:"Можно полотенце?", focus:"miyim — отдельное слово, но без ударения." },
+    { tr:"Bana bir taksi çağırır mısınız?", tl:"бана бир такси чаарыр мысыныз", ru:"Вызовете мне такси?", focus:"ğ не произносится: çağırır = «чаарыр»." },
+    { tr:"Bavulumu burada bırakabilir miyim?", tl:"бавулуму бурада быракабилир мийим", ru:"Можно оставить здесь чемодан?", focus:"u полные, не «бавалуму»." },
+    { tr:"Klima çalışmıyor.", tl:"клима чалышмыйор", ru:"Кондиционер не работает.", focus:"Ударение перед -mı: çalíşmıyor." },
+    { tr:"Sıcak su yok.", tl:"сыджак су йок", ru:"Нет горячей воды.", focus:"sıcak = «сыджак», начинается с «ы»." },
+    { tr:"Oda temizlenmedi.", tl:"ода темизленмеди", ru:"В номере не убрали.", focus:"Ударение перед -me: temizlénmedi." },
+    { tr:"Odayı değiştirebilir miyim?", tl:"одайы дэиштиребилир мийим", ru:"Можно поменять номер?", focus:"değiş = «дэиш», без «г»." },
+    { tr:"Çıkış saat kaçta?", tl:"чыкыш саат качта", ru:"Во сколько выезд?", focus:"çıkış — два «ы», ç и ş на краях." },
+    { tr:"Kartla ödeyebilir miyim?", tl:"картла ёдейебилир мийим", ru:"Можно оплатить картой?", focus:"ö в ödeyebilir — округлить губы." },
+    { tr:"Hesapta bir hata var.", tl:"хесапта бир хата вар", ru:"В счёте ошибка.", focus:"h в начале слов слышна." },
+    { tr:"Teşekkürler, her şey çok güzeldi.", tl:"тешеккюрлер, хер шей чок гюзельди", ru:"Спасибо, всё было отлично.", focus:"kk удвоенное: тешек-кюр-лер." },
+  ]},
+  { id:"greet", label:"приветствия", items:[
+    { tr:"Merhaba.", tl:"мерхаба", ru:"Здравствуйте.", focus:"h слышна: мер-ха-ба." },
+    { tr:"Günaydın.", tl:"гюнайдын", ru:"Доброе утро.", focus:"ü в начале, ı = «ы» в конце." },
+    { tr:"İyi günler.", tl:"ийи гюнлер", ru:"Добрый день.", focus:"ü в günler — губы трубочкой." },
+    { tr:"İyi akşamlar.", tl:"ийи акшамлар", ru:"Добрый вечер.", focus:"ş = «ш»." },
+    { tr:"Hoş geldiniz.", tl:"хош гельдиниз", ru:"Добро пожаловать.", focus:"l мягкое перед e: «гель»." },
+    { tr:"Hoş bulduk.", tl:"хош булдук", ru:"Ответ на «Hoş geldiniz»: рад быть здесь.", focus:"l твёрдое перед u: «бул»." },
+    { tr:"Nasılsınız?", tl:"насылсыныз", ru:"Как вы?", focus:"Три «ы»; ударение на первый слог: násılsınız." },
+    { tr:"İyiyim, teşekkür ederim.", tl:"ийийим, тешеккюр эдерим", ru:"Хорошо, спасибо.", focus:"teşekkür — ü округлое." },
+    { tr:"İyi günler, kolay gelsin.", tl:"ийи гюнлер, колай гельсин", ru:"Добрый день, лёгкой работы. Говорят тому, кто работает: продавцу, официанту, горничной.", focus:"kolay — полное «о», не «калай»; l в gelsin мягкое." },
+    { tr:"Kolay gelsin.", tl:"колай гельсин", ru:"Лёгкой работы (≈ «Бог в помощь»). Не говорят тому, кто отдыхает или ест.", focus:"Ударение: kolay gelsín." },
+    { tr:"Sağ olun.", tl:"саа олун", ru:"Спасибо (вежливо). Ответ на «Kolay gelsin».", focus:"ğ не произносится, удлиняет а: «саа»." },
+    { tr:"Sağ ol.", tl:"саа ол", ru:"Спасибо (на «ты»).", focus:"Два слова звучат слитно: «саол»." },
+    { tr:"Teşekkürler.", tl:"тешеккюрлер", ru:"Спасибо (нейтрально).", focus:"теШЕк, не «тешак»; kk с паузой; ü — губы трубочкой." },
+    { tr:"Teşekkür ederim.", tl:"тешеккюр эдерим", ru:"Благодарю (вежливее).", focus:"Все «е» открытые, ничего не проглатывать." },
+    { tr:"Çok teşekkürler.", tl:"чок тешеккюрлер", ru:"Большое спасибо.", focus:"çok — полное «о»." },
+    { tr:"Rica ederim.", tl:"риджа эдерим", ru:"Пожалуйста / не за что.", focus:"c = «дж»: риДЖа, не «рица»." },
+  ]},
+];
+const NUM = { "2":"iki", "3":"üç", "10":"on", "40":"kırk", "100":"yüz" };
+const CONFUSABLE = [["o","ö"],["u","ü"],["ı","i"],["c","ç"],["ç","ş"],["c","ş"],["s","ş"],["g","ğ"],["c","s"]];
+
+// ---------- state ----------
+const $ = id => document.getElementById(id);
+let mode = "pairs", groupId = "o", setId = "hotel", item = null, lastKey = "";
+let listening = false, recognizer = null;
+let recordOn = !/Android/i.test(navigator.userAgent);
+let stream = null, mediaRec = null, chunks = [];
+let stats = load();
+
+function load(){ try { return JSON.parse(localStorage.getItem("soyle-stats")) || {}; } catch(e){ return {}; } }
+function save(){ try { localStorage.setItem("soyle-stats", JSON.stringify(stats)); } catch(e){} }
+
+// ---------- text helpers ----------
+const norm = s => s.normalize("NFC").toLocaleLowerCase("tr-TR");
+function tokens(s){
+  return norm(s).replace(/[.,!?;:"'«»…()\-–—]/g," ").split(/\s+/).filter(Boolean).map(w => NUM[w] || w);
+}
+function esc(s){ return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// Levenshtein alignment: ops of what was expected (a) vs heard (b)
+function align(a, b){
+  a = Array.from(a); b = Array.from(b);
+  const n=a.length, m=b.length, d=[];
+  for(let i=0;i<=n;i++){ d[i]=[i]; for(let j=1;j<=m;j++) d[i][j]= i===0 ? j : 0; }
+  for(let i=1;i<=n;i++) for(let j=1;j<=m;j++)
+    d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1]===b[j-1]?0:1));
+  const ops=[]; let i=n, j=m;
+  while(i>0 || j>0){
+    if(i>0 && j>0 && d[i][j]===d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)){ ops.unshift({t:a[i-1]===b[j-1]?"eq":"sub", a:a[i-1], b:b[j-1]}); i--; j--; }
+    else if(i>0 && d[i][j]===d[i-1][j]+1){ ops.unshift({t:"del", a:a[i-1]}); i--; }
+    else { ops.unshift({t:"ins", b:b[j-1]}); j--; }
+  }
+  return { ops, dist:d[n][m] };
+}
+function isConfusable(x,y){ return CONFUSABLE.some(([p,q]) => (p===x&&q===y)||(p===y&&q===x)); }
+
+function renderWordDiff(expected, heard, notes){
+  const { ops } = align(expected, heard);
+  return ops.map(o => {
+    if(o.t==="eq") return esc(o.a);
+    if(o.t==="sub"){
+      if(isConfusable(o.a,o.b)) notes.add(`«${o.b}» вместо «${o.a}»`);
+      return `<span class="c-sub" title="услышано: ${esc(o.b)}">${esc(o.a)}</span>`;
+    }
+    if(o.t==="del") return `<span class="c-del" title="не услышано">${esc(o.a)}</span>`;
+    return "";
+  }).join("");
+}
+
+// ---------- rendering ----------
+function renderChips(){
+  const chips = $("chips");
+  if(mode==="phrases"){
+    chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("");
+    chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
+    return;
+  }
+  const all = [...GROUPS.map(g=>({id:g.id,label:g.label})), {id:"mix",label:"вперемешку"}];
+  chips.innerHTML = all.map(g => `<button class="chip" data-g="${g.id}" aria-pressed="${g.id===groupId}">${g.label}</button>`).join("");
+  chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { groupId=b.dataset.g; renderChips(); next(); });
+}
+
+function pickPair(){
+  const pool = groupId==="mix" ? GROUPS : GROUPS.filter(g=>g.id===groupId);
+  let cand, key, guard=0;
+  do {
+    const g = pool[Math.floor(Math.random()*pool.length)];
+    const p = g.pairs[Math.floor(Math.random()*g.pairs.length)];
+    const flip = Math.random()<.5;
+    cand = flip ? {target:p[2],meaning:p[3],partner:p[0],partnerMeaning:p[1],gid:g.id,tip:g.tip}
+                : {target:p[0],meaning:p[1],partner:p[2],partnerMeaning:p[3],gid:g.id,tip:g.tip};
+    key = cand.target;
+  } while(key===lastKey && ++guard<10);
+  lastKey = key; return cand;
+}
+function pickPhrase(){
+  let p, guard=0;
+  const list = PHRASE_SETS.find(g=>g.id===setId).items;
+  do { p = list[Math.floor(Math.random()*list.length)]; } while(p.tr===lastKey && ++guard<10);
+  lastKey = p.tr; return { target:p.tr, translit:p.tl, meaning:p.ru, tip:p.focus, gid:"ph-"+setId };
+}
+
+function next(){
+  stopListening();
+  item = mode==="pairs" ? pickPair() : pickPhrase();
+  const t = $("target");
+  t.classList.toggle("phrase", mode==="phrases");
+  if(mode==="pairs"){
+    const a = Array.from(item.target), b = Array.from(item.partner);
+    t.innerHTML = a.map((c,i)=> c!==b[i] ? `<mark>${esc(c)}</mark>` : esc(c)).join("");
+    $("partner").innerHTML = `не путать с <b>${esc(item.partner)}</b> — ${esc(item.partnerMeaning)}`;
+    $("partner").hidden = false;
+  } else {
+    t.textContent = item.target;
+    $("partner").innerHTML = `[${esc(item.translit)}]`;
+    $("partner").hidden = false;
+  }
+  const q = encodeURIComponent(item.target.replace(/[.,!?]/g,"").trim());
+  $("forvo").href = mode==="pairs" ? `https://forvo.com/word/${q}/#tr` : `https://forvo.com/search/${q}/tr/`;
+  $("yg").href = `https://youglish.com/pronounce/${q}/turkish`;
+  $("meaning").textContent = item.meaning;
+  $("tip").textContent = item.tip;
+  setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
+  $("mine").hidden = true;
+}
+
+function setResult(kind, verdict, extra=""){
+  const r = $("result");
+  r.className = "result " + kind;
+  r.innerHTML = `<span class="verdict">${verdict}</span>${extra}`;
+}
+
+function renderStats(){
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label}))];
+  $("stats").innerHTML = rows.map(r => {
+    const s = stats[r.id] || {t:0, ok:0};
+    const pct = s.t ? Math.round(s.ok/s.t*100) : 0;
+    return `<div class="stat"><span class="lab">${r.label}</span>
+      <span class="num">${s.t ? `${pct}% · попыток: ${s.t}` : "ещё не было"}</span>
+      <div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }).join("");
+}
+function count(gid, okScore){
+  const s = stats[gid] || (stats[gid] = {t:0, ok:0});
+  s.t++; s.ok += okScore; save(); renderStats();
+}
+
+// ---------- evaluation ----------
+function evalPair(alts){
+  const top = tokens(alts[0] || "");
+  const altsTok = alts.map(tokens);
+  const heardList = `<div class="alts">Распознано: ${alts.map(a=>esc(a.trim())).join(" · ") || "—"}</div>`;
+  if(top.includes(item.target)){
+    count(item.gid, 1);
+    return setResult("ok", `Верно: ${esc(item.target)}`, heardList);
+  }
+  if(top.includes(item.partner)){
+    count(item.gid, 0);
+    const notes = new Set(); const diff = renderWordDiff(item.target, item.partner, notes);
+    return setResult("bad",
+      `Прозвучало <b>${esc(item.partner)}</b> (${esc(item.partnerMeaning)}) — ${[...notes].join(", ") || "другой звук"}`,
+      `<div class="diff">${diff}</div>${heardList}`);
+  }
+  if(altsTok.slice(1).some(t=>t.includes(item.target))){
+    count(item.gid, 0.5);
+    return setResult("near", "Почти: нужное слово только в запасных вариантах распознавания. Произнесите звук отчётливее.", heardList);
+  }
+  count(item.gid, 0);
+  const closest = top.reduce((best,w)=>{ const d=align(item.target,w).dist; return !best||d<best.d ? {w,d} : best; }, null);
+  const notes = new Set();
+  const diff = closest ? renderWordDiff(item.target, closest.w, notes) : esc(item.target);
+  return setResult("bad", `Не распознано как «${esc(item.target)}»${notes.size ? ": " + [...notes].join(", ") : ""}`,
+    `<div class="diff">${diff}</div>${heardList}`);
+}
+
+function evalPhrase(alts){
+  const want = tokens(item.target), heard = tokens(alts[0] || "");
+  const pool = heard.slice(); const notes = new Set(); let ok = 0;
+  const parts = want.map(w => {
+    const idx = pool.indexOf(w);
+    if(idx>=0){ pool.splice(idx,1); ok++; return `<span class="w-ok">${esc(w)}</span>`; }
+    let best=-1, bd=Infinity;
+    pool.forEach((h,i)=>{ const d=align(w,h).dist; if(d<bd){bd=d;best=i;} });
+    if(best>=0 && bd <= Math.max(2, Math.ceil(Array.from(w).length/2))){
+      const h = pool.splice(best,1)[0];
+      return `<span>${renderWordDiff(w,h,notes)}</span>`;
+    }
+    return `<span class="w-miss">${esc(w)}</span>`;
+  });
+  const score = want.length ? ok/want.length : 0;
+  count(item.gid, score);
+  const kind = score===1 ? "ok" : score>=.7 ? "near" : "bad";
+  const verdict = score===1 ? "Все слова распознаны"
+    : `Распознано ${ok} из ${want.length} слов${notes.size ? " · " + [...notes].join(", ") : ""}`;
+  setResult(kind, verdict,
+    `<div class="diff">${parts.join(" ")}</div><div class="alts">Распознано: ${esc((alts[0]||"—").trim())}</div>`);
+}
+
+// ---------- speech synthesis ----------
+let trVoice = null;
+function voiceRank(v){
+  if(/natural/i.test(v.name)) return 0;      // нейросетевые голоса Edge (Emel, Ahmet)
+  if(/online/i.test(v.name)) return 1;
+  if(/google/i.test(v.name)) return 2;
+  if(/premium|enhanced|yelda/i.test(v.name)) return 3; // улучшенные голоса Apple
+  return 5;
+}
+function pickVoice(){
+  const vs = speechSynthesis.getVoices().filter(v=>/^tr/i.test(v.lang)).sort((a,b)=>voiceRank(a)-voiceRank(b));
+  let saved = null; try { saved = localStorage.getItem("soyle-voice"); } catch(e){}
+  trVoice = vs.find(v=>v.name===saved) || vs[0] || null;
+  const sel = $("voice");
+  sel.innerHTML = vs.map(v=>`<option value="${esc(v.name)}"${v===trVoice?" selected":""}>${esc(v.name)}${voiceRank(v)<=1?" ★":""}</option>`).join("") || "<option>нет турецких голосов</option>";
+  sel.disabled = !vs.length;
+  $("play").disabled = $("playSlow").disabled = !trVoice;
+  if(trVoice && voiceRank(trVoice)>1) showWarn("Встроенный голос звучит механически. Живое произношение: кнопки «Носитель» и «В видео». Самый естественный синтез — в браузере Microsoft Edge (голоса Emel и Ahmet, Natural).");
+}
+$("voice").onchange = e => {
+  trVoice = speechSynthesis.getVoices().find(v=>v.name===e.target.value) || trVoice;
+  try { localStorage.setItem("soyle-voice", trVoice.name); } catch(err){}
+};
+function say(rate){
+  if(!trVoice) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(item.target);
+  u.voice = trVoice; u.lang = trVoice.lang; u.rate = rate;
+  speechSynthesis.speak(u);
+}
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+else { $("play").disabled = $("playSlow").disabled = true; }
+
+// ---------- recognition ----------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function showWarn(t){ const w=$("warn"); w.textContent=t; w.hidden=false; }
+if(!SR){ showWarn("Этот браузер не умеет распознавать речь. Откройте файл в Google Chrome (на компьютере или Android)."); $("speak").disabled = true; }
+
+async function startRecording(){
+  if(!recordOn || !window.MediaRecorder) return;
+  try {
+    if(!stream) stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    chunks = []; mediaRec = new MediaRecorder(stream);
+    mediaRec.ondataavailable = e => chunks.push(e.data);
+    mediaRec.onstop = () => {
+      const blob = new Blob(chunks, {type: mediaRec.mimeType});
+      const a = $("myAudio"); if(a.src) URL.revokeObjectURL(a.src);
+      a.src = URL.createObjectURL(blob); $("mine").hidden = false;
+    };
+    mediaRec.start();
+  } catch(e){ recordOn = false; $("recToggle").checked = false; }
+}
+function stopRecording(){ if(mediaRec && mediaRec.state==="recording") mediaRec.stop(); }
+
+async function startListening(){
+  if(!SR || listening) return;
+  speechSynthesis && speechSynthesis.cancel();
+  listening = true;
+  const btn = $("speak"); btn.classList.add("listening"); btn.textContent = "🎤 Слушаю…";
+  setResult("info", "Говорите…");
+  await startRecording();
+  recognizer = new SR();
+  recognizer.lang = "tr-TR"; recognizer.maxAlternatives = 5;
+  recognizer.interimResults = false; recognizer.continuous = false;
+  let got = false;
+  recognizer.onresult = e => {
+    got = true;
+    const alts = Array.from(e.results[0]).map(a => a.transcript);
+    mode==="pairs" ? evalPair(alts) : evalPhrase(alts);
+  };
+  recognizer.onerror = e => {
+    got = true;
+    const msg = {
+      "not-allowed":"Нет доступа к микрофону. Разрешите его через значок в адресной строке.",
+      "service-not-allowed":"Нет доступа к микрофону. Разрешите его через значок в адресной строке.",
+      "no-speech":"Ничего не услышал. Начинайте говорить сразу после нажатия.",
+      "network":"Нужен интернет: Chrome распознаёт речь на серверах Google.",
+      "audio-capture":"Микрофон занят или не найден. Снимите галочку «Записывать мой голос» и попробуйте снова.",
+      "aborted":"Остановлено."
+    }[e.error] || ("Ошибка распознавания: " + e.error);
+    setResult("bad", msg);
+  };
+  recognizer.onend = () => {
+    if(!got) setResult("info", "Ничего не распознано. Попробуйте ещё раз.");
+    listening = false; stopRecording();
+    btn.classList.remove("listening"); btn.textContent = "🎤 Сказать";
+  };
+  try { recognizer.start(); } catch(e){ recognizer.onend(); }
+}
+function stopListening(){ if(recognizer && listening) recognizer.abort(); }
+
+// ---------- wiring ----------
+function setMode(m){
+  mode = m;
+  $("tab-pairs").setAttribute("aria-selected", m==="pairs");
+  $("tab-phrases").setAttribute("aria-selected", m==="phrases");
+  renderChips(); next();
+}
+$("tab-pairs").onclick = () => setMode("pairs");
+$("tab-phrases").onclick = () => setMode("phrases");
+$("play").onclick = () => say(0.85);
+$("playSlow").onclick = () => say(0.55);
+$("speak").onclick = () => listening ? stopListening() : startListening();
+$("next").onclick = next;
+$("mine").onclick = () => $("myAudio").play();
+$("recToggle").checked = recordOn;
+$("recToggle").onchange = e => { recordOn = e.target.checked; if(!recordOn && stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } };
+document.addEventListener("keydown", e => {
+  if(e.target.tagName==="INPUT" || e.repeat) return;
+  if(e.code==="Space"){ e.preventDefault(); listening ? stopListening() : startListening(); }
+  else if(e.key==="Enter"){ e.preventDefault(); next(); }
+  else if(e.key.toLowerCase()==="l"){ say(0.85); }
+});
+
+renderChips(); renderStats(); next();
+</script>
+</body>
+</html>
