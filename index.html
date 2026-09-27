@@ -295,7 +295,7 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
 .ic.tulip{color:var(--tulip); width:18px; height:18px}
 /* трудный звук: точки над ö/ü/i и хвостик ç/ş — тюльпан; буквы без знака — целиком */
 .dia{position:relative; display:inline-block}
-.dia::after{content:attr(data-ch); position:absolute; left:0; top:0; color:var(--tulip); clip-path:inset(0 0 58% 0)}
+.dia::after{content:attr(data-ch); position:absolute; left:0; top:0; color:var(--tulip); clip-path:inset(0 0 65% 0)}
 .dia.low::after{clip-path:inset(74% 0 0 0)}
 .dia.whole{color:var(--tulip)} .dia.whole::after{content:none}
 body{font-family:var(--body)}
@@ -490,6 +490,25 @@ h1 span{color:inherit}
 .ls-opt b{font-size:max(28px, calc(var(--fit) * clamp(40px, 7vh, 58px)))}
 .free-title{font-size:max(18px, calc(var(--fit) * clamp(22px, 3.6vh, 30px)))}
 .tabbar .tab{min-height:max(48px, calc(60px * var(--fit)))}
+
+/* оценка 0–100 и разбор ошибок */
+.result{position:relative}
+.res-head{display:flex; align-items:flex-start; gap:12px}
+.res-body{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px}
+.res-body .diff{font-size:18px; line-height:1.3}
+.score{flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; width:52px; height:52px; border-radius:26px; border:3px solid currentColor; background:var(--surface); line-height:1}
+.score b{font:700 20px/1 var(--display)} .score small{font-size:9px; font-weight:600}
+.score.g-ok{color:var(--ok)} .score.g-near{color:var(--near)} .score.g-bad{color:var(--bad)}
+.errs{margin:0; font-size:13px; line-height:1.35; color:var(--ink-2)}
+.errs b{font-family:var(--display); color:var(--ink)}
+.result.win .score{animation:scorepop .5s ease-out}
+@keyframes scorepop{0%{transform:scale(.6)} 60%{transform:scale(1.15)} 100%{transform:scale(1)}}
+.xp-pop{position:absolute; right:12px; top:8px; font:700 15px var(--body); color:var(--ok); pointer-events:none; animation:xpup 1.2s ease-out forwards}
+@keyframes xpup{0%{opacity:0; transform:translateY(8px)} 20%{opacity:1} 100%{opacity:0; transform:translateY(-18px)}}
+#card .target.hit{color:var(--ok); transition:color .2s}
+@media (prefers-reduced-motion: reduce){ .result.win .score, .xp-pop{animation:none} }
+.result{height:max(72px, calc(104px * var(--fit)))}
+#card .acts{grid-template-columns:repeat(3, minmax(0,1fr))}
 </style>
 </head>
 <body>
@@ -538,7 +557,7 @@ h1 span{color:inherit}
 
   <main class="screen">
     <div class="lesson" id="lessonBar" role="img" aria-label="Прогресс урока">
-      <span class="segs" id="lessonSegs" aria-hidden="true"></span><span class="sr" id="lessonTxt">урок 0 / 10</span><i id="lessonFill" hidden></i>
+      <span class="segs" id="lessonSegs" aria-hidden="true"></span><span class="sr" id="lessonTxt">урок 0 / 10</span>
     </div>
     <section class="card" id="listenCard" hidden>
       <div class="ls-top">
@@ -587,10 +606,9 @@ h1 span{color:inherit}
         <button class="act native" id="native"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-native"/></svg></span><span class="lbl">Носитель</span></button>
         <a class="act native" id="yg" target="_blank" rel="noopener"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-video"/></svg></span><span class="lbl">Видео</span></a>
         <button class="act" id="play"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg></span><span class="lbl">Синтез</span></button>
-        <button class="act" id="echo" title="Послушать образец и сразу повторить"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-echo"/></svg></span><span class="lbl">Эхо</span></button>
       </div>
       <div class="main-row">
-        <button class="pill" id="compare" disabled title="Образец и ваша запись подряд"><svg class="ic" aria-hidden="true"><use href="#i-compare"/></svg><span class="lbl">Сравнить</span></button>
+        <button class="pill" id="compare" disabled title="Образец и ваша запись подряд; без записи — образец, вы, оценка"><svg class="ic" aria-hidden="true"><use href="#i-compare"/></svg><span class="lbl">Сравнить</span></button>
         <button class="mic" id="speak" aria-label="Сказать"><svg class="ic on" aria-hidden="true"><use href="#i-mic"/></svg><svg class="ic off" aria-hidden="true"><use href="#i-stop"/></svg><span class="sr lbl">Сказать</span></button>
         <button class="pill" id="next"><span class="lbl">Дальше</span><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg></button>
       </div>
@@ -604,7 +622,6 @@ h1 span{color:inherit}
           <span class="pv-sub">Уровень <span id="gbLevel2">1</span></span>
           <b class="pv-rank" id="gbRank">Турист</b>
           <span class="pv-xp" id="gbXp">0 / 50 XP</span>
-          <span class="bar pv-xpbar" hidden><i id="gbXpBar" style="width:0%"></i></span>
         </div>
       </div>
       <div class="pv-weekhead"><b><span id="gbStreak">0</span> дн. подряд</b><span>заморозок: <span id="gbFreeze">0</span></span></div>
@@ -653,7 +670,7 @@ h1 span{color:inherit}
           <li><b>Звуки</b> — трудные пары (o/ö, u/ü, ı/i, c/ç/ş). Нажмите «Сказать» — тренажёр покажет, не спутали ли вы звук. Трудный звук выделен красным.</li>
           <li><b>Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «с записями» — всё, что записали носители.</li>
           <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Видео</b> — фраза в настоящих видео.</li>
-          <li><b>Эхо</b> — образец, вы, затем образец и ваша запись подряд. <b>Сравнить</b> — образец и ваша запись.</li>
+          <li><b>Сравнить</b> — если вы ещё не говорили это слово: образец, вы, оценка, затем образец и ваша запись подряд; если уже сказали — образец и ваша запись.</li>
           <li><b>На слух</b> — звучит одно слово из пары, выберите какое. <b>Блиц</b> — сколько различите за 60 секунд.</li>
           <li><b>Свободно</b> — скажите что угодно и увидите, что услышит носитель. Нужное сохраните в «мои».</li>
           <li><b>На сегодня</b> — интервальные повторения: фраза возвращается через 1, 3, 7, 16 и 35 дней, ошибка — через 10 минут.</li>
@@ -878,6 +895,59 @@ function align(a, b){
 }
 function isConfusable(x,y){ return CONFUSABLE.some(([p,q]) => (p===x&&q===y)||(p===y&&q===x)); }
 
+// ---------- оценка произношения 0–100 и разбор ошибок по словам и звукам ----------
+// Каждое слово цели: 1 — распознано точно; 0,7 — только в запасном варианте распознавания;
+// иначе доля совпавших букв (1 − правки / длина), а спутанный трудный звук (o/ö, ı/i, c/ç…) меняет смысл — не выше 0,5.
+function pronScore(targetText, alts){
+  const want = tokens(targetText), top = tokens((alts && alts[0]) || ""), others = (alts || []).slice(1).map(tokens);
+  const pool = top.slice();
+  const words = want.map(w => {
+    const i = pool.indexOf(w);
+    if(i >= 0){ pool.splice(i, 1); return { w, heard:w, s:1, errs:[] }; }
+    if(others.some(t => t.includes(w))) return { w, heard:w, s:.7, errs:[], alt:true };
+    let best = -1, bd = Infinity;
+    pool.forEach((h, k) => { const d = align(w, h).dist; if(d < bd){ bd = d; best = k; } });
+    const L = Array.from(w).length;
+    if(best >= 0 && bd <= Math.max(2, Math.ceil(L / 2))){
+      const h = pool.splice(best, 1)[0], { ops } = align(w, h);
+      const errs = ops.filter(o => o.t !== "eq").map(o => ({ t:o.t, a:o.a || "", b:o.b || "" }));
+      let sc = Math.max(0, 1 - bd / Math.max(L, Array.from(h).length));
+      if(errs.some(e => e.t === "sub" && isConfusable(e.a, e.b))) sc = Math.min(sc, .5);
+      return { w, heard:h, s:sc, errs };
+    }
+    return { w, heard:"", s:0, errs:[], miss:true };
+  });
+  const score = want.length ? Math.round(words.reduce((a, x) => a + x.s, 0) / want.length * 100) : 0;
+  return { score, words };
+}
+function gradeOf(n){ return n >= 90 ? ["ok", "Отлично"] : n >= 70 ? ["near", "Хорошо"] : n >= 40 ? ["bad", "Есть ошибки"] : ["bad", "Не понято"]; }
+function scoreHtml(n, what){
+  const [g] = gradeOf(n);
+  return `<span class="score g-${g}" role="img" aria-label="${what || "Оценка"}: ${n} из 100"><b>${n}</b><small>из 100</small></span>`;
+}
+// что именно не так: по словам и по звукам
+function errsHtml(words){
+  const bad = words.filter(x => x.s < 1).slice(0, 4);
+  if(!bad.length) return "";
+  const q = c => `«<span lang="tr">${esc(c)}</span>»`;
+  const items = bad.map(x => {
+    let why;
+    if(x.miss) why = "слово не распознано";
+    else if(x.alt) why = "распознано не сразу — скажите чётче";
+    else why = x.errs.map(e => e.t === "sub" ? `${q(e.b)} вместо ${q(e.a)}` : e.t === "del" ? `не слышно ${q(e.a)}` : `лишний звук ${q(e.b)}`).join(", ");
+    return `<span><b lang="tr" translate="no">${esc(x.w)}</b>: ${why}</span>`;
+  });
+  return `<div class="errs">${items.join(" · ")}</div>`;
+}
+// реакция на хороший ответ: оценка «выпрыгивает», слово зеленеет, рядом +XP. Без звука — идёт запись голоса
+let lastGain = 0;
+function celebrate(resEl, n){
+  if(n < 90) return;
+  resEl.classList.remove("win"); void resEl.offsetWidth; resEl.classList.add("win");
+  if(lastGain > 0){ const x = document.createElement("span"); x.className = "xp-pop"; x.textContent = `+${lastGain} XP`; x.setAttribute("aria-hidden", "true"); resEl.appendChild(x); setTimeout(() => x.remove(), 1200); }
+  if(resEl.id === "result"){ const t = $("target"); t.classList.add("hit"); setTimeout(() => t.classList.remove("hit"), 1100); }
+}
+
 function renderWordDiff(expected, heard, notes){
   const { ops } = align(expected, heard);
   return ops.map(o => {
@@ -1053,13 +1123,15 @@ function next(){
   if(item.native){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
-  $("compare").disabled = recordOn && myRecFor !== item.target; synthSlow = false; echoPending = false;
+  $("compare").disabled = false; synthSlow = false; echoPending = false;
 }
 
-function setResult(kind, verdict, extra=""){
+function setResult(kind, verdict, extra="", score){
   const r = $("result");
   r.className = "result " + kind;
-  r.innerHTML = `<span class="verdict">${verdict}</span>${extra}`;
+  r.innerHTML = score === undefined ? `<span class="verdict">${verdict}</span>${extra}`
+    : `<div class="res-head">${scoreHtml(score)}<div class="res-body"><span class="verdict">${verdict}</span>${extra}</div></div>`;
+  if(score !== undefined) celebrate(r, score);
 }
 
 function renderStats(){
@@ -1077,7 +1149,7 @@ function renderStats(){
 function count(gid, okScore){
   const s = stats[gid] || (stats[gid] = {t:0, ok:0});
   s.t++; s.ok += okScore; save(); renderStats();
-  award(okScore, gid);
+  const xp0 = game.xp; award(okScore, gid); lastGain = game.xp - xp0;
   if(gid !== "free") lessonStep(okScore);
   if(gid !== "free" && gid !== "listen" && item) srsUpdate(okScore);
   renderLesson();
@@ -1165,7 +1237,6 @@ function renderGame(){
   $("gbXp").textContent = `${game.xp} / ${next} XP`;
   const part = Math.min(1, Math.max(0, (game.xp - prev) / (next - prev)));
   $("gbLevelRing").style.strokeDashoffset = 263.9 * (1 - part); $("gbLevel2").textContent = L;
-  $("gbXpBar").style.width = Math.min(100, (game.xp - prev) / (next - prev) * 100) + "%";
   $("gbBlitz").textContent = game.blitzBest;
   $("gbFreeze").textContent = game.freezes;
   const wd = ["вс","пн","вт","ср","чт","пт","сб"];
@@ -1234,7 +1305,6 @@ function renderLesson(){
   bar.style.visibility = show ? "visible" : "hidden";
   if(!show) return;
   const l = lessonOf(mode);
-  $("lessonFill").style.width = Math.max(4, l.n / LESSON_SIZE * 100) + "%";
   $("lessonSegs").innerHTML = Array.from({ length:LESSON_SIZE }, (_, i) => `<i${l.res[i] === undefined ? "" : l.res[i] ? ' class="ok"' : ' class="bad"'}></i>`).join("");
   $("lessonBar").setAttribute("aria-label", `Урок: ${l.n} из ${LESSON_SIZE}, верно ${l.ok}`);
   $("lessonTxt").textContent = `урок ${l.n} / ${LESSON_SIZE}`;
@@ -1393,28 +1463,30 @@ function askRemoveMine(btn, text){
 function evalPair(alts){
   const top = tokens(alts[0] || "");
   const altsTok = alts.map(tokens);
-  const heardList = `<div class="alts">Распознано: ${alts.map(a=>esc(a.trim())).join(" · ") || "—"}</div>`;
+  const heardList = `<div class="alts hintable">Распознано: ${alts.map(a=>esc(a.trim())).join(" · ") || "—"}</div>`;
+  const ps = pronScore(item.target, alts);
   if(top.includes(item.target)){
     count(item.gid, 1);
-    return setResult("ok", `Верно: ${esc(item.target)}`, heardList);
+    return setResult("ok", `Верно: <span lang="tr" translate="no">${esc(item.target)}</span>`, heardList, 100);
   }
   if(top.includes(item.partner)){
     count(item.gid, 0);
     const notes = new Set(); const diff = renderWordDiff(item.target, item.partner, notes);
+    const sc = Math.min(ps.score, 50);
     return setResult("bad",
-      `Прозвучало <b>${esc(item.partner)}</b> (${esc(item.partnerMeaning)}) — ${[...notes].join(", ") || "другой звук"}`,
-      `<div class="diff" lang="tr" translate="no">${diff}</div>${heardList}`);
+      `Прозвучало <b lang="tr">${esc(item.partner)}</b> (${esc(item.partnerMeaning)}) — другое слово`,
+      `<div class="diff" lang="tr" translate="no">${diff}</div>${errsHtml([{ w:item.target, heard:item.partner, s:0, errs:align(item.target, item.partner).ops.filter(o => o.t !== "eq").map(o => ({ t:o.t, a:o.a || "", b:o.b || "" })) }])}${heardList}`, sc);
   }
   if(altsTok.slice(1).some(t=>t.includes(item.target))){
     count(item.gid, 0.5);
-    return setResult("near", "Почти: нужное слово только в запасных вариантах распознавания. Произнесите звук отчётливее.", heardList);
+    return setResult("near", "Почти: слово распознано не с первого варианта. Произнесите звук отчётливее.", heardList, 70);
   }
   count(item.gid, 0);
   const closest = top.reduce((best,w)=>{ const d=align(item.target,w).dist; return !best||d<best.d ? {w,d} : best; }, null);
   const notes = new Set();
   const diff = closest ? renderWordDiff(item.target, closest.w, notes) : esc(item.target);
-  return setResult("bad", `Не распознано как «${esc(item.target)}»${notes.size ? ": " + [...notes].join(", ") : ""}`,
-    `<div class="diff" lang="tr" translate="no">${diff}</div>${heardList}`);
+  return setResult("bad", `${gradeOf(ps.score)[1]}: не распознано как <span lang="tr">«${esc(item.target)}»</span>`,
+    `<div class="diff" lang="tr" translate="no">${diff}</div>${errsHtml(ps.words)}${heardList}`, ps.score);
 }
 
 function compareText(targetText, heardText){
@@ -1435,13 +1507,13 @@ function compareText(targetText, heardText){
   return { score, ok, total: want.length, notes, html: parts.join(" ") };
 }
 function evalPhrase(alts){
-  const { score, ok, total, notes, html } = compareText(item.target, alts[0]);
+  const { score, ok, total, html } = compareText(item.target, alts[0]);
   count(item.gid, score);
-  const kind = score===1 ? "ok" : score>=.7 ? "near" : "bad";
-  const verdict = score===1 ? "Все слова распознаны"
-    : `Распознано ${ok} из ${total} слов${notes.size ? " · " + [...notes].join(", ") : ""}`;
+  const ps = pronScore(item.target, alts), [g, label] = gradeOf(ps.score);
+  const kind = score===1 ? "ok" : g === "ok" ? "near" : g;
+  const verdict = score===1 ? "Отлично: все слова распознаны" : `${label} · ${ok} из ${total} слов`;
   setResult(kind, verdict,
-    `<div class="diff" lang="tr" translate="no">${html}</div><div class="alts">Распознано: ${esc((alts[0]||"—").trim())}</div>`);
+    `<div class="diff" lang="tr" translate="no">${html}</div>${errsHtml(ps.words)}<div class="alts hintable">Распознано: ${esc((alts[0]||"—").trim())}</div>`, ps.score);
 }
 
 // ---------- speech synthesis ----------
@@ -1658,9 +1730,11 @@ function prefetchNative(){
 
 // ---------- любая фраза: поймёт ли носитель ----------
 let freeRec = null, freeOn = false, autoPlayMine = false, lastHeard = "";
-function setFree(kind, verdict, extra=""){
+function setFree(kind, verdict, extra="", score, what){
   const r = $("freeResult"); r.className = "result " + kind;
-  r.innerHTML = `<span class="verdict">${verdict}</span>${extra}`;
+  r.innerHTML = score === undefined ? `<span class="verdict">${verdict}</span>${extra}`
+    : `<div class="res-head">${scoreHtml(score, what)}<div class="res-body"><span class="verdict">${verdict}</span>${extra}</div></div>`;
+  if(score !== undefined) celebrate(r, score);
 }
 function clarity(conf){
   if(!conf) return "";
@@ -1728,14 +1802,15 @@ async function freeListen(){
     if(intent){
       const c = compareText(intent, heard);
       count("free", c.score);
+      const ps = pronScore(intent, [heard]);
       const kind = c.score===1 ? "ok" : c.score>=.65 ? "near" : "bad";
       const verdict = c.score===1 ? "Носитель поймёт вас: все слова распознаны."
-        : c.score>=.65 ? `Скорее поймёт, но может переспросить: ${c.ok} из ${c.total} слов${c.notes.size ? " · " + [...c.notes].join(", ") : ""}.`
-        : `Скорее не поймёт: распознано ${c.ok} из ${c.total} слов${c.notes.size ? " · " + [...c.notes].join(", ") : ""}.`;
-      setFree(kind, verdict, `<div class="diff" lang="tr" translate="no">${c.html}</div><div class="alts">Носитель услышит:</div>${heardHtml}${clarity(conf)}`);
+        : c.score>=.65 ? `Скорее поймёт, но может переспросить: ${c.ok} из ${c.total} слов.`
+        : `Скорее не поймёт: распознано ${c.ok} из ${c.total} слов.`;
+      setFree(kind, verdict, `<div class="diff" lang="tr" translate="no">${c.html}</div>${errsHtml(ps.words)}<div class="alts">Носитель услышит:</div>${heardHtml}${clarity(conf)}`, ps.score);
     } else {
       const kind = !conf ? "info" : conf >= .85 ? "ok" : conf >= .6 ? "near" : "bad";
-      setFree(kind, "Носитель услышит так:", `${heardHtml}${clarity(conf)}<div class="alts">Совпадает с тем, что вы хотели сказать? Нажмите «Перевод», чтобы проверить смысл. Для точной проверки впишите фразу в поле выше.</div>`);
+      setFree(kind, "Носитель услышит так:", `${heardHtml}${clarity(conf)}<div class="alts">Совпадает с тем, что вы хотели сказать? Нажмите «Перевод», чтобы проверить смысл. Для точной проверки впишите фразу в поле выше.</div>`, conf ? Math.round(conf * 100) : undefined, "Чёткость");
     }
   };
   // сторожевой таймер: 12 с без событий от сервиса — останавливаем, чтобы кнопка не зависла
@@ -1785,8 +1860,11 @@ function playReference(text, onDone, varied){
   if(recs.length){
     a.src = recs[Math.floor(Math.random()*recs.length)].url;
     a.onended = () => { a.onended = null; finish(); };
-    a.onerror = () => { a.onerror = null; if(!done) speakSynth(); };  // запись не загрузилась — синтез
-    a.play().catch(() => { if(!done) speakSynth(); });
+    // запись не загрузилась — синтез ОДИН раз (ошибка загрузки и отказ play() приходят оба — было «синтез дважды»)
+    let fellBack = false;
+    const fallback = () => { if(fellBack || done) return; fellBack = true; clearTimeout(guard); speakSynth(); };
+    a.onerror = () => { a.onerror = null; fallback(); };
+    a.play().catch(fallback);
     guard = setTimeout(finish, 15000);
     return;
   }
@@ -1873,11 +1951,15 @@ function endBlitz(quiet){
 }
 
 // Образец (носитель, если есть запись, иначе синтез) и сразу ваша запись
+// «Сравнить» = бывшие «Эхо» и «Сравнить» в одной кнопке:
+// есть ваша запись ЭТОГО слова — образец и сразу вы; нет — полный цикл эхо (образец → вы → оценка → образец и вы)
 function compareVoices(){
-  if(!recordOn) return compareWithFreshRecording();
-  if(myRecFor !== item.target){ setResult("info", "Сначала скажите это слово: «Сказать», потом «Сравнить»."); return; }
-  const mine = $("myAudio");
-  playReference(item.target, () => setTimeout(() => mine.play().catch(()=>{}), 350));
+  if(recordOn && myRecFor === item.target){
+    const mine = $("myAudio");
+    playReference(item.target, () => setTimeout(() => mine.play().catch(()=>{}), 350));
+    return;
+  }
+  echo();
 }
 // Телефон не пишет во время распознавания: образец → запись вас (без распознавания) → образец → вы
 function compareWithFreshRecording(){
@@ -2047,7 +2129,6 @@ $("lsPlay").onclick = () => ls && playReference(ls.answer, null, true);
 $("lsBlitz").onclick = () => blitz ? endBlitz() : startBlitz();
 $("lsA").onclick = () => answerListen("A");
 $("lsB").onclick = () => answerListen("B");
-$("echo").onclick = echo;
 $("freeSpeak").onclick = freeListen;
 $("freeMine").onclick = toggleSelfRecord;
 $("freeCorrect").onclick = () => sayText($("intent").value.trim());

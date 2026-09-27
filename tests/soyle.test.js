@@ -41,6 +41,8 @@ const INIT = () => {
 async function openPage(browser, opts = {}){
   const ctx = await browser.newContext({ viewport:{ width:390, height:844 }, userAgent: opts.android ? 'Mozilla/5.0 (Linux; Android 14) Chrome/128 Mobile' : undefined, colorScheme: opts.scheme || 'light' });
   const p = await ctx.newPage(); p.errors = []; p.on('pageerror', e => p.errors.push(e.message));
+  // тесты не зависят от сети: всё внешнее, что не подменено ниже, отклоняется (как в CI, так и локально)
+  await p.route(u => /^https?:/.test(u.href) && !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(u.href), r => r.abort());
   await p.route('**/*googleapis*/**', r => r.abort());
   await p.route('**/*wiktionary.org/**', r => r.fulfill({ json:{ tr:[{ partOfSpeech:'Noun', definitions:[{ definition:'<i>test</i> meaning' }] }] } }));
   await p.route('**/commons.wikimedia.org/**', r => {
@@ -97,10 +99,35 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await p.evaluate(() => evalPair(['kay', 'köy'])); ok((await p.textContent('#result')).includes('Почти'));
   });
 
+  console.log('Оценка произношения 0–100 и разбор ошибок');
+  await test('оценка: точно — 100, спутанный звук ö/o — не выше 50, пропущенное слово снижает оценку', async () => {
+    const r = await p.evaluate(() => [pronScore('kör', ['kör']).score, pronScore('kör', ['kor']).score, pronScore('kör', ['x', 'kör']).score,
+      pronScore('Hesap lütfen', ['hesap']).score, pronScore('Hesap lütfen', ['hesap lütfen']).score, gradeOf(95)[1], gradeOf(75)[1], gradeOf(50)[1], gradeOf(10)[1]]);
+    eq(r, [100, 50, 70, 50, 100, 'Отлично', 'Хорошо', 'Есть ошибки', 'Не понято']);
+  });
+  await test('разбор: в каком слове и какой звук не совпал', async () => {
+    const r = await p.evaluate(() => { setMode('phrases'); item = { target:'Bir çay lütfen.', gid:'ph-basic' }; evalPhrase(['bir cay lütfen']);
+      return [document.querySelector('#result .score b').textContent, document.querySelector('#result .errs').textContent]; });
+    eq(r[0], '83'); ok(r[1].includes('çay') && r[1].includes('«c» вместо «ç»'), r[1]);
+  });
+  await test('пара: услышано другое слово — оценка, разбор звука; верно — 100 и реакция (+XP, слово зеленеет)', async () => {
+    const r = await p.evaluate(() => { setMode('pairs'); item = { target:'kör', partner:'kor', partnerMeaning:'угли', gid:'o' }; evalPair(['kor']);
+      const bad = [document.querySelector('#result .score b').textContent, document.querySelector('#result .errs').textContent.includes('«o» вместо «ö»')];
+      evalPair(['kör']); const res = document.getElementById('result');
+      return [bad, document.querySelector('#result .score b').textContent, res.classList.contains('win'), !!res.querySelector('.xp-pop'), document.getElementById('target').classList.contains('hit')]; });
+    eq(r, [['50', true], '100', true, true, true]);
+  });
+  await test('«Свободно» с заданной фразой: оценка и ошибки; без фразы — чёткость распознавания', async () => {
+    const r = await p.evaluate(() => { setMode('free'); setFree('ok', 'x', errsHtml(pronScore('Su lütfen', ['şu lütfen']).words), pronScore('Su lütfen', ['şu lütfen']).score);
+      return [document.querySelector('#freeResult .score b').textContent, document.querySelector('#freeResult .errs').textContent]; });
+    eq(r[0], '75'); ok(r[1].includes('«ş» вместо «s»'), r[1]);
+  });
+
   console.log('Фразы');
   await test('фраза целиком — все слова распознаны', async () => {
     await p.evaluate(() => { setMode('phrases'); item = { target:'Köyde büyüdüm.', gid:'ph-basic' }; evalPhrase(['köyde büyüdüm']); });
-    ok((await p.textContent('#result')).includes('Все слова'));
+    ok((await p.textContent('#result')).includes('все слова'));
+    eq(await p.evaluate(() => document.querySelector('#result .score b').textContent), '100');
   });
   await test('ошибка в одном слове подсвечивается', async () => {
     await p.evaluate(() => { item = { target:'Köyde büyüdüm.', gid:'ph-basic' }; evalPhrase(['koyde büyüdüm']); });
@@ -205,10 +232,16 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await a.context().close();
 
   console.log('Запись и сравнение');
-  await test('«Сравнить» не играет запись другого слова', async () => {
+  await test('«Сравнить» не играет запись другого слова: без записи этого слова — полный цикл эхо', async () => {
     await p.evaluate(() => setMode('pairs'));
-    const r = await p.evaluate(async () => { recordOn = true; stream = null; window.__say = item.target; await startListening(); await new Promise(z => setTimeout(z, 200)); const first = [myRecFor === item.target, document.getElementById('compare').disabled]; next(); const afterNext = document.getElementById('compare').disabled; compareVoices(); return [first, afterNext, document.getElementById('result').textContent.includes('Сначала скажите')]; });
-    eq(r, [[true, false], true, true]);
+    const r = await p.evaluate(async () => { recordOn = true; stream = null; window.__say = item.target; await startListening(); await new Promise(z => setTimeout(z, 200));
+      const first = myRecFor === item.target; next(); await (nativePending || Promise.resolve()); nativeCache.set(clean(item.target), [{ url:'https://x/ref.wav', who:'T' }]);
+      window.__say = item.target; window.__played = []; compareVoices(); await new Promise(z => setTimeout(z, 1600));
+      return [first, document.getElementById('compare').disabled, window.__played.map(s => s.startsWith('blob:') ? 'me' : s.split('/').pop())]; });
+    eq(r, [true, false, ['ref.wav', 'ref.wav', 'me']]);   // образец → вы (распознавание) → образец → ваша НОВАЯ запись
+  });
+  await test('кнопки «Эхо» больше нет — её работа внутри «Сравнить»; в карточке 3 кнопки', async () => {
+    eq(await p.evaluate(() => [!!document.getElementById('echo'), document.querySelectorAll('#card .acts .act').length]), [false, 3]);
   });
 
   await test('«Эхо»: образец → ваша попытка → сразу образец и ваша запись', async () => {
@@ -527,7 +560,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     // 3. Фразы: выбрать «отель», сказать фразу целиком
     await u.click('#tab-phrases'); await u.click('.chip[data-s="hotel"]');
     await say(await u.evaluate(() => item.target)); await u.click('#speak'); await u.waitForTimeout(250);
-    ok((await u.textContent('#result')).includes('Все слова'), 'Фразы: фраза не засчитана');
+    ok((await u.textContent('#result')).includes('все слова'), 'Фразы: фраза не засчитана');
     // 4. На слух: нажать правильный вариант
     await u.click('#tab-listen'); await u.waitForTimeout(100);
     const right = await u.evaluate(() => ls.right); await u.click(right === 'A' ? '#lsA' : '#lsB');

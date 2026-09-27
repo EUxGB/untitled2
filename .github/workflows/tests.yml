@@ -20,7 +20,11 @@ jobs:
         with: { node-version: 20 }
       - run: npm install
       - run: npx playwright install --with-deps chromium
-      - run: npm test
+      - name: npm test (ошибки — в аннотации запуска)
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test-output.txt || { grep -E '✗|ожидалось|получено|Error|Итог|условие' test-output.txt | head -40 | while IFS= read -r l; do echo "::error::$l"; done; exit 1; }
   # Публикация на GitHub Pages — только если все тесты прошли
   deploy:
     needs: test
