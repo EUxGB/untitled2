@@ -226,7 +226,6 @@ body.hints details.hintable{display:block !important}
 
   <p class="hint hintable"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>N</kbd> — носитель, <kbd>L</kbd> — синтез, на вкладке «На слух»: <kbd>1</kbd> <kbd>2</kbd></p>
   <label class="opt">Голос синтеза: <select id="voice"></select></label>
-  <label class="opt"><input type="checkbox" id="recToggle"> Записывать мой голос, чтобы сравнить с образцом</label>
 
   <section>
     <h2>Статистика</h2>
@@ -382,7 +381,9 @@ const $ = id => document.getElementById(id);
 let mode = "pairs", groupId = "o", setId = "hotel", item = null, lastKey = "";
 let listening = false, recognizer = null;
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
-let recordOn = !IS_ANDROID;
+let recordConflict = false;
+try { recordConflict = localStorage.getItem("soyle-rec-conflict") === "1"; } catch(e){}
+let recordOn = !recordConflict; // запись своего голоса включена всегда, кроме телефонов, где микрофон не делится
 let stream = null, mediaRec = null, chunks = [];
 let stats = load();
 
@@ -584,7 +585,7 @@ function next(){
   if(item.native){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
-  $("compare").disabled = true; synthSlow = false;
+  $("compare").disabled = recordOn; synthSlow = false;
 }
 
 function setResult(kind, verdict, extra=""){
@@ -795,10 +796,11 @@ async function startRecording(){
       if(mode==="free" && autoPlayMine){ autoPlayMine = false; a.play().catch(()=>{}); }
     };
     mediaRec.start();
-  } catch(e){ recordOn = false; $("recToggle").checked = false; }
+  } catch(e){ /* нет доступа к записи — распознавание работает и без неё */ }
 }
 function disableRecording(){
-  recordOn = false; $("recToggle").checked = false;
+  recordOn = false;
+  try { localStorage.setItem("soyle-rec-conflict", "1"); } catch(e){}
   if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
   setupSelfRecord();
 }
@@ -858,7 +860,7 @@ async function startListening(){
   };
   recognizer.onend = () => {
     if(!got){
-      if(recordOn && IS_ANDROID){ disableRecording(); setResult("bad", "Микрофон был занят записью вашего голоса. Запись отключена — скажите ещё раз."); }
+      if(recordOn && IS_ANDROID){ disableRecording(); setResult("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше распознавание работает само, а себя можно записать кнопкой «🎙 Записать себя» во вкладке «Любая фраза». Скажите ещё раз."); }
       else setResult("info", "Ничего не распознано. Говорите сразу после нажатия, ближе к микрофону.");
     }
     listening = false; stopRecording();
@@ -977,7 +979,7 @@ async function freeListen(){
       "no-speech":"Ничего не услышал. Говорите сразу после нажатия.",
       "network":"Нужен интернет: браузер распознаёт речь на сервере.",
       "audio-capture":"Телефон не даёт одновременно записывать и распознавать. Запись своего голоса отключена — нажмите «Сказать» ещё раз." }[e.error];
-    if(e.error==="audio-capture" && recordOn){ recordOn = false; $("recToggle").checked = false; if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
+    if(e.error==="audio-capture" && recordOn) disableRecording();
     if(msg) setFree("bad", msg);
   };
   freeRec.onend = () => {
@@ -986,7 +988,7 @@ async function freeListen(){
     const heard = (finalText || interimText).trim();
     if(heard && recordOn) autoPlayMine = true;
     if(!heard){
-      if(recordOn && IS_ANDROID){ disableRecording(); setFree("bad", "Микрофон был занят записью вашего голоса. Запись отключена — скажите ещё раз. Себя можно послушать кнопкой «🎙 Записать себя»."); }
+      if(recordOn && IS_ANDROID){ disableRecording(); setFree("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше себя можно записать кнопкой «🎙 Записать себя». Скажите ещё раз."); }
       else if($("freeResult").classList.contains("info")) setFree("info", "Ничего не распознано. Говорите сразу после нажатия, ближе к микрофону.");
       return;
     }
@@ -1072,6 +1074,7 @@ function answerListen(which){
 
 // Образец (носитель, если есть запись, иначе синтез) и сразу ваша запись
 function compareVoices(){
+  if(!recordOn && !$("myAudio").src){ setResult("info", "На этом телефоне запись идёт отдельно: вкладка «Любая фраза» → «🎙 Записать себя»."); return; }
   const mine = $("myAudio"), recs = nativeCache.get(clean(item.target)) || [];
   speechSynthesis && speechSynthesis.cancel();
   const thenMine = () => setTimeout(() => mine.play().catch(()=>{}), 350);
@@ -1131,8 +1134,6 @@ $("freeSave").onclick = () => {
   const text = $("intent").value.trim() || lastHeard;
   $("freeSave").textContent = saveMine(text) ? "✓ Сохранено" : "Уже есть в моих";
 };
-$("recToggle").checked = recordOn;
-$("recToggle").onchange = e => { recordOn = e.target.checked; if(!recordOn && stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } setupSelfRecord(); };
 document.addEventListener("keydown", e => {
   if(e.target.tagName==="INPUT" || e.repeat) return;
   if(mode==="listen"){
