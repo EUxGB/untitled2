@@ -592,7 +592,7 @@ function next(){
   if(item.native){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
-  $("compare").disabled = recordOn && myRecFor !== item.target; synthSlow = false;
+  $("compare").disabled = recordOn && myRecFor !== item.target; synthSlow = false; echoPending = false;
 }
 
 function setResult(kind, verdict, extra=""){
@@ -802,7 +802,10 @@ async function startRecording(){
       const a = $("myAudio"); if(a.src) URL.revokeObjectURL(a.src);
       a.src = URL.createObjectURL(blob); myRecFor = forTarget;
       if(mode==="free") $("freeMine").disabled = false;
-      else if(item && forTarget === item.target) $("compare").disabled = false;
+      else if(item && forTarget === item.target){
+        $("compare").disabled = false;
+        if(echoPending){ echoPending = false; setTimeout(compareVoices, 600); }
+      }
       if(mode==="free" && autoPlayMine){ autoPlayMine = false; a.play().catch(()=>{}); }
     };
     mediaRec.start();
@@ -1050,7 +1053,13 @@ function playReference(text, onDone, varied){
   speechSynthesis.speak(u);
 }
 // Эхо (шэдоуинг): образец → сразу ваша попытка, пока звук ещё «в ушах»
-function echo(){ playReference(item.target, () => setTimeout(startListening, 250)); }
+// После вашей попытки сразу звучат образец и ваша запись — сравнение на слух без лишних нажатий
+let echoPending = false;
+function echo(){
+  if(!recordOn) return compareWithFreshRecording(); // телефон не пишет во время распознавания: образец → запись → образец → вы
+  echoPending = true;
+  playReference(item.target, () => setTimeout(startListening, 250));
+}
 
 // ---------- на слух: различение звуков ----------
 let ls = null, lsLocked = false;

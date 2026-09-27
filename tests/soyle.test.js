@@ -200,6 +200,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r, [[true, false], true, true]);
   });
 
+  await test('«Эхо»: образец → ваша попытка → сразу образец и ваша запись', async () => {
+    const r = await p.evaluate(async () => { setMode('pairs'); recordOn = true; stream = null; await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 100)); nativeCache.set(clean(item.target), [{ url:'https://x/ref.wav', who:'T' }]);
+      window.__say = item.target; window.__played = []; echo(); await new Promise(z => setTimeout(z, 1600));
+      return window.__played.map(s => s.startsWith('blob:') ? 'me' : s.split('/').pop()); });
+    eq(r, ['ref.wav', 'ref.wav', 'me']);
+  });
+
   console.log('Интерфейс');
   await test('кнопки не сдвигаются при смене слов и нажатиях', async () => {
     const pos = () => p.evaluate(() => [...document.querySelectorAll('#card .btngrid .btn')].map(b => { const r = b.getBoundingClientRect(); return Math.round(r.y + scrollY) + ',' + Math.round(r.x); }).join(' '));
