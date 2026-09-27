@@ -26,6 +26,7 @@
   }
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0}
 body{background:var(--bg); color:var(--ink); font:16px/1.5 var(--body); padding-inline:16px; padding-block:24px 48px}
 .wrap{max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
@@ -78,6 +79,14 @@ kbd{font:12px var(--mono); border:1px solid var(--line); border-radius:4px; padd
 .bar i{display:block; height:100%; background:var(--ok)}
 h2{font:600 13px var(--body); text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0}
 select{font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:4px 8px; max-width:100%}
+.freeField{font-size:14px; color:var(--muted); align-self:stretch; text-align:left}
+.freeField span{opacity:.8}
+#intent{width:100%; font:18px var(--body); color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px}
+#intent:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+.live{font:18px/1.4 var(--mono); color:var(--muted); min-height:1.4em; margin:0}
+.fab{position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); z-index:10; border:0; border-radius:999px; padding:14px 20px; font-weight:600; background:var(--accent); color:var(--bg); box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.fab.listening{animation:pulse 1.1s ease-in-out infinite}
+body{padding-bottom:96px}
 .opt{font-size:14px; color:var(--muted); display:flex; gap:8px; align-items:center; justify-content:center}
 </style>
 </head>
@@ -93,9 +102,25 @@ select{font:inherit; color:var(--ink); background:var(--surface); border:1px sol
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-pairs" aria-selected="true">Минимальные пары</button>
     <button class="tab" role="tab" id="tab-phrases" aria-selected="false">Фразы</button>
+    <button class="tab" role="tab" id="tab-free" aria-selected="false">Любая фраза</button>
   </div>
 
   <div class="chips" id="chips"></div>
+
+  <section class="card" id="freeCard" hidden>
+    <p class="target phrase" style="margin:0">Скажите что угодно по-турецки</p>
+    <p class="meaning">Проверю, поймёт ли вас носитель: покажу, что он услышит.</p>
+    <label class="freeField" for="intent">Что вы хотите сказать <span>(необязательно, по-турецки — тогда сравню слово в слово)</span></label>
+    <input id="intent" type="text" autocomplete="off" spellcheck="false" placeholder="например: Hesabı alabilir miyim?">
+    <div class="row">
+      <button class="btn primary" id="freeSpeak">🎤 Сказать</button>
+      <button class="btn" id="freeMine" hidden>▶ Моя запись</button>
+      <button class="btn" id="freeCorrect" hidden>🔊 Как правильно</button>
+      <a class="btn" id="freeTranslate" target="_blank" rel="noopener" hidden>🌐 Перевод</a>
+    </div>
+    <p class="live" id="freeLive"></p>
+    <div class="result info" id="freeResult"><span class="verdict">Нажмите «Сказать» и говорите. Можно задать фразу выше, можно без неё.</span></div>
+  </section>
 
   <section class="card" id="card">
     <p class="target" id="target"></p>
@@ -127,6 +152,7 @@ select{font:inherit; color:var(--ink); background:var(--surface); border:1px sol
   </section>
 </div>
 
+<button class="fab" id="fab" title="Проверить любую фразу">🗣 Любая фраза</button>
 <audio id="myAudio"></audio>
 <audio id="nativeAudio" preload="none"></audio>
 
@@ -315,7 +341,7 @@ function setResult(kind, verdict, extra=""){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label}))];
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), {id:"free",label:"любая фраза"}];
   $("stats").innerHTML = rows.map(r => {
     const s = stats[r.id] || {t:0, ok:0};
     const pct = s.t ? Math.round(s.ok/s.t*100) : 0;
@@ -357,8 +383,8 @@ function evalPair(alts){
     `<div class="diff">${diff}</div>${heardList}`);
 }
 
-function evalPhrase(alts){
-  const want = tokens(item.target), heard = tokens(alts[0] || "");
+function compareText(targetText, heardText){
+  const want = tokens(targetText), heard = tokens(heardText || "");
   const pool = heard.slice(); const notes = new Set(); let ok = 0;
   const parts = want.map(w => {
     const idx = pool.indexOf(w);
@@ -372,12 +398,16 @@ function evalPhrase(alts){
     return `<span class="w-miss">${esc(w)}</span>`;
   });
   const score = want.length ? ok/want.length : 0;
+  return { score, ok, total: want.length, notes, html: parts.join(" ") };
+}
+function evalPhrase(alts){
+  const { score, ok, total, notes, html } = compareText(item.target, alts[0]);
   count(item.gid, score);
   const kind = score===1 ? "ok" : score>=.7 ? "near" : "bad";
   const verdict = score===1 ? "Все слова распознаны"
-    : `Распознано ${ok} из ${want.length} слов${notes.size ? " · " + [...notes].join(", ") : ""}`;
+    : `Распознано ${ok} из ${total} слов${notes.size ? " · " + [...notes].join(", ") : ""}`;
   setResult(kind, verdict,
-    `<div class="diff">${parts.join(" ")}</div><div class="alts">Распознано: ${esc((alts[0]||"—").trim())}</div>`);
+    `<div class="diff">${html}</div><div class="alts">Распознано: ${esc((alts[0]||"—").trim())}</div>`);
 }
 
 // ---------- speech synthesis ----------
@@ -428,7 +458,7 @@ async function startRecording(){
     mediaRec.onstop = () => {
       const blob = new Blob(chunks, {type: mediaRec.mimeType});
       const a = $("myAudio"); if(a.src) URL.revokeObjectURL(a.src);
-      a.src = URL.createObjectURL(blob); $("mine").hidden = false;
+      a.src = URL.createObjectURL(blob); $(mode==="free" ? "freeMine" : "mine").hidden = false;
     };
     mediaRec.start();
   } catch(e){ recordOn = false; $("recToggle").checked = false; }
@@ -553,15 +583,97 @@ function prefetchNative(){
   }).finally(() => { nativePending = null; });
 }
 
+// ---------- любая фраза: поймёт ли носитель ----------
+let freeRec = null, freeOn = false;
+function setFree(kind, verdict, extra=""){
+  const r = $("freeResult"); r.className = "result " + kind;
+  r.innerHTML = `<span class="verdict">${verdict}</span>${extra}`;
+}
+function clarity(conf){
+  if(!conf) return "";
+  const pct = Math.round(conf*100);
+  const word = conf >= .85 ? "чётко" : conf >= .6 ? "понятно, но не совсем чётко" : "неразборчиво";
+  return `<div class="alts">Уверенность распознавания: ${pct}% — ${word} (оценка Chrome, приблизительная)</div>`;
+}
+async function freeListen(){
+  if(!SR){ return setFree("bad", "Этот браузер не распознаёт речь. Откройте в Chrome или Edge."); }
+  if(freeOn){ freeRec && freeRec.stop(); return; }
+  freeOn = true; speechSynthesis && speechSynthesis.cancel();
+  const btn = $("freeSpeak"), fab = $("fab");
+  btn.classList.add("listening"); fab.classList.add("listening"); btn.textContent = "⏹ Закончил";
+  $("freeLive").textContent = "…"; setFree("info", "Слушаю. Говорите по-турецки.");
+  await startRecording();
+  freeRec = new SR();
+  freeRec.lang = "tr-TR"; freeRec.interimResults = true; freeRec.continuous = true; freeRec.maxAlternatives = 3;
+  let finalText = "", confs = [], alts = [];
+  freeRec.onresult = e => {
+    let interim = "";
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal){ finalText += r[0].transcript + " "; if(r[0].confidence) confs.push(r[0].confidence); alts = Array.from(r).map(a=>a.transcript); }
+      else interim += r[0].transcript;
+    }
+    $("freeLive").textContent = (finalText + interim).trim() || "…";
+  };
+  freeRec.onerror = e => {
+    const msg = { "not-allowed":"Нет доступа к микрофону. Разрешите его через значок в адресной строке.",
+      "no-speech":"Ничего не услышал. Говорите сразу после нажатия.",
+      "network":"Нужен интернет: браузер распознаёт речь на сервере." }[e.error];
+    if(msg) setFree("bad", msg);
+  };
+  freeRec.onend = () => {
+    freeOn = false; stopRecording();
+    btn.classList.remove("listening"); fab.classList.remove("listening"); btn.textContent = "🎤 Сказать";
+    const heard = finalText.trim();
+    if(!heard){ if($("freeResult").classList.contains("info")) setFree("info", "Ничего не распознано. Попробуйте ещё раз, ближе к микрофону."); return; }
+    $("freeLive").textContent = "";
+    const conf = confs.length ? confs.reduce((a,b)=>a+b,0)/confs.length : 0;
+    const intent = $("intent").value.trim();
+    $("freeTranslate").href = `https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(heard)}`;
+    $("freeTranslate").hidden = false;
+    $("freeCorrect").hidden = !intent || !trVoice;
+    const heardHtml = `<div class="diff" style="font-weight:400">«${esc(heard)}»</div>`;
+    if(intent){
+      const c = compareText(intent, heard);
+      count("free", c.score);
+      const kind = c.score===1 ? "ok" : c.score>=.65 ? "near" : "bad";
+      const verdict = c.score===1 ? "Носитель поймёт вас: все слова распознаны."
+        : c.score>=.65 ? `Скорее поймёт, но может переспросить: ${c.ok} из ${c.total} слов${c.notes.size ? " · " + [...c.notes].join(", ") : ""}.`
+        : `Скорее не поймёт: распознано ${c.ok} из ${c.total} слов${c.notes.size ? " · " + [...c.notes].join(", ") : ""}.`;
+      setFree(kind, verdict, `<div class="diff">${c.html}</div><div class="alts">Носитель услышит:</div>${heardHtml}${clarity(conf)}`);
+    } else {
+      const kind = !conf ? "info" : conf >= .85 ? "ok" : conf >= .6 ? "near" : "bad";
+      setFree(kind, "Носитель услышит так:", `${heardHtml}${clarity(conf)}<div class="alts">Совпадает с тем, что вы хотели сказать? Нажмите «🌐 Перевод», чтобы проверить смысл. Для точной проверки впишите фразу в поле выше.</div>`);
+    }
+  };
+  try { freeRec.start(); } catch(e){ freeRec.onend(); }
+}
+function sayText(text){
+  if(!trVoice || !text) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text); u.voice = trVoice; u.lang = trVoice.lang; u.rate = .85;
+  speechSynthesis.speak(u);
+}
+
 // ---------- wiring ----------
 function setMode(m){
+  if(listening) stopListening();
   mode = m;
   $("tab-pairs").setAttribute("aria-selected", m==="pairs");
   $("tab-phrases").setAttribute("aria-selected", m==="phrases");
+  $("tab-free").setAttribute("aria-selected", m==="free");
+  $("card").hidden = m==="free"; $("freeCard").hidden = m!=="free";
+  if(m==="free"){ $("chips").hidden = true; return; }
+  $("chips").hidden = false;
   renderChips(); next();
 }
 $("tab-pairs").onclick = () => setMode("pairs");
 $("tab-phrases").onclick = () => setMode("phrases");
+$("tab-free").onclick = () => setMode("free");
+$("freeSpeak").onclick = freeListen;
+$("fab").onclick = () => { if(mode!=="free") setMode("free"); freeListen(); };
+$("freeMine").onclick = () => $("myAudio").play();
+$("freeCorrect").onclick = () => sayText($("intent").value.trim());
 $("play").onclick = () => say(0.85);
 $("playSlow").onclick = () => say(0.55);
 $("speak").onclick = () => listening ? stopListening() : startListening();
@@ -572,7 +684,7 @@ $("recToggle").checked = recordOn;
 $("recToggle").onchange = e => { recordOn = e.target.checked; if(!recordOn && stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } };
 document.addEventListener("keydown", e => {
   if(e.target.tagName==="INPUT" || e.repeat) return;
-  if(e.code==="Space"){ e.preventDefault(); listening ? stopListening() : startListening(); }
+  if(e.code==="Space"){ e.preventDefault(); if(mode==="free") return freeListen(); listening ? stopListening() : startListening(); }
   else if(e.key==="Enter"){ e.preventDefault(); next(); }
   else if(e.key.toLowerCase()==="l"){ say(0.85); }
   else if(e.key.toLowerCase()==="n"){ playNative(); }
