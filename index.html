@@ -31,16 +31,20 @@ html,body{margin:0}
 body{background:var(--bg); color:var(--ink); font:16px/1.5 var(--body); padding-inline:16px; padding-block:24px 48px}
 .wrap{max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
 header{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap}
-h1{font:700 28px/1.1 var(--display); margin:0; letter-spacing:-.01em}
+h1{font:700 26px/1.1 var(--display); margin:0; letter-spacing:-.01em}
 h1 span{color:var(--accent)}
 .sub{color:var(--muted); font-size:14px; margin:0}
 .warn{background:var(--near-soft); color:var(--ink); border-radius:10px; padding:10px 14px; font-size:14px}
-.tabs,.chips{display:flex; gap:8px; flex-wrap:wrap}
+.tabs{display:flex; gap:4px 16px; flex-wrap:wrap}
+.chips{display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin-inline:-16px; padding:2px 16px 6px; scroll-padding-inline:16px}
+.chips::-webkit-scrollbar{display:none}
+.chips .chip{flex:none}
+.chip.set{font-family:var(--body); font-weight:500}
 button{font:inherit; color:inherit; cursor:pointer}
-button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
-.tab{background:none; border:0; border-bottom:2px solid transparent; padding:6px 2px; font-weight:600; color:var(--muted)}
-.tab[aria-selected="true"]{color:var(--ink); border-color:var(--accent)}
-.chip{background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:6px 14px; font:600 14px var(--mono)}
+a:focus-visible, select:focus-visible, button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.tab{min-height:44px; background:none; border:0; border-bottom:2px solid transparent; padding:6px 2px; font-weight:600; color:var(--muted)}
+.tab[aria-pressed="true"]{color:var(--ink); border-color:var(--accent)}
+.chip{min-height:44px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:6px 14px; font:600 14px var(--mono)}
 .chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--bg)}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:28px 24px; display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center}
 .target{font:700 clamp(44px,12vw,76px)/1 var(--display); letter-spacing:.01em; margin:0; word-break:break-word}
@@ -78,10 +82,10 @@ kbd{font:12px var(--mono); border:1px solid var(--line); border-radius:4px; padd
 .bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden}
 .bar i{display:block; height:100%; background:var(--ok)}
 h2{font:600 13px var(--body); text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0}
-select{font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:4px 8px; max-width:100%}
+select{min-height:44px; font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:4px 8px; max-width:100%}
 .freeField{font-size:14px; color:var(--muted); align-self:stretch; text-align:left}
 .freeField span{opacity:.8}
-#intent{width:100%; font:18px var(--body); color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px}
+#intent{min-height:48px; width:100%; font:18px var(--body); color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px}
 #intent:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
 .live{font:18px/1.4 var(--mono); color:var(--muted); min-height:1.4em; margin:0}
 .fab{position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); z-index:10; border:0; border-radius:999px; padding:14px 20px; font-weight:600; background:var(--accent); color:var(--bg); box-shadow:0 6px 20px rgba(0,0,0,.25)}
@@ -94,13 +98,12 @@ body{padding-bottom:96px}
 .help p{margin:0; color:var(--muted)}
 .linkbtn{background:none; border:0; padding:0; color:var(--accent); text-decoration:underline; font-size:inherit}
 .partner a{color:var(--accent)}
-.gamebar{display:grid; grid-template-columns:auto auto 1fr; gap:16px; align-items:end; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 16px}
-.gb-item{display:flex; flex-direction:column; gap:2px; min-width:0}
-.gb-num{font:700 24px/1 var(--display); font-variant-numeric:tabular-nums}
-.gb-lab{font-size:12px; color:var(--muted)}
-.gb-goal .bar{height:8px; margin-top:4px}
+.gamebar{display:flex; align-items:center; gap:8px 14px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:8px 14px; font-size:14px; font-variant-numeric:tabular-nums}
+.gb-chip b{font-weight:700}
+.gb-xp{color:var(--muted)}
+.gb-goal{display:flex; align-items:center; gap:8px; flex:1 1 140px; min-width:0}
+.gb-goal .bar{flex:1; height:6px; display:block}
 .gb-goal .bar i{background:var(--accent); transition:width .4s}
-@media (max-width:420px){ .gamebar{grid-template-columns:1fr 1fr} .gb-goal{grid-column:1 / -1} }
 .ls-options{display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%}
 .ls-opt{border:2px solid var(--line); background:var(--surface); border-radius:14px; padding:18px 8px; display:flex; flex-direction:column; gap:4px; align-items:center}
 .ls-opt b{font:700 clamp(26px,8vw,40px)/1.1 var(--display)}
@@ -110,8 +113,8 @@ body{padding-bottom:96px}
 .toast{position:fixed; left:50%; top:calc(16px + env(safe-area-inset-top, 0px)); transform:translate(-50%,-150%); background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:999px; font-weight:600; z-index:20; transition:transform .3s; pointer-events:none; white-space:nowrap}
 .toast.show{transform:translate(-50%,0)}
 @media (prefers-reduced-motion: reduce){ .toast{transition:none} .gb-goal .bar i{transition:none} }
-header{position:relative; padding-right:48px}
-.qbtn{position:absolute; right:0; top:0; width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:var(--surface); font:700 18px var(--body)}
+header{position:relative; padding-right:56px}
+.qbtn{position:absolute; right:0; top:0; width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--surface); font:700 18px var(--body)}
 .qbtn[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--bg)}
 .hintable{display:none !important}
 body.hints .hintable{display:block !important}
@@ -137,17 +140,16 @@ body.hints details.hintable{display:block !important}
 <div class="wrap">
   <header>
     <h1>S<span>ö</span>yle</h1>
-    <button class="qbtn" id="hintsBtn" aria-pressed="false" title="Показать подсказки">?</button>
+    <button class="qbtn" id="hintsBtn" aria-pressed="false" title="Показать подсказки" aria-label="Подсказки">?</button>
     <p class="sub">Тренажёр турецкого произношения для русскоговорящих</p>
   </header>
 
   <section class="gamebar" aria-label="Прогресс">
-    <div class="gb-item" title="Дней подряд с занятиями"><span class="gb-num" id="gbStreak">0</span><span class="gb-lab">🔥 дней подряд</span></div>
-    <div class="gb-item" title="Уровень и опыт"><span class="gb-num" id="gbLevel">1</span><span class="gb-lab" id="gbXp">уровень · 0 XP</span></div>
-    <div class="gb-item gb-goal" title="Цель на сегодня: правильных ответов">
-      <span class="gb-lab"><span id="gbGoalTxt">0 / 20</span> 🎯 цель дня</span>
-      <div class="bar"><i id="gbGoalBar" style="width:0%"></i></div>
-    </div>
+    <span class="gb-chip" title="Дней подряд с занятиями">🔥 <b id="gbStreak">0</b></span>
+    <span class="gb-chip" title="Уровень">⭐ ур. <b id="gbLevel">1</b></span>
+    <span class="gb-chip gb-xp" id="gbXp" title="Опыт">0 / 50 XP</span>
+    <span class="gb-goal" title="Цель на сегодня: 20 верных ответов">🎯 <span id="gbGoalTxt">0 / 20</span>
+      <span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></span>
   </section>
 
   <div id="warn" class="warn" hidden></div>
@@ -168,12 +170,12 @@ body.hints details.hintable{display:block !important}
     <p>Лучше всего работает в Chrome или Edge. Нужен интернет. На iPhone распознавание речи ограничено.</p>
   </details>
 
-  <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-pairs" aria-selected="true">Минимальные пары</button>
-    <button class="tab" role="tab" id="tab-phrases" aria-selected="false">Фразы</button>
-    <button class="tab" role="tab" id="tab-listen" aria-selected="false">На слух</button>
-    <button class="tab" role="tab" id="tab-free" aria-selected="false">Любая фраза</button>
-  </div>
+  <nav class="tabs" aria-label="Режимы">
+    <button class="tab" id="tab-pairs" aria-pressed="true">Звуки</button>
+    <button class="tab" id="tab-phrases" aria-pressed="false">Фразы</button>
+    <button class="tab" id="tab-listen" aria-pressed="false">На слух</button>
+    <button class="tab" id="tab-free" aria-pressed="false">Свободно</button>
+  </nav>
 
   <div class="chips" id="chips"></div>
 
@@ -185,27 +187,27 @@ body.hints details.hintable{display:block !important}
       <button class="ls-opt" id="lsB" data-k="2"></button>
     </div>
     <p class="hint hintable" id="lsInfo">Сначала учимся слышать разницу: мозгу легче произнести звук, который он уже различает.</p>
-    <div class="result info" id="lsResult"><span class="verdict">Слушайте и выбирайте. Клавиши 1 и 2, пробел — повторить.</span></div>
+    <div class="result info" id="lsResult" aria-live="polite"><span class="verdict">Слушайте и выбирайте. Клавиши 1 и 2, пробел — повторить.</span></div>
   </section>
 
   <section class="card" id="freeCard" hidden>
     <p class="target phrase" style="margin:0">Скажите что угодно по-турецки</p>
     <p class="meaning hintable">Проверю, поймёт ли вас носитель: покажу, что он услышит. Фразу в поле писать необязательно — если впишете, сравню слово в слово.</p>
     <label class="freeField" for="intent">Что вы хотите сказать (по-турецки)</label>
-    <input id="intent" type="text" autocomplete="off" spellcheck="false" placeholder="например: Hesabı alabilir miyim?">
+    <input id="intent" lang="tr" type="text" autocomplete="off" spellcheck="false" placeholder="например: Hesabı alabilir miyim?">
     <div class="btngrid">
       <button class="btn primary wide" id="freeSpeak">🎤 Сказать</button>
       <button class="btn" id="freeMine" disabled>▶ Моя запись</button>
       <button class="btn" id="freeCorrect" disabled>🔊 Как правильно</button>
-      <a class="btn off" id="freeTranslate" target="_blank" rel="noopener">🌐 Перевод</a>
+      <a class="btn off" id="freeTranslate" target="_blank" rel="noopener" aria-disabled="true" tabindex="-1">🌐 Перевод</a>
       <button class="btn" id="freeSave" disabled>⭐ В мои фразы</button>
     </div>
-    <p class="live" id="freeLive"></p>
-    <div class="result info" id="freeResult"><span class="verdict">Нажмите «Сказать» и говорите. Можно задать фразу выше, можно без неё.</span></div>
+    <p class="live" id="freeLive" lang="tr"></p>
+    <div class="result info" id="freeResult" aria-live="polite"><span class="verdict">Нажмите «Сказать» и говорите. Можно задать фразу выше, можно без неё.</span></div>
   </section>
 
   <section class="card" id="card">
-    <p class="target" id="target"></p>
+    <p class="target" id="target" lang="tr"></p>
     <p class="meaning" id="meaning"></p>
     <p class="partner" id="partner"></p>
     <div class="btngrid">
@@ -218,7 +220,7 @@ body.hints details.hintable{display:block !important}
       <button class="btn wide" id="next">Дальше →</button>
     </div>
     <p class="hint hintable" id="nativeStatus"></p>
-    <div class="result info" id="result">
+    <div class="result info" id="result" aria-live="polite">
       <span class="verdict">Нажмите «Сказать» и произнесите слово.</span>
     </div>
     <p class="tip hintable" id="tip"></p>
@@ -428,14 +430,19 @@ function renderWordDiff(expected, heard, notes){
 }
 
 // ---------- rendering ----------
+function scrollChipIntoView(){
+  const c = $("chips"), sel = c.querySelector('[aria-pressed="true"]');
+  if(sel) c.scrollLeft = Math.max(0, sel.offsetLeft - c.clientWidth/2 + sel.offsetWidth/2);
+}
 function renderChips(){
   const chips = $("chips");
+  requestAnimationFrame(scrollChipIntoView);
   if(mode==="phrases"){
     const nLabel = nativeSet ? `🎧 с записями (${nativeSet.length})` : nativeSetLoading ? "🎧 загружаю…" : "🎧 с записями";
-    chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
-      + `<button class="chip" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
-      + `<button class="chip" data-s="srs" aria-pressed="${setId==="srs"}">🧠 на сегодня (${srsDue().length})</button>`
-      + `<button class="chip" data-s="mine" aria-pressed="${setId==="mine"}">⭐ мои (${loadList("soyle-mine").length})</button>`;
+    chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip set" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
+      + `<button class="chip set" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
+      + `<button class="chip set" data-s="srs" aria-pressed="${setId==="srs"}">🧠 на сегодня (${srsDue().length})</button>`
+      + `<button class="chip set" data-s="mine" aria-pressed="${setId==="mine"}">⭐ мои (${loadList("soyle-mine").length})</button>`;
     chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
     return;
   }
@@ -646,7 +653,7 @@ function renderGame(){
   const L = levelOf(game.xp), next = 50 * L * L;
   $("gbStreak").textContent = streak;
   $("gbLevel").textContent = L;
-  $("gbXp").textContent = `уровень · ${game.xp} / ${next} XP`;
+  $("gbXp").textContent = `${game.xp} / ${next} XP`;
   $("gbGoalTxt").textContent = `${Math.min(todayOk, GOAL)} / ${GOAL}`;
   $("gbGoalBar").style.width = Math.min(100, todayOk / GOAL * 100) + "%";
 }
@@ -701,7 +708,7 @@ function evalPair(alts){
     const notes = new Set(); const diff = renderWordDiff(item.target, item.partner, notes);
     return setResult("bad",
       `Прозвучало <b>${esc(item.partner)}</b> (${esc(item.partnerMeaning)}) — ${[...notes].join(", ") || "другой звук"}`,
-      `<div class="diff">${diff}</div>${heardList}`);
+      `<div class="diff" lang="tr">${diff}</div>${heardList}`);
   }
   if(altsTok.slice(1).some(t=>t.includes(item.target))){
     count(item.gid, 0.5);
@@ -712,7 +719,7 @@ function evalPair(alts){
   const notes = new Set();
   const diff = closest ? renderWordDiff(item.target, closest.w, notes) : esc(item.target);
   return setResult("bad", `Не распознано как «${esc(item.target)}»${notes.size ? ": " + [...notes].join(", ") : ""}`,
-    `<div class="diff">${diff}</div>${heardList}`);
+    `<div class="diff" lang="tr">${diff}</div>${heardList}`);
 }
 
 function compareText(targetText, heardText){
@@ -739,7 +746,7 @@ function evalPhrase(alts){
   const verdict = score===1 ? "Все слова распознаны"
     : `Распознано ${ok} из ${total} слов${notes.size ? " · " + [...notes].join(", ") : ""}`;
   setResult(kind, verdict,
-    `<div class="diff">${html}</div><div class="alts">Распознано: ${esc((alts[0]||"—").trim())}</div>`);
+    `<div class="diff" lang="tr">${html}</div><div class="alts">Распознано: ${esc((alts[0]||"—").trim())}</div>`);
 }
 
 // ---------- speech synthesis ----------
@@ -998,7 +1005,7 @@ async function freeListen(){
     $("freeLive").textContent = "";
     const intent = $("intent").value.trim();
     $("freeTranslate").href = `https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(heard)}`;
-    $("freeTranslate").classList.remove("off");
+    $("freeTranslate").classList.remove("off"); $("freeTranslate").removeAttribute("aria-disabled"); $("freeTranslate").removeAttribute("tabindex");
     $("freeSave").disabled = false; $("freeSave").textContent = "⭐ В мои фразы"; lastHeard = heard;
     $("freeCorrect").disabled = !intent || !trVoice;
     const heardHtml = `<div class="diff" style="font-weight:400">«${esc(heard)}»</div>`;
@@ -1009,7 +1016,7 @@ async function freeListen(){
       const verdict = c.score===1 ? "Носитель поймёт вас: все слова распознаны."
         : c.score>=.65 ? `Скорее поймёт, но может переспросить: ${c.ok} из ${c.total} слов${c.notes.size ? " · " + [...c.notes].join(", ") : ""}.`
         : `Скорее не поймёт: распознано ${c.ok} из ${c.total} слов${c.notes.size ? " · " + [...c.notes].join(", ") : ""}.`;
-      setFree(kind, verdict, `<div class="diff">${c.html}</div><div class="alts">Носитель услышит:</div>${heardHtml}${clarity(conf)}`);
+      setFree(kind, verdict, `<div class="diff" lang="tr">${c.html}</div><div class="alts">Носитель услышит:</div>${heardHtml}${clarity(conf)}`);
     } else {
       const kind = !conf ? "info" : conf >= .85 ? "ok" : conf >= .6 ? "near" : "bad";
       setFree(kind, "Носитель услышит так:", `${heardHtml}${clarity(conf)}<div class="alts">Совпадает с тем, что вы хотели сказать? Нажмите «🌐 Перевод», чтобы проверить смысл. Для точной проверки впишите фразу в поле выше.</div>`);
@@ -1054,8 +1061,8 @@ function nextListen(){
   const means = right === "A" ? [p.meaning, p.partnerMeaning] : [p.partnerMeaning, p.meaning];
   ls = { answer:p.target, right, gid:p.gid };
   item = { target:p.target, gid:p.gid, meaning:p.meaning };
-  $("lsA").innerHTML = `<b>${esc(words[0])}</b><small>${esc(means[0])}</small>`;
-  $("lsB").innerHTML = `<b>${esc(words[1])}</b><small>${esc(means[1])}</small>`;
+  $("lsA").innerHTML = `<b lang="tr">${esc(words[0])}</b><small>${esc(means[0])}</small>`;
+  $("lsB").innerHTML = `<b lang="tr">${esc(words[1])}</b><small>${esc(means[1])}</small>`;
   $("lsA").className = $("lsB").className = "ls-opt";
   lsLocked = false;
   // подгружаем записи обоих слов, играем после короткой паузы
@@ -1122,10 +1129,10 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 function setMode(m){
   if(listening) stopListening();
   mode = m;
-  $("tab-pairs").setAttribute("aria-selected", m==="pairs");
-  $("tab-phrases").setAttribute("aria-selected", m==="phrases");
-  $("tab-free").setAttribute("aria-selected", m==="free");
-  $("tab-listen").setAttribute("aria-selected", m==="listen");
+  $("tab-pairs").setAttribute("aria-pressed", m==="pairs");
+  $("tab-phrases").setAttribute("aria-pressed", m==="phrases");
+  $("tab-free").setAttribute("aria-pressed", m==="free");
+  $("tab-listen").setAttribute("aria-pressed", m==="listen");
   $("card").hidden = m==="free" || m==="listen"; $("freeCard").hidden = m!=="free"; $("listenCard").hidden = m!=="listen";
   if(m==="free"){ $("chips").hidden = true; return; }
   $("chips").hidden = false;
@@ -1156,7 +1163,8 @@ $("freeSave").onclick = () => {
   $("freeSave").textContent = saveMine(text) ? "✓ Сохранено" : "Уже есть в моих";
 };
 document.addEventListener("keydown", e => {
-  if(e.target.tagName==="INPUT" || e.repeat) return;
+  // клавиши-сокращения не перехватывают пробел/Enter у кнопок, ссылок и полей (2.1.1)
+  if(e.repeat || e.ctrlKey || e.metaKey || e.altKey || ["INPUT","TEXTAREA","SELECT","BUTTON","A","SUMMARY"].includes(e.target.tagName)) return;
   if(mode==="listen"){
     if(e.code==="Space"){ e.preventDefault(); ls && playReference(ls.answer, null, true); }
     else if(e.key==="1") answerListen("A"); else if(e.key==="2") answerListen("B");
