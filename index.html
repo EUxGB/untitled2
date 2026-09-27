@@ -1034,7 +1034,7 @@ if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = 
 else { $("play").disabled = true; }
 
 // ---------- recognition ----------
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 function showHintWarn(t){ const w=$("warn"); w.textContent=t; w.hidden=false; w.classList.add("hintable"); }
 function showWarn(t){ const w=$("warn"); w.textContent=t; w.hidden=false; }
 if(!SR){ showWarn("Этот браузер не умеет распознавать речь. Откройте файл в Google Chrome (на компьютере или Android)."); $("speak").disabled = true; }
@@ -1103,7 +1103,15 @@ async function startListening(){
   recognizer = new SR();
   recognizer.lang = "tr-TR"; recognizer.maxAlternatives = 5;
   recognizer.interimResults = false; recognizer.continuous = false;
-  let got = false;
+  let got = false, ended = false, timedOut = false;
+  // сторожевой таймер: если сервис распознавания молчит (нет интернета, сервис недоступен) — не зависаем
+  const watchdog = setTimeout(() => {
+    if(ended) return;
+    timedOut = true; got = true;
+    setResult("bad", "Сервис распознавания не ответил. Проверьте интернет и нажмите «Сказать» ещё раз.");
+    try { recognizer.abort(); } catch(e){}
+    setTimeout(() => { if(!ended) recognizer.onend(); }, 1500); // если и abort не завершил — завершаем сами
+  }, 12000);
   recognizer.onresult = e => {
     got = true;
     const alts = Array.from(e.results[0]).map(a => a.transcript);
@@ -1116,12 +1124,13 @@ async function startListening(){
       "service-not-allowed":"Нет доступа к микрофону. Разрешите его через значок в адресной строке.",
       "no-speech":"Ничего не услышал. Начинайте говорить сразу после нажатия.",
       "network":"Нужен интернет: Chrome распознаёт речь на серверах Google.",
-      "audio-capture":"Микрофон занят или не найден. Снимите галочку «Записывать мой голос» и попробуйте снова.",
+      "audio-capture":"Микрофон занят другим приложением или не найден. Закройте запись звука в других приложениях и попробуйте снова.",
       "aborted":"Остановлено."
     }[e.error] || ("Ошибка распознавания: " + e.error);
-    setResult("bad", msg);
+    if(!timedOut) setResult("bad", msg);
   };
   recognizer.onend = () => {
+    if(ended) return; ended = true; clearTimeout(watchdog);
     if(!got){
       if(recordOn && IS_ANDROID){ disableRecording(); setResult("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше распознавание работает само, а себя можно записать кнопкой «🎙 Записать себя» во вкладке «Любая фраза». Скажите ещё раз."); }
       else setResult("info", "Ничего не распознано. Говорите сразу после нажатия, ближе к микрофону.");
@@ -1131,7 +1140,12 @@ async function startListening(){
   };
   try { recognizer.start(); } catch(e){ recognizer.onend(); }
 }
-function stopListening(){ if(recognizer && listening) recognizer.abort(); }
+function stopListening(){
+  if(!(recognizer && listening)) return;
+  const r = recognizer;
+  try { r.abort(); } catch(e){}
+  setTimeout(() => { if(listening && recognizer === r) r.onend(); }, 1500); // сервис не ответил на отмену — завершаем сами
+}
 
 // ---------- записи носителей (Wikimedia Commons: Lingua Libre + Wiktionary) ----------
 const nativeCache = new Map();
@@ -1208,7 +1222,7 @@ function clarity(conf){
 }
 async function freeListen(){
   if(!SR){ return setFree("bad", "Этот браузер не распознаёт речь. Откройте в Chrome или Edge."); }
-  if(freeOn){ freeRec && freeRec.stop(); return; }
+  if(freeOn){ const r = freeRec; try { r && r.stop(); } catch(e){} setTimeout(() => { if(freeOn && freeRec === r) r.onend(); }, 1500); return; }
   freeOn = true; speechSynthesis && speechSynthesis.cancel();
   const btn = $("freeSpeak");
   btn.classList.add("listening"); btn.textContent = "⏹ Закончил";
@@ -1219,7 +1233,7 @@ async function freeListen(){
   // поэтому там слушаем одну фразу, а результат всегда собираем заново и убираем повторы
   const isAndroid = /Android/i.test(navigator.userAgent);
   freeRec.lang = "tr-TR"; freeRec.interimResults = true; freeRec.continuous = !isAndroid; freeRec.maxAlternatives = 3;
-  let finalText = "", conf = 0, interimText = "";
+  let finalText = "", conf = 0, interimText = "", freeTimedOut = false;
   freeRec.onresult = e => {
     const segs = []; let lastConf = 0; interimText = "";
     for(let i = 0; i < e.results.length; i++){
@@ -1251,6 +1265,7 @@ async function freeListen(){
     const heard = (finalText || interimText).trim();
     if(heard && recordOn) autoPlayMine = true;
     if(!heard){
+      if(freeTimedOut) return;
       if(recordOn && IS_ANDROID){ disableRecording(); setFree("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше себя можно записать кнопкой «🎙 Записать себя». Скажите ещё раз."); }
       else if($("freeResult").classList.contains("info")) setFree("info", "Ничего не распознано. Говорите сразу после нажатия, ближе к микрофону.");
       return;
@@ -1275,6 +1290,19 @@ async function freeListen(){
       setFree(kind, "Носитель услышит так:", `${heardHtml}${clarity(conf)}<div class="alts">Совпадает с тем, что вы хотели сказать? Нажмите «🌐 Перевод», чтобы проверить смысл. Для точной проверки впишите фразу в поле выше.</div>`);
     }
   };
+  // сторожевой таймер: 12 с без событий от сервиса — останавливаем, чтобы кнопка не зависла
+  let freeEnded = false, freeWatch = null;
+  const armFreeWatch = () => { clearTimeout(freeWatch); freeWatch = setTimeout(() => {
+    if(freeEnded) return;
+    freeTimedOut = true;
+    if(!(finalText || interimText)) setFree("bad", "Сервис распознавания не ответил. Проверьте интернет и нажмите «Сказать» ещё раз.");
+    try { freeRec.stop(); } catch(e){}
+    setTimeout(() => { if(!freeEnded) freeRec.onend(); }, 1500);
+  }, 12000); };
+  const origResult = freeRec.onresult, origEnd = freeRec.onend;
+  freeRec.onresult = e => { armFreeWatch(); origResult(e); };
+  freeRec.onend = () => { if(freeEnded) return; freeEnded = true; clearTimeout(freeWatch); origEnd(); };
+  armFreeWatch();
   try { freeRec.start(); } catch(e){ freeRec.onend(); }
 }
 function sayText(text){
