@@ -55,7 +55,7 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
       await toggleSelfRecord(); for(let t = 0; t < 30 && a.paused; t++) await new Promise(z => setTimeout(z, 100));
       return [label0, label1, !a.paused || a.currentTime > 0];
     });
-    ok(r[0] === '🎙 Записать себя' && r[1] === '⏹ Стоп' && r[2], JSON.stringify(r));
+    ok(r[0] === 'Записать себя' && r[1] === 'Стоп' && r[2], JSON.stringify(r));
   });
   await test('настоящий распознаватель без сети Google: понятное сообщение, приложение не ломается', async () => {
     const r = await p.evaluate(async () => {

@@ -179,9 +179,9 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const t = await p.textContent('#freeResult'); ok(t.includes('Носитель услышит') && t.includes('merhaba'), t);
     eq(await p.getAttribute('#freeTranslate', 'aria-disabled'), null);
   });
-  await test('«⭐ В мои фразы»: сохранить, не дублировать, удалить', async () => {
-    await p.click('#freeSave'); eq(await p.textContent('#freeSave'), '✓ Сохранено');
-    await p.click('#freeSave'); eq(await p.textContent('#freeSave'), 'Уже есть в моих');
+  await test('«В мои фразы»: сохранить, не дублировать, удалить', async () => {
+    await p.click('#freeSave'); eq(await p.textContent('#freeSave'), 'Сохранено');
+    await p.click('#freeSave'); eq(await p.textContent('#freeSave'), 'Уже в моих');
     await p.evaluate(() => { setMode('phrases'); setId = 'mine'; renderChips(); next(); });
     eq(await p.textContent('#target'), 'merhaba');
     await p.click('#delMine'); eq(await p.evaluate(() => loadList('soyle-mine').length), 1); // первое нажатие только спрашивает
@@ -196,7 +196,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('Android: если микрофон не делится, запись отключается один раз и запоминается', async () => {
     const r = await a.evaluate(async () => { recordOn = true; window.__silent = true; setMode('pairs'); await startListening(); await new Promise(z => setTimeout(z, 100)); window.__silent = false; return [recordOn, localStorage.getItem('soyle-rec-conflict'), document.getElementById('freeMine').textContent]; });
-    eq(r, [false, '1', '🎙 Записать себя']);
+    eq(r, [false, '1', 'Записать себя']);
   });
   await test('Android: «Сравнить» сам записывает и проигрывает образец → вас', async () => {
     const r = await a.evaluate(async () => { window.__played = []; window.__spoken = []; item.target = 'on'; nativeCache.set('on', [{ url:'https://x/on.wav', who:'T' }]); compareWithFreshRecording(); await new Promise(z => setTimeout(z, 2600)); return [window.__spoken.length + window.__played.filter(s => !s.startsWith('blob:')).length >= 2, window.__played.some(s => s.startsWith('blob:')), myRecFor]; });
@@ -251,9 +251,9 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       for(let i = 0; i < 2; i++){ await new Promise(z => setTimeout(z, 420)); answerListen(ls.right); }
       const during = document.getElementById('lsBlitz').textContent;
       await new Promise(z => setTimeout(z, 3200)); BLITZ_SEC = 60;
-      const res = [during.startsWith('⏱'), game.blitzBest, document.getElementById('lsResult').textContent.includes('рекорд'), document.getElementById('lsBlitz').textContent, blitz];
+      const res = [/^\d:\d\d · верно/.test(during), game.blitzBest, document.getElementById('lsResult').textContent.includes('рекорд'), document.getElementById('lsBlitz').textContent, blitz];
       document.getElementById('modalSecondary').click(); return res; }, RESET);
-    eq(r, [true, 2, true, '⚡ Блиц 60 с', null]);
+    eq(r, [true, 2, true, 'Блиц 60 с', null]);
   });
   await test('блиц — настоящие 60 секунд с ответами до конца: экран итогов, новые слова не идут, ответы заблокированы', async () => {
     const q = await openPage(browser);
@@ -274,7 +274,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const errs = q.errors; await q.context().close();
     eq(after.blitz, null); ok(after.overlay, 'нет экрана итогов'); ok(/верно/.test(after.text) && /Блиц|рекорд/.test(after.text), after.text);
     ok(after.disabled, 'варианты не заблокированы после конца'); ok(after.best >= 20, 'рекорд не записан: ' + after.best);
-    eq(after.btn, '⚡ Блиц 60 с'); eq(later, after.word); eq(errs, []);
+    eq(after.btn, 'Блиц 60 с'); eq(later, after.word); eq(errs, []);
   });
   await test('экран итогов блица: «Ещё раз» запускает новый, «Закрыть» возвращает к обычной тренировке', async () => {
     const q = await openPage(browser); await q.clock.install();
@@ -289,7 +289,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('блиц останавливается при уходе из режима «На слух»', async () => {
     const r = await p.evaluate(() => { setMode('listen'); startBlitz(); setMode('pairs'); return [blitz, document.getElementById('lsBlitz').textContent]; });
-    eq(r, [null, '⚡ Блиц 60 с']);
+    eq(r, [null, 'Блиц 60 с']);
   });
   await test('конфетти не ломают страницу и отключены при «уменьшить движение»', async () => {
     await p.evaluate(() => confetti()); await p.waitForTimeout(100);
@@ -313,12 +313,12 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return [listening, Math.round((Date.now()-t0)/1000), document.getElementById('result').textContent.includes('не ответил'), document.getElementById('speak').textContent, recordOn, localStorage.getItem('soyle-rec-conflict')];
     });
     await q.context().close();
-    eq([r[0], r[1] >= 12 && r[1] <= 15, r[2], r[3], r[4], r[5]], [false, true, true, '🎤 Сказать', true, null]);
+    eq([r[0], r[1] >= 12 && r[1] <= 15, r[2], r[3], r[4], r[5]], [false, true, true, 'Сказать', true, null]);
   });
   await test('«Сказать» → повторное нажатие во время зависания останавливает запись', async () => {
     const r = await p.evaluate(async () => { const Hang = function(){ this.start = () => {}; this.stop = () => {}; this.abort = () => {}; }; const keep = SR; SR = Hang; setMode('pairs');
       startListening(); await new Promise(z => setTimeout(z, 200)); stopListening(); await new Promise(z => setTimeout(z, 1800)); SR = keep; return [listening, document.getElementById('speak').textContent]; });
-    eq(r, [false, '🎤 Сказать']);
+    eq(r, [false, 'Сказать']);
   });
   await test('«Свободно»: зависание — сообщение и кнопка снова «Сказать», без ложного отключения записи на Android', async () => {
     const q = await openPage(browser, { android:true });
@@ -326,7 +326,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       freeListen(); for(let t = 0; t < 160 && freeOn; t++) await new Promise(z => setTimeout(z, 100));
       return [freeOn, document.getElementById('freeResult').textContent.includes('не ответил'), document.getElementById('freeSpeak').textContent, localStorage.getItem('soyle-rec-conflict')]; });
     await q.context().close();
-    eq(r, [false, true, '🎤 Сказать', null]);
+    eq(r, [false, true, 'Сказать', null]);
   });
 
   console.log('Геймификация по навыку gamification-loops');
@@ -507,7 +507,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(man.display, 'standalone');
     const sizes = man.icons.map(i => i.sizes); ok(sizes.includes('192x192') && sizes.includes('512x512'));
     man.icons.forEach(i => ok(fs.existsSync(path.join(dir, i.src)), 'нет файла ' + i.src));
-    eq(await p.evaluate(() => [!!document.querySelector('link[rel=manifest]'), document.querySelector('meta[name=theme-color]').content, getComputedStyle(document.body).backgroundColor]), [true, '#f3f5f2', 'rgb(243, 245, 242)']); // цвет панели = фон страницы
+    eq(await p.evaluate(() => [!!document.querySelector('link[rel=manifest]'), document.querySelector('meta[name=theme-color]').content, getComputedStyle(document.body).backgroundColor]), [true, '#EEF2F0', 'rgb(238, 242, 240)']); // цвет панели = фон страницы
   });
 
   console.log('Сценарий пользователя: только нажатия, как на телефоне');
@@ -536,7 +536,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await u.click('#tab-free'); await u.fill('#intent', 'Hesap lütfen'); await say('hesap lütfen');
     await u.click('#freeSpeak'); await u.waitForTimeout(250);
     ok((await u.textContent('#freeResult')).includes('поймёт'), 'Свободно: нет вердикта');
-    await u.click('#freeSave'); eq(await u.textContent('#freeSave'), '✓ Сохранено');
+    await u.click('#freeSave'); eq(await u.textContent('#freeSave'), 'Сохранено');
     // 6. «мои» в Фразах
     await u.click('#tab-phrases'); await u.click('.chip[data-s="mine"]'); eq(await u.textContent('#target'), 'Hesap lütfen');
     // 7. Прогресс: через верхнюю панель, видно XP, достижения, задание
@@ -551,7 +551,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('тёмная тема: оболочка приложения и экран «Прогресс» без ошибок и с фоном', async () => {
     const q = await openPage(browser, { scheme:'dark' });
     const r = await q.evaluate(() => { setMode('progress'); const bg = getComputedStyle(document.body).backgroundColor, nav = getComputedStyle(document.querySelector('.tabbar')).backgroundColor; return [bg, nav]; });
-    await q.context().close(); eq(r, ['rgb(17, 22, 27)', 'rgb(26, 33, 41)']);
+    await q.context().close(); eq(r, ['rgb(14, 23, 25)', 'rgb(22, 33, 36)']);
   });
 
   await test('сообщения ссылаются только на существующие кнопки и разделы', async () => {
@@ -564,6 +564,35 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const bad = quoted.filter(q => !outside.includes(q.replace(/^[^\p{L}]+/u, '').trim()));
     eq(bad, []);
     ok(!/Любая фраза|В видео|Минимальные пары/.test(src.replace(/<!--[\s\S]*?-->/g, '')), 'старые названия в тексте');
+  });
+
+  console.log('Новый вид (макет Claude Design): без эмодзи, иконки SVG');
+  await test('в программе нет стандартных эмодзи — только SVG-иконки и буквы', async () => {
+    const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8').replace(/<!--[\s\S]*?-->/g, '').replace(/\/\/[^\n]*/g, '');
+    const found = [...new Set(src.match(/[\p{Extended_Pictographic}✓✔★⇄▶⏹⏱]/gu) || [])];
+    eq(found, []);
+  });
+  await test('смена надписи не стирает иконку: «Сказать», «Записать себя», блиц', async () => {
+    const r = await p.evaluate(() => { const s = document.getElementById('speak'); setLbl(s, 'Слушаю…'); const a = [s.querySelectorAll('svg').length, s.getAttribute('aria-label')]; setLbl(s, 'Сказать');
+      const b = document.getElementById('lsBlitz'); setLbl(b, '0:42 · верно 3'); a.push(b.querySelectorAll('svg').length, b.textContent); setLbl(b, 'Блиц 60 с'); return a; });
+    eq(r, [2, 'Слушаю…', 1, '0:42 · верно 3']);
+  });
+  await test('трудная буква подсвечена: в паре и в вариантах «На слух»', async () => {
+    const r = await p.evaluate(() => [markDiff('göl', 'gol'), markDiff('gol', 'göl'), markDiff('şiş', 'sis')]);
+    eq(r, ['g<span class="dia" data-ch="ö">o</span>l', 'g<span class="dia whole">o</span>l', '<span class="dia low" data-ch="ş">s</span>i<span class="dia low" data-ch="ş">s</span>']);
+    const n = await p.evaluate(() => { setMode('listen'); nextListen(); const k = document.querySelectorAll('#lsA .dia, #lsB .dia').length; setMode('pairs'); next(); return [k, document.querySelectorAll('#target .dia').length]; });
+    ok(n[0] >= 1 && n[1] >= 1, JSON.stringify(n));
+  });
+  await test('урок: 10 делений, верные и ошибки окрашены', async () => {
+    const r = await p.evaluate(() => { const old = LESSON_SIZE; LESSON_SIZE = 10; setMode('pairs'); lessons.pairs = null; lessonStep(1); lessonStep(0); lessonStep(1);
+      const segs = [...document.querySelectorAll('#lessonSegs i')].map(i => i.className); const lab = document.getElementById('lessonBar').getAttribute('aria-label');
+      lessons.pairs = null; LESSON_SIZE = old; renderLesson(); return [segs.length, segs.slice(0, 4).join(','), lab]; });
+    eq(r, [10, 'ok,bad,ok,', 'Урок: 3 из 10, верно 2']);
+  });
+  await test('кольцо уровня и достижения-жетоны без эмодзи', async () => {
+    const r = await p.evaluate(() => { game.xp = 125; renderGame(); renderBadges(); const off = parseFloat(document.getElementById('gbLevelRing').style.strokeDashoffset);
+      return [document.getElementById('gbLevel2').textContent, off > 100 && off < 200, document.querySelectorAll('#badgeGrid .badge').length, BADGES.every(b => !/\p{Extended_Pictographic}/u.test(b.ic))]; });
+    eq(r, ['2', true, 22, true]);
   });
 
   console.log('Резервная копия прогресса');
@@ -582,7 +611,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.click('#bkYes');
     const r = await q.evaluate(() => [game.xp, game.badges, loadList('soyle-mine')[0].tr, srsDue().length, document.getElementById('gbXp').textContent, document.getElementById('bkMsg').textContent, localStorage.getItem('soyle-rec-conflict')]);
     const errs = q.errors; await q.context().close();
-    eq(r, [777, ['first','warm'], 'Merhaba', 1, '777 / 800 XP', 'Прогресс восстановлен ✓', '1']); eq(errs, []);
+    eq(r, [777, ['first','warm'], 'Merhaba', 1, '777 / 800 XP', 'Прогресс восстановлен', '1']); eq(errs, []);
   });
   await test('«Отмена» ничего не меняет; мусор и чужой JSON отклоняются с понятным сообщением', async () => {
     const q = await openPage(browser);
@@ -624,7 +653,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('упражнение видно на первом экране телефона (390×844)', async () => {
     for(const m of ['pairs','phrases','listen','free']){
       await p.evaluate(m => { setMode(m); scrollTo(0,0); }, m);
-      const bottom = await p.evaluate(() => [...document.querySelectorAll('.card')].find(c => !c.hidden).querySelector('.btn.primary').getBoundingClientRect().bottom);
+      const bottom = await p.evaluate(() => [...document.querySelectorAll('.card')].find(c => !c.hidden).querySelector('.mic, .ls-opt').getBoundingClientRect().bottom);
       ok(bottom < 844, `${m}: главная кнопка ниже экрана (${Math.round(bottom)})`);
     }
   });

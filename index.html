@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<meta name="theme-color" content="#f3f5f2" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#11161b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#EEF2F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1719" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Söyle">
@@ -15,22 +15,25 @@
 <title>Söyle — тренажёр произношения</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700&family=Literata:opsz,wght@7..72,500;7..72,600;7..72,700&display=swap">
 <style>
 :root{
-  --bg:#f3f5f2; --surface:#ffffff; --line:#dde2dc; --ink:#1b232c; --muted:#5d6a72;
-  --accent:#2451a6; --accent-soft:#e3eaf7; --ok:#2c7a4b; --ok-soft:#e1f1e7;
-  --bad:#b23d2b; --bad-soft:#f8e3de; --near:#9a6a0f; --near-soft:#f6ecd4;
-  --display:"Unbounded", "Arial Black", system-ui, sans-serif;
-  --body:"Onest", "Segoe UI", system-ui, sans-serif;
-  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  /* «туман над Босфором», «вода Босфора», «тюльпан», «чернила» */
+  --bg:#EEF2F0; --surface:#FBFCFB; --line:#CAD6D2; --ink:#14262B; --ink-2:#3C4E52; --muted:#55676B;
+  --accent:#0F5C5A; --accent-ink:#0B4644; --accent-soft:#DCEBE8; --tulip:#C62F35; --tulip-ink:#9E2328; --tulip-soft:#F7E1E0;
+  --ok:#0B4644; --ok-soft:#DCEBE8; --bad:#9E2328; --bad-soft:#F7E1E0; --near:#7A5200; --near-soft:#F3E8CF;
+  --on-accent:#FBFCFB;
+  --display:"Literata", Georgia, "Times New Roman", serif;
+  --body:"Commissioner", "Segoe UI", system-ui, sans-serif;
+  --mono:"Commissioner", "Segoe UI", system-ui, sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#11161b; --surface:#1a2129; --line:#2c3640; --ink:#e6ebee; --muted:#9aa7b0;
-    --accent:#86a8ec; --accent-soft:#1f2e48; --ok:#6fcf97; --ok-soft:#173826;
-    --bad:#f08a78; --bad-soft:#44221c; --near:#e7bb5c; --near-soft:#3d3118;
+    --bg:#0E1719; --surface:#162124; --line:#2A3B3F; --ink:#E4EDEB; --ink-2:#BCCBCA; --muted:#98ACAD;
+    --accent:#5DB3AA; --accent-ink:#8ED3CB; --accent-soft:#16332F; --tulip:#F0676C; --tulip-ink:#F59A9E; --tulip-soft:#3A1D1F;
+    --ok:#8ED3CB; --ok-soft:#16332F; --bad:#F59A9E; --bad-soft:#3A1D1F; --near:#E7BB5C; --near-soft:#3A3018;
+    --on-accent:#0E1719;
     color-scheme:dark;
   }
 }
@@ -286,54 +289,258 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
 @media (prefers-reduced-motion: reduce){ .modal-box{animation:none} .lesson .bar i{transition:none} }
 @media (min-width:561px){ .app{border-inline:1px solid var(--line)} }
 @media (prefers-reduced-motion: reduce){ .ring-fg, .tabbar .tab .ti{transition:none} }
+/* ===================== НОВЫЙ ВИД (макет Claude Design, навык frontend-design) ===================== */
+.sr{position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+.ic{width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none}
+.ic.tulip{color:var(--tulip); width:18px; height:18px}
+/* трудный звук: точки над ö/ü/i и хвостик ç/ş — тюльпан; буквы без знака — целиком */
+.dia{position:relative; display:inline-block}
+.dia::after{content:attr(data-ch); position:absolute; left:0; top:0; color:var(--tulip); clip-path:inset(0 0 58% 0)}
+.dia.low::after{clip-path:inset(74% 0 0 0)}
+.dia.whole{color:var(--tulip)} .dia.whole::after{content:none}
+body{font-family:var(--body)}
+h1{font:700 26px/1 var(--display); letter-spacing:-.01em}
+h1 span{color:inherit}
+.topbar{min-height:60px; padding:10px 14px 6px 20px; gap:10px}
+.tb-stats{gap:10px; padding:0 8px 0 14px; height:44px; font:600 15px var(--body); color:var(--ink)}
+.tb-item{display:flex; align-items:center; gap:5px}
+.tb-sep{width:1px; height:18px; background:var(--line)}
+.tb-ring{width:28px; height:28px}
+.tb-ring circle{stroke-width:4}
+.ring-fg{stroke:var(--accent); stroke-dasharray:87.96; stroke-dashoffset:87.96}
+.qbtn{display:grid; place-items:center; color:var(--ink)}
+.qbtn .ic{width:20px; height:20px}
+/* чипы: пары — буквы Literata; наборы фраз — текстовые вкладки */
+.chips{gap:6px; padding:4px 16px 10px}
+.chip{font:600 19px var(--display); border-radius:12px; min-width:74px; background:transparent; border:1px solid var(--line); color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--surface)}
+.chip.set{font:600 15px var(--body); border:0; border-radius:0; min-width:0; padding:10px 2px; margin-right:14px; background:transparent; color:var(--muted); border-bottom:2px solid transparent}
+.chip.set[aria-pressed="true"]{background:transparent; color:var(--ink); border-bottom-color:var(--ink)}
+/* урок — 10 делений: верно / ошибка / впереди */
+.lesson{padding:0 8px 8px}
+.segs{flex:1; display:grid; grid-template-columns:repeat(10, minmax(0,1fr)); gap:4px}
+.segs i{height:4px; border-radius:2px; background:var(--line)}
+.segs i.ok{background:var(--accent)} .segs i.bad{background:var(--tulip)}
+/* карточка без «коробки»: сцена слова */
+.screen > .card{background:transparent; border:0; box-shadow:none; padding:4px 4px 0; gap:8px}
+#card .target{font:600 clamp(56px, 15vh, 132px)/1 var(--display); letter-spacing:-.02em; color:var(--ink)}
+#card .target.phrase{font:600 clamp(24px, 4.2vh, 40px)/1.15 var(--display); letter-spacing:0}
+#card .target mark{background:none; color:inherit; text-decoration:none}
+#card .meaning{font-size:18px; color:var(--ink-2)}
+#card .partner{font-size:15px; color:var(--muted)}
+#card .partner b{font:600 15px var(--display); color:var(--ink)}
+.result{border-radius:16px; padding:10px 16px; height:84px}
+.result.info{background:var(--surface)}
+.result.ok{background:var(--ok-soft)} .result.ok .verdict{color:var(--ok)}
+.result.bad{background:var(--bad-soft)} .result.bad .verdict{color:var(--bad)}
+.result.near{background:var(--near-soft)} .result.near .verdict{color:var(--near)}
+.diff{font:600 20px/1.35 var(--display)}
+.diff .w-ok{color:var(--ok)}
+.diff .c-sub,.diff .c-del{color:var(--bad); text-decoration-color:var(--tulip)}
+.alts{font:13px var(--body)}
+/* круглые действия с подписью (как в камере) */
+.acts{flex:none; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:4px; padding-top:4px}
+.act{display:flex; flex-direction:column; align-items:center; gap:6px; border:0; background:none; padding:4px 0; font:500 13px var(--body); color:var(--ink); text-decoration:none; min-height:44px; cursor:pointer}
+.act .ring{width:52px; height:52px; border-radius:26px; border:1.5px solid var(--line); display:grid; place-items:center; color:var(--ink); transition:background-color .15s, border-color .15s}
+.act.native .ring{border-color:var(--accent); color:var(--accent)}
+.act:disabled, .act.off{opacity:.4; cursor:not-allowed}
+.act.off{pointer-events:none}
+@media (hover:hover){ .act:not(:disabled):not(.off):hover .ring{background:var(--accent-soft); border-color:var(--accent)} }
+.act:not(:disabled):active .ring{background:var(--accent-soft)}
+.main-row{flex:none; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:10px; padding:10px 2px 10px}
+.main-row .pill{min-width:0; max-width:100%; padding:0 14px} .main-row .pill .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.main-row.single{grid-template-columns:1fr}
+.main-row.single .mic{justify-self:center}
+.main-row .pill:first-child{justify-self:start} .main-row .pill:last-child{justify-self:end}
+.pill{display:inline-flex; align-items:center; justify-content:center; gap:8px; height:48px; padding:0 16px; border-radius:24px; border:1px solid var(--line); background:var(--surface); font:600 15px var(--body); color:var(--ink); cursor:pointer}
+.pill .ic{width:20px; height:20px}
+.pill:disabled{opacity:.4; cursor:not-allowed}
+.pill.wide{width:100%}
+@media (hover:hover){ .pill:not(:disabled):hover{border-color:var(--accent)} }
+.pill-row{flex:none; display:flex; padding-top:4px}
+#lsBlitz.running{background:var(--ink); color:var(--surface); border-color:var(--ink); font-variant-numeric:tabular-nums}
+.mic{width:84px; height:84px; border-radius:42px; border:0; background:var(--accent); color:var(--on-accent); display:grid; place-items:center; box-shadow:0 0 0 6px var(--bg), 0 0 0 8px var(--accent); cursor:pointer}
+.mic .ic{width:34px; height:34px; grid-area:1/1}
+.mic .ic.off{display:none}
+.mic.listening{background:var(--tulip); box-shadow:0 0 0 6px var(--bg), 0 0 0 8px var(--tulip); animation:micpulse 1.2s ease-in-out infinite}
+.mic.listening .ic.on{display:none} .mic.listening .ic.off{display:block}
+@keyframes micpulse{50%{box-shadow:0 0 0 6px var(--bg), 0 0 0 12px var(--tulip)}}
+@media (prefers-reduced-motion: reduce){ .mic.listening{animation:none} }
+/* «На слух» */
+.ls-top{flex:none; display:flex; flex-direction:column; align-items:center; gap:12px; padding-top:6px}
+.round-xl{width:104px; height:104px; border-radius:52px; border:0; background:var(--accent); color:var(--on-accent); display:grid; place-items:center; box-shadow:0 0 0 10px var(--accent-soft); cursor:pointer}
+.round-xl .ic{width:42px; height:42px}
+.ls-q{font-size:17px; color:var(--ink-2)}
+.ls-options{gap:12px}
+.ls-opt{border:1.5px solid var(--line); background:var(--surface); border-radius:22px; min-height:140px}
+.ls-opt b{font:600 clamp(40px, 7vh, 58px)/1 var(--display); color:var(--ink)}
+.ls-opt small{font-size:15px; color:var(--ink-2)}
+.ls-opt.right{border:2px solid var(--accent); background:var(--accent-soft)}
+.ls-opt.wrong{border:2px solid var(--tulip); background:var(--tulip-soft)}
+.ls-opt:disabled{cursor:not-allowed}
+/* «Свободно» */
+.free-title{font:600 clamp(22px, 3.6vh, 30px)/1.2 var(--display); text-align:left; text-wrap:balance}
+#intent{border-radius:14px; border:1.5px solid var(--line); background:var(--surface); font:500 19px var(--display)}
+#freeCard .live{font:600 clamp(20px, 3.4vh, 30px)/1.25 var(--display); color:var(--ink); text-align:left}
+/* нижняя панель: значок, подпись, точка у активного */
+.tabbar{background:var(--surface); border-top:1px solid var(--line)}
+.tabbar .tab{gap:3px; font:600 11px var(--body); color:var(--muted); min-height:60px; position:relative}
+.tabbar .tab .ti{padding:0; background:none; width:24px; height:24px}
+.tabbar .tab .glyph{font:700 22px/24px var(--display); text-align:center}
+.tabbar .tab[aria-pressed="true"]{color:var(--accent)}
+.tabbar .tab[aria-pressed="true"] .ti{background:none}
+.tabbar .tab::after{content:""; width:4px; height:4px; border-radius:2px}
+.tabbar .tab[aria-pressed="true"]::after{background:var(--accent)}
+/* «Прогресс» */
+.pv-hero{background:none; color:var(--ink); padding:4px 0; position:relative; gap:18px; border-radius:0}
+.pv-ring{width:96px; height:96px; flex:none; transform:rotate(-90deg)}
+.pv-ring circle{fill:none; stroke-width:6}
+.pv-ring .ring-bg{stroke:var(--line)}
+.pv-ring .ring-fg{stroke-dasharray:263.9; stroke-dashoffset:263.9}
+.pv-hero .pv-lvl{position:absolute; left:0; width:96px; text-align:center; font:700 34px/1 var(--display)}
+.pv-sub{font-size:13px; color:var(--muted)}
+.pv-rank{font:700 30px/1.1 var(--display)}
+.pv-xp{font-size:14px; color:var(--ink-2); opacity:1}
+.pv-weekhead{display:flex; justify-content:space-between; align-items:baseline; font-size:14px; color:var(--muted)}
+.pv-weekhead b{font-size:17px; color:var(--ink)}
+.pv-dot{width:36px; height:36px; border:1.5px dashed var(--line); background:none; color:transparent; font-size:0}
+.pv-dot.done{background:var(--accent); border:0}
+.pv-dot.frozen{background:none; border:2px solid var(--accent); color:var(--accent); font-size:14px}
+.pv-day.today .pv-dot{outline:none; box-shadow:0 0 0 3px var(--bg), 0 0 0 5px var(--tulip)}
+.pv-tiles{grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px}
+.pv-tile{border:0; border-radius:18px; background:var(--surface); padding:14px}
+.pv-tile b{font:700 24px/1.1 var(--display)}
+.pv-tile span{font-size:13px; color:var(--muted)}
+.pv-quest{background:none; border:1.5px solid var(--ink); border-radius:18px; display:flex; flex-direction:column; gap:4px; font-weight:400}
+.pv-quest b{font-size:16px}
+.pv-quest.done{background:var(--ok-soft); border-color:var(--ok); color:var(--ok)}
+.pv-head{display:flex; justify-content:space-between; align-items:baseline}
+.progress h2, .pv-head h2{font:700 17px var(--body); text-transform:none; letter-spacing:0; color:var(--ink)}
+.pv-head span, #badgeCount{font-size:14px; color:var(--muted)}
+.badge-grid{grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px 8px; margin-top:0}
+.badge{flex-direction:column; text-align:center; gap:6px; padding:0; border:0; background:none}
+.badge .ic{width:60px; height:60px; border-radius:30px; display:grid; place-items:center; font:700 22px/1 var(--display); background:var(--ink); color:var(--surface); filter:none; opacity:1; stroke:none}
+.badge.t-accent .ic{background:var(--accent); color:var(--on-accent)} .badge.t-tulip .ic{background:var(--tulip); color:var(--on-accent)}
+.badge b{font-size:12px; font-weight:600; color:var(--ink)}
+.badge small{font-size:11px}
+.badge.locked{border:0; background:none} .badge.locked .ic{background:none; border:1.5px dashed var(--muted); color:var(--muted); filter:none; opacity:1}
+.badge.locked b{color:var(--muted)}
+.stat{border-top-color:var(--line)} .stat .lab{font:600 14px var(--body)}
+.bar i{background:var(--accent)}
+.btn{border-radius:14px; display:inline-flex; align-items:center; justify-content:center; gap:8px}
+.btn .ic{width:20px; height:20px}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+/* итоговое окно — лист снизу с турецким словом */
+.modal{align-items:end; padding:0; background:rgba(9,20,22,.55)}
+.modal-box{width:min(560px,100%); border-radius:28px 28px 0 0; padding:26px 22px calc(26px + env(safe-area-inset-bottom, 0px)); gap:12px; animation:sheet .3s ease-out}
+@keyframes sheet{from{transform:translateY(40px); opacity:0}}
+@media (prefers-reduced-motion: reduce){ .modal-box{animation:none} }
+.modal-ic{font:600 44px/1.05 var(--display); color:var(--accent); letter-spacing:-.01em}
+.modal-box h3{font:700 20px/1.25 var(--body)}
+.ms{background:var(--bg)} .ms b{font:700 24px/1.1 var(--display)}
+.toast{background:var(--ink); color:var(--surface); font:600 14px var(--body); transform:translate(-50%,-200px)}
+.toast:empty{display:none}
+.warn{background:var(--near-soft)}
+@media (max-height:700px){
+  .act .ring{width:44px; height:44px} .act{font-size:12px; gap:4px}
+  .mic{width:68px; height:68px} .mic .ic{width:28px; height:28px}
+  .pill{height:44px; padding:0 12px; font-size:14px}
+  .round-xl{width:80px; height:80px} .round-xl .ic{width:34px; height:34px}
+  .ls-opt{min-height:104px}
+  .result{height:70px}
+  #card .target{font-size:clamp(44px, 12vh, 96px)}
+}
+.badge .ic.long{font-size:15px; letter-spacing:-.01em}
+.badge b{hyphens:auto; overflow-wrap:anywhere; font-size:11.5px}
+@media (max-width:400px){ .main-row .pill .ic{display:none} .main-row .pill{padding:0 10px} }
+@media (max-height:700px){
+  .main-row{padding:6px 2px}
+  .mic{box-shadow:0 0 0 4px var(--bg), 0 0 0 6px var(--accent)}
+  .mic.listening{box-shadow:0 0 0 4px var(--bg), 0 0 0 6px var(--tulip)}
+}
+.pv-dot .ic{width:16px; height:16px; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round}
+.pv-dot.frozen{font-size:0}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-native" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17 7.5c1 1 1 3 0 4M19.5 5.5c2.2 2.2 2.2 5.8 0 8"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M4 12v0M7.5 9v6M11 5v14M14.5 8v8M18 10.5v3M21 12v0"/></symbol>
+    <symbol id="i-echo" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1M19.5 12a7.5 7.5 0 0 1-13 5.1"/><path d="M18 3.5V7h-3.5M6 20.5V17h3.5"/></symbol>
+    <symbol id="i-compare" viewBox="0 0 24 24"><path d="M3 9h3l2-4 3 8 2-4h8"/><path d="M3 17h4l2-3 3 5 2-2h7"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9.5v5h4l5 4v-13l-5 4z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5.5v13l10-6.5z"/></symbol>
+    <symbol id="i-translate" viewBox="0 0 24 24"><path d="M4 6h9M8.5 4v2c0 4-2 7-4.5 8.5M6 10c1 2 3 3.5 5 4"/><path d="M12 20l4-9 4 9M13.5 17h5"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-6-4-6 4z"/></symbol>
+    <symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-8.5z"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><path d="M9.2 9a3 3 0 0 1 5.6 1c0 2-2.8 2.4-2.8 4"/><path d="M12 18h.01"/></symbol>
+    <symbol id="i-bubble" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-6 4z"/></symbol>
+    <symbol id="i-ear" viewBox="0 0 24 24"><path d="M7 9a5 5 0 1 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9.5a2 2 0 1 1 4 0"/></symbol>
+    <symbol id="i-steps" viewBox="0 0 24 24"><path d="M4 19h4v-5h4v-4h4V6h4"/></symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 6.5h6l2 2h9v10h-17z"/></symbol>
+    <symbol id="i-restore" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/></symbol>
+  </defs>
+</svg>
 <div class="app">
   <header class="topbar">
-    <h1 translate="no">S<span>ö</span>yle</h1>
+    <h1 translate="no">S<span class="dia" data-ch="ö">o</span>yle</h1>
     <button class="tb-stats" id="tbProgress" aria-label="Прогресс: дни подряд, уровень, цель дня">
-      <span class="tb-item">🔥 <b id="tbStreak">0</b></span>
-      <span class="tb-item">⭐ <b id="tbLevel">1</b></span>
-      <span class="tb-ring" aria-hidden="true"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="ring-bg"/><circle cx="18" cy="18" r="15" class="ring-fg" id="tbRing"/></svg><span>🎯</span></span>
+      <span class="tb-item"><svg class="ic tulip" aria-hidden="true"><use href="#i-flame"/></svg><b id="tbStreak">0</b></span>
+      <span class="tb-sep" aria-hidden="true"></span>
+      <span class="tb-item">ур. <b id="tbLevel">1</b></span>
+      <span class="tb-ring" aria-hidden="true"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" class="ring-bg"/><circle cx="18" cy="18" r="14" class="ring-fg" id="tbRing"/></svg></span>
     </button>
-    <button class="qbtn" id="hintsBtn" aria-pressed="false" title="Показать подсказки" aria-label="Подсказки">?</button>
+    <button class="qbtn" id="hintsBtn" aria-pressed="false" title="Показать подсказки" aria-label="Подсказки"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg></button>
   </header>
 
   <div id="warn" class="warn" hidden></div>
   <div class="chips" id="chips"></div>
 
   <main class="screen">
-    <div class="lesson" id="lessonBar" aria-label="Прогресс урока">
-      <span class="bar"><i id="lessonFill"></i></span><span id="lessonTxt">урок 0 / 10</span>
+    <div class="lesson" id="lessonBar" role="img" aria-label="Прогресс урока">
+      <span class="segs" id="lessonSegs" aria-hidden="true"></span><span class="sr" id="lessonTxt">урок 0 / 10</span><i id="lessonFill" hidden></i>
     </div>
     <section class="card" id="listenCard" hidden>
-      <p class="meaning ls-q">Какое слово прозвучало?</p>
+      <div class="ls-top">
+        <button class="round-xl" id="lsPlay" aria-label="Послушать ещё раз"><svg class="ic" aria-hidden="true"><use href="#i-speaker"/></svg><span class="sr">Ещё раз</span></button>
+        <p class="meaning ls-q">Какое слово прозвучало?</p>
+      </div>
       <div class="ls-options">
         <button class="ls-opt" id="lsA" data-k="1"></button>
         <button class="ls-opt" id="lsB" data-k="2"></button>
       </div>
-      <p class="hint hintable" id="lsInfo">Сначала учимся слышать разницу: мозгу легче произнести звук, который он уже различает.</p>
+      <p class="hint hintable" id="lsInfo">Голоса и темп меняются нарочно: ухо учится различать звук, а не голос.</p>
       <div class="result info" id="lsResult" aria-live="polite"><span class="verdict">Слушайте и выбирайте. Клавиши 1 и 2, пробел — повторить.</span></div>
-      <div class="btngrid two">
-        <button class="btn" id="lsBlitz" title="Сколько пар различите за 60 секунд">⚡ Блиц 60 с</button>
-        <button class="btn primary" id="lsPlay">🔊 Ещё раз</button>
+      <div class="pill-row">
+        <button class="pill wide" id="lsBlitz" title="Сколько пар различите за 60 секунд"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl">Блиц 60 с</span></button>
       </div>
     </section>
 
     <section class="card" id="freeCard" hidden>
-      <p class="free-title">Скажите что угодно по-турецки</p>
-      <p class="meaning hintable">Проверю, поймёт ли вас носитель: покажу, что он услышит. Фразу в поле писать необязательно — если впишете, сравню слово в слово.</p>
-      <label class="freeField" for="intent">Что вы хотите сказать (по-турецки, необязательно)</label>
+      <p class="free-title">Скажите что угодно — поймёт ли вас носитель?</p>
+      <p class="meaning hintable">Фразу в поле писать необязательно — если впишете, сравню слово в слово.</p>
+      <label class="freeField" for="intent">Что вы хотите сказать, по-турецки (необязательно)</label>
       <input id="intent" name="intent" lang="tr" translate="no" type="text" autocomplete="off" spellcheck="false" placeholder="например: Hesabı alabilir miyim…">
       <p class="live" id="freeLive" lang="tr" translate="no"></p>
       <div class="result info" id="freeResult" aria-live="polite"><span class="verdict">Нажмите «Сказать» и говорите. Можно задать фразу выше, можно без неё.</span></div>
-      <div class="btngrid two">
-        <button class="btn" id="freeMine" disabled>▶ Моя запись</button>
-        <button class="btn" id="freeCorrect" disabled title="Как это звучит правильно">🔊 Образец</button>
-        <a class="btn off" id="freeTranslate" target="_blank" rel="noopener" aria-disabled="true" tabindex="-1">🌐 Перевод</a>
-        <button class="btn" id="freeSave" disabled>⭐ В мои фразы</button>
-        <button class="btn primary wide big" id="freeSpeak">🎤 Сказать</button>
+      <div class="acts">
+        <button class="act" id="freeMine" disabled><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span><span class="lbl">Моя запись</span></button>
+        <button class="act" id="freeCorrect" disabled title="Как это звучит правильно"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg></span><span class="lbl">Образец</span></button>
+        <a class="act off" id="freeTranslate" target="_blank" rel="noopener" aria-disabled="true" tabindex="-1"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-translate"/></svg></span><span class="lbl">Перевод</span></a>
+        <button class="act" id="freeSave" disabled><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-bookmark"/></svg></span><span class="lbl">В мои фразы</span></button>
+      </div>
+      <div class="main-row single">
+        <button class="mic" id="freeSpeak" aria-label="Сказать"><svg class="ic  on" aria-hidden="true"><use href="#i-mic"/></svg><svg class="ic off" aria-hidden="true"><use href="#i-stop"/></svg><span class="sr lbl">Сказать</span></button>
       </div>
     </section>
 
@@ -346,52 +553,56 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
       <div class="result info" id="result" aria-live="polite">
         <span class="verdict">Нажмите «Сказать» и произнесите слово.</span>
       </div>
-      <div class="btngrid">
-        <button class="btn native ib" id="native"><span class="bi" aria-hidden="true">👤</span>Носитель</button>
-        <a class="btn native ib" id="yg" target="_blank" rel="noopener"><span class="bi" aria-hidden="true">🎬</span>Видео</a>
-        <button class="btn ib" id="play"><span class="bi" aria-hidden="true">🔊</span>Синтез</button>
-        <button class="btn ib" id="echo" title="Послушать образец и сразу повторить"><span class="bi" aria-hidden="true">🔁</span>Эхо</button>
-        <button class="btn ib" id="compare" disabled title="Образец и ваша запись подряд"><span class="bi" aria-hidden="true">⇄</span>Сравнить</button>
-        <button class="btn ib" id="next"><span class="bi" aria-hidden="true">→</span>Дальше</button>
-        <button class="btn primary wide big" id="speak">🎤 Сказать</button>
+      <div class="acts">
+        <button class="act native" id="native"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-native"/></svg></span><span class="lbl">Носитель</span></button>
+        <a class="act native" id="yg" target="_blank" rel="noopener"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-video"/></svg></span><span class="lbl">Видео</span></a>
+        <button class="act" id="play"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg></span><span class="lbl">Синтез</span></button>
+        <button class="act" id="echo" title="Послушать образец и сразу повторить"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-echo"/></svg></span><span class="lbl">Эхо</span></button>
+      </div>
+      <div class="main-row">
+        <button class="pill" id="compare" disabled title="Образец и ваша запись подряд"><svg class="ic" aria-hidden="true"><use href="#i-compare"/></svg><span class="lbl">Сравнить</span></button>
+        <button class="mic" id="speak" aria-label="Сказать"><svg class="ic on" aria-hidden="true"><use href="#i-mic"/></svg><svg class="ic off" aria-hidden="true"><use href="#i-stop"/></svg><span class="sr lbl">Сказать</span></button>
+        <button class="pill" id="next"><span class="lbl">Дальше</span><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg></button>
       </div>
     </section>
 
     <section class="progress" id="progressView" hidden aria-label="Прогресс">
       <div class="pv-hero">
-        <div class="pv-level"><span class="pv-lvl" id="gbLevel">1</span><span class="pv-lvl-lab">уровень</span></div>
+        <svg class="pv-ring" viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="42" class="ring-bg"/><circle cx="48" cy="48" r="42" class="ring-fg" id="gbLevelRing"/></svg>
+        <span class="pv-lvl" id="gbLevel">1</span>
         <div class="pv-rankbox">
+          <span class="pv-sub">Уровень <span id="gbLevel2">1</span></span>
           <b class="pv-rank" id="gbRank">Турист</b>
-          <span class="bar pv-xpbar"><i id="gbXpBar" style="width:0%"></i></span>
           <span class="pv-xp" id="gbXp">0 / 50 XP</span>
+          <span class="bar pv-xpbar" hidden><i id="gbXpBar" style="width:0%"></i></span>
         </div>
       </div>
-      <div class="pv-tiles">
-        <div class="pv-tile"><b id="gbStreak">0</b><span>🔥 дней подряд · ❄️ <span id="gbFreeze">0</span></span></div>
-        <div class="pv-tile"><b id="gbGoalTxt">0 / 20</b><span>🎯 цель дня</span><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
-        <div class="pv-tile"><b id="gbBlitz">0</b><span>⚡ рекорд блица</span></div>
-      </div>
+      <div class="pv-weekhead"><b><span id="gbStreak">0</span> дн. подряд</b><span>заморозок: <span id="gbFreeze">0</span></span></div>
       <div class="pv-week" id="gbWeek" aria-label="Занятия за 7 дней"></div>
-      <div class="pv-quest" id="gbQuest">🎁 <span id="gbQuestTxt"></span></div>
+      <div class="pv-tiles">
+        <div class="pv-tile"><span>Цель дня</span><b id="gbGoalTxt">0 / 20</b><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
+        <div class="pv-tile"><span>Рекорд блица</span><b id="gbBlitz">0</b><span>верных за минуту</span></div>
+      </div>
+      <div class="pv-quest" id="gbQuest"><span class="pv-sub">Задание дня · +50 XP</span><b id="gbQuestTxt"></b></div>
 
-      <h2>🏅 Достижения <span id="badgeCount">0 / 0</span></h2>
+      <div class="pv-head"><h2>Достижения</h2><span id="badgeCount">0 / 0</span></div>
       <div class="badge-grid" id="badgeGrid"></div>
 
-      <h2>Статистика</h2>
+      <div class="pv-head"><h2>Статистика</h2></div>
       <div class="stats" id="stats"></div>
 
       <section class="backup" aria-labelledby="bkTitle">
-        <h2 id="bkTitle">💾 Резервная копия прогресса</h2>
+        <h2 id="bkTitle">Резервная копия прогресса</h2>
         <p class="bk-note">Прогресс хранится только в этом браузере. Сохраните копию — и перенесёте его на другой телефон или вернёте после очистки браузера.</p>
         <div class="btngrid two">
-          <button class="btn" id="bkCopy" title="Скопировать код резервной копии">📋 Копировать</button>
-          <button class="btn" id="bkFile" title="Скачать файл резервной копии">⬇ Скачать файл</button>
+          <button class="btn" id="bkCopy" title="Скопировать код резервной копии"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg>Копировать</button>
+          <button class="btn" id="bkFile" title="Скачать файл резервной копии"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>Скачать файл</button>
         </div>
         <label class="freeField" for="bkInput">Восстановить: вставьте код или выберите файл</label>
         <textarea id="bkInput" name="backup" rows="2" spellcheck="false" autocomplete="off" placeholder="SOYLE1:…"></textarea>
         <div class="btngrid two">
-          <label class="btn" for="bkFileInput" id="bkPick">📂 Выбрать файл</label>
-          <button class="btn primary" id="bkRestore">↺ Восстановить</button>
+          <label class="btn" for="bkFileInput" id="bkPick"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg>Выбрать файл</label>
+          <button class="btn primary" id="bkRestore"><svg class="ic" aria-hidden="true"><use href="#i-restore"/></svg>Восстановить</button>
         </div>
         <input type="file" id="bkFileInput" accept=".json,application/json,text/plain" hidden>
         <div class="bk-confirm" id="bkConfirm" hidden>
@@ -409,15 +620,15 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
       <details class="help">
         <summary>Как пользоваться</summary>
         <ol>
-          <li><b>Звуки</b> — трудные пары (o/ö, u/ü, ı/i, c/ç/ş). «🎤 Сказать» — тренажёр покажет, не спутали ли вы звук.</li>
-          <li><b>Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное. «🎧 с записями» — всё, что записали носители.</li>
-          <li><b>👤 Носитель</b> — живая запись, ещё раз — другой голос. <b>🔊 Синтез</b> — компьютерный голос, ещё раз — медленно. <b>🎬 Видео</b> — фраза в настоящих видео.</li>
-          <li><b>🔁 Эхо</b> — образец → вы → образец и ваша запись подряд. <b>⇄ Сравнить</b> — образец и ваша запись.</li>
-          <li><b>На слух</b> — звучит одно слово из пары, выберите какое. <b>⚡ Блиц</b> — сколько различите за 60 секунд.</li>
-          <li><b>Свободно</b> — скажите что угодно и увидите, что услышит носитель. Нужное сохраните в «⭐ мои».</li>
-          <li><b>🧠 на сегодня</b> — интервальные повторения: фраза возвращается через 1, 3, 7, 16 и 35 дней, ошибка — через 10 минут.</li>
-          <li><b>Игра:</b> XP, комбо, уровни со званиями, 🔥 дни подряд, 🎯 цель дня, 🎁 задание дня, 🏅 достижения.</li>
-          <li><b>Как приложение:</b> меню браузера → «Добавить на главный экран» — откроется без адресной строки.</li>
+          <li><b>Звуки</b> — трудные пары (o/ö, u/ü, ı/i, c/ç/ş). Нажмите «Сказать» — тренажёр покажет, не спутали ли вы звук. Трудный звук выделен красным.</li>
+          <li><b>Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «с записями» — всё, что записали носители.</li>
+          <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Видео</b> — фраза в настоящих видео.</li>
+          <li><b>Эхо</b> — образец, вы, затем образец и ваша запись подряд. <b>Сравнить</b> — образец и ваша запись.</li>
+          <li><b>На слух</b> — звучит одно слово из пары, выберите какое. <b>Блиц</b> — сколько различите за 60 секунд.</li>
+          <li><b>Свободно</b> — скажите что угодно и увидите, что услышит носитель. Нужное сохраните в «мои».</li>
+          <li><b>На сегодня</b> — интервальные повторения: фраза возвращается через 1, 3, 7, 16 и 35 дней, ошибка — через 10 минут.</li>
+          <li><b>Игра:</b> опыт, уровни со званиями, дни подряд, цель дня, задание дня, достижения, уроки по 10 заданий.</li>
+          <li><b>Как приложение:</b> меню браузера, затем «Добавить на главный экран» — откроется без адресной строки.</li>
         </ol>
         <p>Лучше всего работает в Chrome или Edge. Нужен интернет. На iPhone распознавание речи ограничено.</p>
         <p class="hint hintable"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>N</kbd> — носитель, <kbd>L</kbd> — синтез, «На слух»: <kbd>1</kbd> <kbd>2</kbd></p>
@@ -426,17 +637,17 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
   </main>
 
   <nav class="tabbar" aria-label="Разделы">
-    <button class="tab" id="tab-pairs" aria-pressed="true"><span class="ti" aria-hidden="true">🔤</span><span>Звуки</span></button>
-    <button class="tab" id="tab-phrases" aria-pressed="false"><span class="ti" aria-hidden="true">💬</span><span>Фразы</span></button>
-    <button class="tab" id="tab-listen" aria-pressed="false"><span class="ti" aria-hidden="true">👂</span><span>На слух</span></button>
-    <button class="tab" id="tab-free" aria-pressed="false"><span class="ti" aria-hidden="true">🗣</span><span>Свободно</span></button>
-    <button class="tab" id="tab-progress" aria-pressed="false"><span class="ti" aria-hidden="true">🏆</span><span>Прогресс</span></button>
+    <button class="tab" id="tab-pairs" aria-pressed="true"><span class="ti glyph" aria-hidden="true">ö</span><span>Звуки</span></button>
+    <button class="tab" id="tab-phrases" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-bubble"/></svg><span>Фразы</span></button>
+    <button class="tab" id="tab-listen" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-ear"/></svg><span>На слух</span></button>
+    <button class="tab" id="tab-free" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-mic"/></svg><span>Свободно</span></button>
+    <button class="tab" id="tab-progress" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-steps"/></svg><span>Прогресс</span></button>
   </nav>
 </div>
 
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-box">
-    <div class="modal-ic" id="modalIc" aria-hidden="true"></div>
+    <div class="modal-ic" id="modalIc" lang="tr" translate="no"></div>
     <h3 id="modalTitle"></h3>
     <p id="modalText"></p>
     <div class="modal-stats" id="modalStats"></div>
@@ -608,6 +819,16 @@ const norm = s => s.normalize("NFC").toLocaleLowerCase("tr-TR");
 function tokens(s){
   return norm(s).replace(/[.,!?;:"'«»…()\-–—]/g," ").split(/\s+/).filter(Boolean).map(w => NUM[w] || w);
 }
+// надпись кнопки меняется, иконка остаётся (иконки — SVG внутри кнопки)
+function setLbl(el, t){ const l = el.querySelector(".lbl"); (l || el).textContent = t; if(el.hasAttribute("aria-label")) el.setAttribute("aria-label", t); }
+function setIc(el, name){ const u = el.querySelector(".ring use, :scope > svg use"); if(u) u.setAttribute("href", "#i-" + name); }
+// трудная буква: ö ü i — окрашены только точки, ç ş — только хвостик, o u ı c s — буква целиком
+const DIA = { "ö":"o", "ü":"u", "i":"ı", "İ":"I", "ç":"c", "ş":"s", "Ö":"O", "Ü":"U", "Ç":"C", "Ş":"S" };
+function diaHtml(c){
+  if(!DIA[c]) return `<span class="dia whole">${esc(c)}</span>`;
+  return `<span class="dia${/[çşÇŞ]/.test(c) ? " low" : ""}" data-ch="${c}">${DIA[c]}</span>`;
+}
+function markDiff(w, other, onlyDia){ const a = Array.from(w), b = Array.from(other || ""); return a.map((c, i) => c !== b[i] && (!onlyDia || DIA[c]) ? diaHtml(c) : esc(c)).join(""); }
 function esc(s){ return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 // Levenshtein alignment: ops of what was expected (a) vs heard (b)
@@ -649,11 +870,11 @@ function renderChips(){
   const chips = $("chips");
   requestAnimationFrame(scrollChipIntoView);
   if(mode==="phrases"){
-    const nLabel = nativeSet ? `🎧 с записями (${nativeSet.length})` : nativeSetLoading ? "🎧 загружаю…" : "🎧 с записями";
+    const nLabel = nativeSet ? `с записями (${nativeSet.length})` : nativeSetLoading ? "загружаю…" : "с записями";
     chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip set" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
       + `<button class="chip set" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
-      + `<button class="chip set" data-s="srs" aria-pressed="${setId==="srs"}">🧠 на сегодня (${srsDue().length})</button>`
-      + `<button class="chip set" data-s="mine" aria-pressed="${setId==="mine"}">⭐ мои (${loadList("soyle-mine").length})</button>`;
+      + `<button class="chip set" data-s="srs" aria-pressed="${setId==="srs"}">на сегодня (${srsDue().length})</button>`
+      + `<button class="chip set" data-s="mine" aria-pressed="${setId==="mine"}">мои (${loadList("soyle-mine").length})</button>`;
     chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
     return;
   }
@@ -709,7 +930,7 @@ async function loadNativeSet(){
     const prev = nativeCache.get(key) || [];
     const merged = prev.concat(e.recs.filter(r => !prev.some(p=>p.url===r.url)));
     nativeCache.set(key, merged);
-    items.push({ tr:e.tr, tl:"", ru:"", focus:"Послушайте носителя («👤 Носитель», каждое нажатие — другой голос) и повторите.", n:merged.length });
+    items.push({ tr:e.tr, tl:"", ru:"", focus:"Послушайте носителя («Носитель», каждое нажатие — другой голос) и повторите.", n:merged.length });
   });
   items.sort((a,b)=>b.n-a.n);
   return items;
@@ -775,15 +996,14 @@ function next(){
   if(!item){
     $("target").classList.add("phrase");
     $("target").textContent = setId==="mine" ? "Пока пусто" : setId==="srs" ? "На сегодня всё повторено" : "Записей не найдено";
-    $("meaning").textContent = setId==="mine" ? "Скажите фразу в разделе «Свободно» и нажмите «⭐ В мои фразы»."
+    $("meaning").textContent = setId==="mine" ? "Скажите фразу в разделе «Свободно» и нажмите «В мои фразы»."
       : setId==="srs" ? "Каждая фраза, которую вы тренируете, вернётся сюда в нужный день: через 1, 3, 7, 16 и 35 дней." : "";
     $("partner").hidden = true; $("tip").textContent = ""; return;
   }
   const t = $("target");
   t.classList.toggle("phrase", mode==="phrases" && (!item.native || /\s/.test(item.target) || item.target.length > 12));
   if(mode==="pairs"){
-    const a = Array.from(item.target), b = Array.from(item.partner);
-    t.innerHTML = a.map((c,i)=> c!==b[i] ? `<mark>${esc(c)}</mark>` : esc(c)).join("");
+    t.innerHTML = markDiff(item.target, item.partner);
     $("partner").innerHTML = `не путать с <b>${esc(item.partner)}</b> — ${esc(item.partnerMeaning)}`;
     $("partner").hidden = false;
   } else {
@@ -860,7 +1080,7 @@ function award(score, gid){
   if(game.lastDay !== today){
     const gap = game.lastDay ? Math.round((Date.parse(today) - Date.parse(game.lastDay)) / 864e5) : 0;
     if(gap === 1) game.streak++;
-    else if(gap === 2 && game.freezes > 0){ game.freezes--; game.streak++; game.frozenDays.push(yest); toast("❄️ Заморозка сохранила вашу серию!"); }
+    else if(gap === 2 && game.freezes > 0){ game.freezes--; game.streak++; game.frozenDays.push(yest); toast("Заморозка сохранила вашу серию"); }
     else game.streak = 1;
     game.lastDay = today;
     if(!game.days.includes(today)) game.days.push(today);
@@ -877,11 +1097,11 @@ function award(score, gid){
     if(game.todayOk === GOAL){
       game.goals++; confetti();
       const gotFreeze = game.freezes < 2; if(gotFreeze) game.freezes++;
-      milestone({ ic:"🎯", title:"Цель дня выполнена!", text:`20 верных ответов за сегодня.${gotFreeze ? " Награда: ❄️ заморозка серии — сохранит серию, если пропустите день." : ""} Можно закончить на сегодня — или продолжить.`,
+      milestone({ ic:"Harika!", title:"Цель дня выполнена", text:`20 верных ответов за сегодня.${gotFreeze ? " Награда: заморозка серии — сохранит серию, если пропустите день." : ""} Можно закончить на сегодня — или продолжить.`,
         primary:{ label:"Продолжить" }, secondary:{ label:"На сегодня всё", fn:() => setMode("progress") } });
     }
     // неожиданный бонус — не за что-то конкретное, поэтому не вытесняет интерес к самому языку
-    if(Math.random() < SURPRISE_P){ gain += 15; toast("🎁 Сюрприз! +15 XP"); }
+    if(Math.random() < SURPRISE_P){ gain += 15; toast("Сюрприз: +15 XP"); }
   } else {
     if(score >= .5) gain = 3;
     game.combo = 0;
@@ -891,8 +1111,8 @@ function award(score, gid){
   if(levelOf(game.xp) > lvl){
     const L = levelOf(game.xp), nextRank = rankOf(L + 1), toNext = 50 * L * L - game.xp;
     confetti();
-    milestone({ ic:"⭐", title:`Уровень ${L}: ${rankOf(L)}!`, text: nextRank !== rankOf(L) ? `Следующее звание — «${nextRank}», осталось ${toNext} XP.` : `До следующего уровня ${toNext} XP.`,
-      stats:[["XP", game.xp], ["дней", game.streak], ["достижений", game.badges.length]], primary:{ label:"Отлично!" } }, `⭐ Новый уровень ${L}: ${rankOf(L)}!`);
+    milestone({ ic:"Tebrikler!", title:`Уровень ${L}: ${rankOf(L)}`, text: nextRank !== rankOf(L) ? `Следующее звание — «${nextRank}», осталось ${toNext} XP.` : `До следующего уровня ${toNext} XP.`,
+      stats:[["XP", game.xp], ["дней", game.streak], ["достижений", game.badges.length]], primary:{ label:"Отлично!" } }, `Новый уровень ${L}: ${rankOf(L)}`);
   }
   checkBadges();
   try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
@@ -909,10 +1129,12 @@ function renderGame(){
   $("gbLevel").textContent = L;
   $("gbRank").textContent = rankOf(L);
   const q = todayQuest();
-  $("gbQuestTxt").textContent = q.done ? `Задание дня выполнено: ${q.t} ✓` : `Задание дня: ${q.t} — ${q.got} / ${q.n} (+50 XP)`;
+  $("gbQuestTxt").textContent = q.done ? `Задание выполнено: ${q.t}` : `${q.t} — ${q.got} из ${q.n}`;
   $("gbQuest").classList.toggle("done", q.done);
   const prev = 50 * (L-1) * (L-1);
   $("gbXp").textContent = `${game.xp} / ${next} XP`;
+  const part = Math.min(1, Math.max(0, (game.xp - prev) / (next - prev)));
+  $("gbLevelRing").style.strokeDashoffset = 263.9 * (1 - part); $("gbLevel2").textContent = L;
   $("gbXpBar").style.width = Math.min(100, (game.xp - prev) / (next - prev) * 100) + "%";
   $("gbBlitz").textContent = game.blitzBest;
   $("gbFreeze").textContent = game.freezes;
@@ -920,7 +1142,7 @@ function renderGame(){
   $("gbWeek").innerHTML = Array.from({ length:7 }, (_, i) => {
     const d = new Date(Date.now() - (6 - i) * 864e5), ds = dayStr(d);
     const cls = game.days.includes(ds) ? "done" : game.frozenDays.includes(ds) ? "frozen" : "";
-    return `<div class="pv-day${i === 6 ? " today" : ""}"><span class="pv-dot ${cls}">${cls === "done" ? "✓" : cls === "frozen" ? "❄️" : ""}</span>${wd[d.getDay()]}</div>`;
+    return `<div class="pv-day${i === 6 ? " today" : ""}"><span class="pv-dot ${cls}">${cls === "frozen" ? '<svg class="ic" aria-hidden="true"><use href="#i-snow"/></svg>' : ""}</span>${wd[d.getDay()]}</div>`;
   }).join("");
   $("tbStreak").textContent = streak; $("tbLevel").textContent = L;
   $("tbRing").style.strokeDashoffset = 94.25 * (1 - Math.min(1, todayOk / GOAL));
@@ -942,7 +1164,7 @@ const modalQueue = []; let modalOpen = false;
 function showModal(o){
   if(modalOpen){ modalQueue.push(o); return; }
   modalOpen = true;
-  $("modalIc").textContent = o.ic || "🎉"; $("modalTitle").textContent = o.title || ""; $("modalText").textContent = o.text || "";
+  $("modalIc").textContent = o.ic || "Aferin!"; $("modalTitle").textContent = o.title || ""; $("modalText").textContent = o.text || "";
   $("modalStats").innerHTML = (o.stats || []).map(([l, v]) => `<div class="ms"><b>${esc(String(v))}</b><span>${esc(l)}</span></div>`).join("");
   const P = $("modalPrimary"), S = $("modalSecondary");
   P.textContent = (o.primary && o.primary.label) || "Дальше";
@@ -976,28 +1198,30 @@ document.addEventListener("keydown", e => { if(e.key === "Escape" && modalOpen) 
 
 // ---------- уроки: 10 заданий с итогом (естественная точка остановки) ----------
 const lessons = {};
-function lessonOf(m){ return lessons[m] || (lessons[m] = { n:0, ok:0, miss:[], xp0:game.xp }); }
+function lessonOf(m){ return lessons[m] || (lessons[m] = { n:0, ok:0, miss:[], res:[], xp0:game.xp }); }
 function renderLesson(){
   const bar = $("lessonBar"), show = ["pairs","phrases","listen"].includes(mode) && LESSON_SIZE < 1e6;
   bar.style.visibility = show ? "visible" : "hidden";
   if(!show) return;
   const l = lessonOf(mode);
   $("lessonFill").style.width = Math.max(4, l.n / LESSON_SIZE * 100) + "%";
+  $("lessonSegs").innerHTML = Array.from({ length:LESSON_SIZE }, (_, i) => `<i${l.res[i] === undefined ? "" : l.res[i] ? ' class="ok"' : ' class="bad"'}></i>`).join("");
+  $("lessonBar").setAttribute("aria-label", `Урок: ${l.n} из ${LESSON_SIZE}, верно ${l.ok}`);
   $("lessonTxt").textContent = `урок ${l.n} / ${LESSON_SIZE}`;
 }
 function lessonStep(score){
   if(!["pairs","phrases","listen"].includes(mode) || (typeof blitz !== "undefined" && blitz)) return;
   const l = lessonOf(mode);
   if(l.n === 0) l.xp0 = game.xp;
-  l.n++; if(score >= 1) l.ok++; else if(item && !l.miss.includes(item.target)) l.miss.push(item.target);
+  l.n++; (l.res || (l.res = [])).push(score >= 1); if(score >= 1) l.ok++; else if(item && !l.miss.includes(item.target)) l.miss.push(item.target);
   renderLesson();
   if(l.n >= LESSON_SIZE){
     const m = mode, earned = game.xp - l.xp0, acc = Math.round(l.ok / l.n * 100);
     game.lessons++; try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
     lessons[m] = null; checkBadges();
     if(acc >= 80) confetti();
-    showModal({ ic: acc === 100 ? "🏆" : acc >= 80 ? "🏁" : "💪", title: acc === 100 ? "Урок без ошибок!" : "Урок пройден!",
-      text: l.miss.length ? `Повторим позже (уже в «🧠 на сегодня»): ${l.miss.slice(0, 5).join(", ")}${l.miss.length > 5 ? "…" : ""}` : "Все ответы верные — так держать.",
+    showModal({ ic: acc === 100 ? "Mükemmel!" : acc >= 80 ? "Aferin!" : "Devam!", title: acc === 100 ? "Урок без ошибок" : "Урок пройден",
+      text: l.miss.length ? `Повторим позже (уже в наборе «на сегодня»): ${l.miss.slice(0, 5).join(", ")}${l.miss.length > 5 ? "…" : ""}` : "Все ответы верные — так держать.",
       stats:[["верно", `${l.ok}/${l.n}`], ["точность", acc + "%"], ["XP", "+" + earned]],
       primary:{ label:"Ещё урок", fn:() => { renderLesson(); if(m === "listen") nextListen(); else next(); } },
       secondary:{ label:"Отдохнуть", fn:() => setMode("progress") } });
@@ -1035,40 +1259,40 @@ function questProgress(score, gid){
   else if(score >= 1 && def.gids.includes(gid)) game.quest.got++;
   if(game.quest.got >= def.n){
     game.quest.done = true; game.xp += 50;
-    toast("🎁 Задание дня выполнено! +50 XP"); confetti();
+    toast("Задание дня выполнено: +50 XP"); confetti();
   }
 }
 
 // ---------- достижения ----------
 const BADGES = [
-  { id:"first",   ic:"🌱", t:"Первое слово",   d:"Первый верный ответ",             ok:g => g.total >= 1 },
-  { id:"warm",    ic:"🔟", t:"Разогрев",       d:"10 верных ответов",               ok:g => g.total >= 10 },
-  { id:"hundred", ic:"💯", t:"Сотня",          d:"100 верных ответов",              ok:g => g.total >= 100 },
-  { id:"combo5",  ic:"🔥", t:"Серия ×5",       d:"5 верных подряд",                 ok:g => g.bestCombo >= 5 },
-  { id:"combo15", ic:"☄️", t:"Неудержимый",    d:"15 верных подряд",                ok:g => g.bestCombo >= 15 },
-  { id:"streak3", ic:"📅", t:"Три дня",        d:"Занятия 3 дня подряд",            ok:g => g.streak >= 3 },
-  { id:"streak7", ic:"🗓️", t:"Неделя",         d:"Занятия 7 дней подряд",           ok:g => g.streak >= 7 },
-  { id:"goal",    ic:"🎯", t:"В цель",         d:"Выполнить цель дня",              ok:g => g.goals >= 1 },
-  { id:"quest",   ic:"🎁", t:"Охотник",        d:"Выполнить задание дня",           ok:g => g.quest && g.quest.done },
-  { id:"ear",     ic:"👂", t:"Турецкое ухо",   d:"20 верных «На слух»",             ok:(g,s) => (s.listen||{}).ok >= 20 },
-  { id:"blitz10", ic:"⚡", t:"Молния",         d:"10 верных за один блиц",          ok:g => g.blitzBest >= 10 },
-  { id:"blitz20", ic:"🌩️", t:"Гроза",          d:"20 верных за один блиц",          ok:g => g.blitzBest >= 20 },
-  { id:"o",       ic:"ö",  t:"Мастер ö",       d:"15 верных в паре o · ö",          ok:(g,s) => (s.o||{}).ok >= 15 },
-  { id:"u",       ic:"ü",  t:"Мастер ü",       d:"15 верных в паре u · ü",          ok:(g,s) => (s.u||{}).ok >= 15 },
-  { id:"i",       ic:"ı",  t:"Мастер ı",       d:"15 верных в паре ı · i",          ok:(g,s) => (s.i||{}).ok >= 15 },
-  { id:"hotel",   ic:"🏨", t:"Гость отеля",    d:"10 верных фраз «отель»",          ok:(g,s) => (s["ph-hotel"]||{}).ok >= 10 },
-  { id:"food",    ic:"🍽️", t:"Afiyet olsun",   d:"10 верных фраз «ресторан»",       ok:(g,s) => (s["ph-food"]||{}).ok >= 10 },
-  { id:"free",    ic:"🗣️", t:"Меня поняли",    d:"5 фраз в «Свободно»",             ok:(g,s) => (s.free||{}).ok >= 5 },
-  { id:"memory",  ic:"🧠", t:"Память слона",   d:"10 повторений «на сегодня»",      ok:(g,s) => (s["ph-srs"]||{}).ok >= 10 },
-  { id:"level5",  ic:"🏙️", t:"Стамбулец",      d:"Достичь 6-го уровня",             ok:g => levelOf(g.xp) >= 6 },
-  { id:"lesson1", ic:"🏁", t:"Первый урок",    d:"Пройти урок из 10 заданий",       ok:g => g.lessons >= 1 },
-  { id:"lesson10",ic:"🎓", t:"Прилежный",      d:"Пройти 10 уроков",                ok:g => g.lessons >= 10 },
+  { id:"first", ic:"1", tone:"t-accent", t:"Первое слово",   d:"Первый верный ответ",             ok:g => g.total >= 1 },
+  { id:"warm", ic:"10", tone:"", t:"Разогрев",       d:"10 верных ответов",               ok:g => g.total >= 10 },
+  { id:"hundred", ic:"100", tone:"t-tulip", t:"Сотня",          d:"100 верных ответов",              ok:g => g.total >= 100 },
+  { id:"combo5", ic:"×5", tone:"t-accent", t:"Серия ×5",       d:"5 верных подряд",                 ok:g => g.bestCombo >= 5 },
+  { id:"combo15", ic:"×15", tone:"t-tulip", t:"Неудержимый",    d:"15 верных подряд",                ok:g => g.bestCombo >= 15 },
+  { id:"streak3", ic:"3д", tone:"", t:"Три дня",        d:"Занятия 3 дня подряд",            ok:g => g.streak >= 3 },
+  { id:"streak7", ic:"7д", tone:"t-accent", t:"Неделя",         d:"Занятия 7 дней подряд",           ok:g => g.streak >= 7 },
+  { id:"goal", ic:"20", tone:"t-tulip", t:"В цель",         d:"Выполнить цель дня",              ok:g => g.goals >= 1 },
+  { id:"quest", ic:"+50", tone:"", t:"Охотник",        d:"Выполнить задание дня",           ok:g => g.quest && g.quest.done },
+  { id:"ear", ic:"A·B", tone:"t-accent", t:"Турецкое ухо",   d:"20 верных «На слух»",             ok:(g,s) => (s.listen||{}).ok >= 20 },
+  { id:"blitz10", ic:"0:60", tone:"", t:"Молния",         d:"10 верных за один блиц",          ok:g => g.blitzBest >= 10 },
+  { id:"blitz20", ic:"0:60", tone:"t-tulip", t:"Гроза",          d:"20 верных за один блиц",          ok:g => g.blitzBest >= 20 },
+  { id:"o", ic:"ö", tone:"",  t:"Мастер ö",       d:"15 верных в паре o · ö",          ok:(g,s) => (s.o||{}).ok >= 15 },
+  { id:"u", ic:"ü", tone:"t-accent",  t:"Мастер ü",       d:"15 верных в паре u · ü",          ok:(g,s) => (s.u||{}).ok >= 15 },
+  { id:"i", ic:"ı", tone:"t-tulip",  t:"Мастер ı",       d:"15 верных в паре ı · i",          ok:(g,s) => (s.i||{}).ok >= 15 },
+  { id:"hotel", ic:"otel", tone:"", t:"Гость отеля",    d:"10 верных фраз «отель»",          ok:(g,s) => (s["ph-hotel"]||{}).ok >= 10 },
+  { id:"food", ic:"afiyet", tone:"t-accent", t:"Afiyet olsun",   d:"10 верных фраз «ресторан»",       ok:(g,s) => (s["ph-food"]||{}).ok >= 10 },
+  { id:"free", ic:"söz", tone:"t-tulip", t:"Меня поняли",    d:"5 фраз в «Свободно»",             ok:(g,s) => (s.free||{}).ok >= 5 },
+  { id:"memory", ic:"1·3·7", tone:"", t:"Память слона",   d:"10 повторений «на сегодня»",      ok:(g,s) => (s["ph-srs"]||{}).ok >= 10 },
+  { id:"level5", ic:"6", tone:"t-accent", t:"Стамбулец",      d:"Достичь 6-го уровня",             ok:g => levelOf(g.xp) >= 6 },
+  { id:"lesson1", ic:"10", tone:"t-tulip", t:"Первый урок",    d:"Пройти урок из 10 заданий",       ok:g => g.lessons >= 1 },
+  { id:"lesson10", ic:"×10", tone:"", t:"Прилежный",      d:"Пройти 10 уроков",                ok:g => g.lessons >= 10 },
 ];
 function checkBadges(){
   normalizeGame();
   BADGES.forEach(b => {
     if(!game.badges.includes(b.id) && b.ok(game, stats)){
-      game.badges.push(b.id); toast(`🏅 Достижение: ${b.t}`);
+      game.badges.push(b.id); toast(`Достижение: ${b.t}`);
     }
   });
   try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
@@ -1079,7 +1303,7 @@ function renderBadges(){
   $("badgeCount").textContent = `${game.badges.length} / ${BADGES.length}`;
   $("badgeGrid").innerHTML = BADGES.map(b => {
     const on = game.badges.includes(b.id);
-    return `<div class="badge${on ? "" : " locked"}"><span class="ic" aria-hidden="true">${b.ic}</span><span><b>${b.t}</b><small>${on ? "получено" : b.d}</small></span></div>`;
+    return `<div class="badge${on ? (b.tone ? " " + b.tone : "") : " locked"}"><span class="ic${b.ic.length > 3 ? " long" : ""}" aria-hidden="true" translate="no">${esc(b.ic)}</span><span><b>${b.t}</b>${on ? `<span class="sr">получено</span>` : `<small>${b.d}</small>`}</span></div>`;
   }).join("");
 }
 
@@ -1088,7 +1312,7 @@ function confetti(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const c = $("confetti"), ctx = c.getContext && c.getContext("2d"); if(!ctx) return;
   c.width = innerWidth; c.height = innerHeight;
-  const colors = ["#2451a6","#2c7a4b","#e7bb5c","#b23d2b","#86a8ec"];
+  const colors = ["#0F5C5A","#5DB3AA","#C62F35","#F0676C","#14262B"];
   const parts = Array.from({ length:80 }, () => ({ x:innerWidth/2, y:innerHeight/3, vx:(Math.random()-.5)*12, vy:Math.random()*-10-2, s:4+Math.random()*5, c:colors[Math.floor(Math.random()*colors.length)] }));
   const t0 = performance.now();
   (function frame(t){
@@ -1205,10 +1429,10 @@ function pickVoice(){
   let saved = null; try { saved = localStorage.getItem("soyle-voice"); } catch(e){}
   trVoice = vs.find(v=>v.name===saved) || vs[0] || null;
   const sel = $("voice");
-  sel.innerHTML = vs.map(v=>`<option value="${esc(v.name)}"${v===trVoice?" selected":""}>${esc(v.name)}${voiceRank(v)<=1?" ★":""}</option>`).join("") || "<option>нет турецких голосов</option>";
+  sel.innerHTML = vs.map(v=>`<option value="${esc(v.name)}"${v===trVoice?" selected":""}>${esc(v.name)}${voiceRank(v)<=1?" — естественный":""}</option>`).join("") || "<option>нет турецких голосов</option>";
   sel.disabled = !vs.length;
   $("play").disabled = !trVoice;
-  if(trVoice && voiceRank(trVoice)>1) showHintWarn("Синтез на этом устройстве звучит механически. Живую речь дают «👤 Носитель» и «🎬 Видео». Самый естественный синтез — в Microsoft Edge (голоса Emel и Ahmet, Natural).");
+  if(trVoice && voiceRank(trVoice)>1) showHintWarn("Синтез на этом устройстве звучит механически. Живую речь дают «Носитель» и «Видео». Самый естественный синтез — в Microsoft Edge (голоса Emel и Ahmet, Natural).");
 }
 $("voice").onchange = e => {
   trVoice = speechSynthesis.getVoices().find(v=>v.name===e.target.value) || trVoice;
@@ -1265,8 +1489,8 @@ function disableRecording(){
 let selfRec = null;
 function setupSelfRecord(){
   const b = $("freeMine");
-  if(recordOn){ b.textContent = "▶ Моя запись"; b.disabled = !$("myAudio").src; return; }
-  b.textContent = "🎙 Записать себя"; b.disabled = false;
+  if(recordOn){ setLbl(b, "Моя запись"); setIc(b, "play"); b.disabled = !$("myAudio").src; return; }
+  setLbl(b, "Записать себя"); setIc(b, "mic"); b.disabled = false;
 }
 async function toggleSelfRecord(){
   const b = $("freeMine");
@@ -1280,9 +1504,9 @@ async function toggleSelfRecord(){
       st.getTracks().forEach(t=>t.stop());
       const a = $("myAudio"); if(a.src) URL.revokeObjectURL(a.src);
       a.src = URL.createObjectURL(new Blob(ch, {type:selfRec.mimeType})); myRecFor = null; a.play().catch(()=>{});
-      b.textContent = "🎙 Записать себя"; b.classList.remove("listening");
+      setLbl(b, "Записать себя"); setIc(b, "mic"); b.classList.remove("listening");
     };
-    selfRec.start(); b.textContent = "⏹ Стоп"; b.classList.add("listening");
+    selfRec.start(); setLbl(b, "Стоп"); setIc(b, "stop"); b.classList.add("listening");
   } catch(e){ setFree("bad", "Нет доступа к микрофону для записи."); }
 }
 function stopRecording(){ if(mediaRec && mediaRec.state==="recording") mediaRec.stop(); }
@@ -1291,7 +1515,7 @@ async function startListening(){
   if(!SR || listening) return;
   speechSynthesis && speechSynthesis.cancel();
   listening = true;
-  const btn = $("speak"); btn.classList.add("listening"); btn.textContent = "🎤 Слушаю…";
+  const btn = $("speak"); btn.classList.add("listening"); setLbl(btn, "Слушаю…");
   setResult("info", "Говорите…");
   await startRecording();
   recognizer = new SR();
@@ -1326,11 +1550,11 @@ async function startListening(){
   recognizer.onend = () => {
     if(ended) return; ended = true; clearTimeout(watchdog);
     if(!got){
-      if(recordOn && IS_ANDROID){ disableRecording(); setResult("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше распознавание работает само, а себя можно записать кнопкой «🎙 Записать себя» в разделе «Свободно». Скажите ещё раз."); }
+      if(recordOn && IS_ANDROID){ disableRecording(); setResult("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше распознавание работает само, а себя можно записать кнопкой «Записать себя» в разделе «Свободно». Скажите ещё раз."); }
       else setResult("info", "Ничего не распознано. Говорите сразу после нажатия, ближе к микрофону.");
     }
     listening = false; stopRecording();
-    btn.classList.remove("listening"); btn.textContent = "🎤 Сказать";
+    btn.classList.remove("listening"); setLbl(btn, "Сказать");
   };
   try { recognizer.start(); } catch(e){ recognizer.onend(); }
 }
@@ -1381,7 +1605,7 @@ function playNative(){
   const recs = nativeCache.get(clean(item.target));
   const a = $("nativeAudio");
   if(!recs){ st.textContent = "Записи носителей ещё загружаются, нажмите через секунду."; return; }
-  if(!recs.length){ st.textContent = "Записи носителя для этого слова нет. Живая речь — «🎬 Видео», синтез — «🔊 Синтез»."; return; }
+  if(!recs.length){ st.textContent = "Записи носителя для этого слова нет. Живая речь — «Видео», синтез — «Синтез»."; return; }
   speechSynthesis && speechSynthesis.cancel();
   const i = nativeIdx % recs.length; nativeIdx++;
   st.textContent = recs.length > 1 ? `Носитель ${i+1} из ${recs.length}: ${recs[i].who}` : `Носитель: ${recs[i].who}`;
@@ -1419,7 +1643,7 @@ async function freeListen(){
   if(freeOn){ const r = freeRec; try { r && r.stop(); } catch(e){} setTimeout(() => { if(freeOn && freeRec === r) r.onend(); }, 1500); return; }
   freeOn = true; speechSynthesis && speechSynthesis.cancel();
   const btn = $("freeSpeak");
-  btn.classList.add("listening"); btn.textContent = "⏹ Закончил";
+  btn.classList.add("listening"); setLbl(btn, "Закончил");
   $("freeLive").textContent = "…"; setFree("info", "Слушаю. Говорите по-турецки.");
   await startRecording();
   freeRec = new SR();
@@ -1455,12 +1679,12 @@ async function freeListen(){
   };
   freeRec.onend = () => {
     freeOn = false; stopRecording();
-    btn.classList.remove("listening"); btn.textContent = "🎤 Сказать";
+    btn.classList.remove("listening"); setLbl(btn, "Сказать");
     const heard = (finalText || interimText).trim();
     if(heard && recordOn) autoPlayMine = true;
     if(!heard){
       if(freeTimedOut) return;
-      if(recordOn && IS_ANDROID){ disableRecording(); setFree("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше себя можно записать кнопкой «🎙 Записать себя». Скажите ещё раз."); }
+      if(recordOn && IS_ANDROID){ disableRecording(); setFree("bad", "Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше себя можно записать кнопкой «Записать себя». Скажите ещё раз."); }
       else if($("freeResult").classList.contains("info")) setFree("info", "Ничего не распознано. Говорите сразу после нажатия, ближе к микрофону.");
       return;
     }
@@ -1468,7 +1692,7 @@ async function freeListen(){
     const intent = $("intent").value.trim();
     $("freeTranslate").href = `https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(heard)}`;
     $("freeTranslate").classList.remove("off"); $("freeTranslate").removeAttribute("aria-disabled"); $("freeTranslate").removeAttribute("tabindex");
-    $("freeSave").disabled = false; $("freeSave").textContent = "⭐ В мои фразы"; lastHeard = heard;
+    $("freeSave").disabled = false; setLbl($("freeSave"), "В мои фразы"); lastHeard = heard;
     $("freeCorrect").disabled = !intent || !trVoice;
     const heardHtml = `<div class="diff" style="font-weight:400">«${esc(heard)}»</div>`;
     if(intent){
@@ -1481,7 +1705,7 @@ async function freeListen(){
       setFree(kind, verdict, `<div class="diff" lang="tr" translate="no">${c.html}</div><div class="alts">Носитель услышит:</div>${heardHtml}${clarity(conf)}`);
     } else {
       const kind = !conf ? "info" : conf >= .85 ? "ok" : conf >= .6 ? "near" : "bad";
-      setFree(kind, "Носитель услышит так:", `${heardHtml}${clarity(conf)}<div class="alts">Совпадает с тем, что вы хотели сказать? Нажмите «🌐 Перевод», чтобы проверить смысл. Для точной проверки впишите фразу в поле выше.</div>`);
+      setFree(kind, "Носитель услышит так:", `${heardHtml}${clarity(conf)}<div class="alts">Совпадает с тем, что вы хотели сказать? Нажмите «Перевод», чтобы проверить смысл. Для точной проверки впишите фразу в поле выше.</div>`);
     }
   };
   // сторожевой таймер: 12 с без событий от сервиса — останавливаем, чтобы кнопка не зависла
@@ -1556,8 +1780,8 @@ function nextListen(){
   const means = right === "A" ? [p.meaning, p.partnerMeaning] : [p.partnerMeaning, p.meaning];
   ls = { answer:p.target, right, gid:p.gid };
   item = { target:p.target, gid:p.gid, meaning:p.meaning };
-  $("lsA").innerHTML = `<b lang="tr" translate="no">${esc(words[0])}</b><small>${esc(means[0])}</small>`;
-  $("lsB").innerHTML = `<b lang="tr" translate="no">${esc(words[1])}</b><small>${esc(means[1])}</small>`;
+  $("lsA").innerHTML = `<b lang="tr" translate="no">${markDiff(words[0], words[1], true)}</b><small>${esc(means[0])}</small>`;
+  $("lsB").innerHTML = `<b lang="tr" translate="no">${markDiff(words[1], words[0], true)}</b><small>${esc(means[1])}</small>`;
   $("lsA").className = $("lsB").className = "ls-opt";
   lsLocked = false;
   // подгружаем записи обоих слов, играем после короткой паузы
@@ -1589,7 +1813,7 @@ function startBlitz(){
   blitz.timer = setInterval(() => { blitz.left--; updateBlitzBtn(); if(blitz.left <= 0) endBlitz(); }, 1000);
   nextListen();
 }
-function updateBlitzBtn(){ if(blitz) $("lsBlitz").textContent = `⏱ ${blitz.left} · ✓ ${blitz.ok}`; }
+function updateBlitzBtn(){ if(blitz) setLbl($("lsBlitz"), `${Math.floor(blitz.left / 60)}:${String(blitz.left % 60).padStart(2, "0")} · верно ${blitz.ok}`); }
 function endBlitz(quiet){
   if(!blitz) return;
   normalizeGame();
@@ -1599,28 +1823,28 @@ function endBlitz(quiet){
   const lvlBefore = levelOf(game.xp);
   const bonus = got * 2; game.xp += bonus;                   // бонус за блиц: +2 XP за каждый верный
   if(levelOf(game.xp) > lvlBefore){ const L = levelOf(game.xp);
-    deferred.push({ ic:"⭐", title:`Уровень ${L}: ${rankOf(L)}!`, text:`Бонус за блиц поднял уровень. До следующего ${50 * L * L - game.xp} XP.`, primary:{ label:"Отлично!" } }); }
+    deferred.push({ ic:"Tebrikler!", title:`Уровень ${L}: ${rankOf(L)}`, text:`Бонус за блиц поднял уровень. До следующего ${50 * L * L - game.xp} XP.`, primary:{ label:"Отлично!" } }); }
   blitz = null;
-  $("lsBlitz").classList.remove("running"); $("lsBlitz").textContent = "⚡ Блиц 60 с";
+  $("lsBlitz").classList.remove("running"); setLbl($("lsBlitz"), "Блиц 60 с");
   lsLocked = true; setOptionsEnabled(false);
   const r = $("lsResult"); r.className = "result " + (record ? "ok" : "info");
-  r.innerHTML = `<span class="verdict">Блиц окончен: ${got} верных${record ? " — новый рекорд! 🏆" : ` (рекорд ${game.blitzBest})`}</span>`;
+  r.innerHTML = `<span class="verdict">Блиц окончен: ${got} верных${record ? " — новый рекорд" : ` (рекорд ${game.blitzBest})`}</span>`;
   checkBadges(); renderGame();
   try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
   const resume = () => { lsLocked = false; setOptionsEnabled(true); nextListen(); };
   if(quiet){ lsLocked = false; setOptionsEnabled(true); return; }
   if(record && got > 0) confetti();
-  showModal({ ic: record && got > 0 ? "🏆" : "⚡", title: record && got > 0 ? "Новый рекорд блица!" : "Блиц окончен",
+  showModal({ ic: record && got > 0 ? "Rekor!" : "Süre doldu", title: record && got > 0 ? "Новый рекорд блица" : "Блиц окончен",
     text: record && got > 0 ? (prevBest ? `Прошлый рекорд: ${prevBest}. Вы улучшили его на ${got - prevBest}.` : "Первый рекорд установлен.") : `До рекорда (${prevBest}) не хватило ${prevBest - got + 1}. Ещё раз?`,
     stats:[["верно", got], ["точность", total ? Math.round(got / total * 100) + "%" : "—"], ["XP", "+" + bonus]],
-    primary:{ label:"⚡ Ещё раз", fn:startBlitz }, secondary:{ label:"Закрыть", fn:resume } });
+    primary:{ label:"Ещё раз", fn:startBlitz }, secondary:{ label:"Закрыть", fn:resume } });
   deferred.splice(0).forEach(o => { if(MILESTONE_MODALS) showModal(o); });  // отложенные праздники — после итогов блица
 }
 
 // Образец (носитель, если есть запись, иначе синтез) и сразу ваша запись
 function compareVoices(){
   if(!recordOn) return compareWithFreshRecording();
-  if(myRecFor !== item.target){ setResult("info", "Сначала скажите это слово: «🎤 Сказать», потом «⇄ Сравнить»."); return; }
+  if(myRecFor !== item.target){ setResult("info", "Сначала скажите это слово: «Сказать», потом «Сравнить»."); return; }
   const mine = $("myAudio");
   playReference(item.target, () => setTimeout(() => mine.play().catch(()=>{}), 350));
 }
@@ -1647,7 +1871,7 @@ function compareWithFreshRecording(){
     };
     rec.start();
     const ms = Math.min(8000, 1500 + Array.from(target).length * 120); // длина записи по длине фразы
-    setResult("info", `🎙 Говорите! Запись ${Math.round(ms/1000)} сек…`);
+    setResult("info", `Говорите! Запись ${Math.round(ms/1000)} сек…`);
     setTimeout(() => rec.state === "recording" && rec.stop(), ms);
   });
 }
@@ -1712,7 +1936,7 @@ function bkApply(){
   normalizeGame(); stats = load();
   bkPending = null; $("bkConfirm").hidden = true; $("bkInput").value = "";
   renderGame(); renderBadges(); renderStats(); renderChips();
-  bkMsg("Прогресс восстановлен ✓", "ok");
+  bkMsg("Прогресс восстановлен", "ok");
 }
 $("bkCopy").onclick = () => {
   const code = bkCode();
@@ -1784,7 +2008,7 @@ $("native").onclick = playNative;
 $("compare").onclick = compareVoices;
 $("freeSave").onclick = () => {
   const text = $("intent").value.trim() || lastHeard;
-  $("freeSave").textContent = saveMine(text) ? "✓ Сохранено" : "Уже есть в моих";
+  setLbl($("freeSave"), saveMine(text) ? "Сохранено" : "Уже в моих");
 };
 document.addEventListener("keydown", e => {
   // клавиши-сокращения не перехватывают пробел/Enter у кнопок, ссылок и полей (2.1.1)
