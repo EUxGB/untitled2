@@ -1,0 +1,11 @@
+{
+  "name": "soyle",
+  "private": true,
+  "description": "Тренажёр турецкого произношения",
+  "scripts": {
+    "test": "AXE=tests/axe.min.js node tests/soyle.test.js index.html"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}

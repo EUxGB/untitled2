@@ -224,13 +224,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('«Эхо» без записи носителя: сначала синтез-образец, потом микрофон', async () => {
     const r = await p.evaluate(async v => { eval(v); setMode('pairs'); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
       nativeCache.set(clean(item.target), []); recordOn = true; stream = null; window.__say = item.target; window.__log = []; echo();
-      await new Promise(z => setTimeout(z, 1800)); return window.__log; }, FAKE_VOICE);
+      for(let t = 0; t < 60 && window.__log[window.__log.length-1] !== 'me'; t++) await new Promise(z => setTimeout(z, 100)); await new Promise(z => setTimeout(z, 300)); return window.__log; }, FAKE_VOICE);
     eq(r.slice(0, 2), ['synth', 'mic']); eq(r.slice(-2), ['synth', 'me']);
   });
   await test('«Эхо» продолжает работу, даже если телефон не сообщил о конце речи', async () => {
-    const r = await p.evaluate(async v => { eval(v); window.__noOnEnd = true; setMode('pairs'); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
-      nativeCache.set(clean(item.target), []); item.target = 'on'; recordOn = true; stream = null; window.__say = 'on'; window.__log = []; echo();
-      await new Promise(z => setTimeout(z, 5000)); window.__noOnEnd = false; return window.__log; }, FAKE_VOICE);
+    const r = await p.evaluate(async v => { eval(v); for(let t = 0; t < 50 && listening; t++) await new Promise(z => setTimeout(z, 100)); window.__noOnEnd = true; setMode('pairs'); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
+      item.target = 'on'; nativeCache.set('on', []); recordOn = true; stream = null; window.__say = 'on'; window.__log = []; echo();
+      for(let t = 0; t < 80 && window.__log[window.__log.length-1] !== 'me'; t++) await new Promise(z => setTimeout(z, 100)); window.__noOnEnd = false; return window.__log; }, FAKE_VOICE);
     ok(r[0] === 'synth' && r.includes('mic') && r[r.length-1] === 'me', JSON.stringify(r));
   });
   await test('запись носителя не загрузилась — образец звучит синтезом', async () => {

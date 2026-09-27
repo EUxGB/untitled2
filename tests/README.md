@@ -5,8 +5,9 @@
 доступность WCAG 2.1 AA (axe-core) в светлой и тёмной теме.
 
 ```bash
-npm i playwright axe-core
-AXE=node_modules/axe-core/axe.min.js node tests/soyle.test.js index.html
+npm install
+npx playwright install chromium
+npm test
 ```
 
 Распознавание речи, микрофон, синтез и сеть подменяются заглушками — тесты проверяют логику тренажёра,
