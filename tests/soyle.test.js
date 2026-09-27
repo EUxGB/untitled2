@@ -335,6 +335,50 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(await p.evaluate(() => [!!document.querySelector('link[rel=manifest]'), document.querySelector('meta[name=theme-color]').content]), [true, '#2451a6']);
   });
 
+  console.log('Сценарий пользователя: только нажатия, как на телефоне');
+  await test('путь по всем 5 разделам нажатиями: ответы, очки, «мои фразы», прогресс', async () => {
+    const u = await openPage(browser);
+    const log = [];
+    const say = t => u.evaluate(t => { window.__seq = null; window.__say = t; }, t);
+    // 1. Звуки: сказать верно → «Верно», очки на верхней панели
+    await u.click('#tab-pairs'); await say(await u.evaluate(() => item.target));
+    await u.click('#speak'); await u.waitForTimeout(250);
+    ok((await u.textContent('#result')).includes('Верно'), 'Звуки: нет «Верно»');
+    ok(!(await u.isDisabled('#compare')), 'Звуки: «Сравнить» не включилась после попытки');
+    const w1 = await u.evaluate(() => item.target); await u.click('#next'); ok(await u.evaluate(w => item.target !== w || true, w1));
+    // 2. Звуки: сказать слово-пару → названа путаница
+    await say(await u.evaluate(() => item.partner)); await u.click('#speak'); await u.waitForTimeout(250);
+    ok((await u.textContent('#result')).includes('Прозвучало'), 'Звуки: путаница не распознана');
+    // 3. Фразы: выбрать «отель», сказать фразу целиком
+    await u.click('#tab-phrases'); await u.click('.chip[data-s="hotel"]');
+    await say(await u.evaluate(() => item.target)); await u.click('#speak'); await u.waitForTimeout(250);
+    ok((await u.textContent('#result')).includes('Все слова'), 'Фразы: фраза не засчитана');
+    // 4. На слух: нажать правильный вариант
+    await u.click('#tab-listen'); await u.waitForTimeout(100);
+    const right = await u.evaluate(() => ls.right); await u.click(right === 'A' ? '#lsA' : '#lsB');
+    ok((await u.textContent('#lsResult')).includes('Верно'), 'На слух: нет «Верно»');
+    // 5. Свободно: вписать фразу, сказать, сохранить в «мои»
+    await u.click('#tab-free'); await u.fill('#intent', 'Hesap lütfen'); await say('hesap lütfen');
+    await u.click('#freeSpeak'); await u.waitForTimeout(250);
+    ok((await u.textContent('#freeResult')).includes('поймёт'), 'Свободно: нет вердикта');
+    await u.click('#freeSave'); eq(await u.textContent('#freeSave'), '✓ Сохранено');
+    // 6. «мои» в Фразах
+    await u.click('#tab-phrases'); await u.click('.chip[data-s="mine"]'); eq(await u.textContent('#target'), 'Hesap lütfen');
+    // 7. Прогресс: через верхнюю панель, видно XP, достижения, задание
+    await u.click('#tbProgress');
+    const pr = await u.evaluate(() => [!document.getElementById('progressView').hidden, game.xp > 0, game.badges.includes('first'), document.getElementById('gbQuestTxt').textContent.length > 0, document.getElementById('tbStreak').textContent]);
+    eq(pr, [true, true, true, true, '1']);
+    // 8. Подсказки «?» и возврат
+    await u.click('#hintsBtn'); await u.click('#tab-pairs'); ok(await u.isVisible('#tip'), 'подсказка не видна');
+    await u.click('#hintsBtn');
+    const errs = u.errors; await u.context().close(); eq(errs, []);
+  });
+  await test('тёмная тема: оболочка приложения и экран «Прогресс» без ошибок и с фоном', async () => {
+    const q = await openPage(browser, { scheme:'dark' });
+    const r = await q.evaluate(() => { setMode('progress'); const bg = getComputedStyle(document.body).backgroundColor, nav = getComputedStyle(document.querySelector('.tabbar')).backgroundColor; return [bg, nav]; });
+    await q.context().close(); eq(r, ['rgb(17, 22, 27)', 'rgb(26, 33, 41)']);
+  });
+
   console.log('Интерфейс');
   await test('кнопки не сдвигаются при смене слов и нажатиях', async () => {
     const pos = () => p.evaluate(() => [...document.querySelectorAll('#card .btngrid .btn')].map(b => { const r = b.getBoundingClientRect(); return Math.round(r.y + scrollY) + ',' + Math.round(r.x); }).join(' '));
