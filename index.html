@@ -104,6 +104,23 @@ body{padding-bottom:96px}
 .gb-goal{display:flex; align-items:center; gap:8px; flex:1 1 140px; min-width:0}
 .gb-goal .bar{flex:1; height:6px; display:block}
 .gb-goal .bar i{background:var(--accent); transition:width .4s}
+.gb-quest{flex:1 1 100%; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--muted); height:1.5em}
+.gb-quest.done{color:var(--ok)}
+.ls-top{grid-template-columns:repeat(2, minmax(0,1fr)) !important}
+#lsBlitz.running{background:var(--near-soft); border-color:var(--near); font-variant-numeric:tabular-nums}
+.badges{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 16px}
+.badges summary{cursor:pointer; list-style:none; min-height:44px; display:flex; align-items:center}
+.badges summary::-webkit-details-marker{display:none}
+.badges summary h2{margin:0}
+#badgeCount{font-variant-numeric:tabular-nums; color:var(--ink); margin-left:6px}
+.badge-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:10px; margin-top:10px}
+.badge{display:flex; gap:10px; align-items:center; padding:8px; border-radius:10px; border:1px solid var(--line)}
+.badge .ic{font-size:26px; line-height:1}
+.badge b{display:block; font-size:14px}
+.badge small{color:var(--muted); font-size:12px; line-height:1.3}
+.badge.locked{opacity:.55}
+.badge.locked .ic{filter:grayscale(1)}
+#confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:30}
 .ls-options{display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%}
 .ls-opt{border:2px solid var(--line); background:var(--surface); border-radius:14px; padding:18px 8px; display:flex; flex-direction:column; gap:4px; align-items:center}
 .ls-opt b{font:700 clamp(26px,8vw,40px)/1.1 var(--display)}
@@ -146,10 +163,11 @@ body.hints details.hintable{display:block !important}
 
   <section class="gamebar" aria-label="Прогресс">
     <span class="gb-chip" title="Дней подряд с занятиями">🔥 <b id="gbStreak">0</b></span>
-    <span class="gb-chip" title="Уровень">⭐ ур. <b id="gbLevel">1</b></span>
+    <span class="gb-chip" title="Уровень и звание">⭐ ур. <b id="gbLevel">1</b> · <span id="gbRank">Турист</span></span>
     <span class="gb-chip gb-xp" id="gbXp" title="Опыт">0 / 50 XP</span>
     <span class="gb-goal" title="Цель на сегодня: 20 верных ответов">🎯 <span id="gbGoalTxt">0 / 20</span>
       <span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></span>
+    <span class="gb-quest" id="gbQuest" title="Задание дня: +50 XP">🎁 <span id="gbQuestTxt"></span></span>
   </section>
 
   <div id="warn" class="warn" hidden></div>
@@ -165,7 +183,7 @@ body.hints details.hintable{display:block !important}
       <li><b>На слух</b> — звучит одно слово из пары, выберите какое. Сначала мозг учится различать звуки, потом их проще произнести. Голоса и темп меняются специально.</li>
       <li><b>🔁 Эхо</b> — образец и сразу ваш повтор (шэдоуинг): копируете звук, пока он ещё в памяти.</li>
       <li><b>🧠 на сегодня</b> — интервальные повторения: каждая отработанная фраза возвращается через 1, 3, 7, 16 и 35 дней, ошибка — через 10 минут. Так фраза переходит в долгую память.</li>
-      <li><b>Игра:</b> опыт (XP) за верные ответы, комбо за серию без ошибок, уровни, 🔥 дни подряд и 🎯 цель дня — 20 верных ответов.</li>
+      <li><b>Игра:</b> опыт (XP) за верные ответы, комбо за серию без ошибок, уровни со званиями (от «Туриста» до «Yerli»), 🔥 дни подряд, 🎯 цель дня — 20 верных ответов, 🎁 задание дня (+50 XP), 🏅 20 достижений, ⚡ блиц — сколько пар различите за 60 секунд.</li>
     </ol>
     <p>Лучше всего работает в Chrome или Edge. Нужен интернет. На iPhone распознавание речи ограничено.</p>
   </details>
@@ -181,7 +199,10 @@ body.hints details.hintable{display:block !important}
 
   <section class="card" id="listenCard" hidden>
     <p class="meaning" style="margin:0">Какое слово прозвучало?</p>
-    <button class="btn primary" id="lsPlay">🔊 Слушать ещё раз</button>
+    <div class="btngrid ls-top">
+      <button class="btn primary" id="lsPlay">🔊 Ещё раз</button>
+      <button class="btn" id="lsBlitz" title="Сколько пар различите за 60 секунд">⚡ Блиц 60 с</button>
+    </div>
     <div class="ls-options">
       <button class="ls-opt" id="lsA" data-k="1"></button>
       <button class="ls-opt" id="lsB" data-k="2"></button>
@@ -229,6 +250,11 @@ body.hints details.hintable{display:block !important}
   <p class="hint hintable"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>N</kbd> — носитель, <kbd>L</kbd> — синтез, на вкладке «На слух»: <kbd>1</kbd> <kbd>2</kbd></p>
   <label class="opt">Голос синтеза: <select id="voice"></select></label>
 
+  <details class="badges" id="badgesBox">
+    <summary><h2>🏅 Достижения <span id="badgeCount">0 / 0</span></h2></summary>
+    <div class="badge-grid" id="badgeGrid"></div>
+  </details>
+
   <section>
     <h2>Статистика</h2>
     <div class="stats" id="stats"></div>
@@ -236,6 +262,7 @@ body.hints details.hintable{display:block !important}
 </div>
 
 <div class="toast" id="toast" aria-live="polite"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
 <button class="fab" id="fab" title="Проверить любую фразу" aria-label="Любая фраза">🗣<span class="fab-t"> Любая фраза</span></button>
 <audio id="myAudio"></audio>
 <audio id="nativeAudio" preload="none"></audio>
@@ -616,51 +643,162 @@ function renderStats(){
 function count(gid, okScore){
   const s = stats[gid] || (stats[gid] = {t:0, ok:0});
   s.t++; s.ok += okScore; save(); renderStats();
-  award(okScore);
+  award(okScore, gid);
   if(gid !== "free" && gid !== "listen" && item) srsUpdate(okScore);
 }
 
 // ---------- игровой слой: опыт, уровни, серия дней, цель дня, комбо ----------
 const GOAL = 20;
 let game = (() => { try { return JSON.parse(localStorage.getItem("soyle-game")) || {}; } catch(e){ return {}; } })();
-game = Object.assign({ xp:0, streak:0, lastDay:"", today:"", todayOk:0, combo:0 }, game);
+// недостающие поля (старые сохранения, сбой хранилища) всегда дополняются значениями по умолчанию
+const GAME_DEFAULTS = () => ({ xp:0, streak:0, lastDay:"", today:"", todayOk:0, combo:0, bestCombo:0, total:0, goals:0, blitzBest:0, badges:[], quest:null });
+function normalizeGame(){
+  game = Object.assign(GAME_DEFAULTS(), game || {});
+  if(!Array.isArray(game.badges)) game.badges = [];
+}
+normalizeGame();
 const dayStr = d => d.toISOString().slice(0,10);
 const levelOf = xp => Math.floor(Math.sqrt(xp/50)) + 1;           // 50, 200, 450, 800… XP
-function award(score){
+function award(score, gid){
+  normalizeGame();
   const today = dayStr(new Date()), yest = dayStr(new Date(Date.now()-864e5));
   if(game.today !== today){ game.today = today; game.todayOk = 0; }
   if(game.lastDay !== today){ game.streak = game.lastDay === yest ? game.streak + 1 : 1; game.lastDay = today; }
   const lvl = levelOf(game.xp);
   let gain = 0;
   if(score >= 1){
-    game.combo++; game.todayOk++;
+    game.combo++; game.todayOk++; game.total++;
+    game.bestCombo = Math.max(game.bestCombo, game.combo);
     gain = Math.round(10 * (1 + Math.min(game.combo-1, 5) * 0.2));  // комбо до ×2
     if(game.combo >= 3 && game.combo % 3 === 0) toast(`Комбо ×${game.combo}! +${gain} XP`);
-    if(game.todayOk === GOAL) toast("🎯 Цель дня выполнена!");
+    if(game.todayOk === GOAL){ game.goals++; toast("🎯 Цель дня выполнена!"); confetti(); }
   } else {
     if(score >= .5) gain = 3;
     game.combo = 0;
   }
   game.xp += gain;
-  if(levelOf(game.xp) > lvl) toast(`⭐ Новый уровень: ${levelOf(game.xp)}!`);
+  questProgress(score, gid);
+  if(levelOf(game.xp) > lvl){ toast(`⭐ Новый уровень ${levelOf(game.xp)}: ${rankOf(levelOf(game.xp))}!`); confetti(); }
+  checkBadges();
   try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
   renderGame();
 }
 function renderGame(){
+  normalizeGame();
   const today = dayStr(new Date()), yest = dayStr(new Date(Date.now()-864e5));
   const streak = (game.lastDay === today || game.lastDay === yest) ? game.streak : 0;
   const todayOk = game.today === today ? game.todayOk : 0;
   const L = levelOf(game.xp), next = 50 * L * L;
   $("gbStreak").textContent = streak;
   $("gbLevel").textContent = L;
+  $("gbRank").textContent = rankOf(L);
+  const q = todayQuest();
+  $("gbQuestTxt").textContent = q.done ? `Задание дня выполнено: ${q.t} ✓` : `Задание дня: ${q.t} — ${q.got} / ${q.n} (+50 XP)`;
+  $("gbQuest").classList.toggle("done", q.done);
   $("gbXp").textContent = `${game.xp} / ${next} XP`;
   $("gbGoalTxt").textContent = `${Math.min(todayOk, GOAL)} / ${GOAL}`;
   $("gbGoalBar").style.width = Math.min(100, todayOk / GOAL * 100) + "%";
 }
-let toastTimer = null;
-function toast(t){
-  const el = $("toast"); el.textContent = t; el.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+// уведомления идут очередью — достижение не перекрывает новый уровень
+const toastQueue = []; let toastBusy = false;
+function toast(t){ toastQueue.push(t); if(!toastBusy) showNextToast(); }
+function showNextToast(){
+  const el = $("toast"), t = toastQueue.shift();
+  if(!t){ toastBusy = false; return; }
+  toastBusy = true; el.textContent = t; el.classList.add("show");
+  setTimeout(() => { el.classList.remove("show"); setTimeout(showNextToast, 250); }, 1800);
+}
+
+// ---------- звания ----------
+const RANKS = ["Турист", "Гость", "Сосед", "Приятель", "Друг", "Стамбулец", "Почти турок", "Yerli — местный"];
+const rankOf = L => RANKS[Math.min(L - 1, RANKS.length - 1)];
+
+// ---------- задание дня (меняется каждый день, +50 XP) ----------
+const QUESTS = [
+  { t:"5 верных «На слух»", gids:["listen"], n:5 },
+  { t:"5 верных фраз «ресторан»", gids:["ph-food"], n:5 },
+  { t:"10 верных в «Звуках»", gids:["o","u","i","c"], n:10 },
+  { t:"5 верных фраз «отель»", gids:["ph-hotel"], n:5 },
+  { t:"5 повторений «на сегодня»", gids:["ph-srs"], n:5 },
+  { t:"комбо ×5 без ошибок", combo:5, n:5 },
+  { t:"3 фразы в «Свободно», которые поймёт носитель", gids:["free"], n:3 },
+  { t:"5 верных фраз «транспорт»", gids:["ph-transport"], n:5 },
+  { t:"5 верных фраз «магазин и базар»", gids:["ph-shop"], n:5 },
+];
+function todayQuest(){
+  const today = dayStr(new Date());
+  if(!game.quest || game.quest.day !== today){
+    const idx = Math.floor(Date.parse(today) / 864e5) % QUESTS.length;
+    game.quest = { day:today, idx, got:0, done:false };
+  }
+  return Object.assign({}, QUESTS[game.quest.idx], game.quest);
+}
+function questProgress(score, gid){
+  const q = todayQuest(), def = QUESTS[game.quest.idx];
+  if(game.quest.done) return;
+  if(def.combo) game.quest.got = Math.min(def.n, Math.max(game.quest.got, game.combo));
+  else if(score >= 1 && def.gids.includes(gid)) game.quest.got++;
+  if(game.quest.got >= def.n){
+    game.quest.done = true; game.xp += 50;
+    toast("🎁 Задание дня выполнено! +50 XP"); confetti();
+  }
+}
+
+// ---------- достижения ----------
+const BADGES = [
+  { id:"first",   ic:"🌱", t:"Первое слово",   d:"Первый верный ответ",             ok:g => g.total >= 1 },
+  { id:"warm",    ic:"🔟", t:"Разогрев",       d:"10 верных ответов",               ok:g => g.total >= 10 },
+  { id:"hundred", ic:"💯", t:"Сотня",          d:"100 верных ответов",              ok:g => g.total >= 100 },
+  { id:"combo5",  ic:"🔥", t:"Серия ×5",       d:"5 верных подряд",                 ok:g => g.bestCombo >= 5 },
+  { id:"combo15", ic:"☄️", t:"Неудержимый",    d:"15 верных подряд",                ok:g => g.bestCombo >= 15 },
+  { id:"streak3", ic:"📅", t:"Три дня",        d:"Занятия 3 дня подряд",            ok:g => g.streak >= 3 },
+  { id:"streak7", ic:"🗓️", t:"Неделя",         d:"Занятия 7 дней подряд",           ok:g => g.streak >= 7 },
+  { id:"goal",    ic:"🎯", t:"В цель",         d:"Выполнить цель дня",              ok:g => g.goals >= 1 },
+  { id:"quest",   ic:"🎁", t:"Охотник",        d:"Выполнить задание дня",           ok:g => g.quest && g.quest.done },
+  { id:"ear",     ic:"👂", t:"Турецкое ухо",   d:"20 верных «На слух»",             ok:(g,s) => (s.listen||{}).ok >= 20 },
+  { id:"blitz10", ic:"⚡", t:"Молния",         d:"10 верных за один блиц",          ok:g => g.blitzBest >= 10 },
+  { id:"blitz20", ic:"🌩️", t:"Гроза",          d:"20 верных за один блиц",          ok:g => g.blitzBest >= 20 },
+  { id:"o",       ic:"ö",  t:"Мастер ö",       d:"15 верных в паре o · ö",          ok:(g,s) => (s.o||{}).ok >= 15 },
+  { id:"u",       ic:"ü",  t:"Мастер ü",       d:"15 верных в паре u · ü",          ok:(g,s) => (s.u||{}).ok >= 15 },
+  { id:"i",       ic:"ı",  t:"Мастер ı",       d:"15 верных в паре ı · i",          ok:(g,s) => (s.i||{}).ok >= 15 },
+  { id:"hotel",   ic:"🏨", t:"Гость отеля",    d:"10 верных фраз «отель»",          ok:(g,s) => (s["ph-hotel"]||{}).ok >= 10 },
+  { id:"food",    ic:"🍽️", t:"Afiyet olsun",   d:"10 верных фраз «ресторан»",       ok:(g,s) => (s["ph-food"]||{}).ok >= 10 },
+  { id:"free",    ic:"🗣️", t:"Меня поняли",    d:"5 фраз в «Свободно»",             ok:(g,s) => (s.free||{}).ok >= 5 },
+  { id:"memory",  ic:"🧠", t:"Память слона",   d:"10 повторений «на сегодня»",      ok:(g,s) => (s["ph-srs"]||{}).ok >= 10 },
+  { id:"level5",  ic:"🏙️", t:"Стамбулец",      d:"Достичь 6-го уровня",             ok:g => levelOf(g.xp) >= 6 },
+];
+function checkBadges(){
+  normalizeGame();
+  BADGES.forEach(b => {
+    if(!game.badges.includes(b.id) && b.ok(game, stats)){
+      game.badges.push(b.id); toast(`🏅 Достижение: ${b.t}`);
+    }
+  });
+  try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
+  renderBadges();
+}
+function renderBadges(){
+  normalizeGame();
+  $("badgeCount").textContent = `${game.badges.length} / ${BADGES.length}`;
+  $("badgeGrid").innerHTML = BADGES.map(b => {
+    const on = game.badges.includes(b.id);
+    return `<div class="badge${on ? "" : " locked"}"><span class="ic" aria-hidden="true">${b.ic}</span><span><b>${b.t}</b><small>${on ? "получено" : b.d}</small></span></div>`;
+  }).join("");
+}
+
+// ---------- праздничный эффект (не показывается при «уменьшить движение») ----------
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c = $("confetti"), ctx = c.getContext && c.getContext("2d"); if(!ctx) return;
+  c.width = innerWidth; c.height = innerHeight;
+  const colors = ["#2451a6","#2c7a4b","#e7bb5c","#b23d2b","#86a8ec"];
+  const parts = Array.from({ length:80 }, () => ({ x:innerWidth/2, y:innerHeight/3, vx:(Math.random()-.5)*12, vy:Math.random()*-10-2, s:4+Math.random()*5, c:colors[Math.floor(Math.random()*colors.length)] }));
+  const t0 = performance.now();
+  (function frame(t){
+    ctx.clearRect(0,0,c.width,c.height);
+    parts.forEach(p => { p.vy += .35; p.x += p.vx; p.y += p.vy; ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, p.s, p.s*.6); });
+    if(t - t0 < 1400) requestAnimationFrame(frame); else ctx.clearRect(0,0,c.width,c.height);
+  })(t0);
 }
 
 // ---------- интервальные повторения (система Лейтнера) ----------
@@ -1105,7 +1243,31 @@ function answerListen(which){
   r.className = "result " + (ok ? "ok" : "bad");
   r.innerHTML = `<span class="verdict">${ok ? "Верно!" : "Нет, прозвучало «" + esc(ls.answer) + "»"}</span>`;
   count("listen", ok ? 1 : 0);
-  setTimeout(nextListen, ok ? 900 : 2000);
+  if(blitz){ blitz.ok += ok ? 1 : 0; updateBlitzBtn(); }
+  setTimeout(nextListen, blitz ? (ok ? 350 : 900) : (ok ? 900 : 2000));
+}
+
+let blitz = null, BLITZ_SEC = 60;
+function startBlitz(){
+  if(blitz) return;
+  blitz = { ok:0, left:BLITZ_SEC };
+  $("lsBlitz").classList.add("running"); updateBlitzBtn();
+  blitz.timer = setInterval(() => { blitz.left--; updateBlitzBtn(); if(blitz.left <= 0) endBlitz(); }, 1000);
+  nextListen();
+}
+function updateBlitzBtn(){ if(blitz) $("lsBlitz").textContent = `⏱ ${blitz.left} · ✓ ${blitz.ok}`; }
+function endBlitz(){
+  if(!blitz) return;
+  normalizeGame();
+  clearInterval(blitz.timer);
+  const got = blitz.ok, record = got > game.blitzBest;
+  if(record) game.blitzBest = got;
+  blitz = null;
+  $("lsBlitz").classList.remove("running"); $("lsBlitz").textContent = "⚡ Блиц 60 с";
+  const r = $("lsResult"); r.className = "result " + (record ? "ok" : "info");
+  r.innerHTML = `<span class="verdict">Блиц окончен: ${got} верных${record ? " — новый рекорд! 🏆" : ` (рекорд ${game.blitzBest})`}</span>`;
+  if(record && got > 0){ toast(`⚡ Рекорд блица: ${got}!`); confetti(); }
+  checkBadges();
 }
 
 // Образец (носитель, если есть запись, иначе синтез) и сразу ваша запись
@@ -1155,6 +1317,7 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 // ---------- wiring ----------
 function setMode(m){
   if(listening) stopListening();
+  if(blitz && m !== "listen") endBlitz();
   mode = m;
   $("tab-pairs").setAttribute("aria-pressed", m==="pairs");
   $("tab-phrases").setAttribute("aria-pressed", m==="phrases");
@@ -1172,6 +1335,7 @@ $("tab-phrases").onclick = () => setMode("phrases");
 $("tab-free").onclick = () => setMode("free");
 $("tab-listen").onclick = () => setMode("listen");
 $("lsPlay").onclick = () => ls && playReference(ls.answer, null, true);
+$("lsBlitz").onclick = () => blitz ? endBlitz() : startBlitz();
 $("lsA").onclick = () => answerListen("A");
 $("lsB").onclick = () => answerListen("B");
 $("echo").onclick = echo;
@@ -1203,7 +1367,7 @@ document.addEventListener("keydown", e => {
   else if(e.key.toLowerCase()==="n"){ playNative(); }
 });
 
-renderChips(); renderStats(); renderGame(); setupSelfRecord(); next();
+renderChips(); renderStats(); renderGame(); renderBadges(); setupSelfRecord(); next();
 </script>
 </body>
 </html>

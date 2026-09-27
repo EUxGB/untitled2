@@ -133,7 +133,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
 
   console.log('Игра и повторения');
   await test('XP, комбо ×2 максимум, цель дня, серия дней', async () => {
-    const r = await p.evaluate(() => { game = { xp:0, streak:0, lastDay:'', today:'', todayOk:0, combo:0 }; for(let i=0;i<8;i++) award(1); award(0); return [game.xp, game.combo, game.todayOk, game.streak, levelOf(game.xp)]; });
+    const r = await p.evaluate(() => { game = { xp:0, streak:0, lastDay:'', today:'', todayOk:0, combo:0 }; normalizeGame(); todayQuest(); game.quest.done = true; for(let i=0;i<8;i++) award(1); award(0); return [game.xp, game.combo, game.todayOk, game.streak, levelOf(game.xp)]; });
     eq(r, [10+12+14+16+18+20+20+20, 0, 8, 1, 2]);
   });
   await test('интервальные повторения: верно → следующая ступень, ошибка → через 10 минут', async () => {
@@ -213,6 +213,58 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       window.__say = item.target; window.__played = []; echo(); await new Promise(z => setTimeout(z, 1600));
       return window.__played.map(s => s.startsWith('blob:') ? 'me' : s.split('/').pop()); });
     eq(r, ['ref.wav', 'ref.wav', 'me']);
+  });
+
+  console.log('Геймификация');
+  const RESET = "game = Object.assign({ xp:0, streak:0, lastDay:'', today:'', todayOk:0, combo:0, bestCombo:0, total:0, goals:0, blitzBest:0, badges:[], quest:null }); stats = {}; toastQueue.length = 0;";
+  await test('старое сохранение игры без новых полей не ломает начисление очков', async () => {
+    const q = await openPage(browser, { storage:{ 'soyle-game': JSON.stringify({ xp:120, streak:2 }) } });
+    const r = await q.evaluate(() => { game = { xp:5 }; award(1, 'o'); return [Array.isArray(game.badges), game.xp > 5, game.badges.includes('first')]; });
+    const errs = q.errors; await q.context().close(); eq(r, [true, true, true]); eq(errs, []);
+  });
+  await test('звания растут с уровнем', async () => {
+    eq(await p.evaluate(() => [rankOf(1), rankOf(3), rankOf(6), rankOf(99)]), ['Турист','Сосед','Стамбулец','Yerli — местный']);
+  });
+  await test('достижения открываются один раз и показываются в списке', async () => {
+    const r = await p.evaluate(r => { eval(r); for(let i = 0; i < 5; i++) award(1, 'o'); const once = game.badges.slice(); award(1, 'o'); return [once, game.badges.filter(b => b === 'first').length, document.getElementById('badgeCount').textContent, document.querySelectorAll('.badge:not(.locked)').length]; }, RESET);
+    ok(r[0].includes('first') && r[0].includes('combo5'), JSON.stringify(r[0])); eq(r[1], 1); eq(r[2], `${r[0].length} / 20`); eq(r[3], r[0].length);
+  });
+  await test('задание дня: прогресс только по своему набору, награда +50 XP один раз', async () => {
+    const r = await p.evaluate(r => { eval(r); todayQuest(); game.quest.idx = 0; // «5 верных На слух»
+      award(1, 'o'); const other = game.quest.got; for(let i = 0; i < 5; i++) award(1, 'listen'); const xp1 = game.xp; award(1, 'listen'); const xp2 = game.xp;
+      return [other, game.quest.done, xp2 - xp1 < 50, document.getElementById('gbQuestTxt').textContent.includes('выполнено')]; }, RESET);
+    eq(r, [0, true, true, true]);
+  });
+  await test('задание на комбо засчитывается по серии', async () => {
+    const r = await p.evaluate(r => { eval(r); todayQuest(); game.quest.idx = 5; for(let i = 0; i < 5; i++) award(1, 'o'); return game.quest.done; }, RESET);
+    eq(r, true);
+  });
+  await test('уведомления идут очередью, а не перекрывают друг друга', async () => {
+    const r = await p.evaluate(async () => { toastQueue.length = 0; for(let t = 0; t < 40 && toastBusy; t++) await new Promise(z => setTimeout(z, 100)); toast('A'); toast('B'); const first = document.getElementById('toast').textContent; await new Promise(z => setTimeout(z, 2200)); return [first, document.getElementById('toast').textContent]; });
+    eq(r, ['A', 'B']);
+  });
+  await test('блиц: таймер, счёт верных, рекорд и достижение', async () => {
+    const r = await p.evaluate(async r => { eval(r); BLITZ_SEC = 3; setMode('listen'); startBlitz();
+      for(let i = 0; i < 2; i++){ await new Promise(z => setTimeout(z, 420)); answerListen(ls.right); }
+      const during = document.getElementById('lsBlitz').textContent;
+      await new Promise(z => setTimeout(z, 3200)); BLITZ_SEC = 60;
+      return [during.startsWith('⏱'), game.blitzBest, document.getElementById('lsResult').textContent.includes('рекорд'), document.getElementById('lsBlitz').textContent, blitz]; }, RESET);
+    eq(r, [true, 2, true, '⚡ Блиц 60 с', null]);
+  });
+  await test('блиц останавливается при уходе из режима «На слух»', async () => {
+    const r = await p.evaluate(() => { setMode('listen'); startBlitz(); setMode('pairs'); return [blitz, document.getElementById('lsBlitz').textContent]; });
+    eq(r, [null, '⚡ Блиц 60 с']);
+  });
+  await test('конфетти не ломают страницу и отключены при «уменьшить движение»', async () => {
+    await p.evaluate(() => confetti()); await p.waitForTimeout(100);
+    const q = await openPage(browser); await q.emulateMedia({ reducedMotion:'reduce' });
+    const drawn = await q.evaluate(() => { const c = document.getElementById('confetti'); const w = c.width; confetti(); return c.width === w; });
+    await q.context().close(); eq(drawn, true); eq(p.errors, []);
+  });
+  await test('панель прогресса не сдвигает кнопки при изменении текста задания', async () => {
+    const r = await p.evaluate(r => { eval(r); setMode('pairs'); const y = () => Math.round(document.getElementById('speak').getBoundingClientRect().y + scrollY);
+      const a = y(); todayQuest(); game.quest.idx = 6; renderGame(); const b = y(); game.quest.done = true; renderGame(); return [a, b, y()]; }, RESET);
+    eq(r[0], r[1]); eq(r[1], r[2]);
   });
 
   console.log('Образец, Эхо и Синтез');
