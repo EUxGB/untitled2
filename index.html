@@ -460,6 +460,36 @@ h1 span{color:inherit}
 }
 .pv-dot .ic{width:16px; height:16px; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round}
 .pv-dot.frozen{font-size:0}
+
+/* ---------- автоподгонка под высоту экрана (навык responsive-design: fluid-размеры) ----------
+   --fit вычисляет autofit(): 1.15 — растянуть на высоком экране, до 0.6 — сжать на низком.
+   Зоны нажатия не меньше 44px. */
+.app{--fit:1}
+.topbar{min-height:calc(60px * var(--fit)); padding-top:calc(10px * var(--fit)); padding-bottom:calc(6px * var(--fit))}
+.chips{padding-top:calc(4px * var(--fit)); padding-bottom:calc(10px * var(--fit))}
+.lesson{padding-bottom:calc(8px * var(--fit))}
+.screen{padding-bottom:calc(10px * var(--fit))}
+.screen > .card{gap:calc(8px * var(--fit))}
+#card .target{font-size:max(30px, calc(var(--fit) * clamp(56px, 15vh, 132px)))}
+#card .target.phrase{font-size:max(18px, calc(var(--fit) * clamp(24px, 4.2vh, 40px)))}
+#card .meaning{font-size:calc(18px * max(.8, min(1.1, var(--fit))))}
+#card .partner{font-size:calc(15px * max(.85, min(1.1, var(--fit))))}
+.result{height:max(52px, calc(84px * var(--fit)))}
+.acts{padding-top:calc(4px * var(--fit))}
+.act{gap:calc(6px * var(--fit)); font-size:calc(13px * max(.85, min(1.1, var(--fit))))}
+.act .ring{width:max(44px, calc(52px * var(--fit))); height:max(44px, calc(52px * var(--fit)))}
+.main-row{padding-top:calc(10px * var(--fit)); padding-bottom:calc(10px * var(--fit))}
+.pill{height:max(44px, calc(48px * var(--fit)))}
+.mic{width:max(56px, calc(84px * var(--fit))); height:max(56px, calc(84px * var(--fit)))}
+.mic .ic{width:calc(34px * max(.7, var(--fit))); height:calc(34px * max(.7, var(--fit)))}
+.ls-top{gap:calc(12px * var(--fit)); padding-top:calc(6px * var(--fit))}
+.round-xl{width:max(60px, calc(104px * var(--fit))); height:max(60px, calc(104px * var(--fit))); box-shadow:0 0 0 calc(10px * var(--fit)) var(--accent-soft)}
+.round-xl .ic{width:calc(42px * max(.6, var(--fit))); height:calc(42px * max(.6, var(--fit)))}
+.ls-options{gap:calc(12px * var(--fit))}
+.ls-opt{min-height:max(72px, calc(140px * var(--fit)))}
+.ls-opt b{font-size:max(28px, calc(var(--fit) * clamp(40px, 7vh, 58px)))}
+.free-title{font-size:max(18px, calc(var(--fit) * clamp(22px, 3.6vh, 30px)))}
+.tabbar .tab{min-height:max(48px, calc(60px * var(--fit)))}
 </style>
 </head>
 <body>
@@ -1019,7 +1049,7 @@ function next(){
   nativeIdx = 0;
   prefetchNative();
   $("yg").href = `https://youglish.com/pronounce/${q}/turkish`;
-  $("meaning").textContent = item.meaning;
+  $("meaning").textContent = item.meaning; scheduleFit();
   if(item.native){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
@@ -1786,6 +1816,7 @@ function nextListen(){
   lsLocked = false;
   // подгружаем записи обоих слов, играем после короткой паузы
   findRecordings(words[0]); findRecordings(words[1]);
+  scheduleFit();
   setTimeout(() => playReference(ls.answer, null, true), 300);
 }
 function answerListen(which){
@@ -1967,6 +1998,26 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 
 // ---------- wiring ----------
 const MODES = ["pairs","phrases","listen","free","progress"];
+// ---------- автоподгонка: всё на одном экране без прокрутки, на высоком экране — крупнее ----------
+// Подбираем --fit (0.6…1.15) двоичным поиском: наибольший, при котором карточка и страница не переполнены.
+function autofit(){
+  const app = document.querySelector(".app"); if(!app) return;
+  const card = [...document.querySelectorAll(".screen > .card")].find(c => !c.hidden && c.offsetParent);
+  const set = v => app.style.setProperty("--fit", v.toFixed(3));
+  if(!card || mode === "progress"){ set(1); return; }
+  const over = () => card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight - innerHeight > 1;
+  let lo = .6, hi = 1.15;
+  set(hi); if(!over()) return;
+  set(lo); if(over()) return;                  // совсем низкий экран: минимальный размер, карточка прокручивается
+  for(let k = 0; k < 8; k++){ const m = (lo + hi) / 2; set(m); if(over()) hi = m; else lo = m; }
+  set(lo);
+}
+let fitRaf = 0;
+function scheduleFit(){ cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(autofit); }
+addEventListener("resize", scheduleFit);
+addEventListener("orientationchange", scheduleFit);
+if(window.visualViewport) visualViewport.addEventListener("resize", scheduleFit);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleFit);
 function setMode(m){
   try { if(location.hash.slice(1) !== m) history.replaceState(null, "", "#" + m); } catch(e){}
   if(listening) stopListening();
@@ -1979,7 +2030,7 @@ function setMode(m){
   $("tab-progress").setAttribute("aria-pressed", m==="progress");
   $("card").hidden = m==="free" || m==="listen" || m==="progress"; $("freeCard").hidden = m!=="free"; $("listenCard").hidden = m!=="listen";
   $("progressView").hidden = m!=="progress";
-  renderLesson();
+  renderLesson(); scheduleFit();
   if(m==="free" || m==="progress"){ $("chips").hidden = true; if(m==="progress"){ renderGame(); renderBadges(); renderStats(); } return; }
   $("chips").hidden = false;
   renderChips();

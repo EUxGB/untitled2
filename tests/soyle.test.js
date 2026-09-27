@@ -595,6 +595,22 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r, ['2', true, 22, true]);
   });
 
+  await test('автоподгонка: на низком экране сжимается, на высоком растягивается, прокрутки нет', async () => {
+    const q = await openPage(browser); const out = [];
+    for(const [w, h] of [[360, 560], [360, 640], [412, 732], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h });
+      for(const m of ['pairs','phrases','listen','free']){
+        out.push(await q.evaluate(([m, w, h]) => { setMode(m); autofit(); const card = [...document.querySelectorAll('.screen > .card')].find(c => !c.hidden);
+          const fit = +getComputedStyle(document.querySelector('.app')).getPropertyValue('--fit');
+          const tab = document.querySelector('.tabbar').getBoundingClientRect().bottom;
+          return { k:`${w}x${h} ${m}`, fit, over: card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight > innerHeight || tab > innerHeight + 1 }; }, [m, w, h]));
+      }
+    }
+    await q.context().close();
+    eq(out.filter(o => o.over).map(o => o.k), []);
+    ok(out.find(o => o.k === '360x560 pairs').fit < 1 && out.find(o => o.k === '412x915 phrases').fit > 1, JSON.stringify(out.map(o => o.k + ':' + o.fit)));
+  });
+
   console.log('Резервная копия прогресса');
   await test('код копии: весь прогресс, без настроек устройства; русские и турецкие буквы не портятся', async () => {
     const r = await p.evaluate(() => { localStorage.setItem('soyle-rec-conflict','1'); localStorage.setItem('soyle-voice','X'); saveList('soyle-mine', [{ tr:'Çok güzel, teşekkürler' }]);

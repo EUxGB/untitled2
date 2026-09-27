@@ -19,6 +19,12 @@
       "skillPath": "skills/productivity/game-design/SKILL.md",
       "computedHash": "79c2695ba9d1721fd05dab6833775ae43cfb6fce92357ef31c8341166fc5b5da"
     },
+    "responsive-design": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/ui-design/skills/responsive-design/SKILL.md",
+      "computedHash": "794cc7f1b2f79d398135d19ef3fe32c406dde926b9bdf86ee3fe7b939a0be906"
+    },
     "web-design-guidelines": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
