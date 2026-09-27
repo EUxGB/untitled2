@@ -214,6 +214,14 @@ header{padding-right:12px}
 .pv-quest{background:var(--near-soft); border-radius:14px; padding:12px 14px; font-weight:500}
 .pv-quest.done{background:var(--ok-soft); color:var(--ok)}
 .progress .opt{justify-content:flex-start}
+.backup{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px}
+.bk-note{margin:0; font-size:13px; color:var(--muted)}
+#bkInput{width:100%; min-height:48px; font:13px var(--mono); color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; resize:vertical}
+label.btn{display:flex; align-items:center; justify-content:center; cursor:pointer}
+.bk-confirm{background:var(--near-soft); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:8px}
+.bk-confirm p{margin:0; font-size:14px}
+.bk-msg{margin:0; font-size:14px; min-height:1.4em}
+.bk-msg.ok{color:var(--ok)} .bk-msg.bad{color:var(--bad)}
 .tabbar{flex:none; display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); background:var(--surface); border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom, 0px)}
 .tabbar .tab{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:60px; padding:6px 2px; border:0; border-radius:0; font-size:11px; font-weight:600; color:var(--muted); background:none}
 .tabbar .tab .ti{font-size:22px; line-height:1; padding:3px 14px; border-radius:999px; transition:background .2s}
@@ -335,6 +343,30 @@ header{padding-right:12px}
 
       <h2>Статистика</h2>
       <div class="stats" id="stats"></div>
+
+      <section class="backup" aria-labelledby="bkTitle">
+        <h2 id="bkTitle">💾 Резервная копия прогресса</h2>
+        <p class="bk-note">Прогресс хранится только в этом браузере. Сохраните копию — и перенесёте его на другой телефон или вернёте после очистки браузера.</p>
+        <div class="btngrid two">
+          <button class="btn" id="bkCopy" title="Скопировать код резервной копии">📋 Копировать</button>
+          <button class="btn" id="bkFile" title="Скачать файл резервной копии">⬇ Скачать файл</button>
+        </div>
+        <label class="freeField" for="bkInput">Восстановить: вставьте код или выберите файл</label>
+        <textarea id="bkInput" rows="2" spellcheck="false" autocomplete="off" placeholder="SOYLE1:…"></textarea>
+        <div class="btngrid two">
+          <label class="btn" for="bkFileInput" id="bkPick">📂 Выбрать файл</label>
+          <button class="btn primary" id="bkRestore">↺ Восстановить</button>
+        </div>
+        <input type="file" id="bkFileInput" accept=".json,application/json,text/plain" hidden>
+        <div class="bk-confirm" id="bkConfirm" hidden>
+          <p id="bkConfirmText"></p>
+          <div class="btngrid two">
+            <button class="btn" id="bkNo">Отмена</button>
+            <button class="btn primary" id="bkYes">Да, заменить</button>
+          </div>
+        </div>
+        <p class="bk-msg" id="bkMsg" role="status" aria-live="polite"></p>
+      </section>
 
       <label class="opt">Голос синтеза: <select id="voice"></select></label>
 
@@ -1441,6 +1473,86 @@ function compareWithFreshRecording(){
     setTimeout(() => rec.state === "recording" && rec.stop(), ms);
   });
 }
+
+// ---------- резервная копия прогресса ----------
+// В копию идёт всё «soyle-*», кроме настроек конкретного устройства (голос, обход микрофона)
+const BK_DEVICE_KEYS = ["soyle-rec-conflict", "soyle-voice"];
+function bkCollect(){
+  const data = {};
+  try {
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith("soyle-") && !BK_DEVICE_KEYS.includes(k)) data[k] = localStorage.getItem(k);
+    }
+  } catch(e){}
+  // актуальные значения из памяти (на случай, если хранилище недоступно)
+  data["soyle-game"] = JSON.stringify(game); data["soyle-stats"] = JSON.stringify(stats);
+  return { app:"soyle", v:1, at:new Date().toISOString(), data };
+}
+const b64enc = str => btoa(String.fromCharCode(...new TextEncoder().encode(str)));
+const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+function bkCode(){ return "SOYLE1:" + b64enc(JSON.stringify(bkCollect())); }
+function bkParse(text){
+  text = (text || "").trim();
+  let obj;
+  try { obj = text.startsWith("SOYLE1:") ? JSON.parse(b64dec(text.slice(7).replace(/\s+/g, ""))) : JSON.parse(text); }
+  catch(e){ throw new Error("Это не код и не файл резервной копии Söyle."); }
+  if(!obj || obj.app !== "soyle" || obj.v !== 1 || typeof obj.data !== "object") throw new Error("Это не резервная копия Söyle или она из другой версии.");
+  const keys = Object.keys(obj.data).filter(k => k.startsWith("soyle-") && !BK_DEVICE_KEYS.includes(k) && typeof obj.data[k] === "string");
+  if(!keys.length) throw new Error("В копии нет данных.");
+  try { keys.forEach(k => { if(["soyle-game","soyle-stats","soyle-mine","soyle-srs"].includes(k)) JSON.parse(obj.data[k]); }); }
+  catch(e){ throw new Error("Копия повреждена — восстановить из неё нельзя."); }
+  return { at:obj.at, data:Object.fromEntries(keys.map(k => [k, obj.data[k]])) };
+}
+function bkSummary(d){
+  let g = {}, mine = [], srs = [];
+  try { g = JSON.parse(d["soyle-game"] || "{}"); } catch(e){}
+  try { mine = JSON.parse(d["soyle-mine"] || "[]"); } catch(e){}
+  try { srs = JSON.parse(d["soyle-srs"] || "[]"); } catch(e){}
+  return `уровень ${levelOf(g.xp || 0)}, ${g.xp || 0} XP, достижений: ${(g.badges || []).length}, моих фраз: ${mine.length}, в повторениях: ${srs.length}`;
+}
+function bkMsg(t, kind){ const m = $("bkMsg"); m.textContent = t; m.className = "bk-msg " + (kind || ""); }
+let bkPending = null;
+function bkAsk(text){
+  try {
+    bkPending = bkParse(text);
+    const when = bkPending.at ? new Date(bkPending.at).toLocaleString("ru-RU") : "неизвестно";
+    $("bkConfirmText").textContent = `Заменить текущий прогресс копией от ${when}? В копии: ${bkSummary(bkPending.data)}. Текущий прогресс будет удалён.`;
+    $("bkConfirm").hidden = false; bkMsg("");
+  } catch(e){ bkPending = null; $("bkConfirm").hidden = true; bkMsg(e.message, "bad"); }
+}
+function bkApply(){
+  if(!bkPending) return;
+  try {
+    const keep = BK_DEVICE_KEYS.map(k => [k, localStorage.getItem(k)]);
+    Object.keys(localStorage).filter(k => k.startsWith("soyle-")).forEach(k => localStorage.removeItem(k));
+    Object.entries(bkPending.data).forEach(([k, v]) => localStorage.setItem(k, v));
+    keep.forEach(([k, v]) => { if(v !== null) localStorage.setItem(k, v); });
+  } catch(e){ bkMsg("Не удалось записать: браузер запретил хранение данных.", "bad"); return; }
+  // загружаем восстановленное состояние в память
+  try { game = JSON.parse(localStorage.getItem("soyle-game")) || {}; } catch(e){ game = {}; }
+  normalizeGame(); stats = load();
+  bkPending = null; $("bkConfirm").hidden = true; $("bkInput").value = "";
+  renderGame(); renderBadges(); renderStats(); renderChips();
+  bkMsg("Прогресс восстановлен ✓", "ok");
+}
+$("bkCopy").onclick = () => {
+  const code = bkCode();
+  const done = () => bkMsg("Код скопирован. Сохраните его в заметках или отправьте себе.", "ok");
+  const fallback = () => { const t = $("bkInput"); t.value = code; t.focus(); t.select(); bkMsg("Код в поле ниже — скопируйте его вручную.", "ok"); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, fallback); else fallback();
+};
+$("bkFile").onclick = () => {
+  const blob = new Blob([JSON.stringify(bkCollect(), null, 1)], { type:"application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = `soyle-progress-${dayStr(new Date())}.json`; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  bkMsg("Файл сохранён в «Загрузки».", "ok");
+};
+$("bkRestore").onclick = () => bkAsk($("bkInput").value);
+$("bkFileInput").onchange = e => { const f = e.target.files[0]; if(!f) return; f.text().then(bkAsk); e.target.value = ""; };
+$("bkYes").onclick = bkApply;
+$("bkNo").onclick = () => { bkPending = null; $("bkConfirm").hidden = true; bkMsg("Отменено."); };
 
 // ---------- подсказки по кнопке «?» ----------
 function setHints(on){

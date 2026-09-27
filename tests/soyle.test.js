@@ -417,6 +417,50 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(!/Любая фраза|В видео|Минимальные пары/.test(src.replace(/<!--[\s\S]*?-->/g, '')), 'старые названия в тексте');
   });
 
+  console.log('Резервная копия прогресса');
+  await test('код копии: весь прогресс, без настроек устройства; русские и турецкие буквы не портятся', async () => {
+    const r = await p.evaluate(() => { localStorage.setItem('soyle-rec-conflict','1'); localStorage.setItem('soyle-voice','X'); saveList('soyle-mine', [{ tr:'Çok güzel, teşekkürler' }]);
+      const code = bkCode(); const back = bkParse(code); return [code.startsWith('SOYLE1:'), Object.keys(back.data).includes('soyle-rec-conflict'), Object.keys(back.data).includes('soyle-voice'), JSON.parse(back.data['soyle-mine'])[0].tr]; });
+    eq(r, [true, false, false, 'Çok güzel, teşekkürler']);
+  });
+  await test('перенос на «другой телефон»: код → вставить → подтвердить → XP, достижения, мои фразы, повторения на месте', async () => {
+    const code = await p.evaluate(() => { game.xp = 777; game.badges = ['first','warm']; saveList('soyle-srs', [{ tr:'Hesap lütfen.', box:2, due:0 }]); saveList('soyle-mine', [{ tr:'Merhaba' }]); return bkCode(); });
+    const q = await openPage(browser);
+    await q.evaluate(() => { localStorage.setItem('soyle-rec-conflict','1'); setMode('progress'); });
+    await q.fill('#bkInput', code); await q.click('#bkRestore');
+    eq(await q.evaluate(() => [game.xp, document.getElementById('bkConfirm').hidden]), [0, false]); // до подтверждения ничего не меняется
+    ok((await q.textContent('#bkConfirmText')).includes('777 XP'));
+    await q.click('#bkYes');
+    const r = await q.evaluate(() => [game.xp, game.badges, loadList('soyle-mine')[0].tr, srsDue().length, document.getElementById('gbXp').textContent, document.getElementById('bkMsg').textContent, localStorage.getItem('soyle-rec-conflict')]);
+    const errs = q.errors; await q.context().close();
+    eq(r, [777, ['first','warm'], 'Merhaba', 1, '777 / 800 XP', 'Прогресс восстановлен ✓', '1']); eq(errs, []);
+  });
+  await test('«Отмена» ничего не меняет; мусор и чужой JSON отклоняются с понятным сообщением', async () => {
+    const q = await openPage(browser);
+    const code = await p.evaluate(() => bkCode());
+    await q.evaluate(() => setMode('progress'));
+    await q.fill('#bkInput', code); await q.click('#bkRestore'); await q.click('#bkNo');
+    const afterCancel = await q.evaluate(() => [game.xp, document.getElementById('bkConfirm').hidden]);
+    const msgs = [];
+    for(const junk of ['привет', 'SOYLE1:%%%', '{"a":1}', JSON.stringify({ app:'soyle', v:1, data:{ 'soyle-game':'{broken' } })]){
+      await q.fill('#bkInput', junk); await q.click('#bkRestore'); msgs.push([await q.textContent('#bkMsg'), await q.evaluate(() => document.getElementById('bkConfirm').hidden)]);
+    }
+    await q.context().close();
+    eq(afterCancel, [0, true]);
+    msgs.forEach(([m, hidden]) => { ok(hidden, 'подтверждение показано для мусора'); ok(/не резервная копия|не код|нет данных|повреждена/.test(m), m); });
+  });
+  await test('файл: «Скачать файл» даёт JSON, «Выбрать файл» восстанавливает из него', async () => {
+    await p.evaluate(() => setMode('progress'));
+    const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#bkFile')]);
+    const file = await dl.path(); const json = JSON.parse(fs.readFileSync(file, 'utf8'));
+    ok(json.app === 'soyle' && /^soyle-progress-\d{4}-\d{2}-\d{2}\.json$/.test(dl.suggestedFilename()), dl.suggestedFilename());
+    const q = await openPage(browser); await q.evaluate(() => setMode('progress'));
+    await q.setInputFiles('#bkFileInput', file); await q.waitForTimeout(200);
+    ok(!(await q.evaluate(() => document.getElementById('bkConfirm').hidden)), 'нет подтверждения после выбора файла');
+    await q.click('#bkYes'); const xp = await q.evaluate(() => game.xp); await q.context().close();
+    eq(xp, json.data['soyle-game'] ? JSON.parse(json.data['soyle-game']).xp : 0);
+  });
+
   console.log('Интерфейс');
   await test('кнопки не сдвигаются при смене слов и нажатиях', async () => {
     const pos = () => p.evaluate(() => [...document.querySelectorAll('#card .btngrid .btn')].map(b => { const r = b.getBoundingClientRect(); return Math.round(r.y + scrollY) + ',' + Math.round(r.x); }).join(' '));
