@@ -34,7 +34,13 @@
 | `game-design` | saschb2b/skills | любое изменение игры/наград/прогресса: `references/design/critique.md` (запахи) и `systems.md` (награды, этика) |
 | `gamification-loops` | omer-metin/skills-for-antigravity (507) | геймификация: `patterns.md`, `sharp_edges.md`, `validations.md` (скачан вручную, не в `.agents`) |
 | `webapp-testing` | anthropics/skills (165K) | проверка: осмотр экранов, нажатия, логи консоли — реализовано в `tests/` |
-| на будущее: `frontend-design` (anthropics, 928K), `playwright-cli` (microsoft, 167K) | | обновление внешнего вида; видео/трассировки тестов |
+| `frontend-design` | anthropics/skills (928K) | любое изменение внешнего вида: план токенов (цвет/шрифт/раскладка), проверка на шаблонность |
+| на будущее: `playwright-cli` | microsoft (167K) | видео/трассировки тестов |
+
+Макет нового вида (Claude Design, по frontend-design): https://claude.ai/artifact/LJwX1w4VPH9jx2gVjskWqp —
+без эмодзи, свои линейные SVG-иконки; палитра «туман Босфора» #EEF2F0, «вода Босфора» #0F5C5A,
+«тюльпан» #C62F35 (только трудные звуки и запись), «чернила» #14262B; шрифты Literata (турецкие слова) и
+Commissioner (интерфейс). Перенос в `index.html` — после одобрения пользователем.
 
 ## Правило №1: перед любым изменением — проверить, не реализовано ли это уже
 
