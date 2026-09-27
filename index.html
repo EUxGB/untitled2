@@ -102,7 +102,7 @@ select{font:inherit; color:var(--ink); background:var(--surface); border:1px sol
     <p class="meaning" id="meaning"></p>
     <p class="partner" id="partner"></p>
     <div class="row">
-      <a class="btn native" id="forvo" target="_blank" rel="noopener">👤 Носитель</a>
+      <button class="btn native" id="native">👤 Носитель</button>
       <a class="btn native" id="yg" target="_blank" rel="noopener">🎬 В видео</a>
       <button class="btn" id="play">🔊 Синтез</button>
       <button class="btn" id="playSlow">🐢 Медленно</button>
@@ -116,7 +116,7 @@ select{font:inherit; color:var(--ink); background:var(--surface); border:1px sol
     <p class="tip" id="tip"></p>
   </section>
 
-  <p class="hint"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>L</kbd> — послушать</p>
+  <p class="hint"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>N</kbd> — носитель, <kbd>L</kbd> — синтез</p>
   <label class="opt">Голос синтеза: <select id="voice"></select></label>
   <label class="opt"><input type="checkbox" id="recToggle"> Записывать мой голос, чтобы сравнить с образцом</label>
 
@@ -127,6 +127,7 @@ select{font:inherit; color:var(--ink); background:var(--surface); border:1px sol
 </div>
 
 <audio id="myAudio"></audio>
+<audio id="nativeAudio" preload="none"></audio>
 
 <script>
 "use strict";
@@ -297,7 +298,7 @@ function next(){
     $("partner").hidden = false;
   }
   const q = encodeURIComponent(item.target.replace(/[.,!?]/g,"").trim());
-  $("forvo").href = mode==="pairs" ? `https://forvo.com/word/${q}/#tr` : `https://forvo.com/search/${q}/tr/`;
+  nativeIdx = 0; $("native").textContent = "👤 Носитель";
   $("yg").href = `https://youglish.com/pronounce/${q}/turkish`;
   $("meaning").textContent = item.meaning;
   $("tip").textContent = item.tip;
@@ -394,7 +395,7 @@ function pickVoice(){
   sel.innerHTML = vs.map(v=>`<option value="${esc(v.name)}"${v===trVoice?" selected":""}>${esc(v.name)}${voiceRank(v)<=1?" ★":""}</option>`).join("") || "<option>нет турецких голосов</option>";
   sel.disabled = !vs.length;
   $("play").disabled = $("playSlow").disabled = !trVoice;
-  if(trVoice && voiceRank(trVoice)>1) showWarn("Встроенный голос звучит механически. Живое произношение: кнопки «Носитель» и «В видео». Самый естественный синтез — в браузере Microsoft Edge (голоса Emel и Ahmet, Natural).");
+  if(trVoice && voiceRank(trVoice)>1) showWarn("Встроенный голос звучит механически. Живое произношение: кнопка «Носитель» (записи носителей, повторное нажатие — другой голос) и «В видео». Самый естественный синтез — в браузере Microsoft Edge (голоса Emel и Ahmet, Natural).");
 }
 $("voice").onchange = e => {
   trVoice = speechSynthesis.getVoices().find(v=>v.name===e.target.value) || trVoice;
@@ -468,6 +469,65 @@ async function startListening(){
 }
 function stopListening(){ if(recognizer && listening) recognizer.abort(); }
 
+// ---------- записи носителей (Wikimedia Commons: Lingua Libre + Wiktionary) ----------
+const nativeCache = new Map();
+let nativeIdx = 0;
+const API = "https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query&prop=imageinfo&iiprop=url";
+const clean = t => norm(t).replace(/[.,!?]/g,"").trim();
+
+async function findRecordings(text){
+  const key = clean(text);
+  if(nativeCache.has(key)) return nativeCache.get(key);
+  const found = [];
+  const seen = new Set();
+  const add = (title, url) => { if(url && !seen.has(url)){ seen.add(url); found.push({ url, who: speakerOf(title) }); } };
+  try {
+    // 1) Lingua Libre: «LL-Q256 (tur)-Имя-слово.wav»
+    const q = encodeURIComponent(`intitle:"LL-Q256" "${key}"`);
+    const r1 = await fetch(`${API}&generator=search&gsrnamespace=6&gsrlimit=50&gsrsearch=${q}`).then(r=>r.json());
+    Object.values(r1.query?.pages || {}).forEach(pg => {
+      const m = pg.title.match(/^File:LL-Q256 \(tur\)-(.+?)-(.+)\.(wav|ogg|mp3|flac)$/i);
+      if(m && clean(m[2]) === key) add(pg.title, pg.imageinfo?.[0]?.url);
+    });
+    // 2) Wiktionary: «Tr-слово.ogg» и варианты
+    const cap = key.charAt(0).toLocaleUpperCase("tr-TR") + key.slice(1);
+    const titles = [key, cap].flatMap(w => ["ogg","wav","mp3","oga"].map(ext => `File:Tr-${w}.${ext}`)).join("|");
+    const r2 = await fetch(`${API}&titles=${encodeURIComponent(titles)}`).then(r=>r.json());
+    Object.values(r2.query?.pages || {}).forEach(pg => { if(!pg.missing) add(pg.title, pg.imageinfo?.[0]?.url); });
+  } catch(e){ return null; } // сеть недоступна — не кэшируем
+  nativeCache.set(key, found);
+  return found;
+}
+function speakerOf(title){
+  const m = title.match(/^File:LL-Q256 \(tur\)-(.+?)-/i);
+  return m ? m[1] : "Wiktionary";
+}
+
+async function playNative(){
+  const btn = $("native");
+  btn.disabled = true; btn.textContent = "👤 Ищу запись…";
+  const target = item.target;
+  const recs = await findRecordings(target);
+  btn.disabled = false;
+  if(item.target !== target) return; // пока искали, слово сменилось
+  if(recs === null){
+    btn.textContent = "👤 Носитель";
+    return setResult("bad", "Не удалось загрузить записи: нет интернета или Wikimedia недоступна.");
+  }
+  if(!recs.length){
+    btn.textContent = "👤 Нет записи";
+    say(0.85);
+    return setResult("info", `Записи носителя для «${esc(target)}» в открытой базе нет — играет синтез. Живую речь можно найти через «🎬 В видео».`);
+  }
+  const rec = recs[nativeIdx % recs.length];
+  nativeIdx++;
+  btn.textContent = recs.length > 1 ? `👤 Носитель ${((nativeIdx-1) % recs.length)+1}/${recs.length}` : "👤 Носитель";
+  speechSynthesis && speechSynthesis.cancel();
+  const a = $("nativeAudio");
+  a.src = rec.url;
+  a.play().catch(()=> setResult("bad", "Браузер не смог воспроизвести запись. Попробуйте ещё раз."));
+}
+
 // ---------- wiring ----------
 function setMode(m){
   mode = m;
@@ -482,6 +542,7 @@ $("playSlow").onclick = () => say(0.55);
 $("speak").onclick = () => listening ? stopListening() : startListening();
 $("next").onclick = next;
 $("mine").onclick = () => $("myAudio").play();
+$("native").onclick = playNative;
 $("recToggle").checked = recordOn;
 $("recToggle").onchange = e => { recordOn = e.target.checked; if(!recordOn && stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } };
 document.addEventListener("keydown", e => {
@@ -489,6 +550,7 @@ document.addEventListener("keydown", e => {
   if(e.code==="Space"){ e.preventDefault(); listening ? stopListening() : startListening(); }
   else if(e.key==="Enter"){ e.preventDefault(); next(); }
   else if(e.key.toLowerCase()==="l"){ say(0.85); }
+  else if(e.key.toLowerCase()==="n"){ playNative(); }
 });
 
 renderChips(); renderStats(); next();
