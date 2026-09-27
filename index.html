@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<meta name="theme-color" content="#2451a6">
+<meta name="theme-color" content="#f3f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11161b" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Söyle">
@@ -160,6 +161,15 @@ body.hints details.hintable{display:block !important}
 .result{min-height:110px}
 .btn:active{transform:none}
 .opt{font-size:14px; color:var(--muted); display:flex; gap:8px; align-items:center; justify-content:center}
+/* ===== правила Vercel Web Interface Guidelines ===== */
+html{touch-action:manipulation}
+@media (hover:hover){
+  .btn:not(:disabled):hover, .chip:hover, .ls-opt:not(:disabled):hover, .tb-stats:hover, .qbtn:hover{border-color:var(--accent); filter:brightness(1.03)}
+  .btn.primary:not(:disabled):hover{filter:brightness(1.12)}
+  .tabbar .tab:hover{color:var(--ink)}
+}
+.btn:not(:disabled):active, .chip:active, .ls-opt:active{filter:brightness(.95)}
+.modal{overscroll-behavior:contain}
 /* ===== оболочка приложения: всё в пределах экрана, без прокрутки страницы ===== */
 html, body{height:100%}
 body{padding:0; overflow:hidden; overscroll-behavior:none; -webkit-tap-highlight-color:transparent}
@@ -281,7 +291,7 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
 <body>
 <div class="app">
   <header class="topbar">
-    <h1>S<span>ö</span>yle</h1>
+    <h1 translate="no">S<span>ö</span>yle</h1>
     <button class="tb-stats" id="tbProgress" aria-label="Прогресс: дни подряд, уровень, цель дня">
       <span class="tb-item">🔥 <b id="tbStreak">0</b></span>
       <span class="tb-item">⭐ <b id="tbLevel">1</b></span>
@@ -315,8 +325,8 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
       <p class="free-title">Скажите что угодно по-турецки</p>
       <p class="meaning hintable">Проверю, поймёт ли вас носитель: покажу, что он услышит. Фразу в поле писать необязательно — если впишете, сравню слово в слово.</p>
       <label class="freeField" for="intent">Что вы хотите сказать (по-турецки, необязательно)</label>
-      <input id="intent" lang="tr" type="text" autocomplete="off" spellcheck="false" placeholder="например: Hesabı alabilir miyim?">
-      <p class="live" id="freeLive" lang="tr"></p>
+      <input id="intent" name="intent" lang="tr" translate="no" type="text" autocomplete="off" spellcheck="false" placeholder="например: Hesabı alabilir miyim…">
+      <p class="live" id="freeLive" lang="tr" translate="no"></p>
       <div class="result info" id="freeResult" aria-live="polite"><span class="verdict">Нажмите «Сказать» и говорите. Можно задать фразу выше, можно без неё.</span></div>
       <div class="btngrid two">
         <button class="btn" id="freeMine" disabled>▶ Моя запись</button>
@@ -328,7 +338,7 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
     </section>
 
     <section class="card" id="card">
-      <p class="target" id="target" lang="tr"></p>
+      <p class="target" id="target" lang="tr" translate="no"></p>
       <p class="meaning" id="meaning"></p>
       <p class="partner" id="partner"></p>
       <p class="hint hintable" id="nativeStatus"></p>
@@ -378,7 +388,7 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
           <button class="btn" id="bkFile" title="Скачать файл резервной копии">⬇ Скачать файл</button>
         </div>
         <label class="freeField" for="bkInput">Восстановить: вставьте код или выберите файл</label>
-        <textarea id="bkInput" rows="2" spellcheck="false" autocomplete="off" placeholder="SOYLE1:…"></textarea>
+        <textarea id="bkInput" name="backup" rows="2" spellcheck="false" autocomplete="off" placeholder="SOYLE1:…"></textarea>
         <div class="btngrid two">
           <label class="btn" for="bkFileInput" id="bkPick">📂 Выбрать файл</label>
           <button class="btn primary" id="bkRestore">↺ Восстановить</button>
@@ -782,7 +792,7 @@ function next(){
       ? `Записей носителей: ${(nativeCache.get(clean(item.target))||[]).length} · <a href="https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(item.target)}" target="_blank" rel="noopener">перевод</a>`
       : item.own ? `<a href="https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(item.target)}" target="_blank" rel="noopener">перевод</a> · <button class="linkbtn" id="delMine">удалить из моих</button>`
       : item.translit ? `[${esc(item.translit)}]` : `<a href="https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(item.target)}" target="_blank" rel="noopener">перевод</a>`;
-    const dm = $("delMine"); if(dm) dm.onclick = () => removeMine(item.target);
+    const dm = $("delMine"); if(dm) dm.onclick = () => askRemoveMine(dm, item.target);
     $("partner").hidden = false;
   }
   const q = encodeURIComponent(item.target.replace(/[.,!?]/g,"").trim());
@@ -826,6 +836,8 @@ function count(gid, okScore){
 // ---------- игровой слой: опыт, уровни, серия дней, цель дня, комбо ----------
 const GOAL = 20;
 const TESTMODE = !!window.SOYLE_TEST;
+// вес опыта по трудности: выбрать из двух — 0,4; произнести — 1; своя фраза, которую понял носитель, — 1,5
+const XP_WEIGHT = { listen:0.4, free:1.5 };
 let SURPRISE_P = TESTMODE ? 0 : 0.07;        // шанс неожиданного бонуса за верный ответ
 let MILESTONE_MODALS = !TESTMODE;            // окна-праздники: новый уровень, цель дня
 let LESSON_SIZE = TESTMODE ? 1e9 : 10;       // заданий в уроке
@@ -860,6 +872,7 @@ function award(score, gid){
     game.combo++; game.todayOk++; game.total++;
     game.bestCombo = Math.max(game.bestCombo, game.combo);
     gain = Math.round(10 * (1 + Math.min(game.combo-1, 5) * 0.2));  // комбо до ×2
+    gain = Math.max(2, Math.round(gain * (XP_WEIGHT[gid] ?? 1)));    // произнести труднее, чем выбрать из двух
     if(game.combo >= 3 && game.combo % 3 === 0) toast(`Комбо ×${game.combo}! +${gain} XP`);
     if(game.todayOk === GOAL){
       game.goals++; confetti();
@@ -950,6 +963,15 @@ function milestone(o, toastText){
   if(typeof blitz !== "undefined" && blitz){ deferred.push(o); return; }  // во время блица — после его окончания
   showModal(o);
 }
+document.addEventListener("keydown", e => {
+  if(e.key !== "Tab" || !modalOpen) return;
+  const f = [...$("modal").querySelectorAll("button")].filter(b => !b.hidden);
+  if(!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  else if(!$("modal").contains(document.activeElement)){ e.preventDefault(); first.focus(); }
+}, true);
 document.addEventListener("keydown", e => { if(e.key === "Escape" && modalOpen) $(!$("modalSecondary").hidden ? "modalSecondary" : "modalPrimary").click(); }, true);
 
 // ---------- уроки: 10 заданий с итогом (естественная точка остановки) ----------
@@ -1106,6 +1128,12 @@ function saveMine(text){
   list.push({ tr:text }); saveList("soyle-mine", list); return true;
 }
 function removeMine(text){ saveList("soyle-mine", loadList("soyle-mine").filter(m => m.tr !== text)); renderChips(); next(); }
+// удаление в два нажатия: первое спрашивает, второе (в течение 4 с) удаляет
+function askRemoveMine(btn, text){
+  if(btn.dataset.armed === "1"){ removeMine(text); toast("Фраза удалена из «моих»"); return; }
+  btn.dataset.armed = "1"; btn.textContent = "нажмите ещё раз, чтобы удалить";
+  setTimeout(() => { if(btn.isConnected){ btn.dataset.armed = ""; btn.textContent = "удалить из моих"; } }, 4000);
+}
 
 // ---------- evaluation ----------
 function evalPair(alts){
@@ -1121,7 +1149,7 @@ function evalPair(alts){
     const notes = new Set(); const diff = renderWordDiff(item.target, item.partner, notes);
     return setResult("bad",
       `Прозвучало <b>${esc(item.partner)}</b> (${esc(item.partnerMeaning)}) — ${[...notes].join(", ") || "другой звук"}`,
-      `<div class="diff" lang="tr">${diff}</div>${heardList}`);
+      `<div class="diff" lang="tr" translate="no">${diff}</div>${heardList}`);
   }
   if(altsTok.slice(1).some(t=>t.includes(item.target))){
     count(item.gid, 0.5);
@@ -1132,7 +1160,7 @@ function evalPair(alts){
   const notes = new Set();
   const diff = closest ? renderWordDiff(item.target, closest.w, notes) : esc(item.target);
   return setResult("bad", `Не распознано как «${esc(item.target)}»${notes.size ? ": " + [...notes].join(", ") : ""}`,
-    `<div class="diff" lang="tr">${diff}</div>${heardList}`);
+    `<div class="diff" lang="tr" translate="no">${diff}</div>${heardList}`);
 }
 
 function compareText(targetText, heardText){
@@ -1159,7 +1187,7 @@ function evalPhrase(alts){
   const verdict = score===1 ? "Все слова распознаны"
     : `Распознано ${ok} из ${total} слов${notes.size ? " · " + [...notes].join(", ") : ""}`;
   setResult(kind, verdict,
-    `<div class="diff" lang="tr">${html}</div><div class="alts">Распознано: ${esc((alts[0]||"—").trim())}</div>`);
+    `<div class="diff" lang="tr" translate="no">${html}</div><div class="alts">Распознано: ${esc((alts[0]||"—").trim())}</div>`);
 }
 
 // ---------- speech synthesis ----------
@@ -1450,7 +1478,7 @@ async function freeListen(){
       const verdict = c.score===1 ? "Носитель поймёт вас: все слова распознаны."
         : c.score>=.65 ? `Скорее поймёт, но может переспросить: ${c.ok} из ${c.total} слов${c.notes.size ? " · " + [...c.notes].join(", ") : ""}.`
         : `Скорее не поймёт: распознано ${c.ok} из ${c.total} слов${c.notes.size ? " · " + [...c.notes].join(", ") : ""}.`;
-      setFree(kind, verdict, `<div class="diff" lang="tr">${c.html}</div><div class="alts">Носитель услышит:</div>${heardHtml}${clarity(conf)}`);
+      setFree(kind, verdict, `<div class="diff" lang="tr" translate="no">${c.html}</div><div class="alts">Носитель услышит:</div>${heardHtml}${clarity(conf)}`);
     } else {
       const kind = !conf ? "info" : conf >= .85 ? "ok" : conf >= .6 ? "near" : "bad";
       setFree(kind, "Носитель услышит так:", `${heardHtml}${clarity(conf)}<div class="alts">Совпадает с тем, что вы хотели сказать? Нажмите «🌐 Перевод», чтобы проверить смысл. Для точной проверки впишите фразу в поле выше.</div>`);
@@ -1528,8 +1556,8 @@ function nextListen(){
   const means = right === "A" ? [p.meaning, p.partnerMeaning] : [p.partnerMeaning, p.meaning];
   ls = { answer:p.target, right, gid:p.gid };
   item = { target:p.target, gid:p.gid, meaning:p.meaning };
-  $("lsA").innerHTML = `<b lang="tr">${esc(words[0])}</b><small>${esc(means[0])}</small>`;
-  $("lsB").innerHTML = `<b lang="tr">${esc(words[1])}</b><small>${esc(means[1])}</small>`;
+  $("lsA").innerHTML = `<b lang="tr" translate="no">${esc(words[0])}</b><small>${esc(means[0])}</small>`;
+  $("lsB").innerHTML = `<b lang="tr" translate="no">${esc(words[1])}</b><small>${esc(means[1])}</small>`;
   $("lsA").className = $("lsB").className = "ls-opt";
   lsLocked = false;
   // подгружаем записи обоих слов, играем после короткой паузы
@@ -1568,7 +1596,10 @@ function endBlitz(quiet){
   clearInterval(blitz.timer); clearTimeout(lsNextTimer);   // больше никаких новых слов после конца
   const got = blitz.ok, total = blitz.total, prevBest = game.blitzBest, record = got > prevBest;
   if(record) game.blitzBest = got;
+  const lvlBefore = levelOf(game.xp);
   const bonus = got * 2; game.xp += bonus;                   // бонус за блиц: +2 XP за каждый верный
+  if(levelOf(game.xp) > lvlBefore){ const L = levelOf(game.xp);
+    deferred.push({ ic:"⭐", title:`Уровень ${L}: ${rankOf(L)}!`, text:`Бонус за блиц поднял уровень. До следующего ${50 * L * L - game.xp} XP.`, primary:{ label:"Отлично!" } }); }
   blitz = null;
   $("lsBlitz").classList.remove("running"); $("lsBlitz").textContent = "⚡ Блиц 60 с";
   lsLocked = true; setOptionsEnabled(false);
@@ -1583,7 +1614,7 @@ function endBlitz(quiet){
     text: record && got > 0 ? (prevBest ? `Прошлый рекорд: ${prevBest}. Вы улучшили его на ${got - prevBest}.` : "Первый рекорд установлен.") : `До рекорда (${prevBest}) не хватило ${prevBest - got + 1}. Ещё раз?`,
     stats:[["верно", got], ["точность", total ? Math.round(got / total * 100) + "%" : "—"], ["XP", "+" + bonus]],
     primary:{ label:"⚡ Ещё раз", fn:startBlitz }, secondary:{ label:"Закрыть", fn:resume } });
-  deferred.splice(0).forEach(o => showModal(o));             // отложенные праздники — после итогов блица
+  deferred.splice(0).forEach(o => { if(MILESTONE_MODALS) showModal(o); });  // отложенные праздники — после итогов блица
 }
 
 // Образец (носитель, если есть запись, иначе синтез) и сразу ваша запись
@@ -1711,7 +1742,9 @@ $("hintsBtn").onclick = () => setHints(!document.body.classList.contains("hints"
 try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHints(false); }
 
 // ---------- wiring ----------
+const MODES = ["pairs","phrases","listen","free","progress"];
 function setMode(m){
+  try { if(location.hash.slice(1) !== m) history.replaceState(null, "", "#" + m); } catch(e){}
   if(listening) stopListening();
   if(blitz && m !== "listen") endBlitz(true);
   mode = m;
@@ -1769,7 +1802,8 @@ document.addEventListener("keydown", e => {
   else if(e.key.toLowerCase()==="n"){ playNative(); }
 });
 
-renderChips(); renderStats(); renderGame(); renderBadges(); renderLesson(); setupSelfRecord(); next();
+renderChips(); renderStats(); renderGame(); renderBadges(); renderLesson();
+{ const h = location.hash.slice(1); if(MODES.includes(h) && h !== "pairs") setTimeout(() => setMode(h), 0); } setupSelfRecord(); next();
 </script>
 </body>
 </html>

@@ -184,6 +184,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await p.click('#freeSave'); eq(await p.textContent('#freeSave'), 'Уже есть в моих');
     await p.evaluate(() => { setMode('phrases'); setId = 'mine'; renderChips(); next(); });
     eq(await p.textContent('#target'), 'merhaba');
+    await p.click('#delMine'); eq(await p.evaluate(() => loadList('soyle-mine').length), 1); // первое нажатие только спрашивает
+    ok((await p.textContent('#delMine')).includes('ещё раз'));
     await p.click('#delMine'); eq(await p.evaluate(() => loadList('soyle-mine').length), 0);
   });
   const a = await openPage(browser, { android:true });
@@ -387,13 +389,38 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('блиц: праздники (новый уровень) не прерывают блиц, а показываются после итогов', async () => {
     const q = await openPage(browser); await q.clock.install();
-    await q.evaluate(() => { MILESTONE_MODALS = true; todayQuest(); game.quest.done = true; game.xp = 45; BLITZ_SEC = 3; setMode('listen'); startBlitz(); });
+    await q.evaluate(() => { MILESTONE_MODALS = true; todayQuest(); game.quest.done = true; game.xp = 48; BLITZ_SEC = 3; setMode('listen'); startBlitz(); });
     await q.evaluate(() => answerListen(ls.right)); // уровень повышается во время блица
     const during = await q.evaluate(() => document.getElementById('modal').hidden);
     await q.clock.runFor(3500);
     const t1 = await q.evaluate(() => document.getElementById('modalTitle').textContent); await q.click('#modalSecondary'); await q.clock.runFor(300);
     const t2 = await q.evaluate(() => document.getElementById('modalTitle').textContent);
     await q.context().close(); eq(during, true); ok(/Блиц|рекорд/.test(t1), t1); ok(t2.includes('Уровень 2'), t2);
+  });
+
+  console.log('web-design-guidelines (Vercel) и game-design');
+  await test('WIG: турецкий текст и название не переводятся браузером; поля с name; касания без задержки; окно не прокручивает страницу', async () => {
+    const r = await p.evaluate(() => { setMode('listen'); const out = [document.getElementById('target').getAttribute('translate'), document.querySelector('#lsA b').getAttribute('translate'), document.querySelector('h1').getAttribute('translate'),
+      document.getElementById('intent').name, document.getElementById('bkInput').name, getComputedStyle(document.documentElement).touchAction, getComputedStyle(document.getElementById('modal')).overscrollBehaviorY,
+      document.getElementById('intent').placeholder.endsWith('…')]; setMode('pairs'); return out; });
+    eq(r, ['no','no','no','intent','backup','manipulation','contain', true]);
+  });
+  await test('WIG: раздел в адресе — ссылка #phrases открывает «Фразы», переключение меняет адрес', async () => {
+    const q = await browser.newPage(); await q.addInitScript(() => { window.SOYLE_TEST = true; }); await q.route('**/*googleapis*/**', r => r.abort()); await q.route('**/commons.wikimedia.org/**', r => r.fulfill({ json:{ query:{ pages:{} } } }));
+    await q.goto(FILE + '#phrases'); await q.waitForTimeout(200);
+    const a = await q.evaluate(() => [mode, document.getElementById('tab-phrases').getAttribute('aria-pressed')]);
+    await q.click('#tab-progress'); const h = await q.evaluate(() => location.hash); await q.close();
+    eq(a, ['phrases','true']); eq(h, '#progress');
+  });
+  await test('WIG: в окне фокус не уходит за его пределы (Tab по кругу)', async () => {
+    const q = await openPage(browser);
+    await q.evaluate(() => showModal({ title:'Тест', primary:{ label:'Да' }, secondary:{ label:'Нет' } })); await q.waitForTimeout(100);
+    const seen = []; for(let i = 0; i < 4; i++){ await q.keyboard.press('Tab'); seen.push(await q.evaluate(() => document.getElementById('modal').contains(document.activeElement))); }
+    await q.context().close(); eq(seen, [true, true, true, true]);
+  });
+  await test('game-design «доминирующая стратегия»: угадывание «На слух» даёт меньше опыта, чем произношение', async () => {
+    const r = await p.evaluate(r => { eval(r); todayQuest(); game.quest.done = true; award(1, 'listen'); const l = game.xp; game.combo = 0; award(1, 'o'); const s = game.xp - l; game.combo = 0; award(1, 'free'); return [l, s, game.xp - l - s]; }, RESET);
+    eq(r, [4, 10, 15]);
   });
 
   console.log('webapp-testing: осмотр каждого экрана и нажатие всех кнопок');
@@ -480,7 +507,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(man.display, 'standalone');
     const sizes = man.icons.map(i => i.sizes); ok(sizes.includes('192x192') && sizes.includes('512x512'));
     man.icons.forEach(i => ok(fs.existsSync(path.join(dir, i.src)), 'нет файла ' + i.src));
-    eq(await p.evaluate(() => [!!document.querySelector('link[rel=manifest]'), document.querySelector('meta[name=theme-color]').content]), [true, '#2451a6']);
+    eq(await p.evaluate(() => [!!document.querySelector('link[rel=manifest]'), document.querySelector('meta[name=theme-color]').content, getComputedStyle(document.body).backgroundColor]), [true, '#f3f5f2', 'rgb(243, 245, 242)']); // цвет панели = фон страницы
   });
 
   console.log('Сценарий пользователя: только нажатия, как на телефоне');
