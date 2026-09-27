@@ -110,6 +110,7 @@ select{font:inherit; color:var(--ink); background:var(--surface); border:1px sol
       <button class="btn" id="mine" hidden>▶ Моя запись</button>
       <button class="btn" id="next">Дальше →</button>
     </div>
+    <p class="hint" id="nativeStatus"></p>
     <div class="result info" id="result">
       <span class="verdict">Нажмите «Сказать» и произнесите слово.</span>
     </div>
@@ -515,8 +516,11 @@ function voiceVariants(){
 }
 function shortVoice(v){ return v.name.replace(/^(Microsoft|Google)\s*/i,"").replace(/\s*[-–(].*$/,"").trim() || v.name; }
 
-function playNative(){
-  // Играем СРАЗУ; каждое нажатие — следующий вариант озвучки этого же слова
+async function playNative(){
+  // Каждое нажатие — следующий вариант озвучки этого же слова; записи носителей идут первыми
+  if(nativePending && nativeIdx === 0){
+    await Promise.race([nativePending, new Promise(r => setTimeout(r, 2000))]);
+  }
   const btn = $("native");
   const vars = voiceVariants();
   speechSynthesis && speechSynthesis.cancel();
@@ -535,14 +539,18 @@ function playNative(){
     speechSynthesis.speak(u);
   }
 }
+let nativePending = null;
 function prefetchNative(){
-  const target = item.target;
-  findRecordings(target).then(recs => {
-    if(item.target !== target || !recs) return;
+  const target = item.target, st = $("nativeStatus");
+  st.textContent = "Записи носителей: ищу…";
+  nativePending = findRecordings(target).then(recs => {
+    if(item.target !== target) return;
     const btn = $("native");
+    if(recs === null){ st.textContent = "Записи носителей: не удалось связаться с Wikimedia (проверьте интернет)."; return; }
+    st.textContent = recs.length ? `Записи носителей: найдено ${recs.length}` : "Записей носителей этого слова в открытой базе нет — будет синтез.";
     btn.textContent = recs.length ? `👤 Носитель ×${recs.length}` : "👤 Носитель";
     if(recs.length){ const a = $("nativeAudio"); a.preload = "auto"; a.src = recs[0].url; }
-  });
+  }).finally(() => { nativePending = null; });
 }
 
 // ---------- wiring ----------
