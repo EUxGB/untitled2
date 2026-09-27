@@ -297,6 +297,44 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r[0], false); eq(r[1], ['synth', 'mic', 'synth', 'me']);
   });
 
+  console.log('Вид приложения');
+  for(const [w, h] of [[390, 844], [360, 640], [412, 915]]) await test(`${w}×${h}: страница не прокручивается, упражнение целиком на экране, подписи не обрезаны`, async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:w, height:h });
+    const bad = [];
+    for(const m of ['pairs','phrases','listen','free','progress']){
+      await q.evaluate(m => setMode(m), m); await q.waitForTimeout(60);
+      const r = await q.evaluate(() => { const c = [...document.querySelectorAll('.screen > section')].find(x => !x.hidden);
+        const nav = document.querySelector('.tabbar').getBoundingClientRect();
+        return { page: document.documentElement.scrollHeight > innerHeight + 1, card: c.id !== 'progressView' && c.scrollHeight > c.clientHeight + 1, nav: nav.bottom > innerHeight + 1 || nav.height < 44,
+          cut: [...c.querySelectorAll('.btn')].filter(b => b.offsetParent && b.scrollWidth > b.clientWidth + 1).map(b => b.textContent.trim()) }; });
+      if(r.page) bad.push(m + ': прокрутка страницы'); if(r.card) bad.push(m + ': карточка не помещается'); if(r.nav) bad.push(m + ': нижняя панель не видна'); if(r.cut.length) bad.push(m + ': обрезано ' + r.cut);
+    }
+    await q.context().close(); eq(bad, []);
+  });
+  await test('нижняя панель: 5 разделов, активный подсвечен, «Свободно» и «Прогресс» открываются', async () => {
+    const r = await p.evaluate(() => { const tabs = [...document.querySelectorAll('.tabbar .tab')].map(t => t.id);
+      document.getElementById('tab-free').click(); const free = !document.getElementById('freeCard').hidden && document.getElementById('tab-free').getAttribute('aria-pressed');
+      document.getElementById('tab-progress').click(); const prog = !document.getElementById('progressView').hidden && document.getElementById('card').hidden;
+      document.getElementById('tab-pairs').click(); return [tabs, free, prog]; });
+    eq(r, [['tab-pairs','tab-phrases','tab-listen','tab-free','tab-progress'], 'true', true]);
+  });
+  await test('игра видна всегда: верхняя панель обновляется после ответа, нажатие открывает «Прогресс»', async () => {
+    const r = await p.evaluate(r => { eval(r); renderGame(); const ring0 = document.getElementById('tbRing').style.strokeDashoffset;
+      for(let i = 0; i < 3; i++) award(1, 'o');
+      const out = [document.getElementById('tbStreak').textContent, document.getElementById('tbRing').style.strokeDashoffset !== ring0];
+      document.getElementById('tbProgress').click(); out.push(!document.getElementById('progressView').hidden, document.getElementById('gbRank').textContent, document.getElementById('badgeCount').textContent.startsWith(game.badges.length + ' /'));
+      setMode('pairs'); return out; }, RESET);
+    eq(r, ['1', true, true, 'Турист', true]);
+  });
+  await test('устанавливается как приложение: манифест, иконки, standalone', async () => {
+    const dir = path.dirname(FILE.replace('file://', ''));
+    const man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+    eq(man.display, 'standalone');
+    const sizes = man.icons.map(i => i.sizes); ok(sizes.includes('192x192') && sizes.includes('512x512'));
+    man.icons.forEach(i => ok(fs.existsSync(path.join(dir, i.src)), 'нет файла ' + i.src));
+    eq(await p.evaluate(() => [!!document.querySelector('link[rel=manifest]'), document.querySelector('meta[name=theme-color]').content]), [true, '#2451a6']);
+  });
+
   console.log('Интерфейс');
   await test('кнопки не сдвигаются при смене слов и нажатиях', async () => {
     const pos = () => p.evaluate(() => [...document.querySelectorAll('#card .btngrid .btn')].map(b => { const r = b.getBoundingClientRect(); return Math.round(r.y + scrollY) + ',' + Math.round(r.x); }).join(' '));
@@ -332,7 +370,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   if(AXE) for(const scheme of ['light','dark']) await test(`WCAG 2.1 AA (axe-core), ${scheme === 'light' ? 'светлая' : 'тёмная'} тема`, async () => {
     const q = await openPage(browser, { scheme });
     const v = [];
-    for(const m of ['pairs','phrases','listen','free']){
+    for(const m of ['pairs','phrases','listen','free','progress']){
       await q.evaluate(m => { setMode(m); document.body.classList.add('hints'); }, m); await q.addScriptTag({ content:AXE });
       v.push(...(await q.evaluate(async () => (await axe.run(document, { runOnly:['wcag2a','wcag2aa','wcag21aa'] })).violations.map(x => x.id))).map(id => m + ':' + id));
     }
