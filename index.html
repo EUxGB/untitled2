@@ -135,10 +135,9 @@ body{padding-bottom:96px}
     <ol>
       <li><b>Минимальные пары</b> — отработка трудных звуков (o/ö, u/ü, ı/i, c/ç/ş). Нажмите «🎤 Сказать» и произнесите слово: тренажёр покажет, не спутали ли вы звук.</li>
       <li><b>Фразы</b> — готовые наборы для ситуаций: отель, ресторан, транспорт, магазин, аптека, общение, экстренное. «🎧 с записями» — всё, что записали носители.</li>
-      <li><b>👤 Носитель</b> — запись живого человека; нажмите ещё раз — другой голос. <b>🔊 Синтез</b> — компьютерный голос. <b>🎬 В видео</b> — фраза в настоящих видео.</li>
-      <li><b>⇄ Сравнить</b> — образец и ваша запись подряд: так проще услышать разницу.</li>
+      <li><b>👤 Носитель</b> — запись живого человека; нажмите ещё раз — другой голос. <b>🔊 Синтез</b> — компьютерный голос, повторное нажатие — медленно. <b>🎬 В видео</b> — фраза в настоящих видео.</li>
+      <li><b>⇄ Сравнить</b> — появляется после попытки: образец и ваша запись подряд, так проще услышать разницу.</li>
       <li><b>🗣 Любая фраза</b> (кнопка внизу) — скажите что угодно и увидите, что услышит носитель. Нужную фразу сохраните в «⭐ мои».</li>
-      <li><b>🔁 ошибки</b> — сюда сами попадают слова, где вы ошиблись. Два верных ответа подряд — и слово уходит.</li>
       <li><b>На слух</b> — звучит одно слово из пары, выберите какое. Сначала мозг учится различать звуки, потом их проще произнести. Голоса и темп меняются специально.</li>
       <li><b>🔁 Эхо</b> — образец и сразу ваш повтор (шэдоуинг): копируете звук, пока он ещё в памяти.</li>
       <li><b>🧠 на сегодня</b> — интервальные повторения: каждая отработанная фраза возвращается через 1, 3, 7, 16 и 35 дней, ошибка — через 10 минут. Так фраза переходит в долгую память.</li>
@@ -191,9 +190,7 @@ body{padding-bottom:96px}
       <button class="btn native" id="native">👤 Носитель</button>
       <a class="btn native" id="yg" target="_blank" rel="noopener">🎬 В видео</a>
       <button class="btn" id="play">🔊 Синтез</button>
-      <button class="btn" id="playSlow">🐢 Медленно</button>
       <button class="btn primary" id="speak">🎤 Сказать</button>
-      <button class="btn" id="mine" hidden>▶ Моя запись</button>
       <button class="btn" id="compare" hidden>⇄ Сравнить</button>
       <button class="btn" id="echo" title="Послушать образец и сразу повторить">🔁 Эхо</button>
       <button class="btn" id="next">Дальше →</button>
@@ -205,7 +202,7 @@ body{padding-bottom:96px}
     <p class="tip" id="tip"></p>
   </section>
 
-  <p class="hint"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>N</kbd> — носитель, <kbd>L</kbd> — синтез</p>
+  <p class="hint"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>N</kbd> — носитель, <kbd>L</kbd> — синтез, на вкладке «На слух»: <kbd>1</kbd> <kbd>2</kbd></p>
   <label class="opt">Голос синтеза: <select id="voice"></select></label>
   <label class="opt"><input type="checkbox" id="recToggle"> Записывать мой голос, чтобы сравнить с образцом</label>
 
@@ -414,8 +411,7 @@ function renderChips(){
     chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
       + `<button class="chip" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
       + `<button class="chip" data-s="srs" aria-pressed="${setId==="srs"}">🧠 на сегодня (${srsDue().length})</button>`
-      + `<button class="chip" data-s="mine" aria-pressed="${setId==="mine"}">⭐ мои (${loadList("soyle-mine").length})</button>`
-      + `<button class="chip" data-s="mistakes" aria-pressed="${setId==="mistakes"}">🔁 ошибки (${loadList("soyle-mistakes").length})</button>`;
+      + `<button class="chip" data-s="mine" aria-pressed="${setId==="mine"}">⭐ мои (${loadList("soyle-mine").length})</button>`;
     chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
     return;
   }
@@ -512,13 +508,13 @@ function pickPhrase(){
     p = due.find(c => c.tr !== lastKey) || due[0]; lastKey = p.tr;
     return { target:p.tr, translit:p.tl, meaning:p.ru, tip:`Повторение по расписанию: ступень ${p.box+1} из ${BOX_DAYS.length}. Чем лучше помните — тем реже будет попадаться.`, gid:"ph-srs" };
   }
-  if(setId === "mine" || setId === "mistakes"){
-    const lst = loadList(setId === "mine" ? "soyle-mine" : "soyle-mistakes");
+  if(setId === "mine"){
+    const lst = loadList("soyle-mine");
     if(!lst.length) return null;
     do { p = lst[Math.floor(Math.random()*lst.length)]; } while(p.tr===lastKey && lst.length>1 && ++guard<10);
     lastKey = p.tr;
-    return { target:p.tr, translit:p.tl || "", meaning:p.ru || "", tip: setId==="mine" ? "Ваша фраза. Скажите её и проверьте, что носитель поймёт." : "Здесь слова и фразы, где была ошибка. Два верных ответа подряд — и они исчезнут отсюда.",
-      gid:"ph-"+setId, own: setId==="mine" };
+    return { target:p.tr, translit:p.tl || "", meaning:p.ru || "", tip: "Ваша фраза. Скажите её и проверьте, что носитель поймёт.",
+      gid:"ph-mine", own:true };
   }
   const list = PHRASE_SETS.find(g=>g.id===setId).items;
   do { p = list[Math.floor(Math.random()*list.length)]; } while(p.tr===lastKey && ++guard<10);
@@ -536,9 +532,8 @@ function next(){
   item = mode==="pairs" ? pickPair() : pickPhrase();
   if(!item){
     $("target").classList.add("phrase");
-    $("target").textContent = setId==="mine" ? "Пока пусто" : setId==="mistakes" ? "Ошибок пока нет" : setId==="srs" ? "На сегодня всё повторено" : "Записей не найдено";
+    $("target").textContent = setId==="mine" ? "Пока пусто" : setId==="srs" ? "На сегодня всё повторено" : "Записей не найдено";
     $("meaning").textContent = setId==="mine" ? "Скажите фразу во вкладке «Любая фраза» и нажмите «⭐ В мои фразы»."
-      : setId==="mistakes" ? "Сюда попадут слова и фразы, в которых вы ошибётесь."
       : setId==="srs" ? "Каждая фраза, которую вы тренируете, вернётся сюда в нужный день: через 1, 3, 7, 16 и 35 дней." : "";
     $("partner").hidden = true; $("tip").textContent = ""; return;
   }
@@ -566,7 +561,7 @@ function next(){
   if(item.native){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
-  $("mine").hidden = true; $("compare").hidden = true;
+  $("compare").hidden = true; synthSlow = false; $("play").textContent = "🔊 Синтез";
 }
 
 function setResult(kind, verdict, extra=""){
@@ -576,7 +571,7 @@ function setResult(kind, verdict, extra=""){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"ph-mistakes",label:"ошибки"}, {id:"free",label:"любая фраза"}];
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"free",label:"любая фраза"}];
   const used = rows.filter(r => (stats[r.id]||{}).t);
   if(!used.length){ $("stats").innerHTML = `<p class="hint" style="text-align:left">Здесь появится ваш прогресс по каждому набору.</p>`; return; }
   $("stats").innerHTML = used.map(r => {
@@ -591,7 +586,7 @@ function count(gid, okScore){
   const s = stats[gid] || (stats[gid] = {t:0, ok:0});
   s.t++; s.ok += okScore; save(); renderStats();
   award(okScore);
-  if(gid !== "free" && gid !== "listen" && item){ trackMistake(okScore); srsUpdate(okScore); }
+  if(gid !== "free" && gid !== "listen" && item) srsUpdate(okScore);
 }
 
 // ---------- игровой слой: опыт, уровни, серия дней, цель дня, комбо ----------
@@ -648,24 +643,18 @@ function srsUpdate(score){
   else { c.box = 0; c.due = now + 10 * 60e3; } // ошибка — повторить через 10 минут
   saveList("soyle-srs", all);
 }
+(function migrateMistakes(){
+  const old = loadList("soyle-mistakes"); if(!old.length) return;
+  const all = loadList("soyle-srs");
+  old.forEach(m => { if(!all.some(c => c.tr === m.tr)) all.push({ tr:m.tr, tl:m.tl||"", ru:m.ru||"", box:0, due:0 }); });
+  saveList("soyle-srs", all);
+  try { localStorage.removeItem("soyle-mistakes"); } catch(e){}
+})();
 function srsDue(){ const now = Date.now(); return loadList("soyle-srs").filter(c => c.due <= now).sort((a,b) => a.due - b.due); }
 
 // ---------- ошибки и мои фразы (хранятся в этом браузере) ----------
 function loadList(k){ try { return JSON.parse(localStorage.getItem(k)) || []; } catch(e){ return []; } }
 function saveList(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
-function trackMistake(score){
-  const list = loadList("soyle-mistakes");
-  const i = list.findIndex(m => m.tr === item.target);
-  if(score < 1){
-    if(i < 0) list.push({ tr:item.target, tl:item.translit || "", ru:item.meaning || "", ok:0 });
-    else list[i].ok = 0;
-  } else if(i >= 0){
-    list[i].ok++;
-    if(list[i].ok >= 2) list.splice(i,1); // два верных ответа подряд — убираем из ошибок
-  }
-  saveList("soyle-mistakes", list);
-  if(mode === "phrases") renderChips();
-}
 function saveMine(text){
   text = text.trim(); if(!text) return false;
   const list = loadList("soyle-mine");
@@ -746,8 +735,8 @@ function pickVoice(){
   const sel = $("voice");
   sel.innerHTML = vs.map(v=>`<option value="${esc(v.name)}"${v===trVoice?" selected":""}>${esc(v.name)}${voiceRank(v)<=1?" ★":""}</option>`).join("") || "<option>нет турецких голосов</option>";
   sel.disabled = !vs.length;
-  $("play").disabled = $("playSlow").disabled = !trVoice;
-  if(trVoice && voiceRank(trVoice)>1) showWarn("Встроенный голос звучит механически. Живое произношение: кнопка «Носитель» (записи носителей, повторное нажатие — другой голос) и «В видео». Самый естественный синтез — в браузере Microsoft Edge (голоса Emel и Ahmet, Natural).");
+  $("play").disabled = !trVoice;
+  if(trVoice && voiceRank(trVoice)>1) showWarn("Синтез на этом устройстве звучит механически. Живую речь дают «👤 Носитель» и «🎬 В видео». Самый естественный синтез — в Microsoft Edge (голоса Emel и Ahmet, Natural).");
 }
 $("voice").onchange = e => {
   trVoice = speechSynthesis.getVoices().find(v=>v.name===e.target.value) || trVoice;
@@ -761,7 +750,7 @@ function say(rate){
   speechSynthesis.speak(u);
 }
 if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-else { $("play").disabled = $("playSlow").disabled = true; }
+else { $("play").disabled = true; }
 
 // ---------- recognition ----------
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -777,7 +766,7 @@ async function startRecording(){
     mediaRec.onstop = () => {
       const blob = new Blob(chunks, {type: mediaRec.mimeType});
       const a = $("myAudio"); if(a.src) URL.revokeObjectURL(a.src);
-      a.src = URL.createObjectURL(blob); $(mode==="free" ? "freeMine" : "mine").hidden = false;
+      a.src = URL.createObjectURL(blob); if(mode==="free") $("freeMine").hidden = false;
       if(mode!=="free") $("compare").hidden = false;
       if(mode==="free" && autoPlayMine){ autoPlayMine = false; a.play().catch(()=>{}); }
     };
@@ -1064,11 +1053,10 @@ $("freeSpeak").onclick = freeListen;
 $("fab").onclick = () => { if(mode!=="free") setMode("free"); freeListen(); };
 $("freeMine").onclick = () => $("myAudio").play();
 $("freeCorrect").onclick = () => sayText($("intent").value.trim());
-$("play").onclick = () => say(0.85);
-$("playSlow").onclick = () => say(0.55);
+let synthSlow = false;
+$("play").onclick = () => { say(synthSlow ? 0.55 : 0.85); synthSlow = !synthSlow; $("play").textContent = synthSlow ? "🐢 Синтез медленно" : "🔊 Синтез"; };
 $("speak").onclick = () => listening ? stopListening() : startListening();
 $("next").onclick = next;
-$("mine").onclick = () => $("myAudio").play();
 $("native").onclick = playNative;
 $("compare").onclick = compareVoices;
 $("freeSave").onclick = () => {
