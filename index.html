@@ -585,7 +585,7 @@ function next(){
   if(item.native){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
-  $("compare").disabled = recordOn; synthSlow = false;
+  $("compare").disabled = recordOn && myRecFor !== item.target; synthSlow = false;
 }
 
 function setResult(kind, verdict, extra=""){
@@ -782,8 +782,10 @@ function showHintWarn(t){ const w=$("warn"); w.textContent=t; w.hidden=false; w.
 function showWarn(t){ const w=$("warn"); w.textContent=t; w.hidden=false; }
 if(!SR){ showWarn("Этот браузер не умеет распознавать речь. Откройте файл в Google Chrome (на компьютере или Android)."); $("speak").disabled = true; }
 
+let myRecFor = null; // слово, к которому относится последняя запись вашего голоса
 async function startRecording(){
   if(!recordOn || !window.MediaRecorder) return;
+  const forTarget = mode === "free" ? null : item && item.target;
   try {
     if(!stream) stream = await navigator.mediaDevices.getUserMedia({audio:true});
     chunks = []; mediaRec = new MediaRecorder(stream);
@@ -791,8 +793,9 @@ async function startRecording(){
     mediaRec.onstop = () => {
       const blob = new Blob(chunks, {type: mediaRec.mimeType});
       const a = $("myAudio"); if(a.src) URL.revokeObjectURL(a.src);
-      a.src = URL.createObjectURL(blob);
-      if(mode==="free") $("freeMine").disabled = false; else $("compare").disabled = false;
+      a.src = URL.createObjectURL(blob); myRecFor = forTarget;
+      if(mode==="free") $("freeMine").disabled = false;
+      else if(item && forTarget === item.target) $("compare").disabled = false;
       if(mode==="free" && autoPlayMine){ autoPlayMine = false; a.play().catch(()=>{}); }
     };
     mediaRec.start();
@@ -822,7 +825,7 @@ async function toggleSelfRecord(){
     selfRec.onstop = () => {
       st.getTracks().forEach(t=>t.stop());
       const a = $("myAudio"); if(a.src) URL.revokeObjectURL(a.src);
-      a.src = URL.createObjectURL(new Blob(ch, {type:selfRec.mimeType})); a.play().catch(()=>{});
+      a.src = URL.createObjectURL(new Blob(ch, {type:selfRec.mimeType})); myRecFor = null; a.play().catch(()=>{});
       b.textContent = "🎙 Записать себя"; b.classList.remove("listening");
     };
     selfRec.start(); b.textContent = "⏹ Стоп"; b.classList.add("listening");
@@ -1074,18 +1077,36 @@ function answerListen(which){
 
 // Образец (носитель, если есть запись, иначе синтез) и сразу ваша запись
 function compareVoices(){
-  if(!recordOn && !$("myAudio").src){ setResult("info", "На этом телефоне запись идёт отдельно: вкладка «Любая фраза» → «🎙 Записать себя»."); return; }
-  const mine = $("myAudio"), recs = nativeCache.get(clean(item.target)) || [];
-  speechSynthesis && speechSynthesis.cancel();
-  const thenMine = () => setTimeout(() => mine.play().catch(()=>{}), 350);
-  if(recs.length){
-    const a = $("nativeAudio"); a.pause(); a.src = recs[0].url;
-    a.onended = () => { a.onended = null; thenMine(); };
-    a.play().catch(thenMine);
-  } else if(trVoice){
-    const u = new SpeechSynthesisUtterance(item.target); u.voice = trVoice; u.lang = trVoice.lang; u.rate = .85;
-    u.onend = thenMine; speechSynthesis.speak(u);
-  } else thenMine();
+  if(!recordOn) return compareWithFreshRecording();
+  if(myRecFor !== item.target){ setResult("info", "Сначала скажите это слово: «🎤 Сказать», потом «⇄ Сравнить»."); return; }
+  const mine = $("myAudio");
+  playReference(item.target, () => setTimeout(() => mine.play().catch(()=>{}), 350));
+}
+// Телефон не пишет во время распознавания: образец → запись вас (без распознавания) → образец → вы
+async function compareWithFreshRecording(){
+  const target = item.target, btn = $("compare");
+  let st;
+  try { st = await navigator.mediaDevices.getUserMedia({audio:true}); }
+  catch(e){ setResult("bad", "Нет доступа к микрофону для записи."); return; }
+  btn.disabled = true;
+  setResult("info", "Слушайте образец, потом сразу повторите.");
+  playReference(target, () => {
+    const ch = [], rec = new MediaRecorder(st);
+    rec.ondataavailable = e => ch.push(e.data);
+    rec.onstop = () => {
+      st.getTracks().forEach(t=>t.stop());
+      const a = $("myAudio"); if(a.src) URL.revokeObjectURL(a.src);
+      a.src = URL.createObjectURL(new Blob(ch, {type:rec.mimeType})); myRecFor = target;
+      btn.disabled = false;
+      if(item.target !== target) return;
+      setResult("info", "Образец — и сразу вы.");
+      playReference(target, () => setTimeout(() => a.play().catch(()=>{}), 350));
+    };
+    rec.start();
+    const ms = Math.min(8000, 1500 + Array.from(target).length * 120); // длина записи по длине фразы
+    setResult("info", `🎙 Говорите! Запись ${Math.round(ms/1000)} сек…`);
+    setTimeout(() => rec.state === "recording" && rec.stop(), ms);
+  });
 }
 
 // ---------- подсказки по кнопке «?» ----------
