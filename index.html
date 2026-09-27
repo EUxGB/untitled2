@@ -299,6 +299,7 @@ function next(){
   }
   const q = encodeURIComponent(item.target.replace(/[.,!?]/g,"").trim());
   nativeIdx = 0; $("native").textContent = "👤 Носитель";
+  prefetchNative();
   $("yg").href = `https://youglish.com/pronounce/${q}/turkish`;
   $("meaning").textContent = item.meaning;
   $("tip").textContent = item.tip;
@@ -503,29 +504,31 @@ function speakerOf(title){
   return m ? m[1] : "Wiktionary";
 }
 
-async function playNative(){
+function playNative(){
+  // Играем СРАЗУ: запись носителя, если уже подгружена, иначе — лучший синтез без ожидания
   const btn = $("native");
-  btn.disabled = true; btn.textContent = "👤 Ищу запись…";
+  const recs = nativeCache.get(clean(item.target));
+  if(recs && recs.length){
+    const rec = recs[nativeIdx % recs.length];
+    nativeIdx++;
+    btn.textContent = recs.length > 1 ? `👤 Носитель ${((nativeIdx-1) % recs.length)+1}/${recs.length}` : "👤 Носитель";
+    speechSynthesis && speechSynthesis.cancel();
+    const a = $("nativeAudio");
+    a.src = rec.url;
+    a.play().catch(()=> say(0.85));
+    return;
+  }
+  say(0.85);
+  if(recs && !recs.length) btn.textContent = "👤 Носитель (синтез)";
+}
+function prefetchNative(){
   const target = item.target;
-  const recs = await findRecordings(target);
-  btn.disabled = false;
-  if(item.target !== target) return; // пока искали, слово сменилось
-  if(recs === null){
-    btn.textContent = "👤 Носитель";
-    return setResult("bad", "Не удалось загрузить записи: нет интернета или Wikimedia недоступна.");
-  }
-  if(!recs.length){
-    btn.textContent = "👤 Нет записи";
-    say(0.85);
-    return setResult("info", `Записи носителя для «${esc(target)}» в открытой базе нет — играет синтез. Живую речь можно найти через «🎬 В видео».`);
-  }
-  const rec = recs[nativeIdx % recs.length];
-  nativeIdx++;
-  btn.textContent = recs.length > 1 ? `👤 Носитель ${((nativeIdx-1) % recs.length)+1}/${recs.length}` : "👤 Носитель";
-  speechSynthesis && speechSynthesis.cancel();
-  const a = $("nativeAudio");
-  a.src = rec.url;
-  a.play().catch(()=> setResult("bad", "Браузер не смог воспроизвести запись. Попробуйте ещё раз."));
+  findRecordings(target).then(recs => {
+    if(item.target !== target || !recs) return;
+    const btn = $("native");
+    btn.textContent = recs.length ? (recs.length > 1 ? `👤 Носитель ×${recs.length}` : "👤 Носитель") : "👤 Носитель (синтез)";
+    if(recs.length){ const a = $("nativeAudio"); a.preload = "auto"; a.src = recs[0].url; }
+  });
 }
 
 // ---------- wiring ----------
