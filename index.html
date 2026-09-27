@@ -380,7 +380,7 @@ function evalPhrase(alts){
 }
 
 // ---------- speech synthesis ----------
-let trVoice = null;
+let trVoice = null, trVoices = [];
 function voiceRank(v){
   if(/natural/i.test(v.name)) return 0;      // нейросетевые голоса Edge (Emel, Ahmet)
   if(/online/i.test(v.name)) return 1;
@@ -390,6 +390,7 @@ function voiceRank(v){
 }
 function pickVoice(){
   const vs = speechSynthesis.getVoices().filter(v=>/^tr/i.test(v.lang)).sort((a,b)=>voiceRank(a)-voiceRank(b));
+  trVoices = vs;
   let saved = null; try { saved = localStorage.getItem("soyle-voice"); } catch(e){}
   trVoice = vs.find(v=>v.name===saved) || vs[0] || null;
   const sel = $("voice");
@@ -504,29 +505,42 @@ function speakerOf(title){
   return m ? m[1] : "Wiktionary";
 }
 
+// Все варианты озвучки текущего слова: записи носителей, затем все турецкие голоса устройства
+function voiceVariants(){
+  const recs = nativeCache.get(clean(item.target)) || [];
+  const list = recs.map(r => ({ kind:"rec", url:r.url, label:r.who }));
+  trVoices.forEach(v => list.push({ kind:"tts", voice:v, rate:0.85, label:shortVoice(v) }));
+  if(trVoices.length === 1) list.push({ kind:"tts", voice:trVoices[0], rate:0.55, label:shortVoice(trVoices[0]) + ", медленно" });
+  return list;
+}
+function shortVoice(v){ return v.name.replace(/^(Microsoft|Google)\s*/i,"").replace(/\s*[-–(].*$/,"").trim() || v.name; }
+
 function playNative(){
-  // Играем СРАЗУ: запись носителя, если уже подгружена, иначе — лучший синтез без ожидания
+  // Играем СРАЗУ; каждое нажатие — следующий вариант озвучки этого же слова
   const btn = $("native");
-  const recs = nativeCache.get(clean(item.target));
-  if(recs && recs.length){
-    const rec = recs[nativeIdx % recs.length];
-    nativeIdx++;
-    btn.textContent = recs.length > 1 ? `👤 Носитель ${((nativeIdx-1) % recs.length)+1}/${recs.length}` : "👤 Носитель";
-    speechSynthesis && speechSynthesis.cancel();
-    const a = $("nativeAudio");
-    a.src = rec.url;
-    a.play().catch(()=> say(0.85));
-    return;
+  const vars = voiceVariants();
+  speechSynthesis && speechSynthesis.cancel();
+  const a = $("nativeAudio"); a.pause();
+  if(!vars.length){ btn.textContent = "👤 Нет голосов"; return; }
+  const i = nativeIdx % vars.length, v = vars[i];
+  nativeIdx++;
+  btn.textContent = `👤 ${i+1}/${vars.length} · ${v.kind==="rec" ? "носитель" : "синтез"}`;
+  btn.title = v.label;
+  if(v.kind === "rec"){
+    a.src = v.url;
+    a.play().catch(()=> playNative()); // запись не играет — сразу следующий вариант
+  } else {
+    const u = new SpeechSynthesisUtterance(item.target);
+    u.voice = v.voice; u.lang = v.voice.lang; u.rate = v.rate;
+    speechSynthesis.speak(u);
   }
-  say(0.85);
-  if(recs && !recs.length) btn.textContent = "👤 Носитель (синтез)";
 }
 function prefetchNative(){
   const target = item.target;
   findRecordings(target).then(recs => {
     if(item.target !== target || !recs) return;
     const btn = $("native");
-    btn.textContent = recs.length ? (recs.length > 1 ? `👤 Носитель ×${recs.length}` : "👤 Носитель") : "👤 Носитель (синтез)";
+    btn.textContent = recs.length ? `👤 Носитель ×${recs.length}` : "👤 Носитель";
     if(recs.length){ const a = $("nativeAudio"); a.preload = "auto"; a.src = recs[0].url; }
   });
 }
