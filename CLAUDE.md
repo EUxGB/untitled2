@@ -1,7 +1,10 @@
 # Söyle — правила работы (обязательно)
 
 Тренажёр турецкого произношения. Вся программа — один файл `index.html`.
-Публикуется из ветки `main`: https://raw.githack.com/EUxGB/untitled2/main/index.html
+Публикуется из ветки `main`:
+- основной адрес — GitHub Pages https://euxgb.github.io/untitled2/ (workflow `tests.yml`: сначала тесты,
+  публикация только если они прошли; в настройках Pages источник — «GitHub Actions»);
+- запасной — https://raw.githack.com/EUxGB/untitled2/main/index.html (бывает кэш).
 
 ## Правило №1: перед любым изменением — проверить, не реализовано ли это уже
 
