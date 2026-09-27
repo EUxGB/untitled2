@@ -232,7 +232,7 @@ const CONFUSABLE = [["o","ö"],["u","ü"],["ı","i"],["c","ç"],["ç","ş"],["c"
 const $ = id => document.getElementById(id);
 let mode = "pairs", groupId = "o", setId = "hotel", item = null, lastKey = "";
 let listening = false, recognizer = null;
-let recordOn = !/Android/i.test(navigator.userAgent);
+let recordOn = true;
 let stream = null, mediaRec = null, chunks = [];
 let stats = load();
 
@@ -539,6 +539,7 @@ async function startRecording(){
       const blob = new Blob(chunks, {type: mediaRec.mimeType});
       const a = $("myAudio"); if(a.src) URL.revokeObjectURL(a.src);
       a.src = URL.createObjectURL(blob); $(mode==="free" ? "freeMine" : "mine").hidden = false;
+      if(mode==="free" && autoPlayMine){ autoPlayMine = false; a.play().catch(()=>{}); }
     };
     mediaRec.start();
   } catch(e){ recordOn = false; $("recToggle").checked = false; }
@@ -645,7 +646,7 @@ function prefetchNative(){
 }
 
 // ---------- любая фраза: поймёт ли носитель ----------
-let freeRec = null, freeOn = false;
+let freeRec = null, freeOn = false, autoPlayMine = false;
 function setFree(kind, verdict, extra=""){
   const r = $("freeResult"); r.className = "result " + kind;
   r.innerHTML = `<span class="verdict">${verdict}</span>${extra}`;
@@ -665,30 +666,43 @@ async function freeListen(){
   $("freeLive").textContent = "…"; setFree("info", "Слушаю. Говорите по-турецки.");
   await startRecording();
   freeRec = new SR();
-  freeRec.lang = "tr-TR"; freeRec.interimResults = true; freeRec.continuous = true; freeRec.maxAlternatives = 3;
-  let finalText = "", confs = [], alts = [];
+  // Android Chrome в режиме continuous присылает одну фразу много раз нарастающими кусками —
+  // поэтому там слушаем одну фразу, а результат всегда собираем заново и убираем повторы
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  freeRec.lang = "tr-TR"; freeRec.interimResults = true; freeRec.continuous = !isAndroid; freeRec.maxAlternatives = 3;
+  let finalText = "", conf = 0, interimText = "";
   freeRec.onresult = e => {
-    let interim = "";
-    for(let i = e.resultIndex; i < e.results.length; i++){
-      const r = e.results[i];
-      if(r.isFinal){ finalText += r[0].transcript + " "; if(r[0].confidence) confs.push(r[0].confidence); alts = Array.from(r).map(a=>a.transcript); }
-      else interim += r[0].transcript;
+    const segs = []; let lastConf = 0; interimText = "";
+    for(let i = 0; i < e.results.length; i++){
+      const r = e.results[i], t = r[0].transcript.trim();
+      if(!t) continue;
+      if(!r.isFinal){ interimText = t; continue; }
+      const last = segs[segs.length-1], lt = last && norm(last), nt = norm(t);
+      if(last && nt.startsWith(lt)) segs[segs.length-1] = t;       // нарастающий повтор — заменяем
+      else if(last && lt.startsWith(nt)) { /* укороченный повтор — пропускаем */ }
+      else segs.push(t);
+      if(r[0].confidence) lastConf = r[0].confidence;
     }
-    $("freeLive").textContent = (finalText + interim).trim() || "…";
+    finalText = segs.join(" "); if(lastConf) conf = lastConf;
+    let shown = finalText;
+    if(interimText && !norm(finalText).endsWith(norm(interimText))) shown = norm(interimText).startsWith(norm(finalText)) ? interimText : (finalText + " " + interimText);
+    $("freeLive").textContent = shown.trim() || "…";
   };
   freeRec.onerror = e => {
     const msg = { "not-allowed":"Нет доступа к микрофону. Разрешите его через значок в адресной строке.",
       "no-speech":"Ничего не услышал. Говорите сразу после нажатия.",
-      "network":"Нужен интернет: браузер распознаёт речь на сервере." }[e.error];
+      "network":"Нужен интернет: браузер распознаёт речь на сервере.",
+      "audio-capture":"Телефон не даёт одновременно записывать и распознавать. Запись своего голоса отключена — нажмите «Сказать» ещё раз." }[e.error];
+    if(e.error==="audio-capture" && recordOn){ recordOn = false; $("recToggle").checked = false; if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
     if(msg) setFree("bad", msg);
   };
   freeRec.onend = () => {
     freeOn = false; stopRecording();
     btn.classList.remove("listening"); fab.classList.remove("listening"); btn.textContent = "🎤 Сказать";
-    const heard = finalText.trim();
+    const heard = (finalText || interimText).trim();
+    if(heard && recordOn) autoPlayMine = true;
     if(!heard){ if($("freeResult").classList.contains("info")) setFree("info", "Ничего не распознано. Попробуйте ещё раз, ближе к микрофону."); return; }
     $("freeLive").textContent = "";
-    const conf = confs.length ? confs.reduce((a,b)=>a+b,0)/confs.length : 0;
     const intent = $("intent").value.trim();
     $("freeTranslate").href = `https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(heard)}`;
     $("freeTranslate").hidden = false;
