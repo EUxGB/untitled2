@@ -93,6 +93,22 @@ body{padding-bottom:96px}
 .help p{margin:0; color:var(--muted)}
 .linkbtn{background:none; border:0; padding:0; color:var(--accent); text-decoration:underline; font-size:inherit}
 .partner a{color:var(--accent)}
+.gamebar{display:grid; grid-template-columns:auto auto 1fr; gap:16px; align-items:end; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 16px}
+.gb-item{display:flex; flex-direction:column; gap:2px; min-width:0}
+.gb-num{font:700 24px/1 var(--display); font-variant-numeric:tabular-nums}
+.gb-lab{font-size:12px; color:var(--muted)}
+.gb-goal .bar{height:8px; margin-top:4px}
+.gb-goal .bar i{background:var(--accent); transition:width .4s}
+@media (max-width:420px){ .gamebar{grid-template-columns:1fr 1fr} .gb-goal{grid-column:1 / -1} }
+.ls-options{display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%}
+.ls-opt{border:2px solid var(--line); background:var(--surface); border-radius:14px; padding:18px 8px; display:flex; flex-direction:column; gap:4px; align-items:center}
+.ls-opt b{font:700 clamp(26px,8vw,40px)/1.1 var(--display)}
+.ls-opt small{color:var(--muted); font-size:13px}
+.ls-opt.right{border-color:var(--ok); background:var(--ok-soft)}
+.ls-opt.wrong{border-color:var(--bad); background:var(--bad-soft)}
+.toast{position:fixed; left:50%; top:calc(16px + env(safe-area-inset-top, 0px)); transform:translate(-50%,-150%); background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:999px; font-weight:600; z-index:20; transition:transform .3s; pointer-events:none; white-space:nowrap}
+.toast.show{transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){ .toast{transition:none} .gb-goal .bar i{transition:none} }
 .opt{font-size:14px; color:var(--muted); display:flex; gap:8px; align-items:center; justify-content:center}
 </style>
 </head>
@@ -102,6 +118,15 @@ body{padding-bottom:96px}
     <h1>S<span>ö</span>yle</h1>
     <p class="sub">Тренажёр турецкого произношения для русскоговорящих</p>
   </header>
+
+  <section class="gamebar" aria-label="Прогресс">
+    <div class="gb-item" title="Дней подряд с занятиями"><span class="gb-num" id="gbStreak">0</span><span class="gb-lab">🔥 дней подряд</span></div>
+    <div class="gb-item" title="Уровень и опыт"><span class="gb-num" id="gbLevel">1</span><span class="gb-lab" id="gbXp">уровень · 0 XP</span></div>
+    <div class="gb-item gb-goal" title="Цель на сегодня: правильных ответов">
+      <span class="gb-lab"><span id="gbGoalTxt">0 / 20</span> 🎯 цель дня</span>
+      <div class="bar"><i id="gbGoalBar" style="width:0%"></i></div>
+    </div>
+  </section>
 
   <div id="warn" class="warn" hidden></div>
 
@@ -114,6 +139,10 @@ body{padding-bottom:96px}
       <li><b>⇄ Сравнить</b> — образец и ваша запись подряд: так проще услышать разницу.</li>
       <li><b>🗣 Любая фраза</b> (кнопка внизу) — скажите что угодно и увидите, что услышит носитель. Нужную фразу сохраните в «⭐ мои».</li>
       <li><b>🔁 ошибки</b> — сюда сами попадают слова, где вы ошиблись. Два верных ответа подряд — и слово уходит.</li>
+      <li><b>На слух</b> — звучит одно слово из пары, выберите какое. Сначала мозг учится различать звуки, потом их проще произнести. Голоса и темп меняются специально.</li>
+      <li><b>🔁 Эхо</b> — образец и сразу ваш повтор (шэдоуинг): копируете звук, пока он ещё в памяти.</li>
+      <li><b>🧠 на сегодня</b> — интервальные повторения: каждая отработанная фраза возвращается через 1, 3, 7, 16 и 35 дней, ошибка — через 10 минут. Так фраза переходит в долгую память.</li>
+      <li><b>Игра:</b> опыт (XP) за верные ответы, комбо за серию без ошибок, уровни, 🔥 дни подряд и 🎯 цель дня — 20 верных ответов.</li>
     </ol>
     <p>Лучше всего работает в Chrome или Edge. Нужен интернет. На iPhone распознавание речи ограничено.</p>
   </details>
@@ -121,10 +150,22 @@ body{padding-bottom:96px}
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-pairs" aria-selected="true">Минимальные пары</button>
     <button class="tab" role="tab" id="tab-phrases" aria-selected="false">Фразы</button>
+    <button class="tab" role="tab" id="tab-listen" aria-selected="false">На слух</button>
     <button class="tab" role="tab" id="tab-free" aria-selected="false">Любая фраза</button>
   </div>
 
   <div class="chips" id="chips"></div>
+
+  <section class="card" id="listenCard" hidden>
+    <p class="meaning" style="margin:0">Какое слово прозвучало?</p>
+    <button class="btn primary" id="lsPlay">🔊 Слушать ещё раз</button>
+    <div class="ls-options">
+      <button class="ls-opt" id="lsA" data-k="1"></button>
+      <button class="ls-opt" id="lsB" data-k="2"></button>
+    </div>
+    <p class="hint" id="lsInfo">Сначала учимся слышать разницу: мозгу легче произнести звук, который он уже различает.</p>
+    <div class="result info" id="lsResult"><span class="verdict">Слушайте и выбирайте. Клавиши 1 и 2, пробел — повторить.</span></div>
+  </section>
 
   <section class="card" id="freeCard" hidden>
     <p class="target phrase" style="margin:0">Скажите что угодно по-турецки</p>
@@ -154,6 +195,7 @@ body{padding-bottom:96px}
       <button class="btn primary" id="speak">🎤 Сказать</button>
       <button class="btn" id="mine" hidden>▶ Моя запись</button>
       <button class="btn" id="compare" hidden>⇄ Сравнить</button>
+      <button class="btn" id="echo" title="Послушать образец и сразу повторить">🔁 Эхо</button>
       <button class="btn" id="next">Дальше →</button>
     </div>
     <p class="hint" id="nativeStatus"></p>
@@ -173,6 +215,7 @@ body{padding-bottom:96px}
   </section>
 </div>
 
+<div class="toast" id="toast" aria-live="polite"></div>
 <button class="fab" id="fab" title="Проверить любую фразу">🗣 Любая фраза</button>
 <audio id="myAudio"></audio>
 <audio id="nativeAudio" preload="none"></audio>
@@ -370,6 +413,7 @@ function renderChips(){
     const nLabel = nativeSet ? `🎧 с записями (${nativeSet.length})` : nativeSetLoading ? "🎧 загружаю…" : "🎧 с записями";
     chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
       + `<button class="chip" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
+      + `<button class="chip" data-s="srs" aria-pressed="${setId==="srs"}">🧠 на сегодня (${srsDue().length})</button>`
       + `<button class="chip" data-s="mine" aria-pressed="${setId==="mine"}">⭐ мои (${loadList("soyle-mine").length})</button>`
       + `<button class="chip" data-s="mistakes" aria-pressed="${setId==="mistakes"}">🔁 ошибки (${loadList("soyle-mistakes").length})</button>`;
     chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
@@ -377,7 +421,7 @@ function renderChips(){
   }
   const all = [...GROUPS.map(g=>({id:g.id,label:g.label})), {id:"mix",label:"вперемешку"}];
   chips.innerHTML = all.map(g => `<button class="chip" data-g="${g.id}" aria-pressed="${g.id===groupId}">${g.label}</button>`).join("");
-  chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { groupId=b.dataset.g; renderChips(); next(); });
+  chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { groupId=b.dataset.g; renderChips(); mode==="listen" ? nextListen() : next(); });
 }
 
 function pickPair(){
@@ -463,6 +507,11 @@ function pickPhrase(){
     do { p = nativeSet[Math.floor(Math.random()*nativeSet.length)]; } while(p.tr===lastKey && ++guard<10);
     lastKey = p.tr; return { target:p.tr, translit:"", meaning:"", tip:p.focus, gid:"ph-native", native:true };
   }
+  if(setId === "srs"){
+    const due = srsDue(); if(!due.length) return null;
+    p = due.find(c => c.tr !== lastKey) || due[0]; lastKey = p.tr;
+    return { target:p.tr, translit:p.tl, meaning:p.ru, tip:`Повторение по расписанию: ступень ${p.box+1} из ${BOX_DAYS.length}. Чем лучше помните — тем реже будет попадаться.`, gid:"ph-srs" };
+  }
   if(setId === "mine" || setId === "mistakes"){
     const lst = loadList(setId === "mine" ? "soyle-mine" : "soyle-mistakes");
     if(!lst.length) return null;
@@ -487,8 +536,10 @@ function next(){
   item = mode==="pairs" ? pickPair() : pickPhrase();
   if(!item){
     $("target").classList.add("phrase");
-    $("target").textContent = setId==="mine" ? "Пока пусто" : setId==="mistakes" ? "Ошибок пока нет" : "Записей не найдено";
-    $("meaning").textContent = setId==="mine" ? "Скажите фразу во вкладке «Любая фраза» и нажмите «⭐ В мои фразы»." : setId==="mistakes" ? "Сюда попадут слова и фразы, в которых вы ошибётесь." : "";
+    $("target").textContent = setId==="mine" ? "Пока пусто" : setId==="mistakes" ? "Ошибок пока нет" : setId==="srs" ? "На сегодня всё повторено" : "Записей не найдено";
+    $("meaning").textContent = setId==="mine" ? "Скажите фразу во вкладке «Любая фраза» и нажмите «⭐ В мои фразы»."
+      : setId==="mistakes" ? "Сюда попадут слова и фразы, в которых вы ошибётесь."
+      : setId==="srs" ? "Каждая фраза, которую вы тренируете, вернётся сюда в нужный день: через 1, 3, 7, 16 и 35 дней." : "";
     $("partner").hidden = true; $("tip").textContent = ""; return;
   }
   const t = $("target");
@@ -525,7 +576,7 @@ function setResult(kind, verdict, extra=""){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-mine",label:"мои"}, {id:"ph-mistakes",label:"ошибки"}, {id:"free",label:"любая фраза"}];
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"ph-mistakes",label:"ошибки"}, {id:"free",label:"любая фраза"}];
   const used = rows.filter(r => (stats[r.id]||{}).t);
   if(!used.length){ $("stats").innerHTML = `<p class="hint" style="text-align:left">Здесь появится ваш прогресс по каждому набору.</p>`; return; }
   $("stats").innerHTML = used.map(r => {
@@ -539,8 +590,65 @@ function renderStats(){
 function count(gid, okScore){
   const s = stats[gid] || (stats[gid] = {t:0, ok:0});
   s.t++; s.ok += okScore; save(); renderStats();
-  if(gid !== "free" && item) trackMistake(okScore);
+  award(okScore);
+  if(gid !== "free" && gid !== "listen" && item){ trackMistake(okScore); srsUpdate(okScore); }
 }
+
+// ---------- игровой слой: опыт, уровни, серия дней, цель дня, комбо ----------
+const GOAL = 20;
+let game = (() => { try { return JSON.parse(localStorage.getItem("soyle-game")) || {}; } catch(e){ return {}; } })();
+game = Object.assign({ xp:0, streak:0, lastDay:"", today:"", todayOk:0, combo:0 }, game);
+const dayStr = d => d.toISOString().slice(0,10);
+const levelOf = xp => Math.floor(Math.sqrt(xp/50)) + 1;           // 50, 200, 450, 800… XP
+function award(score){
+  const today = dayStr(new Date()), yest = dayStr(new Date(Date.now()-864e5));
+  if(game.today !== today){ game.today = today; game.todayOk = 0; }
+  if(game.lastDay !== today){ game.streak = game.lastDay === yest ? game.streak + 1 : 1; game.lastDay = today; }
+  const lvl = levelOf(game.xp);
+  let gain = 0;
+  if(score >= 1){
+    game.combo++; game.todayOk++;
+    gain = Math.round(10 * (1 + Math.min(game.combo-1, 5) * 0.2));  // комбо до ×2
+    if(game.combo >= 3 && game.combo % 3 === 0) toast(`Комбо ×${game.combo}! +${gain} XP`);
+    if(game.todayOk === GOAL) toast("🎯 Цель дня выполнена!");
+  } else {
+    if(score >= .5) gain = 3;
+    game.combo = 0;
+  }
+  game.xp += gain;
+  if(levelOf(game.xp) > lvl) toast(`⭐ Новый уровень: ${levelOf(game.xp)}!`);
+  try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
+  renderGame();
+}
+function renderGame(){
+  const today = dayStr(new Date()), yest = dayStr(new Date(Date.now()-864e5));
+  const streak = (game.lastDay === today || game.lastDay === yest) ? game.streak : 0;
+  const todayOk = game.today === today ? game.todayOk : 0;
+  const L = levelOf(game.xp), next = 50 * L * L;
+  $("gbStreak").textContent = streak;
+  $("gbLevel").textContent = L;
+  $("gbXp").textContent = `уровень · ${game.xp} / ${next} XP`;
+  $("gbGoalTxt").textContent = `${Math.min(todayOk, GOAL)} / ${GOAL}`;
+  $("gbGoalBar").style.width = Math.min(100, todayOk / GOAL * 100) + "%";
+}
+let toastTimer = null;
+function toast(t){
+  const el = $("toast"); el.textContent = t; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+}
+
+// ---------- интервальные повторения (система Лейтнера) ----------
+// Верный ответ — карточка уходит на следующую ступень и возвращается позже; ошибка — снова в начало
+const BOX_DAYS = [0, 1, 3, 7, 16, 35];
+function srsUpdate(score){
+  const all = loadList("soyle-srs"), now = Date.now();
+  let c = all.find(x => x.tr === item.target);
+  if(!c){ c = { tr:item.target, tl:item.translit || "", ru:item.meaning || "", box:0, due:now }; all.push(c); }
+  if(score >= 1){ c.box = Math.min(c.box + 1, BOX_DAYS.length - 1); c.due = now + BOX_DAYS[c.box] * 864e5; }
+  else { c.box = 0; c.due = now + 10 * 60e3; } // ошибка — повторить через 10 минут
+  saveList("soyle-srs", all);
+}
+function srsDue(){ const now = Date.now(); return loadList("soyle-srs").filter(c => c.due <= now).sort((a,b) => a.due - b.due); }
 
 // ---------- ошибки и мои фразы (хранятся в этом браузере) ----------
 function loadList(k){ try { return JSON.parse(localStorage.getItem(k)) || []; } catch(e){ return []; } }
@@ -863,6 +971,57 @@ function sayText(text){
   speechSynthesis.speak(u);
 }
 
+// Образец: запись носителя, если есть, иначе синтез (случайный голос — разнообразие помогает слуху)
+function playReference(text, onDone, varied){
+  speechSynthesis && speechSynthesis.cancel();
+  const recs = nativeCache.get(clean(text)) || [];
+  const a = $("nativeAudio"); a.pause(); a.onended = null;
+  if(recs.length){
+    a.src = recs[Math.floor(Math.random()*recs.length)].url;
+    a.onended = () => { a.onended = null; onDone && onDone(); };
+    a.play().catch(() => onDone && onDone());
+    return;
+  }
+  const v = varied && trVoices.length ? trVoices[Math.floor(Math.random()*trVoices.length)] : trVoice;
+  if(!v){ onDone && onDone(); return; }
+  const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang;
+  u.rate = varied ? 0.75 + Math.random()*0.25 : .85;
+  if(onDone) u.onend = onDone;
+  speechSynthesis.speak(u);
+}
+// Эхо (шэдоуинг): образец → сразу ваша попытка, пока звук ещё «в ушах»
+function echo(){ playReference(item.target, () => setTimeout(startListening, 250)); }
+
+// ---------- на слух: различение звуков ----------
+let ls = null, lsLocked = false;
+function nextListen(){
+  const p = pickPair();
+  const right = Math.random() < .5 ? "A" : "B";
+  const words = right === "A" ? [p.target, p.partner] : [p.partner, p.target];
+  const means = right === "A" ? [p.meaning, p.partnerMeaning] : [p.partnerMeaning, p.meaning];
+  ls = { answer:p.target, right, gid:p.gid };
+  item = { target:p.target, gid:p.gid, meaning:p.meaning };
+  $("lsA").innerHTML = `<b>${esc(words[0])}</b><small>${esc(means[0])}</small>`;
+  $("lsB").innerHTML = `<b>${esc(words[1])}</b><small>${esc(means[1])}</small>`;
+  $("lsA").className = $("lsB").className = "ls-opt";
+  lsLocked = false;
+  // подгружаем записи обоих слов, играем после короткой паузы
+  findRecordings(words[0]); findRecordings(words[1]);
+  setTimeout(() => playReference(ls.answer, null, true), 300);
+}
+function answerListen(which){
+  if(!ls || lsLocked) return;
+  lsLocked = true;
+  const ok = which === ls.right;
+  $("ls" + ls.right).classList.add("right");
+  if(!ok) $("ls" + which).classList.add("wrong");
+  const r = $("lsResult");
+  r.className = "result " + (ok ? "ok" : "bad");
+  r.innerHTML = `<span class="verdict">${ok ? "Верно!" : "Нет, прозвучало «" + esc(ls.answer) + "»"}</span>`;
+  count("listen", ok ? 1 : 0);
+  setTimeout(nextListen, ok ? 900 : 2000);
+}
+
 // Образец (носитель, если есть запись, иначе синтез) и сразу ваша запись
 function compareVoices(){
   const mine = $("myAudio"), recs = nativeCache.get(clean(item.target)) || [];
@@ -885,14 +1044,22 @@ function setMode(m){
   $("tab-pairs").setAttribute("aria-selected", m==="pairs");
   $("tab-phrases").setAttribute("aria-selected", m==="phrases");
   $("tab-free").setAttribute("aria-selected", m==="free");
-  $("card").hidden = m==="free"; $("freeCard").hidden = m!=="free";
+  $("tab-listen").setAttribute("aria-selected", m==="listen");
+  $("card").hidden = m==="free" || m==="listen"; $("freeCard").hidden = m!=="free"; $("listenCard").hidden = m!=="listen";
   if(m==="free"){ $("chips").hidden = true; return; }
   $("chips").hidden = false;
-  renderChips(); next();
+  renderChips();
+  if(m==="listen") return nextListen();
+  next();
 }
 $("tab-pairs").onclick = () => setMode("pairs");
 $("tab-phrases").onclick = () => setMode("phrases");
 $("tab-free").onclick = () => setMode("free");
+$("tab-listen").onclick = () => setMode("listen");
+$("lsPlay").onclick = () => ls && playReference(ls.answer, null, true);
+$("lsA").onclick = () => answerListen("A");
+$("lsB").onclick = () => answerListen("B");
+$("echo").onclick = echo;
 $("freeSpeak").onclick = freeListen;
 $("fab").onclick = () => { if(mode!=="free") setMode("free"); freeListen(); };
 $("freeMine").onclick = () => $("myAudio").play();
@@ -912,13 +1079,18 @@ $("recToggle").checked = recordOn;
 $("recToggle").onchange = e => { recordOn = e.target.checked; if(!recordOn && stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } };
 document.addEventListener("keydown", e => {
   if(e.target.tagName==="INPUT" || e.repeat) return;
+  if(mode==="listen"){
+    if(e.code==="Space"){ e.preventDefault(); ls && playReference(ls.answer, null, true); }
+    else if(e.key==="1") answerListen("A"); else if(e.key==="2") answerListen("B");
+    return;
+  }
   if(e.code==="Space"){ e.preventDefault(); if(mode==="free") return freeListen(); listening ? stopListening() : startListening(); }
   else if(e.key==="Enter"){ e.preventDefault(); next(); }
   else if(e.key.toLowerCase()==="l"){ say(0.85); }
   else if(e.key.toLowerCase()==="n"){ playNative(); }
 });
 
-renderChips(); renderStats(); next();
+renderChips(); renderStats(); renderGame(); next();
 </script>
 </body>
 </html>
