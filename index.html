@@ -252,6 +252,28 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
   .btngrid .btn.ib .bi{font-size:17px}
   .btngrid .big{min-height:46px}
 }
+.lesson{flex:none; display:flex; align-items:center; gap:10px; padding:0 4px 8px; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums}
+.lesson .bar{flex:1; height:8px; border-radius:4px}
+.lesson .bar i{background:var(--ok); transition:width .35s}
+.modal{position:fixed; inset:0; z-index:40; display:grid; place-items:center; padding:16px; background:rgba(10,14,20,.55)}
+.modal-box{width:min(420px,100%); background:var(--surface); color:var(--ink); border-radius:22px; padding:22px 18px 16px; display:flex; flex-direction:column; gap:10px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,.35); animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(.85); opacity:0}}
+.modal-ic{font-size:54px; line-height:1}
+.modal-box h3{margin:0; font:700 22px/1.2 var(--display)}
+.modal-box p{margin:0; color:var(--muted)}
+.modal-stats{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
+.modal-stats:empty{display:none}
+.btngrid.one{grid-template-columns:1fr}
+.ms{background:var(--bg); border-radius:12px; padding:8px 4px; display:flex; flex-direction:column; gap:2px}
+.ms b{font:700 20px/1.1 var(--display); font-variant-numeric:tabular-nums}
+.ms span{font-size:12px; color:var(--muted)}
+.pv-week{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:6px; text-align:center}
+.pv-day{display:flex; flex-direction:column; align-items:center; gap:4px; font-size:12px; color:var(--muted)}
+.pv-dot{width:34px; height:34px; border-radius:50%; display:grid; place-items:center; border:2px solid var(--line); font-size:16px; color:var(--ink)}
+.pv-dot.done{background:var(--ok-soft); border-color:var(--ok)}
+.pv-dot.frozen{background:var(--accent-soft); border-color:var(--accent)}
+.pv-day.today .pv-dot{outline:2px solid var(--accent); outline-offset:2px}
+@media (prefers-reduced-motion: reduce){ .modal-box{animation:none} .lesson .bar i{transition:none} }
 @media (min-width:561px){ .app{border-inline:1px solid var(--line)} }
 @media (prefers-reduced-motion: reduce){ .ring-fg, .tabbar .tab .ti{transition:none} }
 </style>
@@ -272,6 +294,9 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
   <div class="chips" id="chips"></div>
 
   <main class="screen">
+    <div class="lesson" id="lessonBar" aria-label="Прогресс урока">
+      <span class="bar"><i id="lessonFill"></i></span><span id="lessonTxt">урок 0 / 10</span>
+    </div>
     <section class="card" id="listenCard" hidden>
       <p class="meaning ls-q">Какое слово прозвучало?</p>
       <div class="ls-options">
@@ -332,10 +357,11 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
         </div>
       </div>
       <div class="pv-tiles">
-        <div class="pv-tile"><b id="gbStreak">0</b><span>🔥 дней подряд</span></div>
+        <div class="pv-tile"><b id="gbStreak">0</b><span>🔥 дней подряд · ❄️ <span id="gbFreeze">0</span></span></div>
         <div class="pv-tile"><b id="gbGoalTxt">0 / 20</b><span>🎯 цель дня</span><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
         <div class="pv-tile"><b id="gbBlitz">0</b><span>⚡ рекорд блица</span></div>
       </div>
+      <div class="pv-week" id="gbWeek" aria-label="Занятия за 7 дней"></div>
       <div class="pv-quest" id="gbQuest">🎁 <span id="gbQuestTxt"></span></div>
 
       <h2>🏅 Достижения <span id="badgeCount">0 / 0</span></h2>
@@ -398,6 +424,18 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
   </nav>
 </div>
 
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-box">
+    <div class="modal-ic" id="modalIc" aria-hidden="true"></div>
+    <h3 id="modalTitle"></h3>
+    <p id="modalText"></p>
+    <div class="modal-stats" id="modalStats"></div>
+    <div class="btngrid two">
+      <button class="btn" id="modalSecondary"></button>
+      <button class="btn primary" id="modalPrimary"></button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast" aria-live="polite"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 <audio id="myAudio"></audio>
@@ -780,17 +818,25 @@ function count(gid, okScore){
   const s = stats[gid] || (stats[gid] = {t:0, ok:0});
   s.t++; s.ok += okScore; save(); renderStats();
   award(okScore, gid);
+  if(gid !== "free") lessonStep(okScore);
   if(gid !== "free" && gid !== "listen" && item) srsUpdate(okScore);
+  renderLesson();
 }
 
 // ---------- игровой слой: опыт, уровни, серия дней, цель дня, комбо ----------
 const GOAL = 20;
+const TESTMODE = !!window.SOYLE_TEST;
+let SURPRISE_P = TESTMODE ? 0 : 0.07;        // шанс неожиданного бонуса за верный ответ
+let MILESTONE_MODALS = !TESTMODE;            // окна-праздники: новый уровень, цель дня
+let LESSON_SIZE = TESTMODE ? 1e9 : 10;       // заданий в уроке
 let game = (() => { try { return JSON.parse(localStorage.getItem("soyle-game")) || {}; } catch(e){ return {}; } })();
 // недостающие поля (старые сохранения, сбой хранилища) всегда дополняются значениями по умолчанию
-const GAME_DEFAULTS = () => ({ xp:0, streak:0, lastDay:"", today:"", todayOk:0, combo:0, bestCombo:0, total:0, goals:0, blitzBest:0, badges:[], quest:null });
+const GAME_DEFAULTS = () => ({ xp:0, streak:0, lastDay:"", today:"", todayOk:0, combo:0, bestCombo:0, total:0, goals:0, blitzBest:0, badges:[], quest:null, freezes:0, days:[], frozenDays:[], lessons:0 });
 function normalizeGame(){
   game = Object.assign(GAME_DEFAULTS(), game || {});
   if(!Array.isArray(game.badges)) game.badges = [];
+  if(!Array.isArray(game.days)) game.days = [];
+  if(!Array.isArray(game.frozenDays)) game.frozenDays = [];
 }
 normalizeGame();
 const dayStr = d => d.toISOString().slice(0,10);
@@ -799,7 +845,15 @@ function award(score, gid){
   normalizeGame();
   const today = dayStr(new Date()), yest = dayStr(new Date(Date.now()-864e5));
   if(game.today !== today){ game.today = today; game.todayOk = 0; }
-  if(game.lastDay !== today){ game.streak = game.lastDay === yest ? game.streak + 1 : 1; game.lastDay = today; }
+  if(game.lastDay !== today){
+    const gap = game.lastDay ? Math.round((Date.parse(today) - Date.parse(game.lastDay)) / 864e5) : 0;
+    if(gap === 1) game.streak++;
+    else if(gap === 2 && game.freezes > 0){ game.freezes--; game.streak++; game.frozenDays.push(yest); toast("❄️ Заморозка сохранила вашу серию!"); }
+    else game.streak = 1;
+    game.lastDay = today;
+    if(!game.days.includes(today)) game.days.push(today);
+    game.days = game.days.slice(-30); game.frozenDays = game.frozenDays.slice(-30);
+  }
   const lvl = levelOf(game.xp);
   let gain = 0;
   if(score >= 1){
@@ -807,14 +861,26 @@ function award(score, gid){
     game.bestCombo = Math.max(game.bestCombo, game.combo);
     gain = Math.round(10 * (1 + Math.min(game.combo-1, 5) * 0.2));  // комбо до ×2
     if(game.combo >= 3 && game.combo % 3 === 0) toast(`Комбо ×${game.combo}! +${gain} XP`);
-    if(game.todayOk === GOAL){ game.goals++; toast("🎯 Цель дня выполнена!"); confetti(); }
+    if(game.todayOk === GOAL){
+      game.goals++; confetti();
+      const gotFreeze = game.freezes < 2; if(gotFreeze) game.freezes++;
+      milestone({ ic:"🎯", title:"Цель дня выполнена!", text:`20 верных ответов за сегодня.${gotFreeze ? " Награда: ❄️ заморозка серии — сохранит серию, если пропустите день." : ""} Можно закончить на сегодня — или продолжить.`,
+        primary:{ label:"Продолжить" }, secondary:{ label:"На сегодня всё", fn:() => setMode("progress") } });
+    }
+    // неожиданный бонус — не за что-то конкретное, поэтому не вытесняет интерес к самому языку
+    if(Math.random() < SURPRISE_P){ gain += 15; toast("🎁 Сюрприз! +15 XP"); }
   } else {
     if(score >= .5) gain = 3;
     game.combo = 0;
   }
   game.xp += gain;
   questProgress(score, gid);
-  if(levelOf(game.xp) > lvl){ toast(`⭐ Новый уровень ${levelOf(game.xp)}: ${rankOf(levelOf(game.xp))}!`); confetti(); }
+  if(levelOf(game.xp) > lvl){
+    const L = levelOf(game.xp), nextRank = rankOf(L + 1), toNext = 50 * L * L - game.xp;
+    confetti();
+    milestone({ ic:"⭐", title:`Уровень ${L}: ${rankOf(L)}!`, text: nextRank !== rankOf(L) ? `Следующее звание — «${nextRank}», осталось ${toNext} XP.` : `До следующего уровня ${toNext} XP.`,
+      stats:[["XP", game.xp], ["дней", game.streak], ["достижений", game.badges.length]], primary:{ label:"Отлично!" } }, `⭐ Новый уровень ${L}: ${rankOf(L)}!`);
+  }
   checkBadges();
   try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
   renderGame();
@@ -822,7 +888,8 @@ function award(score, gid){
 function renderGame(){
   normalizeGame();
   const today = dayStr(new Date()), yest = dayStr(new Date(Date.now()-864e5));
-  const streak = (game.lastDay === today || game.lastDay === yest) ? game.streak : 0;
+  const before = new Date(Date.now()-2*864e5).toISOString().slice(0,10);
+  const streak = (game.lastDay === today || game.lastDay === yest || (game.lastDay === before && game.freezes > 0)) ? game.streak : 0;
   const todayOk = game.today === today ? game.todayOk : 0;
   const L = levelOf(game.xp), next = 50 * L * L;
   $("gbStreak").textContent = streak;
@@ -835,6 +902,13 @@ function renderGame(){
   $("gbXp").textContent = `${game.xp} / ${next} XP`;
   $("gbXpBar").style.width = Math.min(100, (game.xp - prev) / (next - prev) * 100) + "%";
   $("gbBlitz").textContent = game.blitzBest;
+  $("gbFreeze").textContent = game.freezes;
+  const wd = ["вс","пн","вт","ср","чт","пт","сб"];
+  $("gbWeek").innerHTML = Array.from({ length:7 }, (_, i) => {
+    const d = new Date(Date.now() - (6 - i) * 864e5), ds = dayStr(d);
+    const cls = game.days.includes(ds) ? "done" : game.frozenDays.includes(ds) ? "frozen" : "";
+    return `<div class="pv-day${i === 6 ? " today" : ""}"><span class="pv-dot ${cls}">${cls === "done" ? "✓" : cls === "frozen" ? "❄️" : ""}</span>${wd[d.getDay()]}</div>`;
+  }).join("");
   $("tbStreak").textContent = streak; $("tbLevel").textContent = L;
   $("tbRing").style.strokeDashoffset = 94.25 * (1 - Math.min(1, todayOk / GOAL));
   $("gbGoalTxt").textContent = `${Math.min(todayOk, GOAL)} / ${GOAL}`;
@@ -848,6 +922,64 @@ function showNextToast(){
   if(!t){ toastBusy = false; return; }
   toastBusy = true; el.textContent = t; el.classList.add("show");
   setTimeout(() => { el.classList.remove("show"); setTimeout(showNextToast, 250); }, 1800);
+}
+
+// ---------- окно-праздник ----------
+const modalQueue = []; let modalOpen = false;
+function showModal(o){
+  if(modalOpen){ modalQueue.push(o); return; }
+  modalOpen = true;
+  $("modalIc").textContent = o.ic || "🎉"; $("modalTitle").textContent = o.title || ""; $("modalText").textContent = o.text || "";
+  $("modalStats").innerHTML = (o.stats || []).map(([l, v]) => `<div class="ms"><b>${esc(String(v))}</b><span>${esc(l)}</span></div>`).join("");
+  const P = $("modalPrimary"), S = $("modalSecondary");
+  P.textContent = (o.primary && o.primary.label) || "Дальше";
+  S.hidden = !o.secondary; if(o.secondary) S.textContent = o.secondary.label;
+  const grid = $("modalStats").parentElement.querySelector(".btngrid");
+  grid.classList.toggle("two", !!o.secondary); grid.classList.toggle("one", !o.secondary);
+  P.onclick = () => { closeModal(); o.primary && o.primary.fn && o.primary.fn(); };
+  S.onclick = () => { closeModal(); o.secondary && o.secondary.fn && o.secondary.fn(); };
+  $("modal").hidden = false; setTimeout(() => P.focus(), 50);
+}
+function closeModal(){
+  $("modal").hidden = true; modalOpen = false;
+  if(modalQueue.length) setTimeout(() => showModal(modalQueue.shift()), 150);
+}
+const deferred = [];
+function milestone(o, toastText){
+  if(!MILESTONE_MODALS){ if(toastText) toast(toastText); return; }
+  if(typeof blitz !== "undefined" && blitz){ deferred.push(o); return; }  // во время блица — после его окончания
+  showModal(o);
+}
+document.addEventListener("keydown", e => { if(e.key === "Escape" && modalOpen) $(!$("modalSecondary").hidden ? "modalSecondary" : "modalPrimary").click(); }, true);
+
+// ---------- уроки: 10 заданий с итогом (естественная точка остановки) ----------
+const lessons = {};
+function lessonOf(m){ return lessons[m] || (lessons[m] = { n:0, ok:0, miss:[], xp0:game.xp }); }
+function renderLesson(){
+  const bar = $("lessonBar"), show = ["pairs","phrases","listen"].includes(mode) && LESSON_SIZE < 1e6;
+  bar.style.visibility = show ? "visible" : "hidden";
+  if(!show) return;
+  const l = lessonOf(mode);
+  $("lessonFill").style.width = Math.max(4, l.n / LESSON_SIZE * 100) + "%";
+  $("lessonTxt").textContent = `урок ${l.n} / ${LESSON_SIZE}`;
+}
+function lessonStep(score){
+  if(!["pairs","phrases","listen"].includes(mode) || (typeof blitz !== "undefined" && blitz)) return;
+  const l = lessonOf(mode);
+  if(l.n === 0) l.xp0 = game.xp;
+  l.n++; if(score >= 1) l.ok++; else if(item && !l.miss.includes(item.target)) l.miss.push(item.target);
+  renderLesson();
+  if(l.n >= LESSON_SIZE){
+    const m = mode, earned = game.xp - l.xp0, acc = Math.round(l.ok / l.n * 100);
+    game.lessons++; try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
+    lessons[m] = null; checkBadges();
+    if(acc >= 80) confetti();
+    showModal({ ic: acc === 100 ? "🏆" : acc >= 80 ? "🏁" : "💪", title: acc === 100 ? "Урок без ошибок!" : "Урок пройден!",
+      text: l.miss.length ? `Повторим позже (уже в «🧠 на сегодня»): ${l.miss.slice(0, 5).join(", ")}${l.miss.length > 5 ? "…" : ""}` : "Все ответы верные — так держать.",
+      stats:[["верно", `${l.ok}/${l.n}`], ["точность", acc + "%"], ["XP", "+" + earned]],
+      primary:{ label:"Ещё урок", fn:() => { renderLesson(); if(m === "listen") nextListen(); else next(); } },
+      secondary:{ label:"Отдохнуть", fn:() => setMode("progress") } });
+  }
 }
 
 // ---------- звания ----------
@@ -907,6 +1039,8 @@ const BADGES = [
   { id:"free",    ic:"🗣️", t:"Меня поняли",    d:"5 фраз в «Свободно»",             ok:(g,s) => (s.free||{}).ok >= 5 },
   { id:"memory",  ic:"🧠", t:"Память слона",   d:"10 повторений «на сегодня»",      ok:(g,s) => (s["ph-srs"]||{}).ok >= 10 },
   { id:"level5",  ic:"🏙️", t:"Стамбулец",      d:"Достичь 6-го уровня",             ok:g => levelOf(g.xp) >= 6 },
+  { id:"lesson1", ic:"🏁", t:"Первый урок",    d:"Пройти урок из 10 заданий",       ok:g => g.lessons >= 1 },
+  { id:"lesson10",ic:"🎓", t:"Прилежный",      d:"Пройти 10 уроков",                ok:g => g.lessons >= 10 },
 ];
 function checkBadges(){
   normalizeGame();
@@ -1412,31 +1546,44 @@ function answerListen(which){
   r.className = "result " + (ok ? "ok" : "bad");
   r.innerHTML = `<span class="verdict">${ok ? "Верно!" : "Нет, прозвучало «" + esc(ls.answer) + "»"}</span>`;
   count("listen", ok ? 1 : 0);
-  if(blitz){ blitz.ok += ok ? 1 : 0; updateBlitzBtn(); }
-  setTimeout(nextListen, blitz ? (ok ? 350 : 900) : (ok ? 900 : 2000));
+  if(blitz){ blitz.ok += ok ? 1 : 0; blitz.total++; updateBlitzBtn(); }
+  clearTimeout(lsNextTimer);
+  lsNextTimer = setTimeout(nextListen, blitz ? (ok ? 350 : 900) : (ok ? 900 : 2000));
 }
 
-let blitz = null, BLITZ_SEC = 60;
+let blitz = null, BLITZ_SEC = 60, lsNextTimer = null;
+function setOptionsEnabled(on){ $("lsA").disabled = $("lsB").disabled = !on; }
 function startBlitz(){
   if(blitz) return;
-  blitz = { ok:0, left:BLITZ_SEC };
+  clearTimeout(lsNextTimer); setOptionsEnabled(true);
+  blitz = { ok:0, total:0, left:BLITZ_SEC };
   $("lsBlitz").classList.add("running"); updateBlitzBtn();
   blitz.timer = setInterval(() => { blitz.left--; updateBlitzBtn(); if(blitz.left <= 0) endBlitz(); }, 1000);
   nextListen();
 }
 function updateBlitzBtn(){ if(blitz) $("lsBlitz").textContent = `⏱ ${blitz.left} · ✓ ${blitz.ok}`; }
-function endBlitz(){
+function endBlitz(quiet){
   if(!blitz) return;
   normalizeGame();
-  clearInterval(blitz.timer);
-  const got = blitz.ok, record = got > game.blitzBest;
+  clearInterval(blitz.timer); clearTimeout(lsNextTimer);   // больше никаких новых слов после конца
+  const got = blitz.ok, total = blitz.total, prevBest = game.blitzBest, record = got > prevBest;
   if(record) game.blitzBest = got;
+  const bonus = got * 2; game.xp += bonus;                   // бонус за блиц: +2 XP за каждый верный
   blitz = null;
   $("lsBlitz").classList.remove("running"); $("lsBlitz").textContent = "⚡ Блиц 60 с";
+  lsLocked = true; setOptionsEnabled(false);
   const r = $("lsResult"); r.className = "result " + (record ? "ok" : "info");
   r.innerHTML = `<span class="verdict">Блиц окончен: ${got} верных${record ? " — новый рекорд! 🏆" : ` (рекорд ${game.blitzBest})`}</span>`;
-  if(record && got > 0){ toast(`⚡ Рекорд блица: ${got}!`); confetti(); }
-  checkBadges();
+  checkBadges(); renderGame();
+  try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
+  const resume = () => { lsLocked = false; setOptionsEnabled(true); nextListen(); };
+  if(quiet){ lsLocked = false; setOptionsEnabled(true); return; }
+  if(record && got > 0) confetti();
+  showModal({ ic: record && got > 0 ? "🏆" : "⚡", title: record && got > 0 ? "Новый рекорд блица!" : "Блиц окончен",
+    text: record && got > 0 ? (prevBest ? `Прошлый рекорд: ${prevBest}. Вы улучшили его на ${got - prevBest}.` : "Первый рекорд установлен.") : `До рекорда (${prevBest}) не хватило ${prevBest - got + 1}. Ещё раз?`,
+    stats:[["верно", got], ["точность", total ? Math.round(got / total * 100) + "%" : "—"], ["XP", "+" + bonus]],
+    primary:{ label:"⚡ Ещё раз", fn:startBlitz }, secondary:{ label:"Закрыть", fn:resume } });
+  deferred.splice(0).forEach(o => showModal(o));             // отложенные праздники — после итогов блица
 }
 
 // Образец (носитель, если есть запись, иначе синтез) и сразу ваша запись
@@ -1566,7 +1713,7 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 // ---------- wiring ----------
 function setMode(m){
   if(listening) stopListening();
-  if(blitz && m !== "listen") endBlitz();
+  if(blitz && m !== "listen") endBlitz(true);
   mode = m;
   $("tab-pairs").setAttribute("aria-pressed", m==="pairs");
   $("tab-phrases").setAttribute("aria-pressed", m==="phrases");
@@ -1575,6 +1722,7 @@ function setMode(m){
   $("tab-progress").setAttribute("aria-pressed", m==="progress");
   $("card").hidden = m==="free" || m==="listen" || m==="progress"; $("freeCard").hidden = m!=="free"; $("listenCard").hidden = m!=="listen";
   $("progressView").hidden = m!=="progress";
+  renderLesson();
   if(m==="free" || m==="progress"){ $("chips").hidden = true; if(m==="progress"){ renderGame(); renderBadges(); renderStats(); } return; }
   $("chips").hidden = false;
   renderChips();
@@ -1608,6 +1756,7 @@ $("freeSave").onclick = () => {
 document.addEventListener("keydown", e => {
   // клавиши-сокращения не перехватывают пробел/Enter у кнопок, ссылок и полей (2.1.1)
   if(e.repeat || e.ctrlKey || e.metaKey || e.altKey || ["INPUT","TEXTAREA","SELECT","BUTTON","A","SUMMARY"].includes(e.target.tagName)) return;
+  if(modalOpen) return;               // пока открыто окно — горячие клавиши не работают
   if(mode==="progress") return;
   if(mode==="listen"){
     if(e.code==="Space"){ e.preventDefault(); ls && playReference(ls.answer, null, true); }
@@ -1620,7 +1769,7 @@ document.addEventListener("keydown", e => {
   else if(e.key.toLowerCase()==="n"){ playNative(); }
 });
 
-renderChips(); renderStats(); renderGame(); renderBadges(); setupSelfRecord(); next();
+renderChips(); renderStats(); renderGame(); renderBadges(); renderLesson(); setupSelfRecord(); next();
 </script>
 </body>
 </html>

@@ -15,6 +15,7 @@ const ok = (v, msg) => { if(!v) throw new Error(msg || 'условие не вы
 
 // Заглушки: распознаватель отдаёт window.__say (или последовательность window.__seq), микрофон — тон генератора
 const INIT = () => {
+  window.SOYLE_TEST = true; // без случайных бонусов и окон-праздников; отдельные тесты включают их сами
   const SR = function(){ const self = this;
     this.start = () => setTimeout(() => {
       if(window.__silent){ self.onend(); return; }
@@ -227,7 +228,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('достижения открываются один раз и показываются в списке', async () => {
     const r = await p.evaluate(r => { eval(r); for(let i = 0; i < 5; i++) award(1, 'o'); const once = game.badges.slice(); award(1, 'o'); return [once, game.badges.filter(b => b === 'first').length, document.getElementById('badgeCount').textContent, document.querySelectorAll('.badge:not(.locked)').length]; }, RESET);
-    ok(r[0].includes('first') && r[0].includes('combo5'), JSON.stringify(r[0])); eq(r[1], 1); eq(r[2], `${r[0].length} / 20`); eq(r[3], r[0].length);
+    ok(r[0].includes('first') && r[0].includes('combo5'), JSON.stringify(r[0])); eq(r[1], 1); eq(r[2], `${r[0].length} / ${await p.evaluate(() => BADGES.length)}`); eq(r[3], r[0].length);
   });
   await test('задание дня: прогресс только по своему набору, награда +50 XP один раз', async () => {
     const r = await p.evaluate(r => { eval(r); todayQuest(); game.quest.idx = 0; // «5 верных На слух»
@@ -248,8 +249,41 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       for(let i = 0; i < 2; i++){ await new Promise(z => setTimeout(z, 420)); answerListen(ls.right); }
       const during = document.getElementById('lsBlitz').textContent;
       await new Promise(z => setTimeout(z, 3200)); BLITZ_SEC = 60;
-      return [during.startsWith('⏱'), game.blitzBest, document.getElementById('lsResult').textContent.includes('рекорд'), document.getElementById('lsBlitz').textContent, blitz]; }, RESET);
+      const res = [during.startsWith('⏱'), game.blitzBest, document.getElementById('lsResult').textContent.includes('рекорд'), document.getElementById('lsBlitz').textContent, blitz];
+      document.getElementById('modalSecondary').click(); return res; }, RESET);
     eq(r, [true, 2, true, '⚡ Блиц 60 с', null]);
+  });
+  await test('блиц — настоящие 60 секунд с ответами до конца: экран итогов, новые слова не идут, ответы заблокированы', async () => {
+    const q = await openPage(browser);
+    await q.clock.install();
+    await q.evaluate(() => { setMode('listen'); game.blitzBest = 0; });
+    await q.click('#lsBlitz');
+    // отвечаем правильно всю минуту, как пользователь
+    for(let sec = 0; sec < 62; sec++){
+      const can = await q.evaluate(() => !!ls && !lsLocked && !document.getElementById('lsA').disabled);
+      if(can){ const right = await q.evaluate(() => ls.right); await q.click(right === 'A' ? '#lsA' : '#lsB'); }
+      await q.clock.runFor(1000);
+    }
+    const after = await q.evaluate(() => ({ blitz, overlay: !document.getElementById('modal').hidden, text: document.getElementById('modalStats').textContent + ' ' + document.getElementById('modalTitle').textContent,
+      disabled: document.getElementById('lsA').disabled && document.getElementById('lsB').disabled, best: game.blitzBest, btn: document.getElementById('lsBlitz').textContent, word: ls && ls.answer }));
+    // даже спустя время после конца новое слово не должно появиться само
+    await q.clock.runFor(5000);
+    const later = await q.evaluate(() => ls && ls.answer);
+    const errs = q.errors; await q.context().close();
+    eq(after.blitz, null); ok(after.overlay, 'нет экрана итогов'); ok(/верно/.test(after.text) && /Блиц|рекорд/.test(after.text), after.text);
+    ok(after.disabled, 'варианты не заблокированы после конца'); ok(after.best >= 20, 'рекорд не записан: ' + after.best);
+    eq(after.btn, '⚡ Блиц 60 с'); eq(later, after.word); eq(errs, []);
+  });
+  await test('экран итогов блица: «Ещё раз» запускает новый, «Закрыть» возвращает к обычной тренировке', async () => {
+    const q = await openPage(browser); await q.clock.install();
+    await q.evaluate(() => { setMode('listen'); BLITZ_SEC = 2; });
+    await q.click('#lsBlitz'); await q.clock.runFor(2500);
+    ok(await q.isVisible('#modal'), 'нет экрана итогов');
+    await q.click('#modalPrimary'); const again = await q.evaluate(() => [!!blitz, document.getElementById('modal').hidden, document.getElementById('lsA').disabled]);
+    await q.clock.runFor(2500); await q.click('#modalSecondary');
+    const closed = await q.evaluate(() => [blitz, document.getElementById('modal').hidden, document.getElementById('lsA').disabled, !!ls]);
+    await q.context().close();
+    eq(again, [true, true, false]); eq(closed, [null, true, false, true]);
   });
   await test('блиц останавливается при уходе из режима «На слух»', async () => {
     const r = await p.evaluate(() => { setMode('listen'); startBlitz(); setMode('pairs'); return [blitz, document.getElementById('lsBlitz').textContent]; });
@@ -291,6 +325,94 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return [freeOn, document.getElementById('freeResult').textContent.includes('не ответил'), document.getElementById('freeSpeak').textContent, localStorage.getItem('soyle-rec-conflict')]; });
     await q.context().close();
     eq(r, [false, true, '🎤 Сказать', null]);
+  });
+
+  console.log('Геймификация по навыку gamification-loops');
+  await test('урок: 10 заданий нажатиями → окно итогов с точностью и ошибками; «Ещё урок» / «Отдохнуть»', async () => {
+    const q = await openPage(browser);
+    await q.evaluate(() => { LESSON_SIZE = 10; setMode('pairs'); });
+    for(let i = 0; i < 10; i++){
+      const w = await q.evaluate(i => { const t = item.target; window.__say = i === 3 ? item.partner : t; return t; }, i);
+      await q.click('#speak'); await q.waitForTimeout(120);
+      if(i < 9){ ok(await q.evaluate(() => document.getElementById('modal').hidden), 'окно раньше времени'); await q.click('#next'); }
+    }
+    const r = await q.evaluate(() => [!document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, document.getElementById('modalStats').textContent, document.getElementById('modalText').textContent, game.lessons]);
+    ok(r[0], 'нет окна итогов'); ok(r[1].includes('Урок'), r[1]); ok(r[2].includes('9/10') && r[2].includes('90%'), r[2]); ok(r[3].includes('на сегодня'), r[3]); eq(r[4], 1);
+    await q.click('#modalPrimary');
+    eq(await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('lessonTxt').textContent, game.badges.includes('lesson1')]), [true, 'урок 0 / 10', true]);
+    await q.evaluate(() => { for(let i = 0; i < 10; i++) count('o', 1); }); await q.click('#modalSecondary');
+    eq(await q.evaluate(() => mode), 'progress');
+    const errs = q.errors; await q.context().close(); eq(errs, []);
+  });
+  await test('заморозка серии: один пропуск прощается и тратит ❄️, без заморозки серия сбрасывается', async () => {
+    const r = await p.evaluate(r => { eval(r); const d2 = new Date(Date.now() - 2*864e5).toISOString().slice(0,10);
+      game.lastDay = d2; game.streak = 5; game.freezes = 1; award(1, 'o'); const a = [game.streak, game.freezes, game.frozenDays.length];
+      game.lastDay = d2; game.streak = 5; game.freezes = 0; game.today = ''; award(1, 'o'); return [a, game.streak]; }, RESET);
+    eq(r, [[6, 0, 1], 1]);
+  });
+  await test('цель дня: окно-праздник, +1 ❄️ (не больше 2), кнопка «На сегодня всё» ведёт в «Прогресс»', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => { MILESTONE_MODALS = true; todayQuest(); game.quest.done = true; game.freezes = 0; for(let i = 0; i < 20; i++) award(1, 'o');
+      return [!document.getElementById('modal').hidden, game.freezes]; });
+    ok(r[0], 'нет окна'); eq(r[1], 1);
+    // окна идут очередью (новые уровни наступили раньше цели) — листаем до окна цели дня
+    let title = '';
+    for(let i = 0; i < 8; i++){ title = await q.textContent('#modalTitle'); if(title.includes('Цель дня')) break; await q.click('#modalPrimary'); await q.waitForTimeout(200); }
+    ok(title.includes('Цель дня'), 'окно цели дня не показано: ' + title);
+    await q.click('#modalSecondary'); await q.waitForTimeout(200);
+    for(let i = 0; i < 5 && await q.isVisible('#modal'); i++){ await q.click('#modalPrimary'); await q.waitForTimeout(200); }
+    eq(await q.evaluate(() => mode), 'progress');
+    const cap = await q.evaluate(() => { game.freezes = 2; game.todayOk = 19; award(1, 'o'); return game.freezes; });
+    await q.context().close(); eq(cap, 2);
+  });
+  await test('новый уровень: окно со званием и сколько до следующего; Escape закрывает; горячие клавиши не срабатывают под окном', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => { MILESTONE_MODALS = true; todayQuest(); game.quest.done = true; game.xp = 45; award(1, 'o'); return [document.getElementById('modalTitle').textContent, document.getElementById('modalText').textContent,
+      document.getElementById('modalPrimary').getBoundingClientRect().width / document.querySelector('.modal-box').getBoundingClientRect().width]; });
+    ok(r[2] > 0.8, 'одна кнопка должна быть во всю ширину, сейчас ' + Math.round(r[2]*100) + '%');
+    ok(r[0].includes('Уровень 2') && r[0].includes('Гость'), r[0]); ok(/осталось \d+ XP|\d+ XP/.test(r[1]), r[1]);
+    const w = await q.evaluate(() => item.target); await q.keyboard.press('Enter'); // Enter под окном не листает слова
+    const same = await q.evaluate(() => item.target) === w || await q.evaluate(() => document.getElementById('modal').hidden);
+    await q.keyboard.press('Escape'); const closed = await q.evaluate(() => document.getElementById('modal').hidden);
+    await q.context().close(); ok(same, 'горячая клавиша сработала под окном'); ok(closed, 'Escape не закрыл окно');
+  });
+  await test('неожиданный бонус: +15 XP и уведомление; в обычных тестах выключен', async () => {
+    const r = await p.evaluate(r => { eval(r); todayQuest(); game.quest.done = true; SURPRISE_P = 1; award(1, 'o'); const a = game.xp; SURPRISE_P = 0; award(1, 'o'); return [a, game.xp - a]; }, RESET);
+    eq(r, [25, 12]);
+  });
+  await test('неделя серии на экране «Прогресс»: 7 дней, сегодня отмечено, заморозка видна', async () => {
+    const r = await p.evaluate(r => { eval(r); const y = new Date(Date.now() - 864e5).toISOString().slice(0,10); game.frozenDays = [y]; award(1, 'o'); setMode('progress');
+      const dots = [...document.querySelectorAll('#gbWeek .pv-dot')]; const out = [dots.length, dots[6].className.includes('done'), dots[5].className.includes('frozen')]; setMode('pairs'); return out; }, RESET);
+    eq(r, [7, true, true]);
+  });
+  await test('блиц: праздники (новый уровень) не прерывают блиц, а показываются после итогов', async () => {
+    const q = await openPage(browser); await q.clock.install();
+    await q.evaluate(() => { MILESTONE_MODALS = true; todayQuest(); game.quest.done = true; game.xp = 45; BLITZ_SEC = 3; setMode('listen'); startBlitz(); });
+    await q.evaluate(() => answerListen(ls.right)); // уровень повышается во время блица
+    const during = await q.evaluate(() => document.getElementById('modal').hidden);
+    await q.clock.runFor(3500);
+    const t1 = await q.evaluate(() => document.getElementById('modalTitle').textContent); await q.click('#modalSecondary'); await q.clock.runFor(300);
+    const t2 = await q.evaluate(() => document.getElementById('modalTitle').textContent);
+    await q.context().close(); eq(during, true); ok(/Блиц|рекорд/.test(t1), t1); ok(t2.includes('Уровень 2'), t2);
+  });
+
+  console.log('webapp-testing: осмотр каждого экрана и нажатие всех кнопок');
+  await test('на каждом экране нажимаются все видимые кнопки — без ошибок JS и консоли', async () => {
+    const q = await openPage(browser); const consoleErr = [];
+    q.on('console', m => { if(m.type() === 'error' && !/Failed to load resource|ERR_/.test(m.text())) consoleErr.push(m.text()); });
+    await q.evaluate(() => { window.__say = 'merhaba'; });
+    for(const tab of ['#tab-pairs','#tab-phrases','#tab-listen','#tab-free','#tab-progress']){
+      await q.click(tab); await q.waitForLoadState('networkidle');
+      const ids = await q.evaluate(() => [...document.querySelectorAll('.screen > section:not([hidden]) button, .chips button')].filter(b => b.offsetParent && !b.disabled && !['bkYes'].includes(b.id)).map((b, i) => { b.dataset.probe = String(i); return String(i); }));
+      for(const id of ids){
+        if(await q.isVisible('#modal')) await q.click('#modalSecondary:visible, #modalPrimary');
+        const el = await q.$(`[data-probe="${id}"]`); if(el && await el.isVisible() && await el.isEnabled()) await el.click({ timeout:3000 }).catch(() => {});
+        await q.waitForTimeout(60);
+      }
+      await q.evaluate(() => { if(typeof blitz !== 'undefined' && blitz) endBlitz(true); });
+      if(await q.isVisible('#modal')) await q.click('#modalPrimary');
+    }
+    const errs = q.errors; await q.context().close(); eq(errs, []); eq(consoleErr, []);
   });
 
   console.log('Образец, Эхо и Синтез');
