@@ -775,10 +775,13 @@ $("voice").onchange = e => {
 };
 function say(rate){
   if(!trVoice) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(item.target);
-  u.voice = trVoice; u.lang = trVoice.lang; u.rate = rate;
-  speechSynthesis.speak(u);
+  const busy = speechSynthesis.speaking || speechSynthesis.pending;
+  speechSynthesis.cancel(); $("nativeAudio").pause();
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(item.target);
+    u.voice = trVoice; u.lang = trVoice.lang; u.rate = rate;
+    speechSynthesis.speak(u);
+  }, busy ? 150 : 30);
 }
 if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 else { $("play").disabled = true; }
@@ -1035,22 +1038,36 @@ function sayText(text){
 }
 
 // Образец: запись носителя, если есть, иначе синтез (случайный голос — разнообразие помогает слуху)
+// Образец звучит всегда: запись носителя, а если её нет или она не загрузилась — синтез.
+// onDone вызывается ровно один раз, даже если телефон «забыл» сообщить о конце речи.
 function playReference(text, onDone, varied){
+  let done = false, guard = null;
+  const finish = () => { if(done) return; done = true; clearTimeout(guard); onDone && onDone(); };
+  const busy = speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending);
   speechSynthesis && speechSynthesis.cancel();
+  const a = $("nativeAudio"); a.pause(); a.onended = null; a.onerror = null;
+  const speakSynth = () => {
+    const v = varied && trVoices.length ? trVoices[Math.floor(Math.random()*trVoices.length)] : trVoice;
+    if(!v){ finish(); return; }
+    const rate = varied ? 0.75 + Math.random()*0.25 : .85;
+    // Chrome на Android иногда глотает speak() сразу после cancel() — небольшая пауза
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = rate;
+      u.onend = finish; u.onerror = finish;
+      speechSynthesis.speak(u);
+      guard = setTimeout(finish, 1200 + Array.from(text).length * 140 / rate); // если onend не пришёл
+    }, busy ? 150 : 30);
+  };
   const recs = nativeCache.get(clean(text)) || [];
-  const a = $("nativeAudio"); a.pause(); a.onended = null;
   if(recs.length){
     a.src = recs[Math.floor(Math.random()*recs.length)].url;
-    a.onended = () => { a.onended = null; onDone && onDone(); };
-    a.play().catch(() => onDone && onDone());
+    a.onended = () => { a.onended = null; finish(); };
+    a.onerror = () => { a.onerror = null; if(!done) speakSynth(); };  // запись не загрузилась — синтез
+    a.play().catch(() => { if(!done) speakSynth(); });
+    guard = setTimeout(finish, 15000);
     return;
   }
-  const v = varied && trVoices.length ? trVoices[Math.floor(Math.random()*trVoices.length)] : trVoice;
-  if(!v){ onDone && onDone(); return; }
-  const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang;
-  u.rate = varied ? 0.75 + Math.random()*0.25 : .85;
-  if(onDone) u.onend = onDone;
-  speechSynthesis.speak(u);
+  speakSynth();
 }
 // Эхо (шэдоуинг): образец → сразу ваша попытка, пока звук ещё «в ушах»
 // После вашей попытки сразу звучат образец и ваша запись — сравнение на слух без лишних нажатий
@@ -1099,14 +1116,15 @@ function compareVoices(){
   playReference(item.target, () => setTimeout(() => mine.play().catch(()=>{}), 350));
 }
 // Телефон не пишет во время распознавания: образец → запись вас (без распознавания) → образец → вы
-async function compareWithFreshRecording(){
+function compareWithFreshRecording(){
   const target = item.target, btn = $("compare");
-  let st;
-  try { st = await navigator.mediaDevices.getUserMedia({audio:true}); }
-  catch(e){ setResult("bad", "Нет доступа к микрофону для записи."); return; }
   btn.disabled = true;
   setResult("info", "Слушайте образец, потом сразу повторите.");
-  playReference(target, () => {
+  // Микрофон открывается только ПОСЛЕ образца: на Android открытый микрофон глушит воспроизведение
+  playReference(target, async () => {
+    let st;
+    try { st = await navigator.mediaDevices.getUserMedia({audio:true}); }
+    catch(e){ btn.disabled = false; setResult("bad", "Нет доступа к микрофону для записи."); return; }
     const ch = [], rec = new MediaRecorder(st);
     rec.ondataavailable = e => ch.push(e.data);
     rec.onstop = () => {
@@ -1116,7 +1134,7 @@ async function compareWithFreshRecording(){
       btn.disabled = false;
       if(item.target !== target) return;
       setResult("info", "Образец — и сразу вы.");
-      playReference(target, () => setTimeout(() => a.play().catch(()=>{}), 350));
+      setTimeout(() => playReference(target, () => setTimeout(() => a.play().catch(()=>{}), 350)), 300);
     };
     rec.start();
     const ms = Math.min(8000, 1500 + Array.from(target).length * 120); // длина записи по длине фразы

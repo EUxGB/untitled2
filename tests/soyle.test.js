@@ -25,9 +25,17 @@ const INIT = () => {
     this.stop = () => {}; this.abort = () => {};
   };
   window.SpeechRecognition = SR; window.webkitSpeechRecognition = SR;
-  navigator.mediaDevices.getUserMedia = async () => { const c = new AudioContext(), d = c.createMediaStreamDestination(), o = c.createOscillator(); o.connect(d); o.start(); return d.stream; };
-  window.__spoken = []; speechSynthesis.speak = u => { window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 10); };
-  HTMLMediaElement.prototype.play = function(){ (window.__played = window.__played || []).push(this.src); setTimeout(() => this.onended && this.onended(), 10); return Promise.resolve(); };
+  // журнал событий звука и микрофона: synth / rec / me / mic
+  window.__log = [];
+  navigator.mediaDevices.getUserMedia = async () => { window.__log.push('mic'); const c = new AudioContext(), d = c.createMediaStreamDestination(), o = c.createOscillator(); o.connect(d); o.start(); return d.stream; };
+  window.SpeechSynthesisUtterance = function(t){ this.text = t; };
+  window.__spoken = []; speechSynthesis.speak = u => { window.__spoken.push(u.text); window.__log.push('synth'); if(!window.__noOnEnd) setTimeout(() => u.onend && u.onend(), 10); };
+  HTMLMediaElement.prototype.play = function(){
+    (window.__played = window.__played || []).push(this.src);
+    if(this.src.includes('broken')) return Promise.reject(new Error('load failed'));
+    window.__log.push(this.src.startsWith('blob:') ? 'me' : 'rec');
+    setTimeout(() => this.onended && this.onended(), 10); return Promise.resolve();
+  };
 };
 async function openPage(browser, opts = {}){
   const ctx = await browser.newContext({ viewport:{ width:390, height:844 }, userAgent: opts.android ? 'Mozilla/5.0 (Linux; Android 14) Chrome/128 Mobile' : undefined, colorScheme: opts.scheme || 'light' });
@@ -205,6 +213,36 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       window.__say = item.target; window.__played = []; echo(); await new Promise(z => setTimeout(z, 1600));
       return window.__played.map(s => s.startsWith('blob:') ? 'me' : s.split('/').pop()); });
     eq(r, ['ref.wav', 'ref.wav', 'me']);
+  });
+
+  console.log('Образец, Эхо и Синтез');
+  const FAKE_VOICE = "trVoice = { name:'Test Türkçe', lang:'tr-TR' }; trVoices = [trVoice];";
+  await test('«Синтез» произносит текущее слово', async () => {
+    const r = await p.evaluate(async v => { eval(v); setMode('pairs'); window.__spoken = []; document.getElementById('play').disabled = false; document.getElementById('play').click(); await new Promise(z => setTimeout(z, 100)); return [window.__spoken, item.target]; }, FAKE_VOICE);
+    eq(r[0], [r[1]]);
+  });
+  await test('«Эхо» без записи носителя: сначала синтез-образец, потом микрофон', async () => {
+    const r = await p.evaluate(async v => { eval(v); setMode('pairs'); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
+      nativeCache.set(clean(item.target), []); recordOn = true; stream = null; window.__say = item.target; window.__log = []; echo();
+      await new Promise(z => setTimeout(z, 1800)); return window.__log; }, FAKE_VOICE);
+    eq(r.slice(0, 2), ['synth', 'mic']); eq(r.slice(-2), ['synth', 'me']);
+  });
+  await test('«Эхо» продолжает работу, даже если телефон не сообщил о конце речи', async () => {
+    const r = await p.evaluate(async v => { eval(v); window.__noOnEnd = true; setMode('pairs'); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
+      nativeCache.set(clean(item.target), []); item.target = 'on'; recordOn = true; stream = null; window.__say = 'on'; window.__log = []; echo();
+      await new Promise(z => setTimeout(z, 5000)); window.__noOnEnd = false; return window.__log; }, FAKE_VOICE);
+    ok(r[0] === 'synth' && r.includes('mic') && r[r.length-1] === 'me', JSON.stringify(r));
+  });
+  await test('запись носителя не загрузилась — образец звучит синтезом', async () => {
+    const r = await p.evaluate(async v => { eval(v); window.__log = []; nativeCache.set('xyz', [{ url:'https://x/broken.wav', who:'T' }]); let done = false; playReference('xyz', () => done = true); await new Promise(z => setTimeout(z, 200)); return [window.__log, done]; }, FAKE_VOICE);
+    eq(r, [['synth'], true]);
+  });
+  await test('Android: «Эхо» — образец звучит ДО открытия микрофона, затем образец и вы', async () => {
+    const q = await openPage(browser, { android:true, storage:{ 'soyle-rec-conflict':'1' } });
+    const r = await q.evaluate(async v => { eval(v); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
+      item.target = 'on'; nativeCache.set('on', []); window.__log = []; echo(); await new Promise(z => setTimeout(z, 3200)); return [recordOn, window.__log]; }, FAKE_VOICE);
+    await q.context().close();
+    eq(r[0], false); eq(r[1], ['synth', 'mic', 'synth', 'me']);
   });
 
   console.log('Интерфейс');
