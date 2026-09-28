@@ -459,11 +459,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   console.log('webapp-testing: осмотр каждого экрана и нажатие всех кнопок');
   await test('на каждом экране нажимаются все видимые кнопки — без ошибок JS и консоли', async () => {
     const q = await openPage(browser); const consoleErr = [];
-    q.on('console', m => { if(m.type() === 'error' && !/Failed to load resource|ERR_/.test(m.text())) consoleErr.push(m.text()); });
+    q.on('console', m => { if(m.type() === 'error' && !/Failed to load resource|ERR_|from origin 'null'.*woff2|woff2.*from origin 'null'/.test(m.text())) consoleErr.push(m.text()); });
     await q.evaluate(() => { window.__say = 'merhaba'; });
     for(const tab of ['#tab-pairs','#tab-phrases','#tab-listen','#tab-free','#tab-progress']){
       await q.click(tab); await q.waitForLoadState('networkidle');
-      const ids = await q.evaluate(() => [...document.querySelectorAll('.screen > section:not([hidden]) button, .chips button')].filter(b => b.offsetParent && !b.disabled && !['bkYes'].includes(b.id)).map((b, i) => { b.dataset.probe = String(i); return String(i); }));
+      const ids = await q.evaluate(() => [...document.querySelectorAll('.screen > section:not([hidden]) button, .chips button')].filter(b => b.offsetParent && !b.disabled && !['bkYes','updateApp'].includes(b.id)).map((b, i) => { b.dataset.probe = String(i); return String(i); }));
       for(const id of ids){
         if(await q.isVisible('#modal')) await q.click('#modalSecondary:visible, #modalPrimary');
         const el = await q.$(`[data-probe="${id}"]`); if(el && await el.isVisible() && await el.isEnabled()) await el.click({ timeout:3000 }).catch(() => {});

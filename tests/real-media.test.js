@@ -9,7 +9,7 @@ async function test(name, fn){ try { await fn(); passed++; console.log('  ✓', 
 const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выполнено'); };
 
 (async () => {
-  const types = { '.html':'text/html; charset=utf-8', '.json':'application/manifest+json', '.png':'image/png', '.js':'text/javascript', '.wav':'audio/wav' };
+  const types = { '.html':'text/html; charset=utf-8', '.json':'application/manifest+json', '.png':'image/png', '.js':'text/javascript', '.wav':'audio/wav', '.woff2':'font/woff2' };
   const server = http.createServer((q, r) => { const f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0]) === '/' ? 'index.html' : decodeURIComponent(q.url.split('?')[0])); if(!f.startsWith(ROOT) || !fs.existsSync(f)){ r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': types[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r); }).listen(0);
   const URL = `http://localhost:${server.address().port}/index.html`;
   const browser = await chromium.launch({ args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',`--use-file-for-fake-audio-capture=${WAV}`,'--autoplay-policy=no-user-gesture-required'] });
@@ -23,6 +23,13 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
   await test('страница открывается с сервера, манифест и иконки отдаются', async () => {
     const r = await p.evaluate(async () => { const m = await fetch('manifest.json').then(r => r.json()); const i = await fetch(m.icons[0].src); return [m.display, i.ok, i.headers.get('content-type')]; });
     ok(r[0] === 'standalone' && r[1] && r[2] === 'image/png', JSON.stringify(r));
+  });
+  await test('шрифты Literata и Commissioner грузятся с того же сайта, без Google Fonts; номер версии и кнопка обновления', async () => {
+    const r = await p.evaluate(async () => { await document.fonts.ready; await Promise.all([document.fonts.load('600 40px Literata', 'böl'), document.fonts.load('500 16px Commissioner', 'Сказать')]);
+      return [document.fonts.check('600 40px Literata', 'böl'), document.fonts.check('500 16px Commissioner', 'Сказать'),
+        performance.getEntriesByType('resource').filter(e => /woff2/.test(e.name)).every(e => e.name.startsWith(location.origin)),
+        !!document.querySelector('link[href*="googleapis"]'), document.getElementById('appVersion').textContent, !!document.getElementById('updateApp')]; });
+    ok(r[0] && r[1] && r[2] && !r[3] && r[4].length > 3 && r[5], JSON.stringify(r));
   });
   await test('микрофон открывается, MediaRecorder пишет настоящий звук', async () => {
     const r = await p.evaluate(async () => {

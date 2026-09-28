@@ -36,7 +36,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Собрать сайт (только файлы приложения)
-        run: mkdir _site && cp index.html manifest.json icon-*.png _site/
+        run: |
+          mkdir _site && cp -r index.html manifest.json icon-*.png fonts _site/
+          # номер сборки: приложение сверяет его с сайтом и само подтягивает свежую версию
+          BUILD="$(date -u +%Y-%m-%d) · ${GITHUB_SHA::7}"
+          sed -i "s/__BUILD__/$BUILD/g" _site/index.html
+          grep -c "$BUILD" _site/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: _site }
