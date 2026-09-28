@@ -1325,7 +1325,7 @@ function next(){
   } else if(item.live && !item.meaning){      // живая фраза без готового перевода — машинный перевод прямо в карточке
     const it = item; $("meaning").textContent = "Перевожу…";
     translateTr(it.target).then(t => { if(item === it) $("meaning").textContent = t; }).catch(() => { if(item === it) $("meaning").textContent = ""; });
-  } else if(item.native && !item.live){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
+  } else if(item.native && !item.live && !item.word){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }   // у слов темы — русский перевод, не английское значение
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
   $("compare").disabled = false; synthSlow = false; echoPending = false;
