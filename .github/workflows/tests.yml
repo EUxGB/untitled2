@@ -82,6 +82,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Снять живой сайт
         run: node tests/live-screens.js "https://euxgb.github.io/untitled2/?v=$GITHUB_SHA" shots
+      - name: Проверить внешние сервисы (Tatoeba, MyMemory, YouGlish)
+        run: node tests/probe-services.js shots || true
       - name: Сохранить в ветку screens
         shell: bash
         run: |
