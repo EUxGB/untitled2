@@ -54,6 +54,25 @@ const URL = process.argv[2], OUT = process.argv[3];
         await p.screenshot({ path:`${OUT}/${name}-live-phrases.png` });
         live.pagesOpened = ctx.pages().length;
       } catch(e){ live.error = String(e); }
+      // покрытие записями носителей: слова фраз (Commons) и фразы Tatoeba с лицензией — без лимитов, в отличие от YouGlish
+      try {
+        live.coverage = await p.evaluate(async () => {
+          const words = [...new Set(PHRASE_SETS.flatMap(g => g.items.flatMap(i => normPhrase(i.tr).split(' '))).filter(Boolean))];
+          const has = {}; let i = 0;
+          await Promise.all(Array.from({ length:4 }, async () => { while(i < words.length){ const w = words[i++]; const r = await findRecordings(w); has[w] = r ? r.length : -1; } }));
+          const phrases = PHRASE_SETS.flatMap(g => g.items.map(x => x.tr));
+          const full = phrases.filter(ph => normPhrase(ph).split(' ').every(w => has[w] > 0)).length;
+          const part = phrases.map(ph => { const ws = normPhrase(ph).split(' '); return ws.filter(w => has[w] > 0).length / ws.length; });
+          // Tatoeba: сколько турецких фраз с записью, из них с лицензией
+          let total = 0, lic = 0, after = '', pages = 0;
+          do { const u = `${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&include=audios&sort=created&limit=100${after}`;
+            const d = await fetch(u).then(r => r.json()); (d.data || []).forEach(x => { total++; if((x.audios || []).some(a => a.license)) lic++; });
+            after = d.paging && d.paging.has_next && d.paging.next ? '&after=' + new URL(d.paging.next).searchParams.get('after') : ''; } while(after && ++pages < 20);
+          return { words: words.length, wordsWithAudio: Object.values(has).filter(v => v > 0).length, netErrors: Object.values(has).filter(v => v < 0).length,
+            phrases: phrases.length, phrasesAllWords: full, avgWordShare: Math.round(part.reduce((a, b) => a + b, 0) / part.length * 100),
+            tatoebaTotal: total, tatoebaLicensed: lic, missingSample: Object.keys(has).filter(w => has[w] === 0).slice(0, 40) };
+        });
+      } catch(e){ live.coverageError = String(e); }
       info.live = live;
     }
     log.push({ size:name, ...info, errors: errs });
