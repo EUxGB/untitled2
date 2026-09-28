@@ -29,7 +29,11 @@ const URL = process.argv[2], OUT = process.argv[3];
       const live = {};
       try {
         await p.click('#tab-phrases'); await p.waitForTimeout(800);
-        await p.click('#yg'); await p.waitForSelector('#sheet:not([hidden]) iframe', { timeout:20000 }).catch(() => {});
+        await p.click('#yg'); await p.waitForSelector('#exList li, #exMsg', { timeout:20000 }).catch(() => {});
+        await p.waitForFunction(() => !/Ищу/.test((document.getElementById('exMsg') || {}).textContent || ''), null, { timeout:20000 }).catch(() => {});
+        live.examples = await p.evaluate(() => ({ word: item && item.target, msg: document.getElementById('exMsg').textContent, n: document.querySelectorAll('#exList li').length, audio: document.querySelectorAll('#exList .ex-play[data-i]').length }));
+        await p.screenshot({ path:`${OUT}/${name}-examples-sheet.png` });
+        await p.click('#exVideo'); await p.waitForSelector('#sheet:not([hidden]) iframe', { timeout:20000 }).catch(() => {});
         await p.waitForTimeout(6000);
         live.video = await p.evaluate(() => ({ word: item && item.target, msg: (document.getElementById('ygMsg') || {}).textContent, iframes: document.querySelectorAll('#sheet iframe').length }));
         await p.screenshot({ path:`${OUT}/${name}-video-sheet.png` });
@@ -54,6 +58,19 @@ const URL = process.argv[2], OUT = process.argv[3];
         await p.screenshot({ path:`${OUT}/${name}-live-phrases.png` });
         live.pagesOpened = ctx.pages().length;
       } catch(e){ live.error = String(e); }
+      // слова по темам: переключатель, тема «ресторан», пополнение из Викисловаря, русские значения
+      try {
+        await p.evaluate(() => { closeSheet(); setMode('phrases'); });
+        await p.click('#kindChip'); await p.click('.chip[data-s="food"]'); await p.waitForTimeout(2500);
+        live.words = await p.evaluate(async () => {
+          const r = { word: item.target, meaning: document.getElementById('meaning').textContent, pool0: wordPool('food').items.length };
+          r.added = await growWords('food', 20); r.pool1 = wordPool('food').items.length; r.sample = wordPool('food').items.slice(-8).map(x => x.tr);
+          r.meanings = {}; for(const w of r.sample.slice(0, 5)) r.meanings[w] = await ruMeaning(w);
+          r.examples = {}; for(const w of ['çay', 'oda', 'bilet', 'ilaç', 'hesap']){ const e = await tatoebaExamples(w); r.examples[w] = [e.list.length, e.list.filter(x => x.audio).length, e.list.filter(x => x.ru).length]; }
+          const recs = await findRecordings(item.target); r.recs = recs && recs.length;
+          return r; });
+        await p.screenshot({ path:`${OUT}/${name}-words.png` });
+      } catch(e){ live.wordsError = String(e); }
       // покрытие записями носителей: слова фраз (Commons) и фразы Tatoeba с лицензией — без лимитов, в отличие от YouGlish
       try {
         live.coverage = await p.evaluate(async () => {

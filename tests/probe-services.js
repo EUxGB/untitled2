@@ -5,7 +5,7 @@ const fs = require('fs');
 const OUT = process.argv[2] || 'shots';
 const H = { 'Origin':'https://euxgb.github.io' };
 async function get(url){
-  try { const r = await fetch(url, { headers:H }); const t = await r.text();
+  try { const r = await fetch(url, { headers:H, signal: AbortSignal.timeout(20000) }); const t = await r.text();
     return { url, status:r.status, cors:r.headers.get('access-control-allow-origin'), type:r.headers.get('content-type'), body: (r.headers.get('content-type')||'').includes('json') || (r.headers.get('content-type')||'').includes('javascript') ? t.slice(0, 2500) : ('двоичные данные, байт: ' + t.length) };
   } catch(e){ return { url, error:String(e) }; }
 }
@@ -19,6 +19,8 @@ async function get(url){
     'https://api.tatoeba.org/unstable/audios?lang=tur&limit=2',
     `https://api.mymemory.translated.net/get?q=${q('Hesabı alabilir miyim?')}&langpair=tr|ru`,
     'https://youglish.com/public/emb/widget.js',
+    `https://context.reverso.net/translation/turkish-russian/${q('çay')}`,
+    `https://api.reverso.net/translate/v1/translation`,
     'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=random&limit=2&showtrans=rus',
     'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=random&limit=2&include=audios',
     `https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=3&q=${q('Teşekkür ederim')}`,
@@ -45,19 +47,8 @@ async function get(url){
   res.push(await get(`https://ru.wiktionary.org/w/api.php?action=query&list=categorymembers&cmtitle=${q('Категория:Еда/tr')}&cmlimit=30&cmtype=page&format=json&origin=*`));
   // заголовки файла записи Tatoeba (почему <audio> в браузере может не играть)
   try { const r = await fetch('https://api.tatoeba.org/v1/audios/1256001/file', { headers:H, redirect:'manual' }); res.push({ tatoebaAudioHeaders: Object.fromEntries(r.headers.entries()), status: r.status }); } catch(e){ res.push({ tatoebaAudioHeaders: String(e) }); }
-  // сколько фраз тренажёра есть в Tatoeba целиком с записью носителя
-  const b0 = await chromium.launch(); const p0 = await b0.newPage(); await p0.addInitScript(() => { window.SOYLE_TEST = true; });
-  await p0.goto('file://' + require('path').resolve(__dirname, '..', 'index.html'));
-  const phrases = await p0.evaluate(() => PHRASE_SETS.flatMap(g => g.items.map(i => i.tr))); await b0.close();
-  const norm = t => t.toLocaleLowerCase('tr').replace(/[^\p{L}\s]/gu, '').replace(/\s+/g, ' ').trim();
-  const found = [];
-  for(const ph of phrases){
-    try { const r = await fetch(`https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=5&include=audios&q=${q(ph)}`); const d = await r.json();
-      const hit = (d.data || []).find(x => norm(x.text) === norm(ph)); if(hit) found.push({ ph, id: hit.id, audio: hit.audios && hit.audios[0] && hit.audios[0].download_url, author: hit.audios && hit.audios[0] && hit.audios[0].author, license: hit.audios && hit.audios[0] && hit.audios[0].license });
-    } catch(e){}
-    await new Promise(z => setTimeout(z, 150));
-  }
-  res.push({ tatoebaExact: { phrases: phrases.length, found: found.length, list: found } });
+  // (проверка «сколько фраз тренажёра есть в Tatoeba целиком» сделана: 9 из 99 — убрана, чтобы не тратить время)
+
   // аудио: первый download_url из ответов
   const m = JSON.stringify(res).match(/https?:[^"\\]*audios[^"\\]*file[^"\\]*/);
   if(m) res.push(await get(m[0]).then(r => ({ ...r, body: r.body && r.body.length + ' bytes (обрезано)' })));

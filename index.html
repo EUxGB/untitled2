@@ -544,6 +544,18 @@ h1 span{color:inherit}
 #card .meaning{height:auto; min-height:2.8em; overflow:visible; display:flex; align-items:center; justify-content:center; text-align:center}
 #card .partner{height:auto; min-height:1.4em; overflow:visible}
 #card .target{overflow:visible}
+
+.chip.kind{position:sticky; left:0; z-index:1; background:var(--bg); border:1.5px solid var(--accent) !important; color:var(--accent) !important; border-radius:999px !important; padding:6px 12px !important; margin-right:6px}
+.chip.kind[aria-pressed="true"]{background:var(--accent) !important; color:var(--on-accent) !important}
+
+.ex-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
+.ex{display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:14px; background:var(--bg)}
+.ex-play{flex:none; width:44px; height:44px; border-radius:50%; border:1.5px solid var(--accent); background:var(--surface); color:var(--accent); display:grid; place-items:center; cursor:pointer}
+.ex-play .ic{width:20px; height:20px}
+.ex-play.off{border:1.5px dashed var(--line); background:none; cursor:default}
+.ex-txt{display:flex; flex-direction:column; gap:2px; min-width:0}
+.ex-txt b{font:700 18px/1.3 var(--display); color:var(--ink)}
+.ex-txt small{font-size:14px; color:var(--ink-2)}
 </style>
 </head>
 <body>
@@ -565,6 +577,7 @@ h1 span{color:inherit}
     <symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/></symbol>
     <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-8.5z"/></symbol>
     <symbol id="i-help" viewBox="0 0 24 24"><path d="M9.2 9a3 3 0 0 1 5.6 1c0 2-2.8 2.4-2.8 4"/><path d="M12 18h.01"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/><path d="M8 10h8M8 13h5"/></symbol>
     <symbol id="i-bubble" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-6 4z"/></symbol>
     <symbol id="i-ear" viewBox="0 0 24 24"><path d="M7 9a5 5 0 1 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9.5a2 2 0 1 1 4 0"/></symbol>
     <symbol id="i-steps" viewBox="0 0 24 24"><path d="M4 19h4v-5h4v-4h4V6h4"/></symbol>
@@ -640,7 +653,7 @@ h1 span{color:inherit}
       </div>
       <div class="acts">
         <button class="act native" id="native"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-native"/></svg></span><span class="lbl">Носитель</span></button>
-        <button class="act native" id="yg" title="Отрывки видео, где носители говорят это — прямо здесь"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-video"/></svg></span><span class="lbl">Видео</span></button>
+        <button class="act native" id="yg" title="Живые примеры с этим словом: фразы носителей с переводом и записями"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-quote"/></svg></span><span class="lbl">Примеры</span></button>
         <button class="act" id="play"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg></span><span class="lbl">Синтез</span></button>
       </div>
       <div class="main-row">
@@ -705,7 +718,7 @@ h1 span{color:inherit}
         <ol>
           <li><b>Звуки</b> — трудные пары (o/ö, u/ü, ı/i, c/ç/ş). Нажмите «Сказать» — тренажёр покажет, не спутали ли вы звук. Трудный звук выделен красным.</li>
           <li><b>Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «с записями» — всё, что записали носители.</li>
-          <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Видео</b> — фраза в настоящих видео.</li>
+          <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Примеры</b> — фразы носителей с этим словом: перевод и живая запись; там же видео (YouGlish, до 20 поисков в день).</li>
           <li><b>Сравнить</b> — если вы ещё не говорили это слово: образец, вы, оценка, затем образец и ваша запись подряд; если уже сказали — образец и ваша запись.</li>
           <li><b>На слух</b> — звучит одно слово из пары, выберите какое. <b>Блиц</b> — сколько различите за 60 секунд.</li>
           <li><b>Свободно</b> — скажите что угодно и увидите, что услышит носитель. Нужное сохраните в «мои».</li>
@@ -1016,14 +1029,23 @@ function scrollChipIntoView(){
 function renderChips(){
   const chips = $("chips");
   requestAnimationFrame(scrollChipIntoView);
+  if(mode==="phrases" && wordsKind){      // слова по темам: переключатель + темы с числом слов
+    chips.innerHTML = `<button class="chip set kind" id="kindChip" aria-pressed="true" title="Показать фразы">слова</button>`
+      + PHRASE_SETS.map(g => `<button class="chip set" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label} (${wordPool(g.id).items.length})</button>`).join("");
+    chips.querySelectorAll(".chip[data-s]").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
+    $("kindChip").onclick = () => setKind(false);
+    return;
+  }
   if(mode==="phrases"){
     const nLabel = nativeSet ? `с записями (${nativeSet.length})` : nativeSetLoading ? "загружаю…" : "с записями";
-    chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip set" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
+    chips.innerHTML = `<button class="chip set kind" id="kindChip" aria-pressed="false" title="Показать слова по темам">слова</button>`
+      + PHRASE_SETS.map(g => `<button class="chip set" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
       + `<button class="chip set" data-s="tatoeba" aria-pressed="${setId==="tatoeba"}">${tatoebaSet ? `живые фразы (${tatoebaSet.length})` : tatoebaLoading ? "загружаю…" : "живые фразы"}</button>`
       + `<button class="chip set" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
       + `<button class="chip set" data-s="srs" aria-pressed="${setId==="srs"}">на сегодня (${srsDue().length})</button>`
       + `<button class="chip set" data-s="mine" aria-pressed="${setId==="mine"}">мои (${loadList("soyle-mine").length})</button>`;
-    chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
+    chips.querySelectorAll(".chip[data-s]").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
+    $("kindChip").onclick = () => setKind(true);
     return;
   }
   const all = [...GROUPS.map(g=>({id:g.id,label:g.label})), {id:"mix",label:"вперемешку"}];
@@ -1083,6 +1105,92 @@ async function loadNativeSet(){
   items.sort((a,b)=>b.n-a.n);
   return items;
 }
+// ---------- слова по темам: стартовый набор + пополнение из Викисловаря (en: тематические категории tr:*) ----------
+// Проверено CI: в категориях en.wiktionary турецких слов — Foods 54, Fruits 54, Clothing 62, Medicine 103, Anatomy 129, …
+// (в ru-Викисловаре темы почти пустые), русское значение — из статьи ru-Викисловаря («==== Значение ====»).
+const TOPIC_CATS = {
+  basic:["Colors","Time","Emotions"], hotel:["Hotels","Rooms","Furniture","Buildings"], greet:["Emotions","Time"],
+  food:["Foods","Beverages","Fruits","Vegetables","Cooking","Kitchenware"], transport:["Transport","Vehicles","Travel","Weather"],
+  shop:["Shops","Money","Clothing","Colors"], health:["Medicine","Body parts","Diseases","Anatomy"],
+  talk:["Emotions","Occupations","Time"], sos:["Medicine","Body parts","Diseases"] };
+const WORD_SEEDS = {
+  basic:[["ev","дом"],["su","вода"],["gün","день"],["gece","ночь"],["iyi","хороший"],["büyük","большой"],["küçük","маленький"],["göz","глаз"],["köy","деревня"],["kitap","книга"],["okul","школа"],["zaman","время"]],
+  hotel:[["oda","комната"],["anahtar","ключ"],["yatak","кровать"],["havlu","полотенце"],["banyo","ванная"],["asansör","лифт"],["kahvaltı","завтрак"],["yastık","подушка"],["battaniye","одеяло"],["kat","этаж"],["pencere","окно"],["kapı","дверь"]],
+  greet:[["merhaba","привет"],["günaydın","доброе утро"],["teşekkürler","спасибо"],["lütfen","пожалуйста"],["evet","да"],["hayır","нет"],["tamam","хорошо, ладно"],["özür","извинение"],["hoşgeldiniz","добро пожаловать"],["görüşürüz","увидимся"]],
+  food:[["menü","меню"],["hesap","счёт"],["ekmek","хлеб"],["çay","чай"],["kahve","кофе"],["garson","официант"],["tuz","соль"],["şeker","сахар"],["çatal","вилка"],["bıçak","нож"],["kaşık","ложка"],["tabak","тарелка"],["bardak","стакан"],["peynir","сыр"]],
+  transport:[["otobüs","автобус"],["tren","поезд"],["bilet","билет"],["durak","остановка"],["istasyon","станция"],["taksi","такси"],["vapur","паром"],["havalimanı","аэропорт"],["uçak","самолёт"],["sol","лево"],["sağ","право"],["yol","дорога"]],
+  shop:[["fiyat","цена"],["para","деньги"],["indirim","скидка"],["beden","размер (одежды)"],["renk","цвет"],["ucuz","дешёвый"],["pahalı","дорогой"],["kasa","касса"],["poşet","пакет"],["fiş","чек"],["pazar","базар"],["kilo","килограмм"]],
+  health:[["ilaç","лекарство"],["eczane","аптека"],["ağrı","боль"],["ateş","жар, температура"],["öksürük","кашель"],["baş","голова"],["mide","желудок"],["diş","зуб"],["reçete","рецепт"],["doktor","врач"],["boğaz","горло"],["alerji","аллергия"]],
+  talk:[["arkadaş","друг"],["aile","семья"],["iş","работа"],["isim","имя"],["dil","язык"],["soru","вопрос"],["cevap","ответ"],["mutlu","счастливый"],["yorgun","усталый"],["şehir","город"],["hafta","неделя"],["yarın","завтра"]],
+  sos:[["yardım","помощь"],["polis","полиция"],["hastane","больница"],["ambulans","скорая помощь"],["yangın","пожар"],["tehlike","опасность"],["kayıp","потерянный"],["hırsız","вор"],["kaza","авария"],["acil","срочный"],["çanta","сумка"],["pasaport","паспорт"]] };
+let wordsKind = (() => { try { return localStorage.getItem("soyle-kind") === "words"; } catch(e){ return false; } })();
+function setKind(words){
+  wordsKind = words; try { localStorage.setItem("soyle-kind", words ? "words" : "phrases"); } catch(e){}
+  if(words && !PHRASE_SETS.some(g => g.id === setId)) setId = "hotel";
+  renderChips(); next();
+}
+const wordPools = {};
+function wordPool(topic){
+  if(wordPools[topic]) return wordPools[topic];
+  let pool = null; try { pool = JSON.parse(localStorage.getItem("soyle-words-" + topic)); } catch(e){}
+  if(!pool || !Array.isArray(pool.items)) pool = { items:(WORD_SEEDS[topic] || []).map(([tr, ru]) => ({ tr, ru, seen:0 })), cat:0, cont:"" };
+  return (wordPools[topic] = pool);
+}
+function saveWordPool(topic){ try { localStorage.setItem("soyle-words-" + topic, JSON.stringify(wordPool(topic))); } catch(e){} }
+function saveWordMeaning(topic, tr, ru){ const w = wordPool(topic).items.find(x => x.tr === tr); if(w){ w.ru = ru; saveWordPool(topic); } }
+const WORD_RE = /^[a-zçğıöşüâîû]{2,14}$/;
+const growing = {};
+// пополнение: следующая порция слов темы из категорий Викисловаря (продолжение с того места, где остановились)
+function growWords(topic, need = 15){
+  if(growing[topic]) return growing[topic];
+  const pool = wordPool(topic), cats = TOPIC_CATS[topic] || [];
+  growing[topic] = (async () => {
+    let added = 0;
+    while(added < need && pool.cat < cats.length){
+      const u = `https://en.wiktionary.org/w/api.php?action=query&list=categorymembers&cmtype=page&cmlimit=50&format=json&origin=*&cmtitle=${encodeURIComponent("Category:tr:" + cats[pool.cat])}${pool.cont ? "&cmcontinue=" + encodeURIComponent(pool.cont) : ""}`;
+      const d = await fetch(u).then(r => r.json());
+      (d.query && d.query.categorymembers || []).forEach(m => {
+        const t = String(m.title); if(t[0] !== t[0].toLocaleLowerCase("tr-TR")) return;   // имена собственные (İstanbul) — не берём
+        const w = t;
+        if(WORD_RE.test(w) && !pool.items.some(x => x.tr === w)){ pool.items.push({ tr:w, ru:"", seen:0 }); added++; }
+      });
+      if(d.continue && d.continue.cmcontinue) pool.cont = d.continue.cmcontinue; else { pool.cat++; pool.cont = ""; }
+    }
+    saveWordPool(topic);
+    return added;
+  })().catch(() => 0).finally(() => { growing[topic] = null; if(mode === "phrases" && wordsKind) renderChips(); });
+  return growing[topic];
+}
+function pickWord(topic){
+  const pool = wordPool(topic); if(!pool.items.length) return null;
+  const fresh = pool.items.filter(w => !w.seen && w.tr !== lastKey);
+  if(fresh.length < 5) growWords(topic);                    // новых мало — подгружаем ещё (в фоне)
+  const from = fresh.length ? fresh : pool.items.filter(w => w.tr !== lastKey);
+  const w = from[Math.floor(Math.random() * from.length)] || pool.items[0];
+  w.seen = (w.seen || 0) + 1; saveWordPool(topic); lastKey = w.tr;
+  const label = (PHRASE_SETS.find(g => g.id === topic) || {}).label || topic;
+  return { target:w.tr, translit:"", meaning:w.ru || "", tip:`Слово темы «${label}». Новые слова подгружаются сами, по мере изучения.`, gid:"w-" + topic, native:true, word:true, topic };
+}
+// русское значение: статья ru-Викисловаря (раздел турецкого языка, «Значение»), иначе машинный перевод
+const ruMeanCache = new Map();
+async function ruMeaning(word){
+  if(ruMeanCache.has(word)) return ruMeanCache.get(word);
+  let out = "";
+  try {
+    const d = await fetch(`https://ru.wiktionary.org/w/api.php?action=parse&prop=wikitext&format=json&origin=*&page=${encodeURIComponent(word)}`).then(r => r.json());
+    const wt = d.parse && d.parse.wikitext && d.parse.wikitext["*"] || "";
+    const tr = wt.split(/\n= \{\{-(?!tr-)/)[0], i = tr.indexOf("{{-tr-}}");
+    const sec = i >= 0 ? tr.slice(i) : "";
+    const m = sec.match(/==== ?Значение ?====\s*\n([\s\S]*?)(\n=|$)/);
+    if(m){
+      const line = m[1].split("\n").map(l => l.replace(/^#\s*/, "")).find(l => l.trim() && !/^\{\{пример/.test(l)) || "";
+      out = line.replace(/\{\{[^{}]*\}\}/g, "").replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, "$1").replace(/'{2,3}/g, "").replace(/\s+/g, " ").replace(/^[\s,;:]+|[\s,;:]+$/g, "").trim();
+    }
+  } catch(e){}
+  if(!out){ try { out = await translateTr(word); } catch(e){} }
+  ruMeanCache.set(word, out); return out;
+}
+
 // ---------- набор «живые фразы»: целые фразы, записанные носителями (Tatoeba, свободные лицензии) ----------
 let tatoebaSet = null, tatoebaLoading = null;
 function ruFrom(x){                     // перевод на русский — где бы он ни лежал в ответе
@@ -1139,6 +1247,7 @@ async function describeNative(word){
 }
 
 function pickPhrase(){
+  if(wordsKind) return pickWord(setId);
   let p, guard=0;
   if(setId === "native"){
     if(!nativeSet || !nativeSet.length) return null;
@@ -1210,7 +1319,10 @@ function next(){
   nativeIdx = 0;
   prefetchNative();
   $("meaning").textContent = item.meaning; scheduleFit();
-  if(item.live && !item.meaning){      // живая фраза без готового перевода — машинный перевод прямо в карточке
+  if(item.word && !item.meaning){      // слово темы без перевода — русское значение из ru-Викисловаря (или машинный перевод)
+    const it = item; $("meaning").textContent = "Ищу перевод…";
+    ruMeaning(it.target).then(t => { if(t){ it.meaning = t; saveWordMeaning(it.topic, it.target, t); } if(item === it) $("meaning").textContent = t || ""; });
+  } else if(item.live && !item.meaning){      // живая фраза без готового перевода — машинный перевод прямо в карточке
     const it = item; $("meaning").textContent = "Перевожу…";
     translateTr(it.target).then(t => { if(item === it) $("meaning").textContent = t; }).catch(() => { if(item === it) $("meaning").textContent = ""; });
   } else if(item.native && !item.live){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
@@ -1228,7 +1340,7 @@ function setResult(kind, verdict, extra="", score){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"free",label:"любая фраза"}];
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"free",label:"любая фраза"}];
   const used = rows.filter(r => (stats[r.id]||{}).t);
   if(!used.length){ $("stats").innerHTML = `<p class="hint" style="text-align:left">Здесь появится ваш прогресс по каждому набору.</p>`; return; }
   $("stats").innerHTML = used.map(r => {
@@ -1627,7 +1739,7 @@ function pickVoice(){
   sel.innerHTML = vs.map(v=>`<option value="${esc(v.name)}"${v===trVoice?" selected":""}>${esc(v.name)}${voiceRank(v)<=1?" — естественный":""}</option>`).join("") || "<option>нет турецких голосов</option>";
   sel.disabled = !vs.length;
   $("play").disabled = !trVoice;
-  if(trVoice && voiceRank(trVoice)>1) showHintWarn("Синтез на этом устройстве звучит механически. Живую речь дают «Носитель» и «Видео». Самый естественный синтез — в Microsoft Edge (голоса Emel и Ahmet, Natural).");
+  if(trVoice && voiceRank(trVoice)>1) showHintWarn("Синтез на этом устройстве звучит механически. Живую речь дают «Носитель» и «Примеры». Самый естественный синтез — в Microsoft Edge (голоса Emel и Ahmet, Natural).");
 }
 $("voice").onchange = e => {
   trVoice = speechSynthesis.getVoices().find(v=>v.name===e.target.value) || trVoice;
@@ -1815,14 +1927,32 @@ function playNative(){
   const recs = nativeCache.get(clean(item.target));
   const a = $("nativeAudio");
   if(!recs){ st.textContent = "Записи носителей ещё загружаются, нажмите через секунду."; return; }
-  // отдельной записи нет — носители в видео (YouGlish), внутри приложения
-  if(!recs.length){ st.textContent = "Отдельной записи нет — носители произносят это в видео."; openVideo(item.target); return; }
+  // записи всей фразы нет — носители произносят её слова по отдельности (Commons, без лимитов).
+  // Видео автоматически НЕ открываем: у YouGlish бесплатно 20 поисков в день (пользователь упёрся в лимит)
+  if(!recs.length){ playWordByWord(item.target); return; }
   speechSynthesis && speechSynthesis.cancel();
   const i = nativeIdx % recs.length; nativeIdx++;
   st.textContent = recs.length > 1 ? `Носитель ${i+1} из ${recs.length}: ${recs[i].who}` : `Носитель: ${recs[i].who}`;
   btn.title = recs[i].who;
   a.pause(); a.src = recs[i].url;
   a.play().catch(()=> { st.textContent = "Не удалось воспроизвести запись. Нажмите ещё раз — будет следующий носитель."; });
+}
+// Слова фразы — живыми записями по очереди. Проверено CI: у слов фраз тренажёра записи есть у ~половины
+async function playWordByWord(text){
+  const st = $("nativeStatus"), a = $("nativeAudio"), target = item && item.target;
+  const words = normPhrase(text).split(" ").filter(Boolean);
+  if(words.length < 2){ st.textContent = "Записи носителя нет. Живая речь — «Примеры»: фразы носителей с этим словом."; return; }
+  st.textContent = "Записи всей фразы нет — ищу записи слов…";
+  const found = await Promise.all(words.map(w => findRecordings(w).then(r => r && r[0]).catch(() => null)));
+  if(!item || item.target !== target) return;
+  const have = words.map((w, i) => ({ w, rec: found[i] })), urls = have.filter(x => x.rec).map(x => x.rec.url);
+  if(!urls.length){ st.textContent = "Записей ни фразы, ни её слов нет. Живая речь — «Примеры»: фразы носителей с этими словами."; return; }
+  st.textContent = "Носители по словам: " + have.map(x => x.rec ? x.w : `(${x.w} — нет)`).join(" · ");
+  speechSynthesis && speechSynthesis.cancel();
+  let k = 0;
+  const playNext = () => { if(k >= urls.length || !item || item.target !== target){ a.onended = null; return; }
+    a.src = urls[k++]; a.onended = () => setTimeout(playNext, 250); a.play().catch(() => { a.onended = null; }); };
+  a.pause(); playNext();
 }
 let nativePending = null;
 function prefetchNative(){
@@ -2288,8 +2418,9 @@ function openVideo(text){
   const wid = "ygw" + Date.now();
   openSheet("Как это говорят носители", `<p class="sheet-q" lang="tr" translate="no">${esc(q)}</p>
     <p class="sheet-msg" id="ygMsg" role="status">Загружаю отрывки видео…</p><div class="yg-box" id="${wid}"></div>
-    <p class="sheet-src">Отрывки роликов YouTube с живой речью, подобранные YouGlish.</p>`);
-  const fail = () => { const m = $("ygMsg"); if(m) m.textContent = "Видео не загрузилось. Проверьте интернет и нажмите «Видео» ещё раз."; };
+    <p class="sheet-src">Отрывки роликов YouTube с живой речью, подобранные YouGlish. Бесплатно — до 20 поисков в день на устройство;
+    если в окне появились тарифы, лимит на сегодня исчерпан, а записи носителей по-прежнему в кнопке «Носитель».</p>`);
+  const fail = () => { const m = $("ygMsg"); if(m) m.textContent = "Видео не загрузилось. Проверьте интернет и попробуйте ещё раз."; };
   loadYG().then(() => {
     if(!sheetOpen || !$(wid)) return;
     // фраза целиком в видео встречается не всегда (проверено на живом сайте: «Çıkış saat kaçta?» — 0 отрывков),
@@ -2297,12 +2428,15 @@ function openVideo(text){
     const words = q.split(" "), longest = words.slice().sort((a, b) => b.length - a.length)[0];
     const tries = [...new Set([q, words.slice(0, 3).join(" "), words.slice(0, 2).join(" "), longest])].filter(Boolean);
     let k = 0, found = false;
+    // экономим лимит YouGlish (бесплатно 20 поисков в день): один поиск на нажатие, части фразы — только по кнопке
     const w = new YG.Widget(wid, { width: Math.min(520, $("sheetBody").clientWidth || 340), components: 9, events: {
       onFetchDone: e => {
         const m = $("ygMsg"); if(!m) return;
         if(e && e.totalResult){ found = true; m.textContent = (k ? `Целиком фразы в роликах нет — носители говорят «${tries[k]}». ` : "") + `Отрывков: ${e.totalResult}. Слушайте и повторяйте вслух.`; return; }
-        if(++k < tries.length){ m.textContent = `Ищу «${tries[k]}»…`; setTimeout(() => w.fetch(tries[k], "turkish"), 0); }
-        else m.textContent = "Среди роликов это пока не нашлось. Послушайте «Синтез» или выберите другую фразу.";
+        const rest = tries.slice(k + 1);
+        if(!rest.length){ m.textContent = "Среди роликов это пока не нашлось. Послушайте «Носитель» или выберите другую фразу."; return; }
+        m.innerHTML = "Целиком фразы в роликах нет. Искать её часть: " + rest.map((t, j) => `<button class="linkbtn" data-part="${k + 1 + j}" lang="tr">${esc(t)}</button>`).join(" · ");
+        m.querySelectorAll("[data-part]").forEach(b => b.onclick = () => { k = +b.dataset.part; m.textContent = `Ищу «${tries[k]}»…`; w.fetch(tries[k], "turkish"); });
       },
       // ошибка плеера после найденных отрывков (например, YouTube просит войти) — не затираем найденное
       onError: () => { if(!found) fail(); } } });
@@ -2330,9 +2464,51 @@ function openTranslate(text){
   translateTr(text).then(t => { const o = $("trOut"); if(o) o.textContent = t; })
     .catch(() => { const o = $("trOut"); if(o) o.textContent = "Не удалось перевести. Проверьте интернет и попробуйте ещё раз."; });
 }
-$("yg").onclick = () => item && openVideo(item.target);
+$("yg").onclick = () => item && openExamples(item.target);
 $("freeTranslate").onclick = () => openTranslate(lastHeard);
 
+
+// «Примеры» — вместо платного лимита YouGlish (бесплатно 20 поисков в день, пользователь платить не будет):
+// фразы из Tatoeba с этим словом, перевод на русский и живые записи носителей (лицензированные) — без дневного лимита.
+// Видео YouGlish осталось как дополнительная кнопка в этом окне.
+async function tatoebaExamples(text){
+  const words = normPhrase(text).split(" ").filter(Boolean);
+  const q = words.length > 1 ? `"${normPhrase(text)}"` : words[0];
+  const base = `${TATOEBA}/unstable/sentences?lang=tur&include=audios&showtrans:lang=rus&sort=relevance&limit=15&q=${encodeURIComponent(q)}`;
+  const [a, b] = await Promise.all([base + "&has_audio=yes", base + "&trans:lang=rus"].map(u => fetch(u).then(r => r.json()).catch(() => ({}))));
+  const byId = new Map();                          // одна фраза может прийти из обоих запросов — склеиваем перевод и запись
+  [...(a.data || []), ...(b.data || [])].forEach(x => {
+    const lic = (x.audios || []).filter(au => au.license), ru = ruFrom(x), e = byId.get(x.id);
+    if(e){ if(!e.ru) e.ru = ru; if(!e.audio && lic[0]){ e.audio = tatoebaAudio(lic[0].id); e.who = lic[0].author; } return; }
+    byId.set(x.id, { tr:x.text, ru, audio: lic[0] ? tatoebaAudio(lic[0].id) : "", who: lic[0] ? lic[0].author : "" });
+  });
+  const out = [...byId.values()];
+  out.sort((p, r) => (!!r.audio - !!p.audio) || (!!r.ru - !!p.ru) || p.tr.length - r.tr.length);
+  return { list: out.slice(0, 12), query: q, words };
+}
+function openExamples(text){
+  const t = String(text || "").trim(); if(!t) return;
+  openSheet("Примеры: как говорят носители", `<p class="sheet-q" lang="tr" translate="no">${esc(t)}</p>
+    <p class="sheet-msg" id="exMsg" role="status">Ищу живые примеры…</p><ul class="ex-list" id="exList"></ul>
+    <button class="pill wide" id="exVideo"><svg class="ic" aria-hidden="true"><use href="#i-video"/></svg><span class="lbl">Видео с носителями (YouGlish, до 20 в день)</span></button>
+    <p class="sheet-src">Фразы и записи — Tatoeba (свободные лицензии), кнопка «слушать» — живой голос носителя.</p>`);
+  $("exVideo").onclick = () => openVideo(t);
+  const render = (res, note) => {
+    const list = $("exList"), msg = $("exMsg"); if(!list) return;
+    if(!res.list.length){ msg.textContent = note || "Примеров с этим пока нет. Попробуйте видео ниже или другое слово."; return; }
+    msg.textContent = (note ? note + " " : "") + `Примеров: ${res.list.length}, с записью носителя: ${res.list.filter(x => x.audio).length}.`;
+    list.innerHTML = res.list.map((x, i) => `<li class="ex">${x.audio ? `<button class="ex-play" data-i="${i}" aria-label="Слушать: ${esc(x.tr)}"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></button>` : `<span class="ex-play off" aria-hidden="true"></span>`}
+      <span class="ex-txt"><b lang="tr" translate="no">${esc(x.tr)}</b>${x.ru ? `<small>${esc(x.ru)}</small>` : ""}</span></li>`).join("");
+    list.querySelectorAll(".ex-play[data-i]").forEach(b => b.onclick = () => { const a = $("nativeAudio"); speechSynthesis && speechSynthesis.cancel(); a.pause(); a.onended = null; a.src = res.list[+b.dataset.i].audio; a.play().catch(() => {}); });
+  };
+  tatoebaExamples(t).then(res => {
+    if(!sheetOpen || !$("exList")) return;
+    if(res.list.length || res.words.length < 2) return render(res);
+    // целой фразы в примерах нет — примеры с самым длинным словом из неё (без лимитов, поэтому сразу)
+    const longest = res.words.slice().sort((p, r) => r.length - p.length)[0];
+    return tatoebaExamples(longest).then(r2 => render(r2, `Целиком фразы в примерах нет — примеры со словом «${longest}».`));
+  }).catch(() => { const m = $("exMsg"); if(m) m.textContent = "Нет связи с базой примеров. Проверьте интернет."; });
+}
 function setMode(m){
   try { if(location.hash.slice(1) !== m) history.replaceState(null, "", "#" + m); } catch(e){}
   if(listening) stopListening();

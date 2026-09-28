@@ -594,7 +594,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     // каждое «название» в тексте должно встречаться в коде как настоящая надпись (вне кавычек-ёлочек)
     const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8');
     const outside = src.replace(/«[^»]*»/g, '');
-    const words = ['Свободно','Звуки','Фразы','На слух','Прогресс','Сказать','Дальше','Сравнить','Эхо','Носитель','Синтез','Видео'];
+    const words = ['Свободно','Звуки','Фразы','На слух','Прогресс','Сказать','Дальше','Сравнить','Эхо','Носитель','Синтез','Видео','Примеры'];
     const quoted = [...new Set([...src.matchAll(/«([^»]{2,30})»/g)].map(m => m[1].trim()))]
       .filter(q => /^[\p{Extended_Pictographic}⇄→⚡⭐🔊🎙]/u.test(q) || words.includes(q));
     const bad = quoted.filter(q => !outside.includes(q.replace(/^[^\p{L}]+/u, '').trim()));
@@ -635,8 +635,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q = await openPage(browser); const out = [];
     for(const [w, h] of [[360, 560], [360, 640], [390, 844], [412, 732], [412, 915]]){
       await q.setViewportSize({ width:w, height:h });
-      for(const m of ['pairs','phrases','listen','free']){
-        out.push(await q.evaluate(([m, w, h]) => { setMode(m); autofit(); const card = [...document.querySelectorAll('.screen > .card')].find(c => !c.hidden);
+      for(const m of ['pairs','phrases','words','listen','free']){
+        out.push(await q.evaluate(([m, w, h]) => { if(m === 'words'){ wordsKind = true; setId = 'food'; m = 'phrases'; } else if(m === 'phrases') wordsKind = false; setMode(m); autofit(); const card = [...document.querySelectorAll('.screen > .card')].find(c => !c.hidden);
           const fit = +getComputedStyle(document.querySelector('.app')).getPropertyValue('--fit');
           const tab = document.querySelector('.tabbar').getBoundingClientRect().bottom;
           return { k:`${w}x${h} ${m}`, fit, over: card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight > innerHeight || tab > innerHeight + 1
@@ -677,21 +677,44 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('«Видео»: окно внутри приложения, ролики по текущему слову, без новой вкладки и перехода', async () => {
     const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
     const url0 = q.url(); const word = await q.evaluate(() => item.target);
-    await q.click('#yg'); await q.waitForSelector('#sheet:not([hidden]) iframe', { timeout:5000 }); await q.waitForFunction(() => /Отрывков/.test(document.getElementById('ygMsg').textContent), null, { timeout:5000 });
+    await q.click('#yg'); await q.click('#exVideo'); await q.waitForSelector('#sheet:not([hidden]) iframe', { timeout:5000 }); await q.waitForFunction(() => /Отрывков/.test(document.getElementById('ygMsg').textContent), null, { timeout:5000 });
     const r = await q.evaluate(() => [document.querySelector('#sheet iframe').dataset.q, document.getElementById('ygMsg').textContent, document.activeElement.id]);
     await q.keyboard.press('Escape');
     const after = await q.evaluate(() => [document.getElementById('sheet').hidden, document.getElementById('sheetBody').innerHTML === '', document.activeElement.id]);
     const errs = q.errors; await q.context().close();
     eq(r[0], word + '|turkish'); ok(/Отрывков: 7/.test(r[1]), r[1]); eq(r[2], 'sheetClose');
-    eq(after, [true, true, 'yg']); eq(pages.length, 0); eq(q.url ? url0 : url0, url0); eq(errs, []);
+    eq(after, [true, true, 'yg']);   // фокус вернулся на кнопку «Примеры», откуда открывали eq(pages.length, 0); eq(q.url ? url0 : url0, url0); eq(errs, []);
   });
-  await test('«Видео»: фразы целиком в роликах нет — ищет её части и говорит, что показывает', async () => {
+  await test('«Примеры» (вместо платного лимита YouGlish): фразы носителей с переводом и живой записью, внутри приложения', async () => {
+    const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
+    await q.route('**/api.tatoeba.org/**', r => { const u = decodeURIComponent(r.request().url());
+      if(u.includes('q="çay lütfen"')) return r.fulfill({ json:{ data:[] } });
+      return r.fulfill({ json:{ data: u.includes('has_audio=yes') ? [
+        { id:1, text:'Bir çay lütfen.', audios:[{ id:77, author:'futurk', license:'CC BY 4.0' }], translations:[{ text:'Один чай, пожалуйста.', lang:'rus' }] },
+        { id:2, text:'Çay içer misin?', audios:[{ id:78, author:'x', license:'' }] } ] : [
+        { id:2, text:'Çay içer misin?', audios:[], translations:[[{ text:'Будешь чай?', lang:'rus' }]] },
+        { id:3, text:'Çay sıcak.', audios:[], translations:[] } ] } }); });
+    await q.evaluate(() => openExamples('Çay lütfen'));
+    await q.waitForSelector('#exList li', { timeout:5000 });
+    const r = await q.evaluate(() => [document.getElementById('exMsg').textContent, [...document.querySelectorAll('#exList li')].map(li => [li.querySelector('b').textContent, (li.querySelector('small') || {}).textContent || '', !!li.querySelector('.ex-play[data-i]')])]);
+    await q.evaluate(() => { window.__played = []; }); await q.click('#exList .ex-play[data-i]');
+    const played = await q.evaluate(() => window.__played);
+    await q.context().close();
+    ok(/примеры со словом «lütfen»/.test(r[0]) && /с записью носителя: 1/.test(r[0]), r[0]);
+    eq(r[1][0], ['Bir çay lütfen.', 'Один чай, пожалуйста.', true]);                 // с записью — первой; без лицензии — без кнопки
+    eq(r[1].find(x => x[0] === 'Çay içer misin?'), ['Çay içer misin?', 'Будешь чай?', false]);
+    eq(played, ['https://api.tatoeba.org/v1/audios/77/file']); eq(pages.length, 0);
+  });
+  await test('«Видео» бережёт лимит YouGlish: один поиск на нажатие, часть фразы — только по кнопке', async () => {
     const q = await openInApp();
     await q.evaluate(() => openVideo('Çıkış saat kaçta?'));
-    await q.waitForFunction(() => /Отрывков/.test((document.getElementById('ygMsg') || {}).textContent || ''), null, { timeout:5000 });
-    const r = await q.evaluate(() => [window.__ygq, document.getElementById('ygMsg').textContent]);
+    await q.waitForSelector('#ygMsg [data-part]', { timeout:5000 });
+    const before = await q.evaluate(() => window.__ygq.slice());
+    await q.click('#ygMsg [data-part]');
+    await q.waitForFunction(() => /Отрывков/.test(document.getElementById('ygMsg').textContent), null, { timeout:5000 });
+    const r = await q.evaluate(() => [window.__ygq, document.getElementById('ygMsg').textContent, document.querySelector('.sheet-src').textContent]);
     await q.context().close();
-    eq(r[0], ['Çıkış saat kaçta', 'Çıkış saat']); ok(/носители говорят «Çıkış saat»/.test(r[1]), r[1]);
+    eq(before, ['Çıkış saat kaçta']); eq(r[0], ['Çıkış saat kaçta', 'Çıkış saat']); ok(/носители говорят «Çıkış saat»/.test(r[1]), r[1]); ok(/20 поисков в день/.test(r[2]), r[2]);
   });
   await test('«Перевод» в «Свободно» и в «Фразах»: перевод в окне приложения, без перехода', async () => {
     const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
@@ -725,13 +748,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.context().close();
     ok(r.some(([u, w]) => u === 'https://api.tatoeba.org/v1/audios/1048317/file' && w === 'CVTR (Tatoeba)') && !r.some(([u]) => u.includes('/999/')), JSON.stringify(r));   // без лицензии — не берём (файл 403)
   });
-  await test('«Носитель» для фразы без отдельной записи — видео с носителями внутри приложения', async () => {
-    const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
-    await q.click('#tab-phrases'); await q.evaluate(() => { nativeCache.set(clean(item.target), []); });
-    await q.click('#native'); await q.waitForSelector('#sheet:not([hidden]) iframe', { timeout:5000 });
-    const r = await q.evaluate(() => [document.querySelector('#sheet iframe').dataset.q.split('|')[1], document.getElementById('nativeStatus').textContent]);
+  await test('«Носитель» для фразы без записи — слова по очереди живыми записями, видео само не открывается (лимит YouGlish)', async () => {
+    const q = await openInApp();
+    await q.click('#tab-phrases');
+    const r = await q.evaluate(async () => { item = { target:'Hesap lütfen biraz', gid:'ph-basic', meaning:'' }; nativeCache.set(clean(item.target), []);
+      nativeCache.set(clean('hesap'), [{ url:'https://x/hesap.wav', who:'A' }]); nativeCache.set(clean('lütfen'), [{ url:'https://x/lutfen.wav', who:'B' }]); nativeCache.set(clean('biraz'), []);
+      window.__played = []; playNative(); await new Promise(z => setTimeout(z, 900));
+      return [window.__played.map(s => s.split('/').pop()), document.getElementById('nativeStatus').textContent, document.getElementById('sheet').hidden]; });
     await q.context().close();
-    eq(r[0], 'turkish'); ok(/видео/.test(r[1]), r[1]); eq(pages.length, 0);
+    eq(r[0], ['hesap.wav', 'lutfen.wav']); ok(/по словам: hesap · lütfen · \(biraz — нет\)/.test(r[1]), r[1]); eq(r[2], true);
   });
   await test('набор «живые фразы»: только короткие фразы с записью, перевод на русский, «Носитель» играет запись Tatoeba', async () => {
     const q = await openInApp(); await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json: TATO(decodeURIComponent(r.request().url())) }));
@@ -772,6 +797,47 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       if(r.cut.length || r.overlap || r.scroll) bad.push(`${w}x${h} ${JSON.stringify(r)}`);
     }
     await q.context().close(); eq(bad, []);
+  });
+
+  console.log('Слова по темам с пополнением');
+  const WIKI = u => {
+    if(u.includes('en.wiktionary') && u.includes('categorymembers')){
+      if(!u.includes('cmcontinue')) return { continue:{ cmcontinue:'page|NEXT' }, query:{ categorymembers:[{ title:'otel' }, { title:'resepsiyon' }, { title:'oda servisi' }, { title:'İstanbul' }, { title:'oda' }] } };
+      return { query:{ categorymembers:[{ title:'lobi' }, { title:'bavul' }] } };
+    }
+    if(u.includes('ru.wiktionary')) return { parse:{ title:'ekmek', wikitext:{ '*':"= {{-tr-}} =\n\n=== Морфологические и синтаксические свойства ===\n{{падежи tr\n|nom-sg=ekmek\n}}\n\n==== Значение ====\n\n# [[хлеб]] {{пример|Ekmek aldım.}}\n\n=== Этимология ===\n" } } };
+    return {};
+  };
+  async function openWords(){ const q = await openInApp(); await q.route('**/*wiktionary.org/w/api.php**', r => r.fulfill({ json: WIKI(decodeURIComponent(r.request().url())) })); return q; }
+  await test('«Фразы» → «слова»: слова выбранной темы с переводом, по счётчику в чипах; переключение обратно на фразы', async () => {
+    const q = await openWords();
+    await q.click('#tab-phrases'); await q.click('.chip[data-s="food"]'); await q.click('#kindChip');
+    const r = await q.evaluate(() => [wordsKind, item.word, item.topic, WORD_SEEDS.food.map(x => x[0]).includes(item.target), document.getElementById('meaning').textContent,
+      document.querySelector('.chip[data-s="food"]').textContent, document.getElementById('target').classList.contains('phrase'), localStorage.getItem('soyle-kind')]);
+    await q.click('#kindChip');
+    const back = await q.evaluate(() => [wordsKind, !!item.word, document.querySelector('.chip[data-s="tatoeba"]') !== null]);
+    const errs = q.errors; await q.context().close();
+    eq(r.slice(0, 4), [true, true, 'food', true]); ok(r[4].length > 1, 'нет перевода'); ok(/^ресторан \(\d+\)$/.test(r[5]), r[5]); eq(r[6], false); eq(r[7], 'words');
+    eq(back, [false, false, true]); eq(errs, []);
+  });
+  await test('пополнение: новые слова темы подгружаются из Викисловаря (одиночные слова, продолжение списка), сохраняются', async () => {
+    const q = await openWords();
+    const r = await q.evaluate(async () => {
+      localStorage.removeItem('soyle-words-hotel'); delete wordPools.hotel;
+      const pool = wordPool('hotel'); const n0 = pool.items.length; pool.items.forEach(w => w.seen = 1);
+      pickWord('hotel'); const grew = !!growing.hotel; await growing.hotel;    // новых не осталось — пошла подгрузка
+      localStorage.removeItem('soyle-words-hotel'); delete wordPools.hotel; wordPool('hotel');   // заново: по порциям
+      await growWords('hotel', 1); const n1 = wordPool('hotel').items.length, cont = wordPool('hotel').cont;
+      await growWords('hotel', 1); const n2 = wordPool('hotel').items.length;
+      const saved = JSON.parse(localStorage.getItem('soyle-words-hotel')).items.map(x => x.tr);
+      return [grew, n0, n1 - n0, cont, n2 - n1, saved.includes('resepsiyon'), saved.includes('oda servisi'), saved.some(x => /stanbul/i.test(x)), saved.filter(x => x === 'oda').length, saved.includes('lobi')]; });
+    await q.context().close();
+    eq(r, [true, 12, 2, 'page|NEXT', 2, true, false, false, 1, true]);  // otel+resepsiyon; фраза, имя собственное и дубль «oda» не берутся
+  });
+  await test('русское значение слова — из статьи ru-Викисловаря («Значение»), без разметки', async () => {
+    const q = await openWords();
+    const r = await q.evaluate(() => ruMeaning('ekmek')); await q.context().close();
+    eq(r, 'хлеб');
   });
 
   console.log('Резервная копия прогресса');
