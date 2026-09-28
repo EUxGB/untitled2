@@ -8,6 +8,10 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else 'audio/cv'
 DS = 'datasets/ysdede/commonvoice_17_tr_fixed'
 src = open('index.html', encoding='utf-8').read()
 phrases = re.findall(r'\{ tr:"([^"]+)", tl:', src)
+# фразы с озвучкой (подобраны из Common Voice и Tatoeba) — tests/voiced-phrases.json
+if os.path.exists('tests/voiced-phrases.json'):
+    vp = json.load(open('tests/voiced-phrases.json', encoding='utf-8'))
+    phrases += [x['tr'] for lst in vp.values() for x in lst if x.get('cv')]
 def norm(t):
     t = t.replace('I', 'ı').replace('İ', 'i').lower()
     return re.sub(r'\s+', ' ', re.sub(r"[^\w\s]", ' ', t)).strip()
