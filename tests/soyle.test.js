@@ -204,7 +204,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await p.fill('#intent', ''); await p.evaluate(() => { window.__say = 'merhaba'; });
     await p.click('#freeSpeak'); await p.waitForTimeout(150);
     const t = await p.textContent('#freeResult'); ok(t.includes('Носитель услышит') && t.includes('merhaba'), t);
-    eq(await p.getAttribute('#freeTranslate', 'aria-disabled'), null);
+    eq(await p.isDisabled('#freeTranslate'), false);
   });
   await test('«В мои фразы»: сохранить, не дублировать, удалить', async () => {
     await p.click('#freeSave'); eq(await p.textContent('#freeSave'), 'Сохранено');
@@ -467,11 +467,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       const ids = await q.evaluate(() => [...document.querySelectorAll('.screen > section:not([hidden]) button, .chips button')].filter(b => b.offsetParent && !b.disabled && !['bkYes','updateApp'].includes(b.id)).map((b, i) => { b.dataset.probe = String(i); return String(i); }));
       for(const id of ids){
         if(await q.isVisible('#modal')) await q.click('#modalSecondary:visible, #modalPrimary');
+        if(await q.isVisible('#sheet')) await q.click('#sheetClose');
         const el = await q.$(`[data-probe="${id}"]`); if(el && await el.isVisible() && await el.isEnabled()) await el.click({ timeout:3000 }).catch(() => {});
         await q.waitForTimeout(60);
       }
       await q.evaluate(() => { if(typeof blitz !== 'undefined' && blitz) endBlitz(true); });
       if(await q.isVisible('#modal')) await q.click('#modalPrimary');
+      if(await q.isVisible('#sheet')) await q.click('#sheetClose');
     }
     const errs = q.errors; await q.context().close(); eq(errs, []); eq(consoleErr, []);
   });
@@ -663,6 +665,46 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const infoBg = await q.evaluate(() => { setMode('pairs'); next(); return getComputedStyle(document.getElementById('result')).backgroundColor; });
     await q.context().close();
     eq(bad, []); eq(infoBg, 'rgb(243, 232, 207)');   // песочный, как на выбранном экране (#F3E8CF)
+  });
+
+  console.log('Видео и перевод — внутри приложения, без перехода');
+  // подмена внешних сервисов: виджет YouGlish и перевод MyMemory (настоящие проверяются в CI задачей probe)
+  const FAKE_YG = `var YG={Widget:function(id,o){this.fetch=function(q,l){var f=document.createElement('iframe');f.title='YouGlish';f.setAttribute('data-q',q+'|'+l);document.getElementById(id).appendChild(f);setTimeout(function(){o.events.onFetchDone({totalResult:7,query:q})},30)}}};setTimeout(function(){window.onYouglishAPIReady&&window.onYouglishAPIReady()},10);`;
+  async function openInApp(opts){ const q = await openPage(browser, opts);
+    await q.route('**/youglish.com/public/emb/widget.js', r => r.fulfill({ contentType:'application/javascript', body:FAKE_YG }));
+    await q.route('**/api.mymemory.translated.net/**', r => r.fulfill({ json:{ responseStatus:200, quotaFinished:false, responseData:{ translatedText:'Можно мне счёт?' } } }));
+    return q; }
+  await test('«Видео»: окно внутри приложения, ролики по текущему слову, без новой вкладки и перехода', async () => {
+    const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
+    const url0 = q.url(); const word = await q.evaluate(() => item.target);
+    await q.click('#yg'); await q.waitForSelector('#sheet:not([hidden]) iframe', { timeout:5000 }); await q.waitForFunction(() => /Отрывков/.test(document.getElementById('ygMsg').textContent), null, { timeout:5000 });
+    const r = await q.evaluate(() => [document.querySelector('#sheet iframe').dataset.q, document.getElementById('ygMsg').textContent, document.activeElement.id]);
+    await q.keyboard.press('Escape');
+    const after = await q.evaluate(() => [document.getElementById('sheet').hidden, document.getElementById('sheetBody').innerHTML === '', document.activeElement.id]);
+    const errs = q.errors; await q.context().close();
+    eq(r[0], word + '|turkish'); ok(/Отрывков: 7/.test(r[1]), r[1]); eq(r[2], 'sheetClose');
+    eq(after, [true, true, 'yg']); eq(pages.length, 0); eq(q.url ? url0 : url0, url0); eq(errs, []);
+  });
+  await test('«Перевод» в «Свободно» и в «Фразах»: перевод в окне приложения, без перехода', async () => {
+    const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
+    await q.click('#tab-free'); await q.fill('#intent', ''); await q.evaluate(() => { window.__say = 'hesabı alabilir miyim'; });
+    await q.click('#freeSpeak'); await q.waitForTimeout(200);
+    await q.click('#freeTranslate'); await q.waitForFunction(() => document.getElementById('trOut') && document.getElementById('trOut').textContent !== 'Перевожу…');
+    const free = await q.evaluate(() => [document.querySelector('#sheet .sheet-q').textContent, document.getElementById('trOut').textContent]);
+    await q.click('#sheetClose');
+    await q.click('#tab-phrases'); await q.click('.chip[data-s="mine"]');
+    await q.evaluate(() => { saveMine('Hesabı alabilir miyim?'); setId = 'mine'; renderChips(); next(); });
+    await q.click('#partner [data-tr]'); await q.waitForFunction(() => document.getElementById('trOut') && document.getElementById('trOut').textContent !== 'Перевожу…');
+    const ph = await q.evaluate(() => document.getElementById('trOut').textContent);
+    await q.mouse.click(5, 5);                                   // нажатие мимо окна — закрыть
+    const closed = await q.evaluate(() => document.getElementById('sheet').hidden);
+    const url = q.url(), errs = q.errors; await q.context().close();
+    eq(free, ['hesabı alabilir miyim', 'Можно мне счёт?']); eq(ph, 'Можно мне счёт?'); eq(closed, true);
+    eq(pages.length, 0); ok(!/translate\.google|youglish\.com\/pronounce/.test(url), url); eq(errs, []);
+  });
+  await test('в программе нет ссылок, уводящих из приложения (translate.google, youglish.com/pronounce, target=_blank)', async () => {
+    const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8');
+    eq([/translate\.google/.test(src), /youglish\.com\/pronounce/.test(src), /target="_blank"/.test(src)], [false, false, false]);
   });
 
   console.log('Резервная копия прогресса');

@@ -25,7 +25,23 @@ async function get(url){
     `https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=words&limit=3&trans:lang=rus&showtrans=rus`,
     'https://api.tatoeba.org/unstable/audio/66596/file',
   ];
+  urls.push(
+    'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=words&limit=5&trans:lang=rus&showtrans=matching&showtrans:lang=rus&include=audios',
+    'https://api.tatoeba.org/unstable/audio/1161844/file', 'https://api.tatoeba.org/unstable/audios/1161844/file', 'https://api.tatoeba.org/v1/audios/1161844/file');
   const res = []; for(const u of urls) res.push(await get(u));
+  // сколько фраз тренажёра есть в Tatoeba целиком с записью носителя
+  const b0 = await chromium.launch(); const p0 = await b0.newPage(); await p0.addInitScript(() => { window.SOYLE_TEST = true; });
+  await p0.goto('file://' + require('path').resolve(__dirname, '..', 'index.html'));
+  const phrases = await p0.evaluate(() => PHRASE_SETS.flatMap(g => g.items.map(i => i.tr))); await b0.close();
+  const norm = t => t.toLocaleLowerCase('tr').replace(/[^\p{L}\s]/gu, '').replace(/\s+/g, ' ').trim();
+  const found = [];
+  for(const ph of phrases){
+    try { const r = await fetch(`https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=5&include=audios&q=${q(ph)}`); const d = await r.json();
+      const hit = (d.data || []).find(x => norm(x.text) === norm(ph)); if(hit) found.push({ ph, id: hit.id, audio: hit.audios && hit.audios[0] && hit.audios[0].download_url, author: hit.audios && hit.audios[0] && hit.audios[0].author, license: hit.audios && hit.audios[0] && hit.audios[0].license });
+    } catch(e){}
+    await new Promise(z => setTimeout(z, 150));
+  }
+  res.push({ tatoebaExact: { phrases: phrases.length, found: found.length, list: found } });
   // аудио: первый download_url из ответов
   const m = JSON.stringify(res).match(/https?:[^"\\]*audios[^"\\]*file[^"\\]*/);
   if(m) res.push(await get(m[0]).then(r => ({ ...r, body: r.body && r.body.length + ' bytes (обрезано)' })));

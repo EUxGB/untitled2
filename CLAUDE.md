@@ -155,6 +155,12 @@ Literata/Commissioner убраны. Две главные — `preload`. Пуб�
   side.png, «нормальные цвета»), высота по содержимому (текст не обрезается и не прокручивается внутри);
   `MutationObserver` на `#result/#freeResult/#lsResult` вызывает `autofit` при каждой смене текста.
   Тест «пояснение помещается целиком» — самый длинный текст на 360×640 и 390×844 во всех разделах.
+- **Видео и перевод — внутри приложения** (требование пользователя: не уходить на другие сайты): окно-лист `#sheet`
+  (`openSheet`/`closeSheet`, Escape, нажатие мимо, удержание фокуса). «Видео» — виджет YouGlish (`openVideo`,
+  `youglish.com/public/emb/widget.js`, без ключа — проверено CI: «teşekkür ederim» 5583 отрывка); «Перевод» —
+  MyMemory (`openTranslate`, `api.mymemory.translated.net`, CORS есть — проверено CI). Ссылок `target=_blank`,
+  translate.google, youglish.com/pronounce в программе нет — тест. Внешние сервисы проверяет CI: `tests/probe-services.js`
+  → `probe.json` в ветке `screens`.
 - Подсказки скрыты, показываются кнопкой «?». Статистика по наборам.
 - Запись своего голоса всегда включена; на Android — автоматический обход (кнопка «Записать себя»).
 - Доступность WCAG 2.1 AA, тёмная тема, зоны нажатия ≥ 44 px.

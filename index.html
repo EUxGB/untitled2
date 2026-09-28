@@ -527,12 +527,25 @@ h1 span{color:inherit}
    текст всегда виден целиком: блок растёт по содержимому, а autofit ужимает остальное */
 .result{height:auto; min-height:max(72px, calc(104px * var(--fit))); max-height:none; overflow:visible}
 .result.info{background:var(--near-soft)} .result.info .verdict{color:var(--ink)}
+
+/* окно видео/перевода — лист снизу, как окна-праздники */
+.sheet .sheet-box{text-align:left; max-height:92dvh; overflow:auto}
+.sheet-head{display:flex; align-items:center; gap:10px}
+.sheet-head h3{flex:1; margin:0}
+.sheet-body{display:flex; flex-direction:column; gap:10px}
+.sheet-q{margin:0; font:700 24px/1.25 var(--display); color:var(--ink)}
+.sheet-tr{margin:0; font-size:19px; line-height:1.4; color:var(--ink); background:var(--near-soft); border-radius:16px; padding:12px 14px}
+.sheet-msg{margin:0; font-size:14px; color:var(--ink-2)}
+.sheet-src{margin:0; font-size:12px; color:var(--muted)}
+.yg-box{min-height:200px; border-radius:14px; overflow:hidden; background:var(--bg)}
+.yg-box iframe{max-width:100%}
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <symbol id="i-native" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17 7.5c1 1 1 3 0 4M19.5 5.5c2.2 2.2 2.2 5.8 0 8"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
     <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/></symbol>
     <symbol id="i-wave" viewBox="0 0 24 24"><path d="M4 12v0M7.5 9v6M11 5v14M14.5 8v8M18 10.5v3M21 12v0"/></symbol>
     <symbol id="i-echo" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1M19.5 12a7.5 7.5 0 0 1-13 5.1"/><path d="M18 3.5V7h-3.5M6 20.5V17h3.5"/></symbol>
@@ -603,7 +616,7 @@ h1 span{color:inherit}
       <div class="acts">
         <button class="act" id="freeMine" disabled><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span><span class="lbl">Моя запись</span></button>
         <button class="act" id="freeCorrect" disabled title="Как это звучит правильно"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg></span><span class="lbl">Образец</span></button>
-        <a class="act off" id="freeTranslate" target="_blank" rel="noopener" aria-disabled="true" tabindex="-1"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-translate"/></svg></span><span class="lbl">Перевод</span></a>
+        <button class="act" id="freeTranslate" disabled title="Перевод прямо здесь, без перехода"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-translate"/></svg></span><span class="lbl">Перевод</span></button>
         <button class="act" id="freeSave" disabled><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-bookmark"/></svg></span><span class="lbl">В мои фразы</span></button>
       </div>
       <div class="main-row single">
@@ -622,7 +635,7 @@ h1 span{color:inherit}
       </div>
       <div class="acts">
         <button class="act native" id="native"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-native"/></svg></span><span class="lbl">Носитель</span></button>
-        <a class="act native" id="yg" target="_blank" rel="noopener"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-video"/></svg></span><span class="lbl">Видео</span></a>
+        <button class="act native" id="yg" title="Отрывки видео, где носители говорят это — прямо здесь"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-video"/></svg></span><span class="lbl">Видео</span></button>
         <button class="act" id="play"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg></span><span class="lbl">Синтез</span></button>
       </div>
       <div class="main-row">
@@ -714,6 +727,13 @@ h1 span{color:inherit}
   </nav>
 </div>
 
+<!-- окно внутри приложения: видео и перевод открываются здесь, без перехода на другие сайты -->
+<div class="modal sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="modal-box sheet-box">
+    <div class="sheet-head"><h3 id="sheetTitle"></h3><button class="qbtn" id="sheetClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-box">
     <div class="modal-ic" id="modalIc" lang="tr" translate="no"></div>
@@ -1131,16 +1151,16 @@ function next(){
   } else {
     t.textContent = item.target;
     $("partner").innerHTML = item.native
-      ? `Записей носителей: ${(nativeCache.get(clean(item.target))||[]).length} · <a href="https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(item.target)}" target="_blank" rel="noopener">перевод</a>`
-      : item.own ? `<a href="https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(item.target)}" target="_blank" rel="noopener">перевод</a> · <button class="linkbtn" id="delMine">удалить из моих</button>`
-      : item.translit ? `[${esc(item.translit)}]` : `<a href="https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(item.target)}" target="_blank" rel="noopener">перевод</a>`;
+      ? `Записей носителей: ${(nativeCache.get(clean(item.target))||[]).length} · <button class="linkbtn" data-tr="1">перевод</button>`
+      : item.own ? `<button class="linkbtn" data-tr="1">перевод</button> · <button class="linkbtn" id="delMine">удалить из моих</button>`
+      : item.translit ? `[${esc(item.translit)}]` : `<button class="linkbtn" data-tr="1">перевод</button>`;
     const dm = $("delMine"); if(dm) dm.onclick = () => askRemoveMine(dm, item.target);
+    const tb = $("partner").querySelector("[data-tr]"); if(tb) tb.onclick = () => openTranslate(item.target);
     $("partner").hidden = false;
   }
   const q = encodeURIComponent(item.target.replace(/[.,!?]/g,"").trim());
   nativeIdx = 0;
   prefetchNative();
-  $("yg").href = `https://youglish.com/pronounce/${q}/turkish`;
   $("meaning").textContent = item.meaning; scheduleFit();
   if(item.native){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
   $("tip").textContent = item.tip;
@@ -1816,8 +1836,7 @@ async function freeListen(){
     }
     $("freeLive").textContent = "";
     const intent = $("intent").value.trim();
-    $("freeTranslate").href = `https://translate.google.com/?sl=tr&tl=ru&op=translate&text=${encodeURIComponent(heard)}`;
-    $("freeTranslate").classList.remove("off"); $("freeTranslate").removeAttribute("aria-disabled"); $("freeTranslate").removeAttribute("tabindex");
+    $("freeTranslate").disabled = false;
     $("freeSave").disabled = false; setLbl($("freeSave"), "В мои фразы"); lastHeard = heard;
     $("freeCorrect").disabled = !intent || !trVoice;
     const heardHtml = `<div class="diff" style="font-weight:400">«${esc(heard)}»</div>`;
@@ -2147,9 +2166,97 @@ async function checkUpdate(){
   } catch(e){ /* нет сети — работаем с тем, что есть */ }
 }
 setTimeout(checkUpdate, 1500);
+
+// ---------- окно внутри приложения: видео носителей и перевод без перехода на другие сайты ----------
+let sheetOpen = false, sheetOnClose = null, sheetReturn = null;
+function openSheet(title, html, onClose){
+  if(sheetOpen) closeSheet();
+  sheetReturn = document.activeElement; sheetOnClose = onClose || null;
+  $("sheetTitle").textContent = title; $("sheetBody").innerHTML = html;
+  $("sheet").hidden = false; sheetOpen = true;
+  setTimeout(() => $("sheetClose").focus(), 50);
+}
+function closeSheet(){
+  if(!sheetOpen) return;
+  sheetOpen = false; const f = sheetOnClose; sheetOnClose = null;
+  try { f && f(); } catch(e){}
+  $("sheet").hidden = true; $("sheetBody").innerHTML = "";          // вместе с окном убирается и видео (звук тоже)
+  if(sheetReturn && sheetReturn.focus) sheetReturn.focus();
+}
+$("sheetClose").onclick = closeSheet;
+$("sheet").addEventListener("click", e => { if(e.target === $("sheet")) closeSheet(); });
+document.addEventListener("keydown", e => {
+  if(!sheetOpen) return;
+  if(e.key === "Escape"){ e.preventDefault(); closeSheet(); return; }
+  if(e.key !== "Tab") return;
+  const f = [...$("sheet").querySelectorAll("button, a[href], iframe")].filter(x => x.offsetParent);
+  if(!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  else if(!$("sheet").contains(document.activeElement)){ e.preventDefault(); first.focus(); }
+}, true);
+
+// Видео: виджет YouGlish — отрывки YouTube, где носители произносят слово или фразу (проверено: работает без ключа,
+// «teşekkür ederim» — 5583 отрывка). Играет внутри окна; закрыли окно — видео выгружено.
+let ygLoad = null;
+function loadYG(){
+  if(window.YG && YG.Widget) return Promise.resolve();
+  if(ygLoad) return ygLoad;
+  ygLoad = new Promise((ok, bad) => {
+    window.onYouglishAPIReady = ok;
+    const sc = document.createElement("script"); sc.src = "https://youglish.com/public/emb/widget.js"; sc.async = true;
+    sc.onerror = () => { ygLoad = null; bad(new Error("load")); };
+    document.head.appendChild(sc);
+    setTimeout(() => { if(!(window.YG && YG.Widget)){ ygLoad = null; bad(new Error("timeout")); } }, 15000);
+  });
+  return ygLoad;
+}
+function openVideo(text){
+  const q = String(text || "").replace(/[.,!?;:«»"()]/g, " ").replace(/\s+/g, " ").trim();
+  if(!q) return;
+  speechSynthesis && speechSynthesis.cancel(); $("nativeAudio").pause();
+  const wid = "ygw" + Date.now();
+  openSheet("Как это говорят носители", `<p class="sheet-q" lang="tr" translate="no">${esc(q)}</p>
+    <p class="sheet-msg" id="ygMsg" role="status">Загружаю отрывки видео…</p><div class="yg-box" id="${wid}"></div>
+    <p class="sheet-src">Отрывки роликов YouTube с живой речью, подобранные YouGlish.</p>`);
+  const fail = () => { const m = $("ygMsg"); if(m) m.textContent = "Видео не загрузилось. Проверьте интернет и нажмите «Видео» ещё раз."; };
+  loadYG().then(() => {
+    if(!sheetOpen || !$(wid)) return;
+    const w = new YG.Widget(wid, { width: Math.min(520, $("sheetBody").clientWidth || 340), components: 9, events: {
+      onFetchDone: e => { const m = $("ygMsg"); if(m) m.textContent = e && e.totalResult ? `Отрывков: ${e.totalResult}. Слушайте, повторяйте вслух; стрелки — следующий.` : "Отрывков с этой фразой не нашлось. Попробуйте отдельное слово из неё."; },
+      onError: fail } });
+    w.fetch(q, "turkish");
+  }).catch(fail);
+}
+
+// Перевод: MyMemory (проверено: отвечает, разрешает запросы со страницы; «Hesabı alabilir miyim?» → «Можно мне счет?»)
+const trCache = new Map();
+async function translateTr(text){
+  if(trCache.has(text)) return trCache.get(text);
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 9000);
+  try {
+    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=tr|ru`, { signal: ctl.signal });
+    const d = await r.json(), out = d && d.responseStatus == 200 && d.responseData && d.responseData.translatedText;
+    if(!out || d.quotaFinished) throw new Error("no translation");
+    trCache.set(text, out); return out;
+  } finally { clearTimeout(t); }
+}
+function openTranslate(text){
+  text = String(text || "").trim(); if(!text) return;
+  openSheet("Перевод", `<p class="sheet-q" lang="tr" translate="no">${esc(text)}</p>
+    <p class="sheet-tr" id="trOut" role="status">Перевожу…</p>
+    <p class="sheet-src">Машинный перевод (MyMemory): передаёт смысл, не всегда дословно.</p>`);
+  translateTr(text).then(t => { const o = $("trOut"); if(o) o.textContent = t; })
+    .catch(() => { const o = $("trOut"); if(o) o.textContent = "Не удалось перевести. Проверьте интернет и попробуйте ещё раз."; });
+}
+$("yg").onclick = () => item && openVideo(item.target);
+$("freeTranslate").onclick = () => openTranslate(lastHeard);
+
 function setMode(m){
   try { if(location.hash.slice(1) !== m) history.replaceState(null, "", "#" + m); } catch(e){}
   if(listening) stopListening();
+  closeSheet();
   if(blitz && m !== "listen") endBlitz(true);
   mode = m;
   $("tab-pairs").setAttribute("aria-pressed", m==="pairs");
@@ -2192,7 +2299,7 @@ $("freeSave").onclick = () => {
 document.addEventListener("keydown", e => {
   // клавиши-сокращения не перехватывают пробел/Enter у кнопок, ссылок и полей (2.1.1)
   if(e.repeat || e.ctrlKey || e.metaKey || e.altKey || ["INPUT","TEXTAREA","SELECT","BUTTON","A","SUMMARY"].includes(e.target.tagName)) return;
-  if(modalOpen) return;               // пока открыто окно — горячие клавиши не работают
+  if(modalOpen || sheetOpen) return;  // пока открыто окно — горячие клавиши не работают
   if(mode==="progress") return;
   if(mode==="listen"){
     if(e.code==="Space"){ e.preventDefault(); ls && playReference(ls.answer, null, true); }
