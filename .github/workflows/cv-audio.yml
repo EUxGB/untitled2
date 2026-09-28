@@ -1,0 +1,20 @@
+name: Записи носителей из Common Voice
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q pyarrow huggingface_hub
+      - run: python3 tests/cv-extract.py cvout
+      - name: Положить в ветку cv-audio
+        shell: bash
+        run: |
+          cd cvout && git init -q && git checkout -q -b cv-audio
+          git config user.name "github-actions" && git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -qm "Common Voice: записи фраз тренажёра"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" cv-audio

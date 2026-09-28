@@ -1880,9 +1880,10 @@ let nativeIdx = 0;
 const API = "https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query&prop=imageinfo&iiprop=url";
 const clean = t => norm(t).replace(/[.,!?]/g,"").trim();
 
-async function findRecordings(text){
+async function findRecordings(text, opts = {}){
   const key = clean(text);
   if(nativeCache.has(key)) return nativeCache.get(key);
+  if(opts.commonsOnly && nativeCache.has("c:" + key)) return nativeCache.get("c:" + key);
   const found = [];
   const seen = new Set();
   const add = (title, url) => { if(url && !seen.has(url)){ seen.add(url); found.push({ url, who: speakerOf(title) }); } };
@@ -1905,13 +1906,14 @@ async function findRecordings(text){
   //    Ссылка на файл — /v1/audios/ID/file: download_url из ответа API ведёт на 404 (проверено CI).
 //    Берём только записи с лицензией: без лицензии файл отдаёт 403 (проверено CI) — автор не разрешил повторное использование.
   let tatoebaFailed = false;
-  try {
+  if(opts.commonsOnly) tatoebaFailed = true; else try {
     const r3 = await fetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=5&include=audios&q=${encodeURIComponent(String(text).trim())}`).then(r => r.json());
     (r3.data || []).filter(x => normPhrase(x.text) === normPhrase(text)).forEach(x => (x.audios || []).filter(a => a.license).forEach(a => {
       const url = tatoebaAudio(a.id); if(!seen.has(url)){ seen.add(url); found.push({ url, who: `${a.author || "носитель"} (Tatoeba)` }); }
     }));
   } catch(e){ tatoebaFailed = true; }
-  if(commonsFailed && tatoebaFailed) return null; // сеть недоступна — не кэшируем
+  if(commonsFailed && tatoebaFailed && !opts.commonsOnly) return null; // сеть недоступна — не кэшируем
+  if(opts.commonsOnly){ if(commonsFailed) return null; nativeCache.set("c:" + key, found); return found; }
   nativeCache.set(key, found);
   return found;
 }
@@ -1945,7 +1947,8 @@ async function playWordByWord(text){
   const words = normPhrase(text).split(" ").filter(Boolean);
   if(words.length < 2){ st.textContent = "Записи носителя нет. Живая речь — «Примеры»: фразы носителей с этим словом."; return; }
   st.textContent = "Записи всей фразы нет — ищу записи слов…";
-  const found = await Promise.all(words.map(w => findRecordings(w).then(r => r && r[0]).catch(() => null)));
+  // отдельные слова — только Commons (Lingua Libre/Wiktionary): быстрее; на живом сайте поиск со всеми базами шёл дольше 4 с
+  const found = await Promise.all(words.map(w => findRecordings(w, { commonsOnly:true }).then(r => r && r[0]).catch(() => null)));
   if(!item || item.target !== target) return;
   const have = words.map((w, i) => ({ w, rec: found[i] })), urls = have.filter(x => x.rec).map(x => x.rec.url);
   if(!urls.length){ st.textContent = "Записей ни фразы, ни её слов нет. Живая речь — «Примеры»: фразы носителей с этими словами."; return; }
