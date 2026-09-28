@@ -755,6 +755,25 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq([/translate\.google/.test(src), /youglish\.com\/pronounce/.test(src), /target="_blank"/.test(src)], [false, false, false]);
   });
 
+  await test('длинная фраза и её перевод видны целиком: «Şu köşe yaz köşesi, şu köşe kış köşesi» + длинное значение (пришло позже)', async () => {
+    const q = await openPage(browser); const bad = [];
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h });
+      const r = await q.evaluate(async () => {
+        setMode('phrases'); nativeSet = [{ tr:'Şu köşe yaz köşesi, şu köşe kış köşesi', tl:'', ru:'', focus:'x', n:1 }]; setId = 'native'; lastKey = ''; next();
+        await new Promise(z => setTimeout(z, 80));
+        document.getElementById('meaning').textContent = "Значение (англ.): This corner is the summer corner, that corner is the winter corner (a children's game)";
+        await new Promise(z => setTimeout(z, 150));                       // значение пришло позже — подгонка сама
+        const card = document.getElementById('card');
+        const cut = ['target', 'meaning', 'partner'].filter(id => { const e = document.getElementById(id); return e.scrollHeight > e.clientHeight + 1; });
+        const kids = [...card.children].filter(e => e.offsetParent); let overlap = false;
+        for(let i = 0; i + 1 < kids.length; i++) if(kids[i].getBoundingClientRect().bottom > kids[i+1].getBoundingClientRect().top + 1) overlap = true;
+        return { cut, overlap, scroll: card.scrollHeight - card.clientHeight > 1 }; });
+      if(r.cut.length || r.overlap || r.scroll) bad.push(`${w}x${h} ${JSON.stringify(r)}`);
+    }
+    await q.context().close(); eq(bad, []);
+  });
+
   console.log('Резервная копия прогресса');
   await test('код копии: весь прогресс, без настроек устройства; русские и турецкие буквы не портятся', async () => {
     const r = await p.evaluate(() => { localStorage.setItem('soyle-rec-conflict','1'); localStorage.setItem('soyle-voice','X'); saveList('soyle-mine', [{ tr:'Çok güzel, teşekkürler' }]);

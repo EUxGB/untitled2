@@ -18,6 +18,11 @@ const URL = process.argv[2], OUT = process.argv[3];
       await p.click('#tab-' + tab); await p.waitForTimeout(1200);
       if(await p.isVisible('#modal')) await p.keyboard.press('Escape');
       await p.screenshot({ path:`${OUT}/${name}-${tab}.png` });
+      // обрезанный текст или наложение частей — записываем (пользователь жаловался, что перевод не помещается)
+      const cut = await p.evaluate(() => { const card = [...document.querySelectorAll('.screen > .card')].find(c => !c.hidden && c.offsetParent); if(!card) return [];
+        const out = [...card.querySelectorAll('#target, #meaning, #partner, .result, .ls-opt')].filter(e => e.offsetParent && e.scrollHeight > e.clientHeight + 1).map(e => e.id || e.className);
+        if(card.scrollHeight > card.clientHeight + 1) out.push('card-scroll'); return out; });
+      if(cut.length) (info.cuts = info.cuts || []).push(tab + ': ' + cut.join(','));
     }
     // на одном размере — проверить на живом сайте окна «Видео», «Перевод» и набор «живые фразы» (настоящая сеть)
     if(w === 390){

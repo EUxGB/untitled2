@@ -539,6 +539,11 @@ h1 span{color:inherit}
 .sheet-src{margin:0; font-size:12px; color:var(--muted)}
 .yg-box{min-height:200px; border-radius:14px; overflow:hidden; background:var(--bg)}
 .yg-box iframe{max-width:100%}
+
+/* перевод и строка под фразой — высота по тексту: длинное пояснение не обрезается, autofit ужимает остальное */
+#card .meaning{height:auto; min-height:2.8em; overflow:visible; display:flex; align-items:center; justify-content:center; text-align:center}
+#card .partner{height:auto; min-height:1.4em; overflow:visible}
+#card .target{overflow:visible}
 </style>
 </head>
 <body>
@@ -2194,6 +2199,8 @@ function autofit(){
   // варианты ответа уходили под подсказку, прокрутки при этом не было)
   const overlap = () => { const k = [...card.children].filter(e => e.offsetParent && getComputedStyle(e).display !== "none");
     for(let i = 0; i + 1 < k.length; i++) if(k[i].getBoundingClientRect().bottom > k[i + 1].getBoundingClientRect().top + 1) return true;
+    // обрезанный текст внутри блока (фраза, перевод, пояснение) — тоже переполнение (было: перевод длинной фразы обрезался)
+    if([...card.querySelectorAll("#target, #meaning, #partner, .result, .free-title")].some(e => e.offsetParent && e.scrollHeight > e.clientHeight + 1)) return true;
     return [...card.querySelectorAll(".ls-opt")].some(e => e.scrollHeight > e.clientHeight + 1 || e.getBoundingClientRect().bottom > (e.parentElement.getBoundingClientRect().bottom + 1)); };
   const over = () => card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight - innerHeight > 1 || overlap();
   let lo = .6, hi = 1.15;
@@ -2206,7 +2213,7 @@ let fitRaf = 0;
 function scheduleFit(){ cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(autofit); }
 // текст пояснения меняется (ответ, ошибка, подсказка) — заново подгоняем, чтобы он помещался целиком
 { const mo = new MutationObserver(scheduleFit);
-  ["result", "freeResult", "lsResult"].forEach(id => { const el = document.getElementById(id); if(el) mo.observe(el, { childList:true, subtree:true, characterData:true }); }); }
+  ["result", "freeResult", "lsResult", "target", "meaning", "partner"].forEach(id => { const el = document.getElementById(id); if(el) mo.observe(el, { childList:true, subtree:true, characterData:true }); }); }
 addEventListener("resize", scheduleFit);
 addEventListener("orientationchange", scheduleFit);
 if(window.visualViewport) visualViewport.addEventListener("resize", scheduleFit);
