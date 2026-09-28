@@ -71,6 +71,37 @@ const URL = process.argv[2], OUT = process.argv[3];
           return r; });
         await p.screenshot({ path:`${OUT}/${name}-words.png` });
       } catch(e){ live.wordsError = String(e); }
+      // что слышит пользователь на «Носителе» для фраз (жалоба: «нет носителя с такой фразой и других фраз»)
+      try {
+        live.nativePhrases = await p.evaluate(async () => {
+          const out = {};
+          for(const ph of ['Teşekkürler, her şey çok güzeldi.', 'Hesabı alabilir miyim?', 'İyi akşamlar, rezervasyonum var.', 'Merhaba.', 'Tuvalet nerede?']){
+            item = { target: ph, gid:'ph-basic', meaning:'' }; nativeCache.delete(clean(ph)); await findRecordings(ph);
+            window.__srcs = []; const a = document.getElementById('nativeAudio'); const orig = a.play.bind(a); a.play = function(){ window.__srcs.push(this.src.split('/').pop().slice(0, 40)); return Promise.resolve(); };
+            playNative(); await new Promise(z => setTimeout(z, 4000)); a.play = orig;
+            out[ph] = { status: document.getElementById('nativeStatus').textContent, played: window.__srcs };
+          }
+          return out; });
+      } catch(e){ live.nativePhrasesError = String(e); }
+      // фразы с записью носителя по темам: Tatoeba (с лицензией, до 8 слов) и Lingua Libre (Commons, с пробелом в названии)
+      try {
+        live.topicPhrases = await p.evaluate(async () => {
+          const KW = { hotel:['otel','oda','anahtar','rezervasyon','kahvaltı','havlu'], food:['yemek','hesap','çay','kahve','su','ekmek','restoran','menü'],
+            transport:['otobüs','tren','bilet','taksi','istasyon','uçak','yol'], shop:['fiyat','para','ucuz','pahalı','kaç','satın'],
+            health:['ilaç','doktor','hasta','ağrı','hastane','eczane'], greet:['merhaba','günaydın','teşekkür','lütfen','nasılsın','görüşürüz'] };
+          const res = {};
+          for(const [t, kws] of Object.entries(KW)){ const seen = new Set(); let n = 0, ru = 0;
+            for(const k of kws){ const d = await fetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&include=audios&showtrans:lang=rus&sort=relevance&limit=50&q=${encodeURIComponent(k)}`).then(r => r.json()).catch(() => ({}));
+              (d.data || []).forEach(x => { if(seen.has(x.id) || !(x.audios || []).some(a => a.license) || x.text.split(' ').length > 8) return; seen.add(x.id); n++; if(ruFrom(x)) ru++; }); }
+            res[t] = { licensedAudio: n, withRu: ru }; }
+          // Lingua Libre: турецкие записи с пробелом в названии (фразы, а не слова)
+          let phrasesLL = 0, total = 0, cont = '', pages = 0, sample = [];
+          do { const r = await fetch(`${API}&generator=categorymembers&gcmtype=file&gcmlimit=500&gcmtitle=${encodeURIComponent('Category:Lingua Libre pronunciation-tur')}${cont}`).then(x => x.json());
+            Object.values(r.query && r.query.pages || {}).forEach(pg => { total++; const w = wordFromTitle(pg.title); if(w && /\s/.test(w.word.trim())){ phrasesLL++; if(sample.length < 15) sample.push(w.word); } });
+            cont = r.continue ? '&' + new URLSearchParams(r.continue).toString() : ''; } while(cont && ++pages < 30);
+          res.linguaLibre = { total, phrases: phrasesLL, sample };
+          return res; });
+      } catch(e){ live.topicPhrasesError = String(e); }
       // покрытие записями носителей: слова фраз (Commons) и фразы Tatoeba с лицензией — без лимитов, в отличие от YouGlish
       try {
         live.coverage = await p.evaluate(async () => {
