@@ -648,6 +648,23 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(out.find(o => o.k === '360x560 pairs').fit < 1 && out.find(o => o.k === '412x915 phrases').fit > 1, JSON.stringify(out.map(o => o.k + ':' + o.fit)));
   });
 
+  await test('пояснение помещается в форму целиком: длинный текст и разбор ошибок на 360×640 и 390×844', async () => {
+    const q = await openPage(browser); const bad = [];
+    const LONG = 'Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше распознавание работает само, а себя можно записать кнопкой «Записать себя». Скажите ещё раз.';
+    for(const [w, h] of [[360, 640], [390, 844]]){
+      await q.setViewportSize({ width:w, height:h });
+      for(const [m, fill] of [['pairs', `setResult('bad', LONG)`], ['phrases', `item = { target:'İki gece için bir oda istiyorum.', gid:'ph-hotel', meaning:'x' }; evalPhrase(['iki gece icin bir oda istiyorm'])`], ['free', `setFree('bad', LONG)`], ['listen', `document.getElementById('lsResult').innerHTML = '<span class=verdict>' + LONG + '</span>'`]]){
+        const r = await q.evaluate(async ([m, fill, LONG]) => { setMode(m); eval(fill); await new Promise(z => setTimeout(z, 120)); autofit();
+          const res = document.querySelector('.screen > .card:not([hidden]) .result'), card = res.closest('.card'), rr = res.getBoundingClientRect(), cr = card.getBoundingClientRect();
+          return { cut: res.scrollHeight > res.clientHeight + 1, outside: rr.bottom > cr.bottom + 1 && card.scrollHeight <= card.clientHeight + 1, bg: getComputedStyle(res).backgroundColor }; }, [m, fill, LONG]);
+        if(r.cut || r.outside) bad.push(`${w}x${h} ${m} ${JSON.stringify(r)}`);
+      }
+    }
+    const infoBg = await q.evaluate(() => { setMode('pairs'); next(); return getComputedStyle(document.getElementById('result')).backgroundColor; });
+    await q.context().close();
+    eq(bad, []); eq(infoBg, 'rgb(243, 232, 207)');   // песочный, как на выбранном экране (#F3E8CF)
+  });
+
   console.log('Резервная копия прогресса');
   await test('код копии: весь прогресс, без настроек устройства; русские и турецкие буквы не портятся', async () => {
     const r = await p.evaluate(() => { localStorage.setItem('soyle-rec-conflict','1'); localStorage.setItem('soyle-voice','X'); saveList('soyle-mine', [{ tr:'Çok güzel, teşekkürler' }]);

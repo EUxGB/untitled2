@@ -522,6 +522,11 @@ h1 span{color:inherit}
 .app-ver b{color:var(--ink); font-variant-numeric:tabular-nums}
 
 .round-xl{border-radius:50%}   /* круг при любом --fit (на сайте при растяжении был «скруглённый квадрат») */
+
+/* Пояснение (результат) — песочный блок, как на выбранном пользователем экране (side.png, «нормальные цвета»);
+   текст всегда виден целиком: блок растёт по содержимому, а autofit ужимает остальное */
+.result{height:auto; min-height:max(72px, calc(104px * var(--fit))); max-height:none; overflow:visible}
+.result.info{background:var(--near-soft)} .result.info .verdict{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -582,7 +587,7 @@ h1 span{color:inherit}
         <button class="ls-opt" id="lsB" data-k="2"></button>
       </div>
       <p class="hint hintable" id="lsInfo">Голоса и темп меняются нарочно: ухо учится различать звук, а не голос.</p>
-      <div class="result info" id="lsResult" aria-live="polite"><span class="verdict">Слушайте и выбирайте. Клавиши 1 и 2, пробел — повторить.</span></div>
+      <div class="result info" id="lsResult" aria-live="polite"><span class="verdict">Послушайте и выберите слово, которое прозвучало.</span></div>
       <div class="pill-row">
         <button class="pill wide" id="lsBlitz" title="Сколько пар различите за 60 секунд"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl">Блиц 60 с</span></button>
       </div>
@@ -2118,6 +2123,9 @@ function autofit(){
 }
 let fitRaf = 0;
 function scheduleFit(){ cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(autofit); }
+// текст пояснения меняется (ответ, ошибка, подсказка) — заново подгоняем, чтобы он помещался целиком
+{ const mo = new MutationObserver(scheduleFit);
+  ["result", "freeResult", "lsResult"].forEach(id => { const el = document.getElementById(id); if(el) mo.observe(el, { childList:true, subtree:true, characterData:true }); }); }
 addEventListener("resize", scheduleFit);
 addEventListener("orientationchange", scheduleFit);
 if(window.visualViewport) visualViewport.addEventListener("resize", scheduleFit);
