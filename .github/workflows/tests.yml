@@ -58,7 +58,9 @@ jobs:
         run: |
           URL="https://euxgb.github.io/untitled2"
           for i in $(seq 1 40); do
-            if curl -fsS "$URL/index.html?v=$GITHUB_SHA-$i" | grep -q "· ${GITHUB_SHA::7}"; then echo "сборка ${GITHUB_SHA::7} на сайте"; break; fi
+            # сначала в переменную: «curl | grep -q» при pipefail ложно падает (grep закрывает трубу раньше, curl получает SIGPIPE)
+            PAGE="$(curl -fsS "$URL/index.html?v=$GITHUB_SHA-$i" || true)"
+            if [[ "$PAGE" == *"· ${GITHUB_SHA::7}"* ]]; then echo "сборка ${GITHUB_SHA::7} на сайте (попытка $i)"; break; fi
             [ "$i" = 40 ] && { echo "::error::Через 10 минут сайт всё ещё отдаёт старую сборку"; exit 1; }
             sleep 15
           done
