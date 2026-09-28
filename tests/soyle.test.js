@@ -296,7 +296,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     // отвечаем правильно всю минуту, как пользователь
     for(let sec = 0; sec < 62; sec++){
       const can = await q.evaluate(() => !!ls && !lsLocked && !document.getElementById('lsA').disabled);
-      if(can){ const right = await q.evaluate(() => ls.right); await q.click(right === 'A' ? '#lsA' : '#lsB'); }
+      // force: при подменённых часах проверка «кнопка неподвижна» ждёт кадров анимации, которые идут только по runFor — иногда зависала на 30 с
+      if(can){ const right = await q.evaluate(() => ls.right); await q.click(right === 'A' ? '#lsA' : '#lsB', { force:true }); }
       await q.clock.runFor(1000);
     }
     const after = await q.evaluate(() => ({ blitz, overlay: !document.getElementById('modal').hidden, text: document.getElementById('modalStats').textContent + ' ' + document.getElementById('modalTitle').textContent,

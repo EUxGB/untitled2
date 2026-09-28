@@ -47,3 +47,21 @@ jobs:
         with: { path: _site }
       - id: deployment
         uses: actions/deploy-pages@v4
+  # Проверка «на самом деле»: сайт действительно отдаёт эту сборку и её шрифты (не просто «deploy: success»)
+  verify:
+    needs: deploy
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Сайт отдаёт новую сборку
+        shell: bash
+        run: |
+          URL="https://euxgb.github.io/untitled2"
+          for i in $(seq 1 40); do
+            if curl -fsS "$URL/index.html?v=$GITHUB_SHA-$i" | grep -q "· ${GITHUB_SHA::7}"; then echo "сборка ${GITHUB_SHA::7} на сайте"; break; fi
+            [ "$i" = 40 ] && { echo "::error::Через 10 минут сайт всё ещё отдаёт старую сборку"; exit 1; }
+            sleep 15
+          done
+          for f in fonts/DejaVuSans.woff2 fonts/DejaVuSans-Bold.woff2 fonts/LiberationSerif-Regular.woff2 fonts/LiberationSerif-Bold.woff2 manifest.json; do
+            curl -fsS -o /dev/null "$URL/$f?v=$GITHUB_SHA" || { echo "::error::нет файла $f на сайте"; exit 1; }
+          done

@@ -82,6 +82,37 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
     ok(r.length === 1 || r[1] === false, 'распознавание зависло: ' + JSON.stringify(r));
     console.log('       сообщение:', r[0]);
   });
+  // Одобренный вид: эталонный снимок экрана, который выбрал пользователь (tests/approved/). Любое изменение вида,
+  // которое заметно меняет этот экран, роняет тест: эталон обновляют ТОЛЬКО после согласия пользователя
+  // (UPDATE_APPROVED=1 npm test — перезаписать эталон текущим видом).
+  await test('вид совпадает с одобренным пользователем эталоном (Фразы, 360×640)', async () => {
+    const REF = path.join(__dirname, 'approved', 'phrases-360.png');
+    const c2 = await browser.newContext({ viewport:{ width:360, height:640 }, deviceScaleFactor:2 });
+    const q = await c2.newPage();
+    await q.route(u => /^https?:/.test(u.href) && !u.href.includes('localhost'), r => r.abort());
+    await q.addInitScript(() => { window.SOYLE_TEST = true; });
+    await q.goto(URL); await q.evaluate(() => document.fonts.ready); await q.waitForTimeout(400);
+    await q.evaluate(() => { setMode('phrases'); item = { target:'Bir çay lütfen.', gid:'ph-basic', meaning:'Кондиционер не работает.' };
+      document.getElementById('target').textContent = item.target; document.getElementById('meaning').textContent = item.meaning;
+      document.getElementById('partner').textContent = '[клима чалышмыйор]'; evalPhrase(['bir cay lütfe']); game.streak = 1; renderGame(); });
+    await q.waitForTimeout(700);                                  // анимация оценки закончилась
+    const shot = await q.screenshot();
+    if(process.env.UPDATE_APPROVED === '1' || !fs.existsSync(REF)){ fs.writeFileSync(REF, shot); await c2.close(); console.log('       эталон записан:', REF); return; }
+    // сравнение попиксельно в самом браузере: доля пикселей, где цвет заметно отличается
+    const diff = await q.evaluate(async ([a, b]) => {
+      const load = src => new Promise(z => { const i = new Image(); i.onload = () => z(i); i.src = src; });
+      const [ia, ib] = await Promise.all([load(a), load(b)]);
+      if(ia.width !== ib.width || ia.height !== ib.height) return 1;
+      const px = img => { const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const x = cv.getContext('2d'); x.drawImage(img, 0, 0); return x.getImageData(0, 0, img.width, img.height).data; };
+      const da = px(ia), db = px(ib); let bad = 0;
+      for(let i = 0; i < da.length; i += 4) if(Math.abs(da[i]-db[i]) + Math.abs(da[i+1]-db[i+1]) + Math.abs(da[i+2]-db[i+2]) > 90) bad++;
+      return bad / (da.length / 4);
+    }, ['data:image/png;base64,' + fs.readFileSync(REF).toString('base64'), 'data:image/png;base64,' + shot.toString('base64')]);
+    if(diff > 0.02) fs.writeFileSync(path.join(__dirname, 'approved', 'phrases-360.actual.png'), shot);
+    await c2.close();
+    ok(diff <= 0.02, `вид отличается от одобренного на ${(diff * 100).toFixed(1)}% пикселей (порог 2%) — снимок: tests/approved/phrases-360.actual.png`);
+    console.log(`       отличие от эталона: ${(diff * 100).toFixed(2)}%`);
+  });
   await test('за прогон нет JS-ошибок', async () => ok(errors.length === 0, errors.join('; ')));
 
   await browser.close(); server.close();
