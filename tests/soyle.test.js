@@ -642,7 +642,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
           return { k:`${w}x${h} ${m}`, fit, over: card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight > innerHeight || tab > innerHeight + 1
             || (() => { const k = [...card.children].filter(e => e.offsetParent); for(let i = 0; i + 1 < k.length; i++) if(k[i].getBoundingClientRect().bottom > k[i+1].getBoundingClientRect().top + 1) return 'наложение: ' + k[i].className + ' / ' + k[i+1].className; return false; })()
             || (m === 'listen' && [...document.querySelectorAll('#lsA b, #lsB b')].some(b => { const r = b.getBoundingClientRect(), t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !t || !b.parentElement.contains(t); }) && 'слово варианта закрыто'),
-          round: m === 'listen' ? (() => { const b = document.getElementById('lsPlay'); return getComputedStyle(b).borderRadius === '50%' || parseFloat(getComputedStyle(b).borderRadius) >= b.offsetWidth / 2 - 1; })() : true }; }, [m, w, h]));
+          round: [...document.querySelectorAll('.screen > .card:not([hidden]) .mic, .screen > .card:not([hidden]) .act .ring, .screen > .card:not([hidden]) .round-xl')].every(b => getComputedStyle(b).borderRadius === '50%' || parseFloat(getComputedStyle(b).borderRadius) >= Math.max(b.offsetWidth, b.offsetHeight) / 2 - 1) }; }, [m, w, h]));
       }
     }
     await q.context().close();

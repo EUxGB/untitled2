@@ -521,7 +521,7 @@ h1 span{color:inherit}
 .app-ver{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:8px 0 16px; font-size:13px; color:var(--muted)}
 .app-ver b{color:var(--ink); font-variant-numeric:tabular-nums}
 
-.round-xl{border-radius:50%}   /* круг при любом --fit (на сайте при растяжении был «скруглённый квадрат») */
+.round-xl, .mic, .act .ring{border-radius:50%}   /* круги при любом --fit (на живом сайте при растяжении были «скруглённые квадраты») */   /* круг при любом --fit (на сайте при растяжении был «скруглённый квадрат») */
 
 /* Пояснение (результат) — песочный блок, как на выбранном пользователем экране (side.png, «нормальные цвета»);
    текст всегда виден целиком: блок растёт по содержимому, а autofit ужимает остальное */
@@ -2289,15 +2289,16 @@ function openVideo(text){
     // тогда ищем её части: первые 3 слова, первые 2, самое длинное слово
     const words = q.split(" "), longest = words.slice().sort((a, b) => b.length - a.length)[0];
     const tries = [...new Set([q, words.slice(0, 3).join(" "), words.slice(0, 2).join(" "), longest])].filter(Boolean);
-    let k = 0;
+    let k = 0, found = false;
     const w = new YG.Widget(wid, { width: Math.min(520, $("sheetBody").clientWidth || 340), components: 9, events: {
       onFetchDone: e => {
         const m = $("ygMsg"); if(!m) return;
-        if(e && e.totalResult){ m.textContent = (k ? `Целиком фразы в роликах нет — носители говорят «${tries[k]}». ` : "") + `Отрывков: ${e.totalResult}. Слушайте и повторяйте вслух.`; return; }
-        if(++k < tries.length){ m.textContent = `Ищу «${tries[k]}»…`; w.fetch(tries[k], "turkish"); }
+        if(e && e.totalResult){ found = true; m.textContent = (k ? `Целиком фразы в роликах нет — носители говорят «${tries[k]}». ` : "") + `Отрывков: ${e.totalResult}. Слушайте и повторяйте вслух.`; return; }
+        if(++k < tries.length){ m.textContent = `Ищу «${tries[k]}»…`; setTimeout(() => w.fetch(tries[k], "turkish"), 0); }
         else m.textContent = "Среди роликов это пока не нашлось. Послушайте «Синтез» или выберите другую фразу.";
       },
-      onError: fail } });
+      // ошибка плеера после найденных отрывков (например, YouTube просит войти) — не затираем найденное
+      onError: () => { if(!found) fail(); } } });
     w.fetch(tries[0], "turkish");
   }).catch(fail);
 }
