@@ -669,7 +669,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
 
   console.log('Видео и перевод — внутри приложения, без перехода');
   // подмена внешних сервисов: виджет YouGlish и перевод MyMemory (настоящие проверяются в CI задачей probe)
-  const FAKE_YG = `var YG={Widget:function(id,o){this.fetch=function(q,l){var f=document.createElement('iframe');f.title='YouGlish';f.setAttribute('data-q',q+'|'+l);document.getElementById(id).appendChild(f);setTimeout(function(){o.events.onFetchDone({totalResult:7,query:q})},30)}}};setTimeout(function(){window.onYouglishAPIReady&&window.onYouglishAPIReady()},10);`;
+  const FAKE_YG = `var YG={Widget:function(id,o){this.fetch=function(q,l){(window.__ygq=window.__ygq||[]).push(q);var f=document.getElementById(id).querySelector('iframe')||document.createElement('iframe');f.title='YouGlish';f.setAttribute('data-q',q+'|'+l);document.getElementById(id).appendChild(f);setTimeout(function(){o.events.onFetchDone({totalResult:(q.indexOf(' ')>0&&q.length>12)?0:7,query:q})},30)}}};setTimeout(function(){window.onYouglishAPIReady&&window.onYouglishAPIReady()},10);`;
   async function openInApp(opts){ const q = await openPage(browser, opts);
     await q.route('**/youglish.com/public/emb/widget.js', r => r.fulfill({ contentType:'application/javascript', body:FAKE_YG }));
     await q.route('**/api.mymemory.translated.net/**', r => r.fulfill({ json:{ responseStatus:200, quotaFinished:false, responseData:{ translatedText:'Можно мне счёт?' } } }));
@@ -684,6 +684,14 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const errs = q.errors; await q.context().close();
     eq(r[0], word + '|turkish'); ok(/Отрывков: 7/.test(r[1]), r[1]); eq(r[2], 'sheetClose');
     eq(after, [true, true, 'yg']); eq(pages.length, 0); eq(q.url ? url0 : url0, url0); eq(errs, []);
+  });
+  await test('«Видео»: фразы целиком в роликах нет — ищет её части и говорит, что показывает', async () => {
+    const q = await openInApp();
+    await q.evaluate(() => openVideo('Çıkış saat kaçta?'));
+    await q.waitForFunction(() => /Отрывков/.test((document.getElementById('ygMsg') || {}).textContent || ''), null, { timeout:5000 });
+    const r = await q.evaluate(() => [window.__ygq, document.getElementById('ygMsg').textContent]);
+    await q.context().close();
+    eq(r[0], ['Çıkış saat kaçta', 'Çıkış saat']); ok(/носители говорят «Çıkış saat»/.test(r[1]), r[1]);
   });
   await test('«Перевод» в «Свободно» и в «Фразах»: перевод в окне приложения, без перехода', async () => {
     const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
@@ -704,17 +712,18 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   console.log('Фразы голосом носителей: Tatoeba и видео');
   const TATO = u => {
-    if(u.includes('q=')) return { data:[{ id:483496, text:'Merhaba.', lang:'tur', audios:[{ id:1048317, author:'CVTR', download_url:'https://api.tatoeba.org/unstable/audio/1048317/file' }] }], paging:{ total:1 } };
+    if(u.includes('q=')) return { data:[{ id:483496, text:'Merhaba.', lang:'tur', audios:[{ id:1048317, author:'CVTR', license:'CC BY 4.0', download_url:'https://api.tatoeba.org/unstable/audio/1048317/file' }, { id:999, author:'nolic', license:'' }] }], paging:{ total:1 } };
     return { data:[
-      { id:1, text:'Balık sever misiniz?', lang:'tur', audios:[{ id:68301, author:'civiricus' }], translations:[[{ id:9, text:'Вы любите рыбу?', lang:'rus' }], []] },
-      { id:2, text:'Bu çok uzun bir cümle ve yedi kelimeden fazla olduğu için alınmayacak.', lang:'tur', audios:[{ id:5, author:'x' }] },
-      { id:3, text:'Tabii ki.', lang:'tur', audios:[{ id:1250528, author:'futurk' }] } ] };
+      { id:1, text:'Balık sever misiniz?', lang:'tur', audios:[{ id:68301, author:'civiricus', license:'CC BY-NC 4.0' }], translations:[[{ id:9, text:'Вы любите рыбу?', lang:'rus' }], []] },
+      { id:2, text:'Bu çok uzun bir cümle ve yedi kelimeden fazla olduğu için alınmayacak.', lang:'tur', audios:[{ id:5, author:'x', license:'CC BY 4.0' }] },
+      { id:3, text:'Tabii ki.', lang:'tur', audios:[{ id:1250528, author:'futurk', license:'CC BY 4.0' }] },
+      { id:4, text:'Gidiyorlar.', lang:'tur', audios:[{ id:1248994, author:'futurk', license:'' }] } ] };
   };
   await test('«Носитель» для фразы: целая фраза из Tatoeba (ссылка /v1/audios/…/file, не битая из ответа)', async () => {
     const q = await openInApp(); await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json: TATO(decodeURIComponent(r.request().url())) }));
     const r = await q.evaluate(async () => { nativeCache.delete(clean('Merhaba.')); const recs = await findRecordings('Merhaba.'); return recs.map(x => [x.url, x.who]); });
     await q.context().close();
-    ok(r.some(([u, w]) => u === 'https://api.tatoeba.org/v1/audios/1048317/file' && w === 'CVTR (Tatoeba)'), JSON.stringify(r));
+    ok(r.some(([u, w]) => u === 'https://api.tatoeba.org/v1/audios/1048317/file' && w === 'CVTR (Tatoeba)') && !r.some(([u]) => u.includes('/999/')), JSON.stringify(r));   // без лицензии — не берём (файл 403)
   });
   await test('«Носитель» для фразы без отдельной записи — видео с носителями внутри приложения', async () => {
     const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));

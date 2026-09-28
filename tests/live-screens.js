@@ -40,10 +40,10 @@ const URL = process.argv[2], OUT = process.argv[3];
         live.phrases = await p.evaluate(async () => { const r = { count: tatoebaSet ? tatoebaSet.length : 0, withRu: tatoebaSet ? tatoebaSet.filter(x => x.ru).length : 0, word: item && item.target, meaning: document.getElementById('meaning').textContent };
           const recs = item && nativeCache.get(clean(item.target)); r.audio = recs && recs[0] && recs[0].url;
           if(r.audio){ const a = new Audio(r.audio); r.audioOk = await new Promise(z => { a.oncanplaythrough = () => z(true); a.onerror = () => z('error ' + (a.error && a.error.code) + ' ' + (a.error && a.error.message)); setTimeout(() => z('timeout'), 10000); a.load(); });
-            try { const f = await fetch(r.audio); const b = await f.blob(); r.fetchAudio = [f.status, f.headers.get('content-type'), b.size];
+            try { const f = await fetch(r.audio); const b = await f.blob(); r.fetchAudio = [f.status, f.headers.get('content-type'), b.size, b.size < 400 ? await b.text() : ''];
               const a2 = new Audio(URL.createObjectURL(b)); r.blobOk = await new Promise(z => { a2.oncanplaythrough = () => z(true); a2.onerror = () => z('error ' + (a2.error && a2.error.code)); setTimeout(() => z('timeout'), 10000); a2.load(); });
             } catch(e){ r.fetchAudio = String(e); }
-            const c = new Audio('https://upload.wikimedia.org/wikipedia/commons/2/25/LL-Q256_%28tur%29-Zeynep_Esin_Arslan-merhaba.wav'); r.commonsOk = await new Promise(z => { c.oncanplaythrough = () => z(true); c.onerror = () => z('error ' + (c.error && c.error.code)); setTimeout(() => z('timeout'), 10000); c.load(); }); }
+            const cr = (await findRecordings('merhaba')) || []; r.commonsUrl = cr[0] && cr[0].url; const c = new Audio(r.commonsUrl); r.commonsOk = await new Promise(z => { c.oncanplaythrough = () => z(true); c.onerror = () => z('error ' + (c.error && c.error.code)); setTimeout(() => z('timeout'), 10000); c.load(); }); }
           const m = await findRecordings('Merhaba.'); r.merhaba = m && m.map(x => x.who);
           return r; });
         await p.screenshot({ path:`${OUT}/${name}-live-phrases.png` });

@@ -1088,13 +1088,14 @@ function ruFrom(x){                     // перевод на русский �
 }
 async function loadTatoebaSet(){
   const items = [], seen = new Set();
-  for(let page = 0; page < 3 && items.length < 120; page++){
+  for(let page = 0; page < 6 && items.length < 150; page++){
     const d = await fetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&trans:lang=rus&showtrans:lang=rus&include=audios&sort=random&limit=100`).then(r => r.json());
     (d.data || []).forEach(x => {
       const words = String(x.text).trim().split(/\s+/).length, key = clean(x.text);
-      if(words > 7 || seen.has(key) || !(x.audios || []).length) return;
+      const lic = (x.audios || []).filter(a => a.license);
+      if(words > 7 || seen.has(key) || !lic.length) return;
       seen.add(key);
-      const recs = x.audios.map(a => ({ url: tatoebaAudio(a.id), who: `${a.author || "носитель"} (Tatoeba)` }));
+      const recs = lic.map(a => ({ url: tatoebaAudio(a.id), who: `${a.author || "носитель"} (Tatoeba)` }));
       nativeCache.set(key, recs);
       items.push({ tr:x.text, tl:"", ru:ruFrom(x), focus:"Живая запись всей фразы. «Носитель» — послушать, потом «Сказать».", n:recs.length });
     });
@@ -1783,10 +1784,11 @@ async function findRecordings(text){
   } catch(e){ commonsFailed = true; }
   // 3) Tatoeba: целые фразы, записанные носителями (проверено CI: 9 из 99 фраз тренажёра есть целиком).
   //    Ссылка на файл — /v1/audios/ID/file: download_url из ответа API ведёт на 404 (проверено CI).
+//    Берём только записи с лицензией: без лицензии файл отдаёт 403 (проверено CI) — автор не разрешил повторное использование.
   let tatoebaFailed = false;
   try {
     const r3 = await fetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=5&include=audios&q=${encodeURIComponent(String(text).trim())}`).then(r => r.json());
-    (r3.data || []).filter(x => normPhrase(x.text) === normPhrase(text)).forEach(x => (x.audios || []).forEach(a => {
+    (r3.data || []).filter(x => normPhrase(x.text) === normPhrase(text)).forEach(x => (x.audios || []).filter(a => a.license).forEach(a => {
       const url = tatoebaAudio(a.id); if(!seen.has(url)){ seen.add(url); found.push({ url, who: `${a.author || "носитель"} (Tatoeba)` }); }
     }));
   } catch(e){ tatoebaFailed = true; }
@@ -2283,10 +2285,20 @@ function openVideo(text){
   const fail = () => { const m = $("ygMsg"); if(m) m.textContent = "Видео не загрузилось. Проверьте интернет и нажмите «Видео» ещё раз."; };
   loadYG().then(() => {
     if(!sheetOpen || !$(wid)) return;
+    // фраза целиком в видео встречается не всегда (проверено на живом сайте: «Çıkış saat kaçta?» — 0 отрывков),
+    // тогда ищем её части: первые 3 слова, первые 2, самое длинное слово
+    const words = q.split(" "), longest = words.slice().sort((a, b) => b.length - a.length)[0];
+    const tries = [...new Set([q, words.slice(0, 3).join(" "), words.slice(0, 2).join(" "), longest])].filter(Boolean);
+    let k = 0;
     const w = new YG.Widget(wid, { width: Math.min(520, $("sheetBody").clientWidth || 340), components: 9, events: {
-      onFetchDone: e => { const m = $("ygMsg"); if(m) m.textContent = e && e.totalResult ? `Отрывков: ${e.totalResult}. Слушайте, повторяйте вслух; стрелки — следующий.` : "Отрывков с этой фразой не нашлось. Попробуйте отдельное слово из неё."; },
+      onFetchDone: e => {
+        const m = $("ygMsg"); if(!m) return;
+        if(e && e.totalResult){ m.textContent = (k ? `Целиком фразы в роликах нет — носители говорят «${tries[k]}». ` : "") + `Отрывков: ${e.totalResult}. Слушайте и повторяйте вслух.`; return; }
+        if(++k < tries.length){ m.textContent = `Ищу «${tries[k]}»…`; w.fetch(tries[k], "turkish"); }
+        else m.textContent = "Среди роликов это пока не нашлось. Послушайте «Синтез» или выберите другую фразу.";
+      },
       onError: fail } });
-    w.fetch(q, "turkish");
+    w.fetch(tries[0], "turkish");
   }).catch(fail);
 }
 
