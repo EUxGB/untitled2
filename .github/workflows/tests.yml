@@ -67,3 +67,25 @@ jobs:
           for f in fonts/DejaVuSans.woff2 fonts/DejaVuSans-Bold.woff2 fonts/LiberationSerif-Regular.woff2 fonts/LiberationSerif-Bold.woff2 manifest.json; do
             curl -fsS -o /dev/null "$URL/$f?v=$GITHUB_SHA" || { echo "::error::нет файла $f на сайте"; exit 1; }
           done
+  # Снимки живого сайта во всех разделах → ветка `screens` (чтобы показать пользователю, как сайт выглядит на самом деле)
+  screens:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Снять живой сайт
+        run: node tests/live-screens.js "https://euxgb.github.io/untitled2/?v=$GITHUB_SHA" shots
+      - name: Сохранить в ветку screens
+        shell: bash
+        run: |
+          cd shots && git init -q && git checkout -q -b screens
+          git config user.name "github-actions" && git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -qm "Снимки живого сайта для ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" screens
