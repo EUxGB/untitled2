@@ -631,17 +631,20 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
 
   await test('автоподгонка: на низком экране сжимается, на высоком растягивается, прокрутки нет', async () => {
     const q = await openPage(browser); const out = [];
-    for(const [w, h] of [[360, 560], [360, 640], [412, 732], [412, 915]]){
+    for(const [w, h] of [[360, 560], [360, 640], [390, 844], [412, 732], [412, 915]]){
       await q.setViewportSize({ width:w, height:h });
       for(const m of ['pairs','phrases','listen','free']){
         out.push(await q.evaluate(([m, w, h]) => { setMode(m); autofit(); const card = [...document.querySelectorAll('.screen > .card')].find(c => !c.hidden);
           const fit = +getComputedStyle(document.querySelector('.app')).getPropertyValue('--fit');
           const tab = document.querySelector('.tabbar').getBoundingClientRect().bottom;
-          return { k:`${w}x${h} ${m}`, fit, over: card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight > innerHeight || tab > innerHeight + 1 }; }, [m, w, h]));
+          return { k:`${w}x${h} ${m}`, fit, over: card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight > innerHeight || tab > innerHeight + 1
+            || (() => { const k = [...card.children].filter(e => e.offsetParent); for(let i = 0; i + 1 < k.length; i++) if(k[i].getBoundingClientRect().bottom > k[i+1].getBoundingClientRect().top + 1) return 'наложение: ' + k[i].className + ' / ' + k[i+1].className; return false; })()
+            || (m === 'listen' && [...document.querySelectorAll('#lsA b, #lsB b')].some(b => { const r = b.getBoundingClientRect(), t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !t || !b.parentElement.contains(t); }) && 'слово варианта закрыто'),
+          round: m === 'listen' ? (() => { const b = document.getElementById('lsPlay'); return getComputedStyle(b).borderRadius === '50%' || parseFloat(getComputedStyle(b).borderRadius) >= b.offsetWidth / 2 - 1; })() : true }; }, [m, w, h]));
       }
     }
     await q.context().close();
-    eq(out.filter(o => o.over).map(o => o.k), []);
+    eq(out.filter(o => o.over).map(o => o.k + ' ' + o.over), []); eq(out.filter(o => !o.round).map(o => o.k), []);
     ok(out.find(o => o.k === '360x560 pairs').fit < 1 && out.find(o => o.k === '412x915 phrases').fit > 1, JSON.stringify(out.map(o => o.k + ':' + o.fit)));
   });
 

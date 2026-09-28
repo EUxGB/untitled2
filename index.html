@@ -520,6 +520,8 @@ h1 span{color:inherit}
 
 .app-ver{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:8px 0 16px; font-size:13px; color:var(--muted)}
 .app-ver b{color:var(--ink); font-variant-numeric:tabular-nums}
+
+.round-xl{border-radius:50%}   /* круг при любом --fit (на сайте при растяжении был «скруглённый квадрат») */
 </style>
 </head>
 <body>
@@ -2102,7 +2104,12 @@ function autofit(){
   const card = [...document.querySelectorAll(".screen > .card")].find(c => !c.hidden && c.offsetParent);
   const set = v => app.style.setProperty("--fit", v.toFixed(3));
   if(!card || mode === "progress"){ set(1); return; }
-  const over = () => card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight - innerHeight > 1;
+  // переполнение — это и прокрутка, и НАЛОЖЕНИЕ частей карточки друг на друга (было на живом сайте 360×640 «На слух»:
+  // варианты ответа уходили под подсказку, прокрутки при этом не было)
+  const overlap = () => { const k = [...card.children].filter(e => e.offsetParent && getComputedStyle(e).display !== "none");
+    for(let i = 0; i + 1 < k.length; i++) if(k[i].getBoundingClientRect().bottom > k[i + 1].getBoundingClientRect().top + 1) return true;
+    return [...card.querySelectorAll(".ls-opt")].some(e => e.scrollHeight > e.clientHeight + 1 || e.getBoundingClientRect().bottom > (e.parentElement.getBoundingClientRect().bottom + 1)); };
+  const over = () => card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight - innerHeight > 1 || overlap();
   let lo = .6, hi = 1.15;
   set(hi); if(!over()) return;
   set(lo); if(over()) return;                  // совсем низкий экран: минимальный размер, карточка прокручивается
