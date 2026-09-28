@@ -780,6 +780,53 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq([/translate\.google/.test(src), /youglish\.com\/pronounce/.test(src), /target="_blank"/.test(src)], [false, false, false]);
   });
 
+  await test('фразы по темам — только с записью носителя (Common Voice / Tatoeba); старые без записи не удалены, а в наборе «без записи»', async () => {
+    const vp = JSON.parse(fs.readFileSync(path.join(__dirname, 'voiced-phrases.json'), 'utf8'));
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => ({ sets: PHRASE_SETS.map(g => [g.id, g.items.length, g.items.every(p => p.voiced && p.tl && p.ru && p.focus)]),
+      all: PHRASE_SETS.flatMap(g => g.items.map(p => p.tr)), old: OLD_PHRASES.map(p => p.tr), oldVoiced: [...OLD_VOICED],
+      tl: ['Doğru değil mi?', 'Güzel', 'Yardım edin!', 'Hesap lütfen.'].map(trToCyr) }));
+    await q.click('#tab-phrases'); await q.click('.chip[data-s="novoice"]');
+    const nv = await q.evaluate(() => [document.querySelector('.chip[data-s="novoice"]').textContent, OLD_PHRASES.some(p => p.tr === item.target)]);
+    await q.context().close();
+    r.sets.forEach(([id, n, ok]) => { if(n < 10 || !ok) throw new Error(`набор ${id}: ${n} фраз, все с записью и полями: ${ok}`); });
+    const voiced = new Set([...Object.values(vp).flat().map(x => x.tr), ...r.oldVoiced]);
+    eq(r.all.filter(t => !voiced.has(t)), []);                                  // в темах нет фраз без записи
+    eq(r.old.length + r.all.filter(t => r.oldVoiced.includes(t)).length >= 99, true);   // старые 99 фраз все на месте
+    eq(r.old.includes('Şu köşe yaz köşesi, şu köşe kış köşesi, ortada su şişesi.'), true);
+    eq(r.tl, ['доору деиль ми', 'гюзель', 'ярдым эдин', 'хесап лютфен']);
+    eq(nv, [`без записи (${r.old.length})`, true]);
+  });
+  await test('у каждой фразы тем есть файл записи: Common Voice — в audio/cv (index.json + mp3), Tatoeba — id записи', async () => {
+    const dir = path.join(__dirname, '..', 'audio', 'cv');
+    const idx = JSON.parse(fs.readFileSync(path.join(dir, 'index.json'), 'utf8')).phrases;
+    const n = t => String(t).toLocaleLowerCase('tr-TR').replace(/[^\p{L}\s]/gu, '').replace(/\s+/g, ' ').trim();
+    const have = new Map(Object.entries(idx).map(([k, v]) => [n(k), v]));
+    const q = await openPage(browser);
+    const items = await q.evaluate(() => PHRASE_SETS.flatMap(g => g.items.map(p => p.tr)).map(tr => [tr, TAT_REC.has(nphr(tr))]));
+    await q.context().close();
+    const bad = items.filter(([tr, tat]) => !tat && !(have.get(n(tr)) || []).every(x => fs.existsSync(path.join(dir, x.file))) || (!tat && !have.has(n(tr)))).map(x => x[0]);
+    eq(bad, []);
+  });
+  await test('«Носитель» у фразы из Tatoeba играет её запись сразу, без поиска по сети; самая длинная фраза темы помещается на 360×640', async () => {
+    const q = await openPage(browser); const net = [];
+    q.on('request', rq => { if(/Elektri/i.test(decodeURIComponent(rq.url()))) net.push(rq.url()); });   // поиск записи именно этой фразы
+    await q.setViewportSize({ width:360, height:640 });
+    const r = await q.evaluate(async () => {
+      setMode('phrases'); setId = 'hotel';
+      const p = PHRASE_SETS.find(g => g.id === 'hotel').items.find(x => x.tr === 'Elektriğimiz yok.');
+      item = { target:p.tr, translit:p.tl, meaning:p.ru, tip:p.focus, gid:'ph-hotel' };
+      const recs = await findRecordings(p.tr);
+      const longest = PHRASE_SETS.flatMap(g => g.items).sort((a, b) => b.tr.length + b.ru.length - a.tr.length - a.ru.length)[0];
+      nativeSet = [{ ...longest, n:1 }]; setId = 'native'; lastKey = ''; next(); await new Promise(z => setTimeout(z, 150));
+      const card = document.getElementById('card');
+      const cut = ['target', 'meaning'].filter(id => { const e = document.getElementById(id); return e.scrollHeight > e.clientHeight + 1; });
+      return [recs, cut, card.scrollHeight - card.clientHeight <= 1]; });
+    await q.context().close();
+    eq(r[0], [{ url:'https://api.tatoeba.org/v1/audios/1162651/file', who:'languagelerner (Tatoeba)' }]);
+    eq(r[1], []); eq(r[2], true); eq(net, []);
+  });
+
   await test('длинная фраза и её перевод видны целиком: «Şu köşe yaz köşesi, şu köşe kış köşesi» + длинное значение (пришло позже)', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){

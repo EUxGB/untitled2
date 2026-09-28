@@ -904,6 +904,62 @@ const PHRASE_SETS = [
     { tr:"En yakın hastane nerede?", tl:"эн якын хастане нэрэде", ru:"Где ближайшая больница?", focus:"hastane — h слышна." },
   ]},
 ];
+// Фразы с записью носителя (просьба: «фразы лучше взять оттуда, где есть озвучка»).
+// Подобраны из Common Voice 17 (CC0; записи вырезаны в audio/cv/, инструмент tests/cv-extract.py) и Tatoeba
+// (только записи с лицензией; [фраза, перевод, id записи, автор]). Источник списка — tests/voiced-phrases.json.
+const VOICED = {
+  greet:[["Hoş geldiniz.","Добро пожаловать."],["İyi akşamlar!","Добрый вечер!"],["Çok memnunum.","Очень рад."],["Peki nasılsın?","Ну, как ты?"],["Nasılsın bugün?","Как ты сегодня?"],["Nasılsınız bakalım?","Ну, как вы?"],["Günaydın dostum.","Доброе утро, друг."],["Merhaba efendim.","Здравствуйте (вежливо)."],["Merhaba arkadaşlar.","Привет, друзья."],["Çok teşekkürler!","Большое спасибо!"],["Tamam, teşekkürler.","Хорошо, спасибо."],["Hayır teşekkürler.","Нет, спасибо."],["Hayır, sağ olun.","Нет, спасибо (вежливо)."],["Tamam, sağ olun.","Хорошо, спасибо."],["Size de iyi günler.","И вам хорошего дня."],["Herkese iyi günler.","Всем хорошего дня."],["Sonra görüşürüz.","Увидимся позже."],["Birazdan görüşürüz.","Скоро увидимся."],["Çok affedersiniz.","Очень извиняюсь."],["Ben özür dilerim.","Прошу прощения."]],
+  hotel:[["Bir oda istiyorum.","Мне нужен номер."],["Hangi odada?","В каком номере?"],["Hangi otel?","Какой отель?"],["Anahtar nerede?","Где ключ?"],["Anahtarın var mı?","У тебя есть ключ?"],["Anahtarları bana ver.","Дай мне ключи."],["Size odanızı göstereyim.","Позвольте показать вам номер."],["Ben odama gidiyorum.","Я иду в свой номер."],["Banyoyu kullanabilir miyim?","Можно воспользоваться ванной?"],["Ben bir duş alacağım.","Я приму душ."],["Asansörü tutun!","Придержите лифт!"],["Kahvaltı hazır!","Завтрак готов!"],["Kahvaltı yaptın mı?","Ты позавтракал?"],["Kahvaltı yapmak ister misin?","Хочешь позавтракать?"],["Tuvalet nerede?","Где туалет?"],["Elektriğimiz yok.","У нас нет электричества.",1162651,"languagelerner"],["Şikayetimiz yoktur.","У нас нет жалоб.",1162699,"languagelerner"]],
+  food:[["Hesap lütfen.","Счёт, пожалуйста."],["Kalkalım artık, hesap lütfen!","Пойдём уже — счёт, пожалуйста!"],["Afiyet olsun.","Приятного аппетита."],["Su getirin!","Принесите воды!"],["Biraz su alabilir miyim?","Можно немного воды?"],["Kahve alabilir miyim?","Можно мне кофе?"],["Kahve içer misin?","Будешь кофе?"],["Bir bardak çay ister misin?","Хочешь стакан чая?"],["İçecek bir şey ister misiniz?","Хотите что-нибудь выпить?"],["Bira ister misiniz?","Хотите пива?"],["Sipariş verelim mi?","Сделаем заказ?"],["Ben acıktım.","Я проголодался."],["Karnım çok aç.","Я ужасно голодный.",1162656,"languagelerner"],["Bir salata istiyorum.","Я хотел бы салат.",1162912,"languagelerner"],["Biraz daha istiyorum.","Хочу ещё немного."],["Yemekte ne var?","Что на обед?"],["Yemek nasıldı?","Как еда?"],["Çok lezzetliymiş.","Очень вкусно."],["Çok lezzetli görünüyor.","Выглядит очень вкусно."],["Çay için teşekkürler.","Спасибо за чай."],["Yemek için teşekkürler.","Спасибо за еду."],["Ben kahve içmem.","Я не пью кофе."],["Peyniri sevmiyorum.","Я не люблю сыр.",1162913,"languagelerner"],["Veganım.","Я веган.",1162649,"languagelerner"],["Barmen nerede?","Где бармен?",1162862,"languagelerner"],["Daha sonra ödemek istiyorum.","Я хотел бы заплатить позже.",1163014,"languagelerner"]],
+  transport:[["Hey, taksi!","Эй, такси!"],["Biletler lütfen.","Билеты, пожалуйста."],["Metroyla gidiyorum.","Я поеду на метро.",1162665,"languagelerner"],["Sağa dönün!","Поверните направо!",1162642,"languagelerner"],["Otobüsü durdurun!","Остановите автобус!"],["Treni durdurun!","Остановите поезд!"],["Herkes trene!","Все в поезд!"],["Ne kadar uzak?","Как далеко?"],["Ne kadar uzaklıkta?","На каком расстоянии?"],["Ne kadar sürer bu?","Сколько это займёт?"],["Daha ne kadar sürer?","Сколько ещё ехать?"],["Ne kadar bekleyeceğiz?","Сколько нам ждать?"],["Şimdi neredeyiz?","Где мы сейчас?"],["Orası nerede?","Где это место?"],["Onu nerede bulurum?","Где мне его найти?"],["Nerede kalıyorsun?","Где ты остановился?"],["Nereden geldiniz?","Откуда вы приехали?"]],
+  shop:[["Çok pahalıdır.","Это очень дорого."],["Ne kadar lazım?","Сколько нужно?"],["Ne kadar istiyor?","Сколько он просит?"],["Ne kadar istersin?","Сколько ты хочешь?"],["Kaç paran var?","Сколько у тебя денег?"],["Ne kadar paranız var?","Сколько у вас денег?"],["Bir lira yeter değil mi?","Одной лиры хватит, да?"],["Bunun farklı bir rengi var mı?","Есть такое другого цвета?",1161882,"languagelerner"],["Biraz alabilir miyim?","Можно немного?"],["Biraz daha ister misiniz?","Хотите ещё?"],["Bana biraz para ver.","Дай мне немного денег."],["Beş doların var mı?","Есть пять долларов?",1162659,"languagelerner"]],
+  health:[["Doktor, lütfen.","Доктор, пожалуйста."],["Siz doktor musunuz?","Вы врач?"],["Doktor ne dedi?","Что сказал врач?"],["Doktora gittin mi?","Ты ходил к врачу?"],["Doktor çağırayım mı?","Вызвать врача?"],["Biri doktor çağırsın!","Кто-нибудь, вызовите врача!"],["Hangi hastane?","Какая больница?"],["Ağrın var mı?","У тебя что-то болит?"],["Başın ağrıyor mu?","У тебя болит голова?"],["Ateşin var mı?","У тебя температура?"],["Ateşi çok yüksek.","У него очень высокая температура."],["Hasta mısın sen?","Ты болен?"],["Alerjim var.","У меня аллергия."],["Kendimi hasta hissediyorum.","Я чувствую себя больным.",1162693,"languagelerner"],["Kendinizi nasıl hissediyorsunuz?","Как вы себя чувствуете?",1162692,"languagelerner"],["Sağlığım yerinde.","Я здоров.",1162998,"languagelerner"],["Vitamin alıyorum.","Я принимаю витамины.",1163034,"languagelerner"]],
+  talk:[["İsminiz ne?","Как вас зовут?"],["Adınız lütfen?","Ваше имя, пожалуйста?"],["Sen nerede yaşıyorsun?","Где ты живёшь?",1162685,"languagelerner"],["Ne iş yapıyorsun?","Кем ты работаешь?"],["Sen kaç yaşındasın?","Сколько тебе лет?"],["Ben de çalışıyorum.","Я тоже работаю."],["İngilizce biliyor musunuz?","Вы говорите по-английски?"],["Fransızca konuşur musunuz?","Вы говорите по-французски?",1162981,"languagelerner"],["Japonca konuşmuyorum.","Я не говорю по-японски.",1162984,"languagelerner"],["Onlar hızlı konuşuyorlar.","Они говорят быстро.",1162928,"languagelerner"],["Ben anlamıyorum.","Я не понимаю."],["Sizi anlamıyorum.","Я вас не понимаю."],["Pardon, anlamadım?","Простите, не понял?"],["Anlamadım, ne?","Не понял, что?"],["Kimle konuşuyorsun?","С кем ты разговариваешь?"],["Tekrar deneyelim mi?","Попробуем ещё раз?"],["Haftasonun nasıldı?","Как прошли выходные?",1162704,"languagelerner"],["Bu akşam geliyor musun?","Ты придёшь сегодня вечером?",1162993,"languagelerner"],["Spor sever misin?","Ты любишь спорт?",1162647,"languagelerner"]],
+  sos:[["İmdat, imdat!","Помогите, помогите!"],["Lütfen yardım edin.","Пожалуйста, помогите."],["Bana yardım edin!","Помогите мне!"],["Biri bana yardım etsin!","Кто-нибудь, помогите мне!"],["Bana yardım edebilir misiniz?","Вы можете мне помочь?"],["Yardım istiyorum.","Мне нужна помощь."],["Ben kayboldum.","Я потерялся."],["Polis çağırın!","Вызовите полицию!"],["Polis çağırayım mı?","Вызвать полицию?"],["Ambulans çağırın!","Вызовите скорую!"],["Biri ambulans çağırsın!","Кто-нибудь, вызовите скорую!"],["Ambulans nerede?","Где скорая?"],["Yangın mı çıktı?","Пожар?"],["Çok tehlikeli.","Очень опасно."],["Çantam nerede?","Где моя сумка?"],["Cüzdanım nerede?","Где мой кошелёк?"],["Telefon nerede?","Где телефон?"]],
+  basic:[["Tabii ki.","Конечно.",1162645,"languagelerner"],["Daha iyi.","Лучше.",1162643,"languagelerner"],["Ne yapayım?","Что же мне делать?",1162917,"languagelerner"],["Sıra sizde.","Ваша очередь.",1163035,"languagelerner"],["Sessiz olun.","Тише, пожалуйста.",1162644,"languagelerner"],["Lütfen gelin.","Приходите, пожалуйста.",1162635,"languagelerner"],["Bekleyebilirsiniz.","Вы можете подождать.",1163002,"languagelerner"],["Biraz bekleyin lütfen.","Подождите немного, пожалуйста."],["Bana biraz zaman ver.","Дай мне немного времени."],["Bu sana bağlı.","Это зависит от тебя.",1162672,"languagelerner"],["Gidebilirim.","Я могу пойти.",1162858,"languagelerner"],["Ben evde çalışıyorum.","Я работаю дома.",1162868,"languagelerner"],["Umarım iyidirler.","Надеюсь, у них всё хорошо.",1162634,"languagelerner"],["Nasılsınız?","Как вы?"]],
+};
+// Старые фразы, у которых запись Common Voice уже есть (audio/cv/index.json) — остаются в своей теме.
+const OLD_VOICED = new Set(["İyi akşamlar.", "Afiyet olsun.", "Ambulans çağırın!", "Çok teşekkürler.", "Alerjim var.", "İngilizce biliyor musunuz?", "Tuvalet nerede?", "Hoş geldiniz.", "Polis çağırın!", "Hesap lütfen.", "Nasılsınız?"]);
+const nphr = t => String(t || "").toLocaleLowerCase("tr-TR").replace(/[^\p{L}\s]/gu, "").replace(/\s+/g, " ").trim();
+// Кириллическая подсказка чтения по турецкой орфографии (приблизительно: c = дж, ğ удлиняет гласную, ı = ы).
+function trToCyr(text){
+  const V = "aeıioöuü", FRONT = "eiöü";
+  const M = { a:"а", b:"б", c:"дж", ç:"ч", d:"д", e:"е", f:"ф", g:"г", h:"х", ı:"ы", i:"и", j:"ж", k:"к", l:"л", m:"м", n:"н",
+    o:"о", ö:"ё", p:"п", r:"р", s:"с", ş:"ш", t:"т", u:"у", ü:"ю", v:"в", y:"й", z:"з", â:"а", î:"и", û:"у" };
+  return String(text).toLocaleLowerCase("tr-TR").replace(/[.!?]+$/, "").split(/(\s+|[,;:!?.]+)/).map(w => {
+    let out = "", lastV = "";
+    for(let i = 0; i < w.length; i++){
+      const ch = w[i], nx = w[i+1] || "", start = i === 0, nxV = !!nx && V.includes(nx);   // "".includes → true: проверять, что буква есть
+      if(ch === "ğ"){ if(!nxV && lastV) out += M[lastV]; continue; }        // doğru → доору, değil → деиль
+      if(ch === "y" && start && nx === "a"){ out += "я"; i++; lastV = "a"; continue; }  // yakın → якын
+      if(ch === "e" && start){ out += "э"; lastV = "e"; continue; }                       // ev → эв
+      if(ch === "l" && FRONT.includes(lastV) && !nxV){ out += "ль"; continue; } // güzel → гюзель
+      out += M[ch] ?? ch;
+      if(V.includes(ch)) lastV = ch;
+    }
+    return out;
+  }).join("");
+}
+// Подсказка по трудным звукам фразы — из букв, которые в ней есть.
+const HARD_TIPS = [["ı","ı — русское «ы»"],["ö","ö — «ё» с округлёнными губами"],["ü","ü — «ю», губы трубочкой"],["ğ","ğ не произносится, удлиняет гласную"],
+  ["ç","ç = «ч»"],["c","c = «дж», не «ц»"],["ş","ş = «ш»"],["h","h слышна, как лёгкий выдох"]];
+function autoFocus(tr){
+  const w = tr.toLocaleLowerCase("tr-TR");
+  const t = HARD_TIPS.filter(([ch]) => w.includes(ch)).slice(0, 2).map(x => x[1]);
+  return (t.length ? t.join("; ") + ". " : "") + "Есть запись носителя — «Носитель».";
+}
+const TAT_REC = new Map();     // фраза → записи Tatoeba (id, автор) — без поиска по сети
+const OLD_PHRASES = [];        // фразы без записи носителя — отдельный набор «без записи» (не удалены)
+PHRASE_SETS.forEach(g => {
+  const keep = g.items.filter(p => OLD_VOICED.has(p.tr));
+  g.items.filter(p => !OLD_VOICED.has(p.tr)).forEach(p => OLD_PHRASES.push(p));
+  const have = new Set(keep.map(p => nphr(p.tr)));
+  const fresh = (VOICED[g.id] || []).filter(([tr]) => !have.has(nphr(tr))).map(([tr, ru, tat, author]) => {
+    if(tat) TAT_REC.set(nphr(tr), [...(TAT_REC.get(nphr(tr)) || []), { id:tat, author }]);
+    return { tr, tl:trToCyr(tr), ru, focus:autoFocus(tr), voiced:true };
+  });
+  g.items = [...keep.map(p => ({ ...p, voiced:true })), ...fresh];
+});
 const NUM = { "1":"bir", "2":"iki", "3":"üç", "5":"beş", "10":"on", "20":"yirmi", "40":"kırk", "50":"elli", "100":"yüz" };
 const CONFUSABLE = [["o","ö"],["u","ü"],["ı","i"],["c","ç"],["ç","ş"],["c","ş"],["s","ş"],["g","ğ"],["c","s"]];
 
@@ -1045,6 +1101,7 @@ function renderChips(){
       + `<button class="chip set" data-s="tatoeba" aria-pressed="${setId==="tatoeba"}">${tatoebaSet ? `живые фразы (${tatoebaSet.length})` : tatoebaLoading ? "загружаю…" : "живые фразы"}</button>`
       + `<button class="chip set" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
       + `<button class="chip set" data-s="srs" aria-pressed="${setId==="srs"}">на сегодня (${srsDue().length})</button>`
+      + `<button class="chip set" data-s="novoice" aria-pressed="${setId==="novoice"}">без записи (${OLD_PHRASES.length})</button>`
       + `<button class="chip set" data-s="mine" aria-pressed="${setId==="mine"}">мои (${loadList("soyle-mine").length})</button>`;
     chips.querySelectorAll(".chip[data-s]").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
     $("kindChip").onclick = () => setKind(true);
@@ -1274,7 +1331,7 @@ function pickPhrase(){
     return { target:p.tr, translit:p.tl || "", meaning:p.ru || "", tip: "Ваша фраза. Скажите её и проверьте, что носитель поймёт.",
       gid:"ph-mine", own:true };
   }
-  const list = PHRASE_SETS.find(g=>g.id===setId).items;
+  const list = setId === "novoice" ? OLD_PHRASES : PHRASE_SETS.find(g=>g.id===setId).items;
   do { p = list[Math.floor(Math.random()*list.length)]; } while(p.tr===lastKey && ++guard<10);
   lastKey = p.tr; return { target:p.tr, translit:p.tl, meaning:p.ru, tip:p.focus, gid:"ph-"+setId };
 }
@@ -1342,7 +1399,7 @@ function setResult(kind, verdict, extra="", score){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"free",label:"любая фраза"}];
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"free",label:"любая фраза"}];
   const used = rows.filter(r => (stats[r.id]||{}).t);
   if(!used.length){ $("stats").innerHTML = `<p class="hint" style="text-align:left">Здесь появится ваш прогресс по каждому набору.</p>`; return; }
   $("stats").innerHTML = used.map(r => {
@@ -1893,6 +1950,11 @@ async function findRecordings(text, opts = {}){
   const key = clean(text);
   if(nativeCache.has(key)) return nativeCache.get(key);
   if(opts.commonsOnly && nativeCache.has("c:" + key)) return nativeCache.get("c:" + key);
+  if(!opts.commonsOnly){      // запись фразы уже известна (Common Voice в audio/cv, Tatoeba из VOICED) — сразу, без поиска по сети
+    await cvReady;
+    const local = [...cvRecordings(text), ...(TAT_REC.get(nphr(text)) || []).map(a => ({ url:tatoebaAudio(a.id), who:`${a.author || "носитель"} (Tatoeba)` }))];
+    if(local.length){ nativeCache.set(key, local); return local; }
+  }
   const found = [];
   const seen = new Set();
   const add = (title, url) => { if(url && !seen.has(url)){ seen.add(url); found.push({ url, who: speakerOf(title) }); } };

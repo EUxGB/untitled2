@@ -83,6 +83,19 @@ const URL = process.argv[2], OUT = process.argv[3];
           }
           return out; });
       } catch(e){ live.nativePhrasesError = String(e); }
+      // все фразы тем (подобраны «оттуда, где есть озвучка»): у каждой запись находится и загружается на живом сайте
+      try {
+        live.voicedSets = await p.evaluate(async () => {
+          await cvReady; const bad = []; let ok = 0;
+          const loads = url => new Promise(res => { const a = new Audio(); const t = setTimeout(() => res('timeout'), 15000);
+            a.oncanplaythrough = () => { clearTimeout(t); res('ok'); }; a.onerror = () => { clearTimeout(t); res('error'); }; a.preload = 'auto'; a.src = url; });
+          for(const g of PHRASE_SETS) for(const ph of g.items){
+            nativeCache.delete(clean(ph.tr)); const recs = await findRecordings(ph.tr);
+            const st = recs && recs.length ? await loads(recs[0].url) : 'нет записи';
+            if(st === 'ok') ok++; else bad.push(`${g.id}: ${ph.tr} — ${st}`);
+          }
+          return { ok, bad }; });
+      } catch(e){ live.voicedSetsError = String(e); }
       // фразы с записью носителя по темам: Tatoeba (с лицензией, до 8 слов) и Lingua Libre (Commons, с пробелом в названии)
       try {
         live.topicPhrases = await p.evaluate(async () => {
