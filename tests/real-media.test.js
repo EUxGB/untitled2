@@ -24,12 +24,20 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
     const r = await p.evaluate(async () => { const m = await fetch('manifest.json').then(r => r.json()); const i = await fetch(m.icons[0].src); return [m.display, i.ok, i.headers.get('content-type')]; });
     ok(r[0] === 'standalone' && r[1] && r[2] === 'image/png', JSON.stringify(r));
   });
-  await test('шрифты Literata и Commissioner грузятся с того же сайта, без Google Fonts; номер версии и кнопка обновления', async () => {
-    const r = await p.evaluate(async () => { await document.fonts.ready; await Promise.all([document.fonts.load('600 40px Literata', 'böl'), document.fonts.load('500 16px Commissioner', 'Сказать')]);
-      return [document.fonts.check('600 40px Literata', 'böl'), document.fonts.check('500 16px Commissioner', 'Сказать'),
+  await test('шрифты Soyle Serif и Soyle Sans (как на одобренном экране) грузятся с того же сайта, без Google Fonts; номер версии и кнопка обновления', async () => {
+    const r = await p.evaluate(async () => { await document.fonts.ready; await Promise.all([document.fonts.load('700 40px "Soyle Serif"', 'böl'), document.fonts.load('400 16px "Soyle Sans"', 'Сказать')]);
+      return [document.fonts.check('700 40px "Soyle Serif"', 'böl'), document.fonts.check('400 16px "Soyle Sans"', 'Сказать'),
         performance.getEntriesByType('resource').filter(e => /woff2/.test(e.name)).every(e => e.name.startsWith(location.origin)),
         !!document.querySelector('link[href*="googleapis"]'), document.getElementById('appVersion').textContent, !!document.getElementById('updateApp')]; });
     ok(r[0] && r[1] && r[2] && !r[3] && r[4].length > 3 && r[5], JSON.stringify(r));
+  });
+  await test('на экране действительно рисуются свои шрифты (как на одобренном скриншоте), а не шрифты телефона', async () => {
+    const c = await p.context().newCDPSession(p); await c.send('DOM.enable'); await c.send('CSS.enable');
+    const { root } = await c.send('DOM.getDocument'); const out = {};
+    for(const sel of ['#target', '#next .lbl', '#meaning']){
+      const { nodeId } = await c.send('DOM.querySelector', { nodeId: root.nodeId, selector: sel });
+      out[sel] = (await c.send('CSS.getPlatformFontsForNode', { nodeId })).fonts.map(f => f.familyName + (f.isCustomFont ? '*' : '')).join(','); }
+    ok(out['#target'] === 'Liberation Serif*' && out['#next .lbl'] === 'DejaVu Sans*' && out['#meaning'] === 'DejaVu Sans*', JSON.stringify(out));
   });
   await test('микрофон открывается, MediaRecorder пишет настоящий звук', async () => {
     const r = await p.evaluate(async () => {
