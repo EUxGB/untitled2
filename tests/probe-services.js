@@ -29,6 +29,8 @@ async function get(url){
     'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=words&limit=5&trans:lang=rus&showtrans=matching&showtrans:lang=rus&include=audios',
     'https://api.tatoeba.org/v1/audios/1161844/file', 'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&trans:lang=rus&showtrans:lang=rus&include=audios&sort=random&limit=2');
   const res = []; for(const u of urls) res.push(await get(u));
+  // заголовки файла записи Tatoeba (почему <audio> в браузере может не играть)
+  try { const r = await fetch('https://api.tatoeba.org/v1/audios/1256001/file', { headers:H, redirect:'manual' }); res.push({ tatoebaAudioHeaders: Object.fromEntries(r.headers.entries()), status: r.status }); } catch(e){ res.push({ tatoebaAudioHeaders: String(e) }); }
   // сколько фраз тренажёра есть в Tatoeba целиком с записью носителя
   const b0 = await chromium.launch(); const p0 = await b0.newPage(); await p0.addInitScript(() => { window.SOYLE_TEST = true; });
   await p0.goto('file://' + require('path').resolve(__dirname, '..', 'index.html'));
