@@ -84,6 +84,8 @@ jobs:
         run: node tests/live-screens.js "https://euxgb.github.io/untitled2/?v=$GITHUB_SHA" shots
       - name: Проверить внешние сервисы (Tatoeba, MyMemory, YouGlish)
         run: node tests/probe-services.js shots || true
+      - name: Common Voice — сколько фраз записано носителями
+        run: pip install -q pyarrow huggingface_hub && timeout 900 python3 tests/cv-scan.py shots || true
       - name: Сохранить в ветку screens
         shell: bash
         run: |
