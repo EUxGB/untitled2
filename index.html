@@ -1014,6 +1014,7 @@ function renderChips(){
   if(mode==="phrases"){
     const nLabel = nativeSet ? `с записями (${nativeSet.length})` : nativeSetLoading ? "загружаю…" : "с записями";
     chips.innerHTML = PHRASE_SETS.map(g => `<button class="chip set" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
+      + `<button class="chip set" data-s="tatoeba" aria-pressed="${setId==="tatoeba"}">${tatoebaSet ? `живые фразы (${tatoebaSet.length})` : tatoebaLoading ? "загружаю…" : "живые фразы"}</button>`
       + `<button class="chip set" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
       + `<button class="chip set" data-s="srs" aria-pressed="${setId==="srs"}">на сегодня (${srsDue().length})</button>`
       + `<button class="chip set" data-s="mine" aria-pressed="${setId==="mine"}">мои (${loadList("soyle-mine").length})</button>`;
@@ -1077,6 +1078,36 @@ async function loadNativeSet(){
   items.sort((a,b)=>b.n-a.n);
   return items;
 }
+// ---------- набор «живые фразы»: целые фразы, записанные носителями (Tatoeba, свободные лицензии) ----------
+let tatoebaSet = null, tatoebaLoading = null;
+function ruFrom(x){                     // перевод на русский — где бы он ни лежал в ответе
+  let out = "";
+  (function walk(v){ if(out || !v) return; if(Array.isArray(v)) return v.forEach(walk);
+    if(typeof v === "object"){ if(v.lang === "rus" && v.text) out = v.text; else Object.values(v).forEach(walk); } })(x.translations);
+  return out;
+}
+async function loadTatoebaSet(){
+  const items = [], seen = new Set();
+  for(let page = 0; page < 3 && items.length < 120; page++){
+    const d = await fetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&trans:lang=rus&showtrans:lang=rus&include=audios&sort=random&limit=100`).then(r => r.json());
+    (d.data || []).forEach(x => {
+      const words = String(x.text).trim().split(/\s+/).length, key = clean(x.text);
+      if(words > 7 || seen.has(key) || !(x.audios || []).length) return;
+      seen.add(key);
+      const recs = x.audios.map(a => ({ url: tatoebaAudio(a.id), who: `${a.author || "носитель"} (Tatoeba)` }));
+      nativeCache.set(key, recs);
+      items.push({ tr:x.text, tl:"", ru:ruFrom(x), focus:"Живая запись всей фразы. «Носитель» — послушать, потом «Сказать».", n:recs.length });
+    });
+  }
+  if(!items.length) throw new Error("empty");
+  return items;
+}
+function ensureTatoebaSet(){
+  if(tatoebaSet || tatoebaLoading) return tatoebaLoading;
+  tatoebaLoading = loadTatoebaSet().then(items => { tatoebaSet = items; }).catch(() => { tatoebaSet = null; })
+    .finally(() => { tatoebaLoading = null; if(mode==="phrases") renderChips(); if(mode==="phrases" && setId==="tatoeba") next(); });
+  return tatoebaLoading;
+}
 function ensureNativeSet(){
   if(nativeSet || nativeSetLoading) return nativeSetLoading;
   nativeSetLoading = loadNativeSet().then(items => { nativeSet = items; }).catch(() => { nativeSet = null; })
@@ -1108,6 +1139,11 @@ function pickPhrase(){
     do { p = nativeSet[Math.floor(Math.random()*nativeSet.length)]; } while(p.tr===lastKey && ++guard<10);
     lastKey = p.tr; return { target:p.tr, translit:"", meaning:"", tip:p.focus, gid:"ph-native", native:true };
   }
+  if(setId === "tatoeba"){
+    if(!tatoebaSet || !tatoebaSet.length) return null;
+    do { p = tatoebaSet[Math.floor(Math.random()*tatoebaSet.length)]; } while(p.tr===lastKey && ++guard<10);
+    lastKey = p.tr; return { target:p.tr, translit:"", meaning:p.ru, tip:p.focus, gid:"ph-tatoeba", native:true, live:true };
+  }
   if(setId === "srs"){
     const due = srsDue(); if(!due.length) return null;
     p = due.find(c => c.tr !== lastKey) || due[0]; lastKey = p.tr;
@@ -1132,6 +1168,12 @@ function next(){
     ensureNativeSet();
     $("target").textContent = nativeSetLoading ? "Загружаю записи носителей…" : "Не удалось загрузить записи";
     $("target").classList.add("phrase"); $("meaning").textContent = "Источник: Wikimedia Commons (Lingua Libre, Wiktionary)";
+    $("partner").hidden = true; $("tip").textContent = ""; return;
+  }
+  if(mode==="phrases" && setId==="tatoeba" && !tatoebaSet){
+    ensureTatoebaSet();
+    $("target").textContent = tatoebaLoading ? "Загружаю фразы носителей…" : "Не удалось загрузить фразы";
+    $("target").classList.add("phrase"); $("meaning").textContent = "Источник: Tatoeba — фразы, записанные носителями";
     $("partner").hidden = true; $("tip").textContent = ""; return;
   }
   item = mode==="pairs" ? pickPair() : pickPhrase();
@@ -1162,7 +1204,10 @@ function next(){
   nativeIdx = 0;
   prefetchNative();
   $("meaning").textContent = item.meaning; scheduleFit();
-  if(item.native){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
+  if(item.live && !item.meaning){      // живая фраза без готового перевода — машинный перевод прямо в карточке
+    const it = item; $("meaning").textContent = "Перевожу…";
+    translateTr(it.target).then(t => { if(item === it) $("meaning").textContent = t; }).catch(() => { if(item === it) $("meaning").textContent = ""; });
+  } else if(item.native && !item.live){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
   $("compare").disabled = false; synthSlow = false; echoPending = false;
@@ -1721,6 +1766,7 @@ async function findRecordings(text){
   const found = [];
   const seen = new Set();
   const add = (title, url) => { if(url && !seen.has(url)){ seen.add(url); found.push({ url, who: speakerOf(title) }); } };
+  let commonsFailed = false;
   try {
     // 1) Lingua Libre: «LL-Q256 (tur)-Имя-слово.wav»
     const q = encodeURIComponent(`intitle:"LL-Q256" "${key}"`);
@@ -1734,10 +1780,23 @@ async function findRecordings(text){
     const titles = [key, cap].flatMap(w => ["ogg","wav","mp3","oga"].map(ext => `File:Tr-${w}.${ext}`)).join("|");
     const r2 = await fetch(`${API}&titles=${encodeURIComponent(titles)}`).then(r=>r.json());
     Object.values(r2.query?.pages || {}).forEach(pg => { if(!pg.missing) add(pg.title, pg.imageinfo?.[0]?.url); });
-  } catch(e){ return null; } // сеть недоступна — не кэшируем
+  } catch(e){ commonsFailed = true; }
+  // 3) Tatoeba: целые фразы, записанные носителями (проверено CI: 9 из 99 фраз тренажёра есть целиком).
+  //    Ссылка на файл — /v1/audios/ID/file: download_url из ответа API ведёт на 404 (проверено CI).
+  let tatoebaFailed = false;
+  try {
+    const r3 = await fetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=5&include=audios&q=${encodeURIComponent(String(text).trim())}`).then(r => r.json());
+    (r3.data || []).filter(x => normPhrase(x.text) === normPhrase(text)).forEach(x => (x.audios || []).forEach(a => {
+      const url = tatoebaAudio(a.id); if(!seen.has(url)){ seen.add(url); found.push({ url, who: `${a.author || "носитель"} (Tatoeba)` }); }
+    }));
+  } catch(e){ tatoebaFailed = true; }
+  if(commonsFailed && tatoebaFailed) return null; // сеть недоступна — не кэшируем
   nativeCache.set(key, found);
   return found;
 }
+const TATOEBA = "https://api.tatoeba.org";
+const tatoebaAudio = id => `${TATOEBA}/v1/audios/${id}/file`;
+const normPhrase = t => String(t || "").toLocaleLowerCase("tr-TR").replace(/[^\p{L}\s]/gu, "").replace(/\s+/g, " ").trim();
 function speakerOf(title){
   const m = title.match(/^File:LL-Q256 \(tur\)-(.+?)-/i);
   return m ? m[1] : "Wiktionary";
@@ -1749,7 +1808,8 @@ function playNative(){
   const recs = nativeCache.get(clean(item.target));
   const a = $("nativeAudio");
   if(!recs){ st.textContent = "Записи носителей ещё загружаются, нажмите через секунду."; return; }
-  if(!recs.length){ st.textContent = "Записи носителя для этого слова нет. Живая речь — «Видео», синтез — «Синтез»."; return; }
+  // отдельной записи нет — носители в видео (YouGlish), внутри приложения
+  if(!recs.length){ st.textContent = "Отдельной записи нет — носители произносят это в видео."; openVideo(item.target); return; }
   speechSynthesis && speechSynthesis.cancel();
   const i = nativeIdx % recs.length; nativeIdx++;
   st.textContent = recs.length > 1 ? `Носитель ${i+1} из ${recs.length}: ${recs[i].who}` : `Носитель: ${recs[i].who}`;
@@ -1764,8 +1824,8 @@ function prefetchNative(){
   nativePending = findRecordings(target).then(recs => {
     if(item.target !== target) return;
     const btn = $("native");
-    if(recs === null){ st.textContent = "Записи носителей: не удалось связаться с Wikimedia (проверьте интернет)."; return; }
-    st.textContent = recs.length ? `Записи носителей: найдено ${recs.length}` : "Записей носителей этого слова в открытой базе нет.";
+    if(recs === null){ st.textContent = "Записи носителей: нет связи с базами записей (проверьте интернет)."; return; }
+    st.textContent = recs.length ? `Записи носителей: найдено ${recs.length}` : "Отдельной записи нет — «Носитель» покажет видео, где это говорят носители.";
     if(recs.length){ const a = $("nativeAudio"); a.preload = "auto"; a.src = recs[0].url; }
   }).finally(() => { nativePending = null; });
 }

@@ -702,6 +702,40 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(free, ['hesabı alabilir miyim', 'Можно мне счёт?']); eq(ph, 'Можно мне счёт?'); eq(closed, true);
     eq(pages.length, 0); ok(!/translate\.google|youglish\.com\/pronounce/.test(url), url); eq(errs, []);
   });
+  console.log('Фразы голосом носителей: Tatoeba и видео');
+  const TATO = u => {
+    if(u.includes('q=')) return { data:[{ id:483496, text:'Merhaba.', lang:'tur', audios:[{ id:1048317, author:'CVTR', download_url:'https://api.tatoeba.org/unstable/audio/1048317/file' }] }], paging:{ total:1 } };
+    return { data:[
+      { id:1, text:'Balık sever misiniz?', lang:'tur', audios:[{ id:68301, author:'civiricus' }], translations:[[{ id:9, text:'Вы любите рыбу?', lang:'rus' }], []] },
+      { id:2, text:'Bu çok uzun bir cümle ve yedi kelimeden fazla olduğu için alınmayacak.', lang:'tur', audios:[{ id:5, author:'x' }] },
+      { id:3, text:'Tabii ki.', lang:'tur', audios:[{ id:1250528, author:'futurk' }] } ] };
+  };
+  await test('«Носитель» для фразы: целая фраза из Tatoeba (ссылка /v1/audios/…/file, не битая из ответа)', async () => {
+    const q = await openInApp(); await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json: TATO(decodeURIComponent(r.request().url())) }));
+    const r = await q.evaluate(async () => { nativeCache.delete(clean('Merhaba.')); const recs = await findRecordings('Merhaba.'); return recs.map(x => [x.url, x.who]); });
+    await q.context().close();
+    ok(r.some(([u, w]) => u === 'https://api.tatoeba.org/v1/audios/1048317/file' && w === 'CVTR (Tatoeba)'), JSON.stringify(r));
+  });
+  await test('«Носитель» для фразы без отдельной записи — видео с носителями внутри приложения', async () => {
+    const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
+    await q.click('#tab-phrases'); await q.evaluate(() => { nativeCache.set(clean(item.target), []); });
+    await q.click('#native'); await q.waitForSelector('#sheet:not([hidden]) iframe', { timeout:5000 });
+    const r = await q.evaluate(() => [document.querySelector('#sheet iframe').dataset.q.split('|')[1], document.getElementById('nativeStatus').textContent]);
+    await q.context().close();
+    eq(r[0], 'turkish'); ok(/видео/.test(r[1]), r[1]); eq(pages.length, 0);
+  });
+  await test('набор «живые фразы»: только короткие фразы с записью, перевод на русский, «Носитель» играет запись Tatoeba', async () => {
+    const q = await openInApp(); await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json: TATO(decodeURIComponent(r.request().url())) }));
+    await q.click('#tab-phrases'); await q.click('.chip[data-s="tatoeba"]');
+    await q.waitForFunction(() => tatoebaSet && tatoebaSet.length);
+    const r = await q.evaluate(async () => { const list = tatoebaSet.map(x => [x.tr, x.ru]);
+      setId = 'tatoeba'; lastKey = 'Tabii ki.'; next(); await new Promise(z => setTimeout(z, 50));
+      window.__log = []; playNative(); await new Promise(z => setTimeout(z, 50));
+      return [list, item.target, document.getElementById('meaning').textContent, document.getElementById('nativeAudio').src, document.querySelector('.chip[data-s="tatoeba"]').textContent]; });
+    const errs = q.errors; await q.context().close();
+    eq(r[0], [['Balık sever misiniz?', 'Вы любите рыбу?'], ['Tabii ki.', '']]);
+    eq(r[1], 'Balık sever misiniz?'); eq(r[2], 'Вы любите рыбу?'); eq(r[3], 'https://api.tatoeba.org/v1/audios/68301/file'); eq(r[4], 'живые фразы (2)'); eq(errs, []);
+  });
   await test('в программе нет ссылок, уводящих из приложения (translate.google, youglish.com/pronounce, target=_blank)', async () => {
     const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8');
     eq([/translate\.google/.test(src), /youglish\.com\/pronounce/.test(src), /target="_blank"/.test(src)], [false, false, false]);

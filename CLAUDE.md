@@ -161,6 +161,11 @@ Literata/Commissioner убраны. Две главные — `preload`. Пуб�
   MyMemory (`openTranslate`, `api.mymemory.translated.net`, CORS есть — проверено CI). Ссылок `target=_blank`,
   translate.google, youglish.com/pronounce в программе нет — тест. Внешние сервисы проверяет CI: `tests/probe-services.js`
   → `probe.json` в ветке `screens`.
+- **Фразы голосом носителей**: «Носитель» ищет записи в Commons (слова) и в **Tatoeba** (целые фразы: точное совпадение,
+  `include=audios`; файл — `https://api.tatoeba.org/v1/audios/<id>/file`, т.к. `download_url` из ответа даёт 404 — проверено CI).
+  Нет отдельной записи — «Носитель» открывает видео YouGlish с этой фразой внутри приложения. Набор «живые фразы»
+  (`setId "tatoeba"`, `loadTatoebaSet`): до 7 слов, только с записью, русский перевод из Tatoeba или машинный (MyMemory).
+  Проверено CI: 9 из 99 фраз тренажёра есть в Tatoeba целиком; турецких фраз с записью — 1141.
 - Подсказки скрыты, показываются кнопкой «?». Статистика по наборам.
 - Запись своего голоса всегда включена; на Android — автоматический обход (кнопка «Записать себя»).
 - Доступность WCAG 2.1 AA, тёмная тема, зоны нажатия ≥ 44 px.

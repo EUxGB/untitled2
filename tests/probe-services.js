@@ -27,7 +27,7 @@ async function get(url){
   ];
   urls.push(
     'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=words&limit=5&trans:lang=rus&showtrans=matching&showtrans:lang=rus&include=audios',
-    'https://api.tatoeba.org/unstable/audio/1161844/file', 'https://api.tatoeba.org/unstable/audios/1161844/file', 'https://api.tatoeba.org/v1/audios/1161844/file');
+    'https://api.tatoeba.org/v1/audios/1161844/file', 'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&trans:lang=rus&showtrans:lang=rus&include=audios&sort=random&limit=2');
   const res = []; for(const u of urls) res.push(await get(u));
   // сколько фраз тренажёра есть в Tatoeba целиком с записью носителя
   const b0 = await chromium.launch(); const p0 = await b0.newPage(); await p0.addInitScript(() => { window.SOYLE_TEST = true; });
