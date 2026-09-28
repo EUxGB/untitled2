@@ -9,7 +9,7 @@ async function test(name, fn){ try { await fn(); passed++; console.log('  ✓', 
 const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выполнено'); };
 
 (async () => {
-  const types = { '.html':'text/html; charset=utf-8', '.json':'application/manifest+json', '.png':'image/png', '.js':'text/javascript', '.wav':'audio/wav', '.woff2':'font/woff2' };
+  const types = { '.html':'text/html; charset=utf-8', '.json':'application/manifest+json', '.png':'image/png', '.js':'text/javascript', '.wav':'audio/wav', '.woff2':'font/woff2', '.mp3':'audio/mpeg' };
   const server = http.createServer((q, r) => { const f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0]) === '/' ? 'index.html' : decodeURIComponent(q.url.split('?')[0])); if(!f.startsWith(ROOT) || !fs.existsSync(f)){ r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': types[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r); }).listen(0);
   const URL = `http://localhost:${server.address().port}/index.html`;
   const browser = await chromium.launch({ args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',`--use-file-for-fake-audio-capture=${WAV}`,'--autoplay-policy=no-user-gesture-required'] });
@@ -112,6 +112,13 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
     await c2.close();
     ok(diff <= 0.02, `вид отличается от одобренного на ${(diff * 100).toFixed(1)}% пикселей (порог 2%) — снимок: tests/approved/phrases-360.actual.png`);
     console.log(`       отличие от эталона: ${(diff * 100).toFixed(2)}%`);
+  });
+  await test('фраза целиком голосом носителя из Common Voice: «Hesap lütfen.» — запись находится первой и настоящий звук играется', async () => {
+    const r = await p.evaluate(async () => { await cvReady; nativeCache.delete(clean('Hesap lütfen.'));
+      const recs = await findRecordings('Hesap lütfen.'); const first = recs && recs[0];
+      const a = new Audio(first.url); const ok = await new Promise(z => { a.oncanplaythrough = () => z(a.duration); a.onerror = () => z('error'); setTimeout(() => z('timeout'), 8000); a.load(); });
+      return [first.url, first.who, ok, Object.keys(CV_INDEX).length]; });
+    ok(/^audio\/cv\/\d+\.mp3$/.test(r[0]) && r[1] === 'носитель (Common Voice)' && typeof r[2] === 'number' && r[2] > 0.5 && r[3] >= 10, JSON.stringify(r));
   });
   await test('за прогон нет JS-ошибок', async () => ok(errors.length === 0, errors.join('; ')));
 

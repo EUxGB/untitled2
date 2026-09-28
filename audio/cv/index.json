@@ -1,0 +1,103 @@
+{
+ "source": "Mozilla Common Voice 17 (tr), CC0 — зеркало huggingface.co/datasets/ysdede/commonvoice_17_tr_fixed",
+ "phrases": {
+  "İyi akşamlar.": [
+   {
+    "file": "001.mp3",
+    "votes": 4
+   },
+   {
+    "file": "002.mp3",
+    "votes": 2
+   }
+  ],
+  "Afiyet olsun.": [
+   {
+    "file": "003.mp3",
+    "votes": 2
+   },
+   {
+    "file": "004.mp3",
+    "votes": 2
+   }
+  ],
+  "Ambulans çağırın!": [
+   {
+    "file": "005.mp3",
+    "votes": 2
+   },
+   {
+    "file": "006.mp3",
+    "votes": 2
+   }
+  ],
+  "Çok teşekkürler.": [
+   {
+    "file": "007.mp3",
+    "votes": 4
+   },
+   {
+    "file": "008.mp3",
+    "votes": 2
+   }
+  ],
+  "Alerjim var.": [
+   {
+    "file": "009.mp3",
+    "votes": 8
+   },
+   {
+    "file": "010.mp3",
+    "votes": 4
+   }
+  ],
+  "İngilizce biliyor musunuz?": [
+   {
+    "file": "011.mp3",
+    "votes": 4
+   },
+   {
+    "file": "012.mp3",
+    "votes": 4
+   }
+  ],
+  "Tuvalet nerede?": [
+   {
+    "file": "013.mp3",
+    "votes": 4
+   }
+  ],
+  "Hoş geldiniz.": [
+   {
+    "file": "014.mp3",
+    "votes": 4
+   },
+   {
+    "file": "015.mp3",
+    "votes": 4
+   }
+  ],
+  "Polis çağırın!": [
+   {
+    "file": "016.mp3",
+    "votes": 4
+   }
+  ],
+  "Hesap lütfen.": [
+   {
+    "file": "017.mp3",
+    "votes": 4
+   }
+  ],
+  "Nasılsınız?": [
+   {
+    "file": "018.mp3",
+    "votes": 2
+   },
+   {
+    "file": "019.mp3",
+    "votes": 2
+   }
+  ]
+ }
+}

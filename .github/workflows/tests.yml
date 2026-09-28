@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Собрать сайт (только файлы приложения)
         run: |
-          mkdir _site && cp -r index.html manifest.json icon-*.png fonts _site/
+          mkdir _site && cp -r index.html manifest.json icon-*.png fonts audio _site/
           # номер сборки: приложение сверяет его с сайтом и само подтягивает свежую версию
           BUILD="$(date -u +%Y-%m-%d) · ${GITHUB_SHA::7}"
           sed -i "s/__BUILD__/$BUILD/g" _site/index.html
@@ -68,7 +68,7 @@ jobs:
             [ "$i" = 40 ] && { echo "::error::Через 10 минут сайт всё ещё отдаёт старую сборку"; exit 1; }
             sleep 15
           done
-          for f in fonts/DejaVuSans.woff2 fonts/DejaVuSans-Bold.woff2 fonts/LiberationSerif-Regular.woff2 fonts/LiberationSerif-Bold.woff2 manifest.json; do
+          for f in fonts/DejaVuSans.woff2 fonts/DejaVuSans-Bold.woff2 fonts/LiberationSerif-Regular.woff2 fonts/LiberationSerif-Bold.woff2 manifest.json audio/cv/index.json audio/cv/001.mp3; do
             curl -fsS -o /dev/null "$URL/$f?v=$GITHUB_SHA" || { echo "::error::нет файла $f на сайте"; exit 1; }
           done
   # Снимки живого сайта во всех разделах → ветка `screens` (чтобы показать пользователю, как сайт выглядит на самом деле)

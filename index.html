@@ -1880,6 +1880,15 @@ let nativeIdx = 0;
 const API = "https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query&prop=imageinfo&iiprop=url";
 const clean = t => norm(t).replace(/[.,!?]/g,"").trim();
 
+// Записи носителей из Common Voice 17 (CC0), вырезанные заранее для фраз тренажёра (лежат рядом: audio/cv/)
+let CV_INDEX = null;
+const cvReady = (/^https?:/.test(location.protocol) ? fetch("audio/cv/index.json").then(r => r.ok ? r.json() : null) : Promise.resolve(null))
+  .then(d => { CV_INDEX = d && d.phrases || {}; }).catch(() => { CV_INDEX = {}; });
+function cvRecordings(text){
+  const n = normPhrase(text), out = [];
+  Object.entries(CV_INDEX || {}).forEach(([ph, list]) => { if(normPhrase(ph) === n) list.forEach(x => out.push({ url:"audio/cv/" + x.file, who:"носитель (Common Voice)" })); });
+  return out;
+}
 async function findRecordings(text, opts = {}){
   const key = clean(text);
   if(nativeCache.has(key)) return nativeCache.get(key);
@@ -1914,6 +1923,7 @@ async function findRecordings(text, opts = {}){
   } catch(e){ tatoebaFailed = true; }
   if(commonsFailed && tatoebaFailed && !opts.commonsOnly) return null; // сеть недоступна — не кэшируем
   if(opts.commonsOnly){ if(commonsFailed) return null; nativeCache.set("c:" + key, found); return found; }
+  await cvReady; cvRecordings(text).forEach(r => { if(!seen.has(r.url)){ seen.add(r.url); found.unshift(r); } });   // целая фраза голосом носителя — первой
   nativeCache.set(key, found);
   return found;
 }

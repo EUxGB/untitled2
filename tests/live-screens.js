@@ -75,10 +75,10 @@ const URL = process.argv[2], OUT = process.argv[3];
       try {
         live.nativePhrases = await p.evaluate(async () => {
           const out = {};
-          for(const ph of ['Teşekkürler, her şey çok güzeldi.', 'Hesabı alabilir miyim?', 'İyi akşamlar, rezervasyonum var.', 'Merhaba.', 'Tuvalet nerede?']){
+          for(const ph of ['Teşekkürler, her şey çok güzeldi.', 'Hesabı alabilir miyim?', 'Hesap lütfen.', 'Merhaba.', 'Tuvalet nerede?']){
             item = { target: ph, gid:'ph-basic', meaning:'' }; nativeCache.delete(clean(ph)); await findRecordings(ph);
             window.__srcs = []; const a = document.getElementById('nativeAudio'); const orig = a.play.bind(a); a.play = function(){ window.__srcs.push(this.src.split('/').pop().slice(0, 40)); return Promise.resolve(); };
-            playNative(); await new Promise(z => setTimeout(z, 4000)); a.play = orig;
+            playNative(); await new Promise(z => setTimeout(z, 8000)); a.play = orig;
             out[ph] = { status: document.getElementById('nativeStatus').textContent, played: window.__srcs };
           }
           return out; });
