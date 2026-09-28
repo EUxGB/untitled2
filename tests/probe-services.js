@@ -29,6 +29,20 @@ async function get(url){
     'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=words&limit=5&trans:lang=rus&showtrans=matching&showtrans:lang=rus&include=audios',
     'https://api.tatoeba.org/v1/audios/1161844/file', 'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&trans:lang=rus&showtrans:lang=rus&include=audios&sort=random&limit=2');
   const res = []; for(const u of urls) res.push(await get(u));
+  // словари по темам: какие категории есть и сколько в них турецких слов (ru и en Викисловарь)
+  const ruCats = ['Еда','Напитки','Транспорт','Медицина','Болезни','Части тела','Одежда','Мебель','Цвета','Семья','Жилище','Здания','Профессии','Деньги','Время','Погода','Фрукты','Овощи','Животные','Посуда','Торговля','Путешествия','Туризм','Гостиницы','Числительные'].map(c => `Категория:${c}/tr`);
+  const enCats = ['Foods','Beverages','Transport','Vehicles','Medicine','Diseases','Anatomy','Body parts','Clothing','Furniture','Colors','Family members','Buildings','Rooms','Occupations','Money','Time','Weather','Fruits','Vegetables','Mammals','Birds','Kitchenware','Shops','Travel','Tourism','Hotels','Emotions','Cooking'].map(c => `Category:tr:${c}`);
+  for(const [host, cats] of [['ru.wiktionary.org', ruCats], ['en.wiktionary.org', enCats]]){
+    const out = {};
+    for(let i = 0; i < cats.length; i += 25){
+      const u = `https://${host}/w/api.php?action=query&prop=categoryinfo&format=json&origin=*&titles=${q(cats.slice(i, i + 25).join('|'))}`;
+      try { const d = await (await fetch(u)).json(); Object.values(d.query.pages).forEach(pg => out[pg.title] = pg.categoryinfo ? pg.categoryinfo.pages : (pg.missing !== undefined ? 'нет' : 0)); } catch(e){ out.error = String(e); }
+    }
+    res.push({ categories: host, out });
+  }
+  // как выглядит статья турецкого слова в ru-Викисловаре (чтобы достать русское значение)
+  res.push(await get(`https://ru.wiktionary.org/w/api.php?action=parse&page=ekmek&prop=wikitext&format=json&origin=*`));
+  res.push(await get(`https://ru.wiktionary.org/w/api.php?action=query&list=categorymembers&cmtitle=${q('Категория:Еда/tr')}&cmlimit=30&cmtype=page&format=json&origin=*`));
   // заголовки файла записи Tatoeba (почему <audio> в браузере может не играть)
   try { const r = await fetch('https://api.tatoeba.org/v1/audios/1256001/file', { headers:H, redirect:'manual' }); res.push({ tatoebaAudioHeaders: Object.fromEntries(r.headers.entries()), status: r.status }); } catch(e){ res.push({ tatoebaAudioHeaders: String(e) }); }
   // сколько фраз тренажёра есть в Tatoeba целиком с записью носителя
