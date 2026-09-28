@@ -6,7 +6,7 @@ const OUT = process.argv[2] || 'shots';
 const H = { 'Origin':'https://euxgb.github.io' };
 async function get(url){
   try { const r = await fetch(url, { headers:H }); const t = await r.text();
-    return { url, status:r.status, cors:r.headers.get('access-control-allow-origin'), type:r.headers.get('content-type'), body:t.slice(0, 2500) };
+    return { url, status:r.status, cors:r.headers.get('access-control-allow-origin'), type:r.headers.get('content-type'), body: (r.headers.get('content-type')||'').includes('json') || (r.headers.get('content-type')||'').includes('javascript') ? t.slice(0, 2500) : ('двоичные данные, байт: ' + t.length) };
   } catch(e){ return { url, error:String(e) }; }
 }
 (async () => {
@@ -19,6 +19,11 @@ async function get(url){
     'https://api.tatoeba.org/unstable/audios?lang=tur&limit=2',
     `https://api.mymemory.translated.net/get?q=${q('Hesabı alabilir miyim?')}&langpair=tr|ru`,
     'https://youglish.com/public/emb/widget.js',
+    'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=random&limit=2&showtrans=rus',
+    'https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=random&limit=2&include=audios',
+    `https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=3&q=${q('Teşekkür ederim')}`,
+    `https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=words&limit=3&trans:lang=rus&showtrans=rus`,
+    'https://api.tatoeba.org/unstable/audio/66596/file',
   ];
   const res = []; for(const u of urls) res.push(await get(u));
   // аудио: первый download_url из ответов
