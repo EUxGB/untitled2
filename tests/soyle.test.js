@@ -814,11 +814,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q = await openWords();
     await q.click('#tab-phrases'); await q.click('.chip[data-s="food"]'); await q.click('#kindChip');
     const r = await q.evaluate(() => [wordsKind, item.word, item.topic, WORD_SEEDS.food.map(x => x[0]).includes(item.target), document.getElementById('meaning').textContent,
-      document.querySelector('.chip[data-s="food"]').textContent, document.getElementById('target').classList.contains('phrase'), localStorage.getItem('soyle-kind'), item.target]);
+      document.querySelector('.chip[data-s="food"]').textContent, document.getElementById('target').classList.contains('phrase'), localStorage.getItem('soyle-kind'), item.target, document.getElementById('result').textContent]);
+    const vis = await q.evaluate(() => { const k = document.getElementById('kindChip').getBoundingClientRect(), c = document.querySelector('.chip[data-s="food"]').getBoundingClientRect(); return c.left >= k.right - 1 && c.right <= innerWidth + 1; });
+    ok(vis, 'выбранная тема закрыта переключателем «слова» или за краем');
     await q.click('#kindChip');
     const back = await q.evaluate(() => [wordsKind, !!item.word, document.querySelector('.chip[data-s="tatoeba"]') !== null]);
     const errs = q.errors; await q.context().close();
-    eq(r.slice(0, 4), [true, true, 'food', true]); eq(r[4], Object.fromEntries(WORDS_FOOD)[r[8]]);   // русский перевод темы, не английское значение из Викисловаря ok(/^ресторан \(\d+\)$/.test(r[5]), r[5]); eq(r[6], false); eq(r[7], 'words');
+    eq(r.slice(0, 4), [true, true, 'food', true]); eq(r[4], Object.fromEntries(WORDS_FOOD)[r[8]]);   // русский перевод темы, не английское значение из Викисловаря ok(/^ресторан \(\d+\)$/.test(r[5]), r[5]); eq(r[6], false); eq(r[7], 'words'); ok(/произнесите слово/.test(r[9]), r[9]);
     eq(back, [false, false, true]); eq(errs, []);
   });
   await test('пополнение: новые слова темы подгружаются из Викисловаря (одиночные слова, продолжение списка), сохраняются', async () => {

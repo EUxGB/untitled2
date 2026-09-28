@@ -545,7 +545,7 @@ h1 span{color:inherit}
 #card .partner{height:auto; min-height:1.4em; overflow:visible}
 #card .target{overflow:visible}
 
-.chip.kind{position:sticky; left:0; z-index:1; background:var(--bg); border:1.5px solid var(--accent) !important; color:var(--accent) !important; border-radius:999px !important; padding:6px 12px !important; margin-right:6px}
+.chip.kind{position:sticky; left:0; z-index:1; background:var(--bg); box-shadow:-16px 0 0 0 var(--bg), 10px 0 8px -4px var(--bg); border:1.5px solid var(--accent) !important; color:var(--accent) !important; border-radius:999px !important; padding:6px 12px !important; margin-right:6px}
 .chip.kind[aria-pressed="true"]{background:var(--accent) !important; color:var(--on-accent) !important}
 
 .ex-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
@@ -1023,8 +1023,10 @@ function renderWordDiff(expected, heard, notes){
 
 // ---------- rendering ----------
 function scrollChipIntoView(){
-  const c = $("chips"), sel = c.querySelector('[aria-pressed="true"]');
-  if(sel) c.scrollLeft = Math.max(0, sel.offsetLeft - c.clientWidth/2 + sel.offsetWidth/2);
+  const c = $("chips"), sel = c.querySelector('.chip:not(.kind)[aria-pressed="true"]');
+  const kind = c.querySelector(".chip.kind");      // закреплённый переключатель «слова» не должен закрывать выбранную тему
+  if(sel && kind) c.scrollLeft = Math.max(0, c.scrollLeft + sel.getBoundingClientRect().left - kind.getBoundingClientRect().right - 12);
+  else if(sel) c.scrollLeft = Math.max(0, sel.offsetLeft - c.clientWidth/2 + sel.offsetWidth/2);
 }
 function renderChips(){
   const chips = $("chips");
@@ -1327,7 +1329,7 @@ function next(){
     translateTr(it.target).then(t => { if(item === it) $("meaning").textContent = t; }).catch(() => { if(item === it) $("meaning").textContent = ""; });
   } else if(item.native && !item.live && !item.word){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }   // у слов темы — русский перевод, не английское значение
   $("tip").textContent = item.tip;
-  setResult("info", mode==="pairs" ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
+  setResult("info", mode==="pairs" || item.word ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
   $("compare").disabled = false; synthSlow = false; echoPending = false;
 }
 
