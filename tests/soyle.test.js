@@ -743,6 +743,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return [list, item.target, document.getElementById('meaning').textContent, document.getElementById('nativeAudio').src, document.querySelector('.chip[data-s="tatoeba"]').textContent]; });
     const errs = q.errors; await q.context().close();
     eq(r[0], [['Balık sever misiniz?', 'Вы любите рыбу?'], ['Tabii ki.', '']]);
+    const one = await (async () => { const q2 = await openInApp(); await q2.route('**/api.tatoeba.org/**', r => r.fulfill({ json: TATO(decodeURIComponent(r.request().url())) }));
+      const x = await q2.evaluate(async () => { await ensureTatoebaSet(); tatoebaSet = [{ tr:'Veganım.', ru:'Я веган.', focus:'', n:1 }]; setMode('phrases'); setId = 'tatoeba'; lastKey = ''; next(); await new Promise(z => setTimeout(z, 100)); autofit();
+        const t = document.getElementById('target'), c = t.closest('.card'); return [t.classList.contains('phrase'), t.scrollWidth <= t.clientWidth + 1, t.getBoundingClientRect().right <= c.getBoundingClientRect().right + 1]; });
+      await q2.context().close(); return x; })();
+    eq(one, [true, true, true]);   // однословная живая фраза — шрифтом фраз, не вылезает за край
     eq(r[1], 'Balık sever misiniz?'); eq(r[2], 'Вы любите рыбу?'); eq(r[3], 'https://api.tatoeba.org/v1/audios/68301/file'); eq(r[4], 'живые фразы (2)'); eq(errs, []);
   });
   await test('в программе нет ссылок, уводящих из приложения (translate.google, youglish.com/pronounce, target=_blank)', async () => {

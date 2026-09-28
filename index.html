@@ -1186,7 +1186,7 @@ function next(){
     $("partner").hidden = true; $("tip").textContent = ""; return;
   }
   const t = $("target");
-  t.classList.toggle("phrase", mode==="phrases" && (!item.native || /\s/.test(item.target) || item.target.length > 12));
+  t.classList.toggle("phrase", mode==="phrases" && (!item.native || item.live || /\s/.test(item.target) || item.target.length > 12));   // «живые фразы» — всегда шрифтом фраз (было: «Veganım.» огромным и с переносом)
   if(mode==="pairs"){
     t.innerHTML = markDiff(item.target, item.partner);
     $("partner").innerHTML = `не путать с <b>${esc(item.partner)}</b> — ${esc(item.partnerMeaning)}`;
