@@ -603,6 +603,20 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .modal-medal .medal{animation:medalin .5s ease-out}
 @keyframes medalin{0%{transform:scale(.6) rotate(-12deg); opacity:0} 70%{transform:scale(1.06) rotate(2deg); opacity:1} 100%{transform:none}}
 @media (prefers-reduced-motion: reduce){ .modal-medal .medal{animation:none} .medal svg, #listenCard .ls-opt{transition:none} }
+
+/* «Память»: вспоминание и оценка */
+.tabbar{grid-template-columns:repeat(6, minmax(0,1fr))}
+.tabbar .tab{font-size:clamp(10px, 2.9vw, 11px); letter-spacing:-.01em}
+.tab-n{position:absolute; top:5px; left:calc(50% + 6px); min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--tulip); color:var(--on-accent); font:700 11px/18px var(--body); font-variant-numeric:tabular-nums}
+#card .target.mem-hide{color:var(--muted); letter-spacing:.04em}
+.grades{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; margin-top:10px}
+.grade{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-height:48px; padding:4px 2px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); font:inherit; touch-action:manipulation; cursor:pointer}
+.grade b{font-size:13px} .grade small{font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums}
+.grade:hover{border-color:var(--accent)}
+.grade:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.grade.g1 b{color:var(--bad)}
+.grade.suggest{border:2px solid var(--accent); background:var(--accent-soft)}
+.mem-left{display:block; margin-top:6px; font-size:12px; font-weight:400; color:var(--muted); font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -625,6 +639,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
     <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-8.5z"/></symbol>
     <symbol id="i-help" viewBox="0 0 24 24"><path d="M9.2 9a3 3 0 0 1 5.6 1c0 2-2.8 2.4-2.8 4"/><path d="M12 18h.01"/></symbol>
     <symbol id="i-quote" viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/><path d="M8 10h8M8 13h5"/></symbol>
+    <symbol id="i-cards" viewBox="0 0 24 24"><rect x="4" y="7" width="13" height="13" rx="2"/><path d="M8 4h10a2 2 0 0 1 2 2v10"/><path d="M8 13.5l2.2 2.2L14 11"/></symbol>
     <symbol id="i-bubble" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-6 4z"/></symbol>
     <symbol id="i-ear" viewBox="0 0 24 24"><path d="M7 9a5 5 0 1 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9.5a2 2 0 1 1 4 0"/></symbol>
     <symbol id="i-steps" viewBox="0 0 24 24"><path d="M4 19h4v-5h4v-4h4V6h4"/></symbol>
@@ -724,6 +739,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       <div class="pv-week" id="gbWeek" aria-label="Занятия за 7 дней"></div>
       <div class="pv-tiles">
         <div class="pv-tile"><span>Цель дня</span><b id="gbGoalTxt">0 / 20</b><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
+        <div class="pv-tile"><span>Память</span><b id="gbMem">0</b><span id="gbMemSub">фраз прочно</span></div>
         <div class="pv-tile"><span>Рекорд блица</span><b id="gbBlitz">0</b><span id="gbBlitzSub">слов за минуту</span></div>
       </div>
       <div class="pv-quest" id="gbQuest"><span class="pv-sub">Задание дня · +50 XP</span><b id="gbQuestTxt"></b></div>
@@ -785,6 +801,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
   </main>
 
   <nav class="tabbar" aria-label="Разделы">
+    <button class="tab" id="tab-memory" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-cards"/></svg><span>Память</span><span class="tab-n" id="memDue" hidden aria-hidden="true"></span></button>
     <button class="tab" id="tab-pairs" aria-pressed="true"><span class="ti glyph" aria-hidden="true">ö</span><span>Звуки</span></button>
     <button class="tab" id="tab-phrases" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-bubble"/></svg><span>Фразы</span></button>
     <button class="tab" id="tab-listen" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-ear"/></svg><span>На слух</span></button>
@@ -1149,7 +1166,6 @@ function renderChips(){
       + PHRASE_SETS.map(g => `<button class="chip set" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
       + `<button class="chip set" data-s="tatoeba" aria-pressed="${setId==="tatoeba"}">${tatoebaSet ? `живые фразы (${tatoebaSet.length})` : tatoebaLoading ? "загружаю…" : "живые фразы"}</button>`
       + `<button class="chip set" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
-      + `<button class="chip set" data-s="srs" aria-pressed="${setId==="srs"}">на сегодня (${srsDue().length})</button>`
       + `<button class="chip set" data-s="novoice" aria-pressed="${setId==="novoice"}">без записи (${OLD_PHRASES.length})</button>`
       + `<button class="chip set" data-s="mine" aria-pressed="${setId==="mine"}">мои (${loadList("soyle-mine").length})</button>`;
     chips.querySelectorAll(".chip[data-s]").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
@@ -1377,11 +1393,6 @@ function pickPhrase(){
     do { p = tatoebaSet[Math.floor(Math.random()*tatoebaSet.length)]; } while(p.tr===lastKey && ++guard<10);
     lastKey = p.tr; return { target:p.tr, translit:"", meaning:p.ru, tip:p.focus, gid:"ph-tatoeba", native:true, live:true };
   }
-  if(setId === "srs"){
-    const due = srsDue(); if(!due.length) return null;
-    p = due.find(c => c.tr !== lastKey) || due[0]; lastKey = p.tr;
-    return { target:p.tr, translit:p.tl, meaning:p.ru, tip:`Повторение по расписанию: ступень ${p.box+1} из ${BOX_DAYS.length}. Чем лучше помните — тем реже будет попадаться.`, gid:"ph-srs" };
-  }
   if(setId === "mine"){
     const lst = loadList("soyle-mine");
     if(!lst.length) return null;
@@ -1412,9 +1423,9 @@ function next(){
   item = mode==="pairs" ? pickPair() : pickPhrase();
   if(!item){
     $("target").classList.add("phrase");
-    $("target").textContent = setId==="mine" ? "Пока пусто" : setId==="srs" ? "На сегодня всё повторено" : "Записей не найдено";
+    $("target").textContent = setId==="mine" ? "Пока пусто" : "Записей не найдено";
     $("meaning").textContent = setId==="mine" ? "Скажите фразу в разделе «Свободно» и нажмите «В мои фразы»."
-      : setId==="srs" ? "Каждая фраза, которую вы тренируете, вернётся сюда в нужный день: через 1, 3, 7, 16 и 35 дней." : "";
+      : "";
     $("partner").hidden = true; $("tip").textContent = ""; return;
   }
   const t = $("target");
@@ -1458,7 +1469,7 @@ function setResult(kind, verdict, extra="", score){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"listenph",label:"на слух: фразы"}, {id:"free",label:"любая фраза"}];
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"ph-native",label:"с записями"}, {id:"mem-rec",label:"память: понять на слух"}, {id:"mem-prod",label:"память: сказать"}, {id:"ph-srs",label:"память: повторить за носителем"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"listenph",label:"на слух: фразы"}, {id:"free",label:"любая фраза"}];
   const used = rows.filter(r => (stats[r.id]||{}).t);
   if(!used.length){ $("stats").innerHTML = `<p class="hint" style="text-align:left">Здесь появится ваш прогресс по каждому набору.</p>`; return; }
   $("stats").innerHTML = used.map(r => {
@@ -1482,7 +1493,7 @@ function count(gid, okScore){
 const GOAL = 20;
 const TESTMODE = !!window.SOYLE_TEST;
 // вес опыта по трудности: выбрать из двух — 0,4; произнести — 1; своя фраза, которую понял носитель, — 1,5
-const XP_WEIGHT = { listen:0.4, listenph:0.4, free:1.5 };   // фразы на слух — тоже выбор из двух
+const XP_WEIGHT = { listen:0.4, listenph:0.4, free:1.5, "mem-rec":0.4, "mem-prod":1.5 };   // «понять» оценивается самим собой — вес как у выбора из двух; «сказать по памяти» проверяет распознавание   // фразы на слух — тоже выбор из двух
 let SURPRISE_P = TESTMODE ? 0 : 0.07;        // шанс неожиданного бонуса за верный ответ
 let MILESTONE_MODALS = !TESTMODE;            // окна-праздники: новый уровень, цель дня
 let LESSON_SIZE = TESTMODE ? 1e9 : 10;       // заданий в уроке
@@ -1562,6 +1573,7 @@ function renderGame(){
   const part = Math.min(1, Math.max(0, (game.xp - prev) / (next - prev)));
   $("gbLevelRing").style.strokeDashoffset = 263.9 * (1 - part); $("gbLevel2").textContent = L;
   $("gbBlitz").textContent = game.blitzBest;
+  { const m = memStats(); $("gbMem").textContent = m.strong; $("gbMemSub").textContent = `прочно (3+ нед.) · всего ${m.total} · сегодня ${m.today}`; }
   $("gbBlitzSub").textContent = `слов за минуту · фраз: ${game.blitzBestPh || 0}`;
   $("gbFreeze").textContent = game.freezes;
   const wd = ["вс","пн","вт","ср","чт","пт","сб"];
@@ -1665,7 +1677,7 @@ const QUESTS = [
   { t:"5 верных фраз «ресторан»", gids:["ph-food"], n:5 },
   { t:"10 верных в «Звуках»", gids:["o","u","i","c"], n:10 },
   { t:"5 верных фраз «отель»", gids:["ph-hotel"], n:5 },
-  { t:"5 повторений «на сегодня»", gids:["ph-srs"], n:5 },
+  { t:"5 фраз в «Памяти»", gids:["ph-srs", "mem-rec", "mem-prod"], n:5 },
   { t:"комбо ×5 без ошибок", combo:5, n:5 },
   { t:"3 фразы в «Свободно», которые поймёт носитель", gids:["free"], n:3 },
   { t:"5 верных фраз «транспорт»", gids:["ph-transport"], n:5 },
@@ -1720,7 +1732,8 @@ const BADGES = [
   { id:"hotel",   ic:"otel",  tier:1, t:"Гость отеля",    d:"10 верных фраз «отель»",               v:(g,s) => SOK(s,"ph-hotel"), n:10 },
   { id:"food",    ic:"afiyet",tier:1, t:"Afiyet olsun",   d:"10 верных фраз «ресторан»",            v:(g,s) => SOK(s,"ph-food"), n:10 },
   { id:"free",    ic:"söyle", tier:2, t:"Меня поняли",    d:"5 фраз в «Свободно»",                  v:(g,s) => SOK(s,"free"), n:5 },
-  { id:"memory",  ic:"1·3·7", tier:2, t:"Память слона",   d:"10 повторений «на сегодня»",           v:(g,s) => SOK(s,"ph-srs"), n:10 },
+  { id:"memory",  ic:"1·3·7", tier:2, t:"Память слона",   d:"10 раз вспомнить в «Памяти»",          v:(g,s) => SOK(s,"mem-rec") + SOK(s,"mem-prod") + SOK(s,"ph-srs"), n:10 },
+  { id:"strong",  ic:"21д",   tier:3, t:"Прочная память", d:"20 фраз держатся в памяти 3+ недели",  v:() => memStats().strong, n:20 },
   { id:"level5",  ic:"6",     tier:3, t:"Стамбулец",      d:"Достичь 6-го уровня",                  v:g => levelOf(g.xp), n:6 },
   { id:"lesson10",ic:"×10",   tier:3, t:"Прилежный",      d:"Пройти 10 уроков",                     v:g => g.lessons, n:10 },
 ];
@@ -1797,25 +1810,268 @@ function confetti(){
   })(t0);
 }
 
-// ---------- интервальные повторения (система Лейтнера) ----------
-// Верный ответ — карточка уходит на следующую ступень и возвращается позже; ошибка — снова в начало
-const BOX_DAYS = [0, 1, 3, 7, 16, 35];
-function srsUpdate(score){
-  const all = loadList("soyle-srs"), now = Date.now();
-  let c = all.find(x => x.tr === item.target);
-  if(!c){ c = { tr:item.target, tl:item.translit || "", ru:item.meaning || "", box:0, due:now }; all.push(c); }
-  if(score >= 1){ c.box = Math.min(c.box + 1, BOX_DAYS.length - 1); c.due = now + BOX_DAYS[c.box] * 864e5; }
-  else { c.box = 0; c.due = now + 10 * 60e3; } // ошибка — повторить через 10 минут
-  saveList("soyle-srs", all);
+// ---------- FSRS-6 (Free Spaced Repetition Scheduler) — перенос py-fsrs (open-spaced-repetition), параметры по умолчанию ----------
+const FSRS_W = [0.212, 1.2931, 2.3065, 8.2956, 6.4133, 0.8334, 3.0194, 0.001, 1.8722, 0.1666, 0.796, 1.4835, 0.0614, 0.2629, 1.6483, 0.6014, 1.8729, 0.5425, 0.0912, 0.0658, 0.1542];
+const FSRS = (() => {
+  const W = FSRS_W, DECAY = -W[20], FACTOR = Math.pow(0.9, 1 / DECAY) - 1, RET = 0.9, MAX_I = 365;
+  const MIN = 60e3, DAY = 864e5, LEARN = [1 * MIN, 10 * MIN], RELEARN = [10 * MIN];
+  const clampD = d => Math.min(10, Math.max(1, d)), clampS = s => Math.max(0.001, s);
+  const R = (days, S) => Math.pow(1 + FACTOR * days / S, DECAY);
+  const S0 = g => clampS(W[g - 1]);
+  const D0 = g => W[4] - Math.exp(W[5] * (g - 1)) + 1;
+  const nextD = (D, g) => { const delta = -W[6] * (g - 3), d2 = D + (10 - D) * delta / 9; return clampD(W[7] * D0(4) + (1 - W[7]) * d2); };
+  const recallS = (D, S, r, g) => S * (1 + Math.exp(W[8]) * (11 - D) * Math.pow(S, -W[9]) * (Math.exp((1 - r) * W[10]) - 1) * (g === 2 ? W[15] : 1) * (g === 4 ? W[16] : 1));
+  const forgetS = (D, S, r) => Math.min(W[11] * Math.pow(D, -W[12]) * (Math.pow(S + 1, W[13]) - 1) * Math.exp((1 - r) * W[14]), S / Math.exp(W[17] * W[18]));
+  const shortS = (S, g) => { let inc = Math.exp(W[17] * (g - 3 + W[18])) * Math.pow(S, -W[19]); if(g >= 2) inc = Math.max(inc, 1); return clampS(S * inc); };
+  const interval = S => Math.min(MAX_I, Math.max(1, Math.round(S / FACTOR * (Math.pow(RET, 1 / DECAY) - 1))));
+  // состояния: 1 — изучение, 2 — повторение, 3 — переучивание; g: 1 забыл, 2 трудно, 3 помню, 4 легко
+  function review(c, g, now){
+    c = { ...c }; const days = c.last != null ? Math.floor((now - c.last) / DAY) : null;
+    const steps = c.state === 3 ? RELEARN : LEARN;
+    if(c.s == null || c.d == null){ c.s = S0(g); c.d = clampD(D0(g)); }
+    else if(days !== null && days < 1){ c.s = shortS(c.s, g); c.d = nextD(c.d, g); }
+    else { const r = R(days, c.s); c.s = clampS(g === 1 ? forgetS(c.d, c.s, r) : recallS(c.d, c.s, r, g)); c.d = nextD(c.d, g); }
+    let wait;
+    if(c.state === 2){
+      if(g === 1){ c.state = 3; c.step = 0; c.lapses = (c.lapses || 0) + 1; wait = RELEARN[0]; }
+      else wait = interval(c.s) * DAY;
+    } else {                                     // изучение или переучивание: короткие шаги в минутах
+      if(c.step >= steps.length && g >= 2){ c.state = 2; c.step = null; wait = interval(c.s) * DAY; }
+      else if(g === 1){ c.step = 0; wait = steps[0]; }
+      else if(g === 2){ wait = c.step === 0 ? (steps.length === 1 ? steps[0] * 1.5 : (steps[0] + steps[1]) / 2) : steps[c.step]; }
+      else if(g === 3){ if(c.step + 1 === steps.length){ c.state = 2; c.step = null; wait = interval(c.s) * DAY; } else { c.step++; wait = steps[c.step]; } }
+      else { c.state = 2; c.step = null; wait = interval(c.s) * DAY; }
+    }
+    c.last = now; c.due = now + wait; c.reps = (c.reps || 0) + 1;
+    return c;
+  }
+  const newCard = now => ({ state:1, step:0, s:null, d:null, due:now, last:null, reps:0, lapses:0 });
+  const retrievability = (c, now) => c.s == null || c.last == null ? 0 : R(Math.max(0, Math.floor((now - c.last) / DAY)), c.s);
+  return { review, newCard, retrievability, interval, W, DAY };
+})();
+// ---------- «Память»: вспоминание + интервальные повторения FSRS-6 ----------
+// Почему так (проверенные данные, подробности — CLAUDE.md):
+//  • эффект тестирования: вспомнить лучше, чем перечитать (Rowland 2014, 159 эффектов: g = 0,50; с обратной связью 0,73;
+//    вспомнить по подсказке 0,61 против узнавания 0,29) — поэтому ответ скрыт, сначала попытка, потом правильный ответ;
+//  • интервалы — FSRS-6 (открытый алгоритм Anki; сверено с py-fsrs на 1901 случайном ответе — совпадение полное);
+//  • направление: новичкам сначала «понять на слух» (турецкий → русский), затем «сказать» (русский → турецкий)
+//    (Terai, Yamashita, Pasich 2021) — сторона «сказать» открывается, когда фраза держится ≥ 3 дней;
+//  • повторное изучение (successive relearning, Rawson & Dunlosky): забыли — вернётся в этом же занятии через 1–10 минут;
+//  • чередование тем: новые фразы идут по кругу из разных тем, а не блоком одной темы.
+// Раньше «на сегодня» (Лейтнер) продвигал карточку, когда фразу ЧИТАЛИ вслух — память при этом не тренировалась.
+const BOX_DAYS = [0, 1, 3, 7, 16, 35];            // старая система Лейтнера — только для переноса сохранений
+const NEW_PER_DAY = 10, PROD_AFTER_DAYS = 3, LEARN_AHEAD = 20 * 60e3;
+const cardKey = c => c.tr + "|" + (c.side || "rec");
+function loadCards(){
+  const list = loadList("soyle-srs"); let changed = false;
+  const out = list.map(c => {
+    if(c.side) return c;
+    changed = true;                                  // перенос карточки Лейтнера: ступень → стабильность (дни)
+    const box = Math.max(0, Math.min(c.box || 0, BOX_DAYS.length - 1)), base = { tr:c.tr, tl:c.tl || "", ru:c.ru || "", side:"rec", added:c.due || 0, lapses:0 };
+    if(!box) return { ...base, state:1, step:0, s:null, d:null, due:c.due || 0, last:null, reps:0, seen:true };
+    return { ...base, state:2, step:null, s:BOX_DAYS[box], d:5, due:c.due || 0, last:(c.due || 0) - BOX_DAYS[box] * 864e5, reps:box };
+  });
+  if(changed) saveList("soyle-srs", out);
+  return out;
+}
+function saveCards(list){ saveList("soyle-srs", list); }
+function newMemCard(tr, tl, ru, side, now){ return { tr, tl:tl || "", ru:ru || "", side, added:now, ...FSRS.newCard(now), seen: side === "prod" }; }
+// Каждая фраза, которую вы тренируете в других разделах, попадает в «Память» как новая. Чтение вслух расписание
+// НЕ продвигает: это не вспоминание (текст перед глазами).
+function srsUpdate(){
+  if(!item || !item.target || mode === "memory") return;
+  const all = loadCards();
+  if(all.some(c => c.tr === item.target)) return;
+  all.push(newMemCard(item.target, item.translit, item.meaning, "rec", Date.now())); saveCards(all);
+}
+function srsDue(now = Date.now()){ return loadCards().filter(c => c.s != null && c.due <= now).sort((a, b) => a.due - b.due); }
+function memDay(){
+  const today = dayStr(new Date());
+  let d = null; try { d = JSON.parse(localStorage.getItem("soyle-memday")); } catch(e){}
+  return d && d.day === today ? d : { day:today, newN:0, extra:0, done:0 };
+}
+function memSaveDay(d){ try { localStorage.setItem("soyle-memday", JSON.stringify(d)); } catch(e){} }
+// новые фразы — по кругу из разных тем (чередование), только фразы с записью носителя
+function memTopicPool(){
+  const lists = PHRASE_SETS.map(g => g.items), out = [];
+  for(let i = 0; lists.some(l => i < l.length); i++) lists.forEach(l => { if(l[i]) out.push(l[i]); });
+  return out;
+}
+function memPlan(now = Date.now()){
+  const cards = loadCards(), day = memDay();
+  const due = cards.filter(c => c.s != null && c.due <= now).sort((a, b) => FSRS.retrievability(a, now) - FSRS.retrievability(b, now));
+  const seenDue = cards.filter(c => c.s == null && c.seen && c.due <= now);       // изучены, ждут первого вспоминания
+  const room = Math.max(0, NEW_PER_DAY + (day.extra || 0) - day.newN);
+  const have = new Set(cards.map(c => c.tr));
+  const fresh = [...cards.filter(c => c.s == null && !c.seen), ...memTopicPool().filter(p => !have.has(p.tr)).map(p => newMemCard(p.tr, p.tl, p.ru, "rec", now))].slice(0, room);
+  const ahead = cards.filter(c => c.state !== 2 && (c.s != null || c.seen) && c.due > now && c.due <= now + LEARN_AHEAD).sort((a, b) => a.due - b.due);
+  return { cards, day, due:[...due, ...seenDue], fresh, ahead, room };
+}
+let mem = null;          // { card, phase:"study"|"prompt"|"answer"|"empty", hint:0, said:null, sinceNew:0 }
+function memPick(){
+  const p = memPlan(), last = mem && mem.card ? cardKey(mem.card) : "";
+  const due = p.due.filter(c => cardKey(c) !== last || p.due.length === 1);
+  const since = mem ? mem.sinceNew || 0 : 0;
+  // чередование: после 3 повторений — одна новая, пока есть место на сегодня
+  if(p.fresh.length && (!due.length || since >= 3)) return { card:p.fresh[0], isNew:true };
+  if(due.length) return { card:due[0] };
+  const ahead = p.ahead.filter(c => cardKey(c) !== last);
+  if(ahead.length) return { card:ahead[0] };
+  if(p.ahead.length) return { card:p.ahead[0] };
+  return null;
+}
+const fmtWait = ms => { const m = Math.round(ms / 60e3); if(m < 60) return `${Math.max(1, m)} мин`; const h = Math.round(m / 60); if(h < 24) return `${h} ч`;
+  const d = Math.round(ms / 864e5); return d < 31 ? `${d} д` : d < 365 ? `${Math.round(d / 30)} мес` : `${Math.round(d / 365)} г`; };
+function memSetButtons(phase, side){
+  const cmp = $("compare"), nx = $("next");
+  const prompt = phase === "prompt";
+  setLbl(cmp, prompt ? (side === "rec" ? "Текст" : "Буквы") : "Сравнить"); setIc(cmp, prompt ? "help" : "compare"); cmp.disabled = phase === "empty";
+  setLbl(nx, phase === "study" ? "Запомнил" : prompt ? "Показать" : phase === "empty" ? "Ещё 5 новых" : "Оцените");
+  nx.disabled = phase === "answer";
+  $("speak").disabled = phase === "empty" || !SR;
+  // до ответа «Носитель», «Примеры», «Синтез» выдали бы ответ на «сказать»; на «понять на слух» звук — это и есть вопрос
+  const hide = prompt && side === "prod";
+  $("native").disabled = hide || phase === "empty"; $("play").disabled = hide || phase === "empty" || !trVoice; $("yg").disabled = prompt || phase === "empty";
+}
+function memRender(){
+  const t = $("target"), c = mem.card, side = c.side;
+  t.classList.add("phrase"); t.classList.remove("mem-hide");
+  $("partner").hidden = false; $("partner").textContent = ""; $("nativeStatus").textContent = "";
+  memSetButtons(mem.phase, side);
+  const left = memPlan(), info = `<small class="mem-left">Повторить: ${left.due.length} · новых на сегодня: ${left.fresh.length}</small>`;
+  if(mem.phase === "study"){
+    t.textContent = c.tr; $("partner").textContent = c.tl ? `[${c.tl}]` : ""; $("meaning").textContent = c.ru;
+    $("tip").textContent = "Сначала знакомство, потом вспоминание: попытка вспомнить укрепляет память сильнее, чем повторное чтение.";
+    setResult("info", "Новая фраза. Послушайте и повторите вслух, затем «Запомнил» — через минуту вспомните её без подсказки.", info);
+    memPlay(c.tr);
+  } else if(mem.phase === "prompt"){
+    t.classList.add("mem-hide");
+    if(side === "rec"){
+      t.textContent = mem.hint ? c.tr : "· · ·";
+      $("meaning").textContent = "Что значит эта фраза?";
+      $("tip").textContent = "Не спешите подсматривать: даже неудачная попытка вспомнить укрепляет память.";
+      memPlay(c.tr);
+    } else {
+      t.textContent = mem.hint >= 1 ? c.tr.split(/(\s+)/).map(w => /^\s+$/.test(w) ? w : w.replace(/(\p{L})(\p{L}*)/u, (_, a, b) => a + "·".repeat(Array.from(b).length))).join("") : "· · ·";
+      $("partner").textContent = mem.hint >= 2 && c.tl ? `[${c.tl}]` : "";
+      $("meaning").textContent = `Как сказать: «${c.ru}»`;
+      $("tip").textContent = "Каждая подсказка снижает оценку до «Трудно» — фраза вернётся раньше.";
+    }
+    setResult("info", side === "rec" ? "Послушайте («Носитель» — ещё раз) и вспомните перевод. Потом «Показать»." : "Скажите по-турецки — «Сказать». Не выходит — «Буквы»: первые буквы слов.", info);
+  } else if(mem.phase === "answer"){
+    t.innerHTML = esc(c.tr); $("partner").textContent = c.tl ? `[${c.tl}]` : "";
+    $("meaning").textContent = c.ru || "Перевожу…";
+    if(!c.ru) translateTr(c.tr).then(r => { if(mem && mem.card === c){ c.ru = r; $("meaning").textContent = r; } }).catch(() => {});
+    $("tip").textContent = "";
+    const now = Date.now(), names = ["Забыл", "Трудно", "Помню", "Легко"];
+    const grades = `<div class="grades" role="group" aria-label="Как вспомнили">${names.map((n, i) => {
+      const g = i + 1, wait = FSRS.review(mem.card, g, now).due - now;
+      return `<button class="grade g${g}${mem.suggest === g ? " suggest" : ""}" data-g="${g}" aria-label="${n}: повторить через ${fmtWait(wait)}"><b>${n}</b><small>${fmtWait(wait)}</small></button>`; }).join("")}</div>`;
+    const head = mem.said ? mem.said.html : `<span class="verdict">${side === "rec" ? "Вспомнили перевод?" : "Вспомнили, как сказать?"} Оцените честно — от этого зависит, когда фраза вернётся.</span>`;
+    const r = $("result");
+    if(mem.said) setResult(mem.said.kind, mem.said.verdict, mem.said.extra + grades, mem.said.score); else { r.className = "result info"; r.innerHTML = head + grades; }
+    $("result").querySelectorAll(".grade").forEach(b => b.onclick = () => memGrade(+b.dataset.g));
+    if(side === "prod") memPlay(c.tr);                                    // обратная связь: правильный ответ голосом носителя
+  } else {                                                                // пусто на сегодня
+    const p = memPlan(), all = p.cards.filter(x => x.s != null), strong = all.filter(x => x.s >= 21).length;
+    const next = p.cards.filter(x => x.s != null || x.seen).map(x => x.due).sort((a, b) => a - b)[0];
+    t.textContent = "На сегодня всё";
+    $("meaning").textContent = all.length ? `В памяти фраз: ${all.length}, прочно (держатся 3+ недели): ${strong}.` : "Новые фразы на сегодня изучены.";
+    $("partner").textContent = next ? `Следующее повторение: через ${fmtWait(Math.max(0, next - Date.now()))}` : "";
+    $("tip").textContent = "Интервалы растут, когда вы вспоминаете: 1 день, неделя, месяц. Лучше понемногу каждый день.";
+    setResult("info", "Можно закончить на сегодня — или взять ещё 5 новых фраз.");
+  }
+  scheduleFit();
+}
+function memPlay(text){
+  const c = mem && mem.card;
+  findRecordings(text).then(() => { if(mem && mem.card === c && mode === "memory") playReference(text); }).catch(() => {});
+  prefetchNative();
+}
+function memNext(){
+  stopListening();
+  const pick = memPick();
+  if(!pick){ mem = { card:null, phase:"empty", hint:0 }; item = null; memEmpty(); return; }
+  const c = pick.card, isStudy = c.s == null && !c.seen;
+  mem = { card:c, phase: isStudy ? "study" : "prompt", hint:0, said:null, suggest:0, sinceNew: pick.isNew ? 0 : ((mem && mem.sinceNew) || 0) + 1 };
+  item = { target:c.tr, translit:c.tl, meaning:c.ru, gid:"ph-srs", card:c };
+  nativeIdx = 0; synthSlow = false; echoPending = false;
+  memRender(); updateMemTab();
+}
+function memEmpty(){ mem.phase = "empty"; memSetButtons("empty"); memRender(); updateMemTab(); }
+function memStore(c){ const all = loadCards(), i = all.findIndex(x => cardKey(x) === cardKey(c)); if(i >= 0) all[i] = c; else all.push(c); saveCards(all); }
+function memStudied(){                                                   // «Запомнил»: первое знакомство, вспоминание — через минуту
+  const c = { ...mem.card, seen:true, due:Date.now() + 60e3 }, d = memDay();
+  d.newN++; memSaveDay(d); memStore(c); memNext();
+}
+function memReveal(){ if(!mem || mem.phase !== "prompt") return; stopListening(); mem.phase = "answer"; memRender(); }
+function memHint(){
+  if(!mem || mem.phase !== "prompt") return;
+  mem.hint = Math.min(2, mem.hint + 1);
+  if(mem.card.side === "rec") mem.hint = 2;                              // на слух подсказка — показать текст фразы
+  memRender();
+}
+function evalRecall(alts){
+  if(!mem || !mem.card) return;
+  if(mem.phase !== "prompt" || mem.card.side !== "prod"){ evalPhrase(alts); return; }   // повторить за носителем — просто произношение
+  const c = mem.card, { score, ok, total, html } = compareText(c.tr, alts[0]);
+  const ps = pronScore(c.tr, alts), [g, label] = gradeOf(ps.score);
+  count("mem-prod", score);                                              // опыт — по тому, насколько верно сказано по памяти
+  // предложенная оценка: 90+ — «Помню», 70+ — «Трудно», ниже — «Забыл»; с подсказкой — не выше «Трудно»
+  let sug = ps.score >= 90 ? 3 : ps.score >= 70 ? 2 : 1; if(mem.hint) sug = Math.min(sug, 2);
+  mem.suggest = sug;
+  mem.said = { kind: g, verdict:`${label} · ${ok} из ${total} слов${mem.hint ? " (с подсказкой)" : ""}`, score:ps.score,
+    extra:`<div class="diff" lang="tr" translate="no">${html}</div>${errsHtml(ps.words)}<div class="alts hintable">Распознано: ${esc((alts[0]||"—").trim())}</div>` };
+  mem.phase = "answer"; memRender();
+}
+function memGrade(g){
+  if(!mem || mem.phase !== "answer") return;
+  const now = Date.now(), before = mem.card, c = FSRS.review(before, g, now);
+  c.seen = true;
+  if(before.s == null && !before.seen){ const d = memDay(); d.newN++; memSaveDay(d); }
+  memStore(c);
+  // «понять на слух» держится ≥ 3 дней — открываем «сказать» (русский → турецкий)
+  if(c.side === "rec" && c.state === 2 && c.s >= PROD_AFTER_DAYS && c.ru && !loadCards().some(x => x.tr === c.tr && x.side === "prod"))
+    memStore(newMemCard(c.tr, c.tl, c.ru, "prod", now));
+  if(c.side === "rec") memCount("mem-rec", g >= 2 ? 1 : 0, 1);         // опыт за «понять» не зависит от оценки — честная оценка не стоит очков
+  else if(!mem.said) count("mem-prod", 0);
+  const d = memDay(); d.done++; memSaveDay(d);
+  memNext();
+}
+function memCount(gid, ok, xpScore){                                     // как count(), но опыт отдельно от «верно»
+  const st = stats[gid] || (stats[gid] = { t:0, ok:0 });
+  st.t++; st.ok += ok; save(); renderStats();
+  const xp0 = game.xp; award(xpScore, gid); lastGain = game.xp - xp0;
+  lessonStep(ok); renderLesson();
+}
+function memRestoreButtons(){                                           // вне «Памяти» у кнопок карточки обычные роли
+  setLbl($("compare"), "Сравнить"); setIc($("compare"), "compare"); $("compare").disabled = false;
+  setLbl($("next"), "Дальше"); $("next").disabled = false; $("speak").disabled = !SR;
+  $("native").disabled = false; $("yg").disabled = false; $("play").disabled = !trVoice;
+  $("target").classList.remove("mem-hide");
+}
+function memNextBtn(){
+  if(!mem) return memNext();
+  if(mem.phase === "study") return memStudied();
+  if(mem.phase === "prompt") return memReveal();
+  if(mem.phase === "empty"){ const d = memDay(); d.extra = (d.extra || 0) + 5; memSaveDay(d); memNext(); }
+}
+function memStats(){
+  const cards = loadCards().filter(c => c.s != null), now = Date.now();
+  return { total:cards.length, strong:cards.filter(c => c.s >= 21).length, due:srsDue(now).length + loadCards().filter(c => c.s == null && c.seen && c.due <= now).length, today:memDay().done };
+}
+function updateMemTab(){
+  const n = memStats().due, el = $("memDue");
+  if(el){ el.textContent = n > 99 ? "99+" : n; el.hidden = !n; }
+  $("tab-memory").setAttribute("aria-label", n ? `Память: повторить ${n}` : "Память");
 }
 (function migrateMistakes(){
   const old = loadList("soyle-mistakes"); if(!old.length) return;
-  const all = loadList("soyle-srs");
-  old.forEach(m => { if(!all.some(c => c.tr === m.tr)) all.push({ tr:m.tr, tl:m.tl||"", ru:m.ru||"", box:0, due:0 }); });
-  saveList("soyle-srs", all);
+  const all = loadCards(), now = Date.now();
+  old.forEach(m => { if(!all.some(c => c.tr === m.tr)) all.push({ ...newMemCard(m.tr, m.tl, m.ru, "rec", now), seen:true, due:0 }); });
+  saveCards(all);
   try { localStorage.removeItem("soyle-mistakes"); } catch(e){}
 })();
-function srsDue(){ const now = Date.now(); return loadList("soyle-srs").filter(c => c.due <= now).sort((a,b) => a.due - b.due); }
 
 // ---------- ошибки и мои фразы (хранятся в этом браузере) ----------
 function loadList(k){ try { return JSON.parse(localStorage.getItem(k)) || []; } catch(e){ return []; } }
@@ -2010,7 +2266,7 @@ async function startListening(){
   recognizer.onresult = e => {
     got = true;
     const alts = Array.from(e.results[0]).map(a => a.transcript);
-    mode==="pairs" ? evalPair(alts) : evalPhrase(alts);
+    mode==="pairs" ? evalPair(alts) : mode==="memory" ? evalRecall(alts) : evalPhrase(alts);
   };
   recognizer.onerror = e => {
     got = true;
@@ -2570,7 +2826,7 @@ $("hintsBtn").onclick = () => setHints(!document.body.classList.contains("hints"
 try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHints(false); }
 
 // ---------- wiring ----------
-const MODES = ["pairs","phrases","listen","free","progress"];
+const MODES = ["memory","pairs","phrases","listen","free","progress"];
 // ---------- автоподгонка: всё на одном экране без прокрутки, на высоком экране — крупнее ----------
 // Подбираем --fit (0.6…1.15) двоичным поиском: наибольший, при котором карточка и страница не переполнены.
 function autofit(){
@@ -2768,6 +3024,7 @@ function setMode(m){
   closeSheet();
   if(blitz && m !== "listen") endBlitz(true);
   mode = m;
+  $("tab-memory").setAttribute("aria-pressed", m==="memory");
   $("tab-pairs").setAttribute("aria-pressed", m==="pairs");
   $("tab-phrases").setAttribute("aria-pressed", m==="phrases");
   $("tab-free").setAttribute("aria-pressed", m==="free");
@@ -2776,12 +3033,15 @@ function setMode(m){
   $("card").hidden = m==="free" || m==="listen" || m==="progress"; $("freeCard").hidden = m!=="free"; $("listenCard").hidden = m!=="listen";
   $("progressView").hidden = m!=="progress";
   renderLesson(); scheduleFit();
+  if(m!=="memory" && mem){ mem = null; memRestoreButtons(); }
+  if(m==="memory"){ $("chips").hidden = true; return memNext(); }
   if(m==="free" || m==="progress"){ $("chips").hidden = true; if(m==="progress"){ renderGame(); renderBadges(); renderStats(); } return; }
   $("chips").hidden = false;
   renderChips();
   if(m==="listen"){ lsLabels(); return nextListen(); }
   next();
 }
+$("tab-memory").onclick = () => setMode("memory");
 $("tab-pairs").onclick = () => setMode("pairs");
 $("tab-phrases").onclick = () => setMode("phrases");
 $("tab-free").onclick = () => setMode("free");
@@ -2798,9 +3058,9 @@ $("freeCorrect").onclick = () => sayText($("intent").value.trim());
 let synthSlow = false;
 $("play").onclick = () => { say(synthSlow ? 0.55 : 0.85); synthSlow = !synthSlow; };
 $("speak").onclick = () => listening ? stopListening() : startListening();
-$("next").onclick = next;
+$("next").onclick = () => mode === "memory" ? memNextBtn() : next();
 $("native").onclick = playNative;
-$("compare").onclick = compareVoices;
+$("compare").onclick = () => mode === "memory" && mem && mem.phase === "prompt" ? memHint() : compareVoices();
 $("freeSave").onclick = () => {
   const text = $("intent").value.trim() || lastHeard;
   setLbl($("freeSave"), saveMine(text) ? "Сохранено" : "Уже в моих");
@@ -2815,13 +3075,19 @@ document.addEventListener("keydown", e => {
     else if(e.key==="1") answerListen("A"); else if(e.key==="2") answerListen("B");
     return;
   }
+  if(mode==="memory"){
+    if(mem && mem.phase === "answer" && "1234".includes(e.key)){ memGrade(+e.key); return; }
+    if(e.code==="Space" && mem && mem.card){ e.preventDefault(); listening ? stopListening() : startListening(); }
+    else if(e.key==="Enter" && !$("next").disabled){ e.preventDefault(); memNextBtn(); }
+    return;
+  }
   if(e.code==="Space"){ e.preventDefault(); if(mode==="free") return freeListen(); listening ? stopListening() : startListening(); }
   else if(e.key==="Enter"){ e.preventDefault(); next(); }
   else if(e.key.toLowerCase()==="l"){ say(0.85); }
   else if(e.key.toLowerCase()==="n"){ playNative(); }
 });
 
-renderChips(); renderStats(); renderGame(); renderBadges(); renderLesson();
+renderChips(); renderStats(); renderGame(); renderBadges(); renderLesson(); updateMemTab();
 { const h = location.hash.slice(1); if(MODES.includes(h) && h !== "pairs") setTimeout(() => setMode(h), 0); } setupSelfRecord(); next();
 </script>
 </body>

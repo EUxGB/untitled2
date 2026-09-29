@@ -14,7 +14,7 @@ const URL = process.argv[2], OUT = process.argv[3];
     await p.goto(URL, { waitUntil:'load' }); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1500);
     const info = await p.evaluate(() => ({ version: (document.getElementById('appVersion') || {}).textContent,
       fonts: [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.weight) }));
-    for(const tab of ['pairs', 'phrases', 'listen', 'free', 'progress']){
+    for(const tab of ['memory', 'pairs', 'phrases', 'listen', 'free', 'progress']){
       await p.click('#tab-' + tab); await p.waitForTimeout(1200);
       if(await p.isVisible('#modal')) await p.keyboard.press('Escape');
       await p.screenshot({ path:`${OUT}/${name}-${tab}.png` });

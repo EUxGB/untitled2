@@ -164,11 +164,23 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await p.evaluate(() => { game = { xp:0, streak:0, lastDay:'', today:'', todayOk:0, combo:0 }; normalizeGame(); todayQuest(); game.quest.done = true; for(let i=0;i<8;i++) award(1); award(0); return [game.xp, game.combo, game.todayOk, game.streak, levelOf(game.xp)]; });
     eq(r, [10+12+14+16+18+20+20+20, 0, 8, 1, 2]);
   });
-  await test('интервальные повторения: верно → следующая ступень, ошибка → через 10 минут', async () => {
-    const r = await p.evaluate(() => { saveList('soyle-srs', []); item = { target:'Hesap lütfen.', gid:'ph-food' };
-      srsUpdate(1); const a = loadList('soyle-srs')[0]; srsUpdate(1); const b = loadList('soyle-srs')[0]; srsUpdate(0); const c = loadList('soyle-srs')[0];
-      return [a.box, Math.round((a.due-Date.now())/864e5), b.box, Math.round((b.due-Date.now())/864e5), c.box, Math.round((c.due-Date.now())/60e3)]; });
-    eq(r, [1, 1, 2, 3, 0, 10]);
+  await test('FSRS-6 в программе считает так же, как официальная py-fsrs (стабильность, трудность, срок, состояние)', async () => {
+    const ref = JSON.parse(fs.readFileSync(path.join(__dirname, 'fsrs-cases.json'), 'utf8')).cases;
+    const bad = await p.evaluate(cases => { let bad = 0;
+      for(const seq of cases){ let c = FSRS.newCard(0); for(const x of seq){ c = FSRS.review(c, x.g, x.t);
+        if(!(Math.abs(c.s - x.s) < 1e-6 * Math.max(1, x.s) && Math.abs(c.d - x.d) < 1e-6 && Math.abs(c.due - x.due) < 1500 && c.state === x.state && (c.step ?? null) === (x.step ?? null))) bad++; } }
+      return bad; }, ref);
+    eq([bad, ref.reduce((a, s) => a + s.length, 0) > 300], [0, true]);
+  });
+  await test('чтение вслух в других разделах НЕ продвигает расписание — фраза только попадает в «Память» как новая', async () => {
+    const r = await p.evaluate(() => { saveList('soyle-srs', []); const m0 = mode; mode = 'phrases'; item = { target:'Hesap lütfen.', translit:'хесап', meaning:'Счёт', gid:'ph-food' };
+      srsUpdate(1); srsUpdate(1); const c = loadCards(); mode = m0; return [c.length, c[0].s, c[0].side, c[0].seen, srsDue().length]; });
+    eq(r, [1, null, 'rec', false, 0]);
+  });
+  await test('старые карточки Лейтнера переносятся: ступень → стабильность в днях, срок сохраняется', async () => {
+    const r = await p.evaluate(() => { saveList('soyle-srs', [{ tr:'a', ru:'а', box:2, due:5 }, { tr:'b', box:0, due:7 }]); const c = loadCards();
+      return [c[0].state, c[0].s, c[0].due, c[0].side, c[1].s, c[1].seen, !!loadList('soyle-srs')[0].side]; });
+    eq(r, [2, 3, 5, 'rec', null, true, true]);
   });
   await test('«на сегодня» показывает только то, что пора повторить', async () => {
     const r = await p.evaluate(() => { saveList('soyle-srs', [{ tr:'a', box:1, due:0 }, { tr:'b', box:2, due:Date.now()+864e5 }]); return srsDue().map(c => c.tr); });
@@ -528,7 +540,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       document.getElementById('tab-free').click(); const free = !document.getElementById('freeCard').hidden && document.getElementById('tab-free').getAttribute('aria-pressed');
       document.getElementById('tab-progress').click(); const prog = !document.getElementById('progressView').hidden && document.getElementById('card').hidden;
       document.getElementById('tab-pairs').click(); return [tabs, free, prog]; });
-    eq(r, [['tab-pairs','tab-phrases','tab-listen','tab-free','tab-progress'], 'true', true]);
+    eq(r, [['tab-memory','tab-pairs','tab-phrases','tab-listen','tab-free','tab-progress'], 'true', true]);
   });
   await test('игра видна всегда: верхняя панель обновляется после ответа, нажатие открывает «Прогресс»', async () => {
     const r = await p.evaluate(r => { eval(r); renderGame(); const ring0 = document.getElementById('tbRing').style.strokeDashoffset;
@@ -629,7 +641,81 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('кольцо уровня и достижения-жетоны без эмодзи', async () => {
     const r = await p.evaluate(() => { game.xp = 125; renderGame(); renderBadges(); const off = parseFloat(document.getElementById('gbLevelRing').style.strokeDashoffset);
       return [document.getElementById('gbLevel2').textContent, off > 100 && off < 200, document.querySelectorAll('#badgeGrid .badge').length, BADGES.every(b => !/\p{Extended_Pictographic}/u.test(b.ic))]; });
-    eq(r, ['2', true, 27, true]);
+    eq(r, ['2', true, 28, true]);
+  });
+
+  console.log('«Память»: вспоминание (эффект тестирования) + FSRS-6');
+  await test('новая фраза: знакомство → через минуту вспомнить без текста → ответ → 4 оценки со сроками → расписание FSRS', async () => {
+    const q = await openPage(browser);
+    await q.click('#tab-memory');
+    const s1 = await q.evaluate(() => [mem.phase, document.getElementById('target').textContent, document.getElementById('meaning').textContent.length > 0, document.querySelector('#next .lbl').textContent]);
+    await q.click('#next');                                            // «Запомнил»
+    const s2 = await q.evaluate(t => { const c = loadCards().find(x => x.tr === t); return [c.seen, c.s, Math.round((c.due - Date.now()) / 1000), memDay().newN, mem.phase]; }, s1[1]);
+    await q.evaluate(t => { const all = loadCards(); all.find(x => x.tr === t).due = Date.now() - 1; saveCards(all); memNext(); }, s1[1]);
+    const s3 = await q.evaluate(() => [mem.card.tr, document.getElementById('target').textContent, document.getElementById('meaning').textContent, document.querySelector('#next .lbl').textContent,
+      document.querySelector('#compare .lbl').textContent, document.getElementById('yg').disabled, document.getElementById('native').disabled]);
+    await q.click('#next');                                            // «Показать»
+    const s4 = await q.evaluate(() => [document.getElementById('target').textContent, [...document.querySelectorAll('#result .grade')].map(b => b.querySelector('b').textContent + ' ' + b.querySelector('small').textContent),
+      document.getElementById('next').disabled, document.querySelectorAll('#result .grade.suggest').length]);
+    await q.click('#result .grade[data-g="3"]');
+    const s5 = await q.evaluate(t => { const c = loadCards().find(x => x.tr === t); return [c.state, c.step, Math.round((c.due - Date.now()) / 60e3), +c.s.toFixed(4), (stats['mem-rec'] || {}).ok]; }, s1[1]);
+    const errs = q.errors; await q.context().close();
+    eq(s1.slice(0, 1).concat(s1.slice(2)), ['study', true, 'Запомнил']);
+    eq(s2, [true, null, 60, 1, 'study']);                              // первое вспоминание — через минуту; следующая новая пока в знакомстве
+    eq(s3, [s1[1], '· · ·', 'Что значит эта фраза?', 'Показать', 'Текст', true, false]);
+    eq([s4[0], s4[1].length, s4[1][0], s4[2], s4[3]], [s1[1], 4, 'Забыл 1 мин', true, 0]);   // без речи оценку не подсказываем
+    eq(s5, [1, 1, 10, 2.3065, 1]);                                     // FSRS: «Помню» при первом вспоминании — шаг 10 мин, S0 = w[2]
+    eq(errs, []);
+  });
+  await test('«сказать по памяти»: русский → турецкий, звук скрыт до ответа, «Буквы», оценка по речи (с подсказкой не выше «Трудно»)', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(async () => { const now = Date.now();
+      saveCards([{ ...newMemCard('Tuvalet nerede?', 'тувалет нэрэде', 'Где туалет?', 'prod', now), due:now - 1 }]);
+      setMode('memory'); const a = [mem.card.side, document.getElementById('meaning').textContent, document.getElementById('target').textContent,
+        document.getElementById('native').disabled, document.getElementById('play').disabled, document.querySelector('#compare .lbl').textContent];
+      document.getElementById('compare').click(); a.push(document.getElementById('target').textContent);
+      window.__say = 'tuvalet nerede'; startListening(); await new Promise(z => setTimeout(z, 150));
+      a.push(mem.phase, mem.suggest, document.querySelectorAll('#result .grade').length, !!document.querySelector('#result .score'), document.getElementById('target').textContent, (stats['mem-prod'] || {}).t);
+      return a; });
+    const r2 = await q.evaluate(async () => { const now = Date.now();
+      saveCards([{ ...newMemCard('Hesap lütfen.', '', 'Счёт, пожалуйста.', 'prod', now), due:now - 1 }]); mem = null; memNext();
+      window.__say = 'hesap lütfen'; startListening(); await new Promise(z => setTimeout(z, 150)); return [mem.suggest, document.querySelector('#result .grade.suggest').dataset.g]; });
+    const errs = q.errors; await q.context().close();
+    eq(r, ['prod', 'Как сказать: «Где туалет?»', '· · ·', true, true, 'Буквы', 'T······ n·····?', 'answer', 2, 4, true, 'Tuvalet nerede?', 1]);
+    eq(r2, [3, '3']); eq(errs, []);
+  });
+  await test('честная оценка не стоит очков: опыт за «понять на слух» одинаков при «Забыл» и «Помню»', async () => {
+    const r = await p.evaluate(r => { eval(r); const now = Date.now(); const out = [];
+      for(const g of [1, 3]){ saveCards([{ ...newMemCard('Merhaba.', '', 'Привет.', 'rec', now), seen:true, due:now - 1 }]); game.combo = 0; setMode('memory'); memReveal(); const x0 = game.xp; memGrade(g); out.push(game.xp - x0); }
+      setMode('pairs'); return out; }, RESET);
+    eq(r[0] > 0 && r[0] === r[1], true);
+  });
+  await test('«сказать» открывается, когда «понять на слух» держится ≥ 3 дней; новые — по кругу из разных тем, не больше 10 в день', async () => {
+    const r = await p.evaluate(() => { const now = Date.now(); localStorage.removeItem('soyle-memday');
+      saveCards([{ ...newMemCard('Hesap lütfen.', '', 'Счёт, пожалуйста.', 'rec', now), state:2, s:3, d:5, last:now - 4 * 864e5, due:now - 1, seen:true }]);
+      setMode('memory'); memReveal(); memGrade(3); const prod = loadCards().find(c => c.side === 'prod');
+      const plan = memPlan(); const topic = tr => (PHRASE_SETS.find(g => g.items.some(p => p.tr === tr)) || {}).id;
+      const firstTopics = memTopicPool().slice(0, PHRASE_SETS.length).map(c => topic(c.tr));   // порядок новых: по кругу из разных тем
+      const d = memDay(); d.newN = 10; memSaveDay(d); const none = memPlan().fresh.length; d.extra = 5; memSaveDay(d); const more = memPlan().fresh.length;
+      setMode('pairs'); return [!!prod && prod.ru, plan.fresh.length, new Set(firstTopics).size === PHRASE_SETS.length, none, more]; });
+    eq(r, ['Счёт, пожалуйста.', 10, true, 0, 5]);
+  });
+  await test('«Память» помещается: знакомство, вопрос и ответ с оценками и разбором речи на 360×640 и 390×844', async () => {
+    const q = await openPage(browser); const bad = [];
+    for(const [w, h] of [[360, 640], [390, 844]]){
+      await q.setViewportSize({ width:w, height:h });
+      const x = await q.evaluate(async () => { const now = Date.now(); const res = [];
+        const check = name => { autofit(); const card = document.getElementById('card'); const kids = [...card.children].filter(e => e.offsetParent); let overlap = false;
+          for(let i = 0; i + 1 < kids.length; i++) if(kids[i].getBoundingClientRect().bottom > kids[i+1].getBoundingClientRect().top + 1) overlap = true;
+          const cut = ['target', 'meaning', 'result'].filter(id => { const e = document.getElementById(id); return e.scrollHeight > e.clientHeight + 1; });
+          if(overlap || cut.length || card.scrollHeight > card.clientHeight + 1) res.push(name + ' ' + JSON.stringify({ overlap, cut, scroll: card.scrollHeight - card.clientHeight })); };
+        saveCards([]); localStorage.removeItem('soyle-memday'); setMode('memory'); await new Promise(z => setTimeout(z, 100)); check('знакомство');
+        saveCards([{ ...newMemCard('Kendinizi nasıl hissediyorsunuz?', 'кендинизи насыл хиссэдийорсунуз', 'Как вы себя чувствуете?', 'prod', now), due:now - 1 }]); mem = null; memNext(); await new Promise(z => setTimeout(z, 50)); check('вопрос');
+        window.__say = 'kendinizi nasıl hisediyorsunuz'; startListening(); await new Promise(z => setTimeout(z, 200)); check('ответ');
+        setMode('pairs'); return res; });
+      bad.push(...x.map(s => `${w}x${h} ${s}`));
+    }
+    await q.context().close(); eq(bad, []);
   });
 
   console.log('«На слух» и блиц: фразы; честный блиц; медали достижений');
