@@ -31,6 +31,7 @@
   --accent:#0F5C5A; --accent-ink:#0B4644; --accent-soft:#DCEBE8; --tulip:#C62F35; --tulip-ink:#9E2328; --tulip-soft:#F7E1E0;
   --ok:#0B4644; --ok-soft:#DCEBE8; --bad:#9E2328; --bad-soft:#F7E1E0; --near:#7A5200; --near-soft:#F3E8CF;
   --on-accent:#FBFCFB;
+  --gold:#B8892B; --gold-ink:#3A2A06;   /* позолота — только легендарные достижения */
   --display:"Soyle Serif", "Liberation Serif", "Times New Roman", serif;
   --body:"Soyle Sans", "DejaVu Sans", Verdana, sans-serif;
   --mono:"Soyle Sans", "DejaVu Sans", Verdana, sans-serif;
@@ -42,6 +43,7 @@
     --accent:#5DB3AA; --accent-ink:#8ED3CB; --accent-soft:#16332F; --tulip:#F0676C; --tulip-ink:#F59A9E; --tulip-soft:#3A1D1F;
     --ok:#8ED3CB; --ok-soft:#16332F; --bad:#F59A9E; --bad-soft:#3A1D1F; --near:#E7BB5C; --near-soft:#3A3018;
     --on-accent:#0E1719;
+    --gold:#D9AE4E; --gold-ink:#2A1E04;
     color-scheme:dark;
   }
 }
@@ -556,6 +558,51 @@ h1 span{color:inherit}
 .ex-txt{display:flex; flex-direction:column; gap:2px; min-width:0}
 .ex-txt b{font:700 18px/1.3 var(--display); color:var(--ink)}
 .ex-txt small{font-size:14px; color:var(--ink-2)}
+
+/* «На слух»: фразы */
+#listenCard.phr .ls-opt{padding:12px 10px; justify-content:center}
+#listenCard.phr .ls-opt b{font-size:max(17px, calc(var(--fit) * clamp(19px, 3vh, 25px))); line-height:1.22; text-wrap:balance; overflow-wrap:anywhere}
+#listenCard.phr .ls-opt small{font-size:13px; line-height:1.3}
+.dw{text-decoration:underline 2px var(--tulip); text-underline-offset:4px}
+#listenCard .ls-opt{transition:opacity .15s}
+#listenCard.wait .ls-opt{opacity:.55}
+.penalty{font-weight:700; color:var(--bad); font-variant-numeric:tabular-nums; white-space:nowrap}
+
+/* Достижения: медали по редкости (круг — обычное, восьмигранник — редкое, сельджукская звезда — легендарное) */
+.badge-next{margin:-4px 0 12px; font-size:14px; color:var(--ink-2)}
+.badge-grid{grid-template-columns:repeat(auto-fill, minmax(88px, 1fr)); gap:14px 6px}
+#badgeGrid .badge b{overflow-wrap:normal; hyphens:manual; text-wrap:balance}   /* без разрыва слова посередине («Неудержим ый») */
+button.badge{font:inherit; color:inherit; cursor:pointer; border-radius:12px; min-height:44px; touch-action:manipulation}
+button.badge:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+button.badge:hover .medal svg{transform:translateY(-2px)}
+.badge small{font-variant-numeric:tabular-nums; color:var(--muted)}
+.medal{position:relative; display:grid; place-items:center; width:64px; height:64px; flex:none}
+.medal svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible; transition:transform .15s}
+.medal i{position:relative; font:700 21px/1 var(--display); font-style:normal; color:var(--on-accent); letter-spacing:-.01em}
+.medal i.long{font-size:14px}
+.medal .m-fill{fill:var(--accent)}
+.medal.t2 .m-fill{fill:var(--ink)}
+.medal.t3 .m-fill{fill:var(--gold)}
+.medal .m-line{fill:none; stroke:var(--on-accent); stroke-opacity:.45; stroke-width:1.5}
+.medal.t2 .m-line{stroke:var(--gold); stroke-opacity:.9}
+.medal.t3 .m-line{stroke:var(--gold-ink); stroke-opacity:.5}
+.medal.t2 i{color:var(--surface)}
+.medal.t3 i{color:var(--gold-ink)}
+.medal.off .m-off{fill:var(--surface)}
+.medal.off .m-water{fill:var(--accent-soft)}
+.medal.off .m-edge{fill:none; stroke:var(--line); stroke-width:2}
+.medal.off i{color:var(--muted)}
+.medal.big{width:112px; height:112px}
+.medal.big i{font-size:36px} .medal.big i.long{font-size:24px}
+.badge-card{display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; padding:4px 0 8px}
+.bc-d{margin:6px 0 0; font-size:17px; color:var(--ink)}
+.bc-m{margin:0; font-size:14px; color:var(--muted); font-variant-numeric:tabular-nums}
+.bc-prog{width:min(240px, 80%); height:8px; border-radius:4px; background:var(--accent-soft); overflow:hidden}
+.bc-prog i{display:block; height:100%; background:var(--accent)}
+.modal-medal{display:grid; place-items:center; margin-bottom:6px}
+.modal-medal .medal{animation:medalin .5s ease-out}
+@keyframes medalin{0%{transform:scale(.6) rotate(-12deg); opacity:0} 70%{transform:scale(1.06) rotate(2deg); opacity:1} 100%{transform:none}}
+@media (prefers-reduced-motion: reduce){ .modal-medal .medal{animation:none} .medal svg, #listenCard .ls-opt{transition:none} }
 </style>
 </head>
 <body>
@@ -677,11 +724,12 @@ h1 span{color:inherit}
       <div class="pv-week" id="gbWeek" aria-label="Занятия за 7 дней"></div>
       <div class="pv-tiles">
         <div class="pv-tile"><span>Цель дня</span><b id="gbGoalTxt">0 / 20</b><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
-        <div class="pv-tile"><span>Рекорд блица</span><b id="gbBlitz">0</b><span>верных за минуту</span></div>
+        <div class="pv-tile"><span>Рекорд блица</span><b id="gbBlitz">0</b><span id="gbBlitzSub">слов за минуту</span></div>
       </div>
       <div class="pv-quest" id="gbQuest"><span class="pv-sub">Задание дня · +50 XP</span><b id="gbQuestTxt"></b></div>
 
       <div class="pv-head"><h2>Достижения</h2><span id="badgeCount">0 / 0</span></div>
+      <p class="badge-next" id="badgeNext" hidden></p>
       <div class="badge-grid" id="badgeGrid"></div>
 
       <div class="pv-head"><h2>Статистика</h2></div>
@@ -754,7 +802,7 @@ h1 span{color:inherit}
 </div>
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-box">
-    <div class="modal-ic" id="modalIc" lang="tr" translate="no"></div>
+    <div class="modal-medal" id="modalMedal" hidden></div><div class="modal-ic" id="modalIc" lang="tr" translate="no"></div>
     <h3 id="modalTitle"></h3>
     <p id="modalText"></p>
     <div class="modal-stats" id="modalStats"></div>
@@ -1059,6 +1107,7 @@ function errsHtml(words){
 let lastGain = 0;
 function celebrate(resEl, n){
   if(n < 90) return;
+  normalizeGame(); game.perfect++; checkBadges();
   resEl.classList.remove("win"); void resEl.offsetWidth; resEl.classList.add("win");
   if(lastGain > 0){ const x = document.createElement("span"); x.className = "xp-pop"; x.textContent = `+${lastGain} XP`; x.setAttribute("aria-hidden", "true"); resEl.appendChild(x); setTimeout(() => x.remove(), 1200); }
   if(resEl.id === "result"){ const t = $("target"); t.classList.add("hit"); setTimeout(() => t.classList.remove("hit"), 1100); }
@@ -1105,6 +1154,16 @@ function renderChips(){
       + `<button class="chip set" data-s="mine" aria-pressed="${setId==="mine"}">мои (${loadList("soyle-mine").length})</button>`;
     chips.querySelectorAll(".chip[data-s]").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
     $("kindChip").onclick = () => setKind(true);
+    return;
+  }
+  if(mode==="listen"){                     // «На слух»: слова (пары звуков) или фразы по темам
+    const phr = lsKind === "phrases";
+    const opts = phr ? [{id:"all",label:"все темы"}, ...PHRASE_SETS.map(g => ({id:g.id,label:g.label}))] : [...GROUPS.map(g=>({id:g.id,label:g.label})), {id:"mix",label:"вперемешку"}];
+    const sel = phr ? lsTopic : groupId;
+    chips.innerHTML = `<button class="chip set kind" id="lsKindChip" aria-pressed="${phr}" title="${phr ? "Различать слова" : "Различать фразы"}">фразы</button>`
+      + opts.map(g => `<button class="chip${phr ? " set" : ""}" data-g="${g.id}" aria-pressed="${g.id===sel}">${g.label}</button>`).join("");
+    chips.querySelectorAll(".chip[data-g]").forEach(b => b.onclick = () => { if(phr) lsTopic = b.dataset.g; else groupId = b.dataset.g; renderChips(); nextListen(); });
+    $("lsKindChip").onclick = () => setLsKind(phr ? "words" : "phrases");
     return;
   }
   const all = [...GROUPS.map(g=>({id:g.id,label:g.label})), {id:"mix",label:"вперемешку"}];
@@ -1399,7 +1458,7 @@ function setResult(kind, verdict, extra="", score){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"free",label:"любая фраза"}];
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"ph-native",label:"с записями"}, {id:"ph-srs",label:"на сегодня"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"listenph",label:"на слух: фразы"}, {id:"free",label:"любая фраза"}];
   const used = rows.filter(r => (stats[r.id]||{}).t);
   if(!used.length){ $("stats").innerHTML = `<p class="hint" style="text-align:left">Здесь появится ваш прогресс по каждому набору.</p>`; return; }
   $("stats").innerHTML = used.map(r => {
@@ -1415,7 +1474,7 @@ function count(gid, okScore){
   s.t++; s.ok += okScore; save(); renderStats();
   const xp0 = game.xp; award(okScore, gid); lastGain = game.xp - xp0;
   if(gid !== "free") lessonStep(okScore);
-  if(gid !== "free" && gid !== "listen" && item) srsUpdate(okScore);
+  if(gid !== "free" && gid !== "listen" && gid !== "listenph" && item) srsUpdate(okScore);
   renderLesson();
 }
 
@@ -1423,18 +1482,19 @@ function count(gid, okScore){
 const GOAL = 20;
 const TESTMODE = !!window.SOYLE_TEST;
 // вес опыта по трудности: выбрать из двух — 0,4; произнести — 1; своя фраза, которую понял носитель, — 1,5
-const XP_WEIGHT = { listen:0.4, free:1.5 };
+const XP_WEIGHT = { listen:0.4, listenph:0.4, free:1.5 };   // фразы на слух — тоже выбор из двух
 let SURPRISE_P = TESTMODE ? 0 : 0.07;        // шанс неожиданного бонуса за верный ответ
 let MILESTONE_MODALS = !TESTMODE;            // окна-праздники: новый уровень, цель дня
 let LESSON_SIZE = TESTMODE ? 1e9 : 10;       // заданий в уроке
 let game = (() => { try { return JSON.parse(localStorage.getItem("soyle-game")) || {}; } catch(e){ return {}; } })();
 // недостающие поля (старые сохранения, сбой хранилища) всегда дополняются значениями по умолчанию
-const GAME_DEFAULTS = () => ({ xp:0, streak:0, lastDay:"", today:"", todayOk:0, combo:0, bestCombo:0, total:0, goals:0, blitzBest:0, badges:[], quest:null, freezes:0, days:[], frozenDays:[], lessons:0 });
+const GAME_DEFAULTS = () => ({ xp:0, streak:0, lastDay:"", today:"", todayOk:0, combo:0, bestCombo:0, total:0, goals:0, blitzBest:0, blitzBestPh:0, badges:[], badgeDates:{}, perfect:0, quest:null, freezes:0, days:[], frozenDays:[], lessons:0 });
 function normalizeGame(){
   game = Object.assign(GAME_DEFAULTS(), game || {});
   if(!Array.isArray(game.badges)) game.badges = [];
   if(!Array.isArray(game.days)) game.days = [];
   if(!Array.isArray(game.frozenDays)) game.frozenDays = [];
+  if(!game.badgeDates || typeof game.badgeDates !== "object" || Array.isArray(game.badgeDates)) game.badgeDates = {};
 }
 normalizeGame();
 const dayStr = d => d.toISOString().slice(0,10);
@@ -1502,6 +1562,7 @@ function renderGame(){
   const part = Math.min(1, Math.max(0, (game.xp - prev) / (next - prev)));
   $("gbLevelRing").style.strokeDashoffset = 263.9 * (1 - part); $("gbLevel2").textContent = L;
   $("gbBlitz").textContent = game.blitzBest;
+  $("gbBlitzSub").textContent = `слов за минуту · фраз: ${game.blitzBestPh || 0}`;
   $("gbFreeze").textContent = game.freezes;
   const wd = ["вс","пн","вт","ср","чт","пт","сб"];
   $("gbWeek").innerHTML = Array.from({ length:7 }, (_, i) => {
@@ -1529,7 +1590,9 @@ const modalQueue = []; let modalOpen = false;
 function showModal(o){
   if(modalOpen){ modalQueue.push(o); return; }
   modalOpen = true;
-  $("modalIc").textContent = o.ic || "Aferin!"; $("modalTitle").textContent = o.title || ""; $("modalText").textContent = o.text || "";
+  $("modalIc").textContent = o.ic || "Aferin!";
+  $("modalMedal").innerHTML = o.medal ? medalHtml(o.medal, true, true) : ""; $("modalMedal").hidden = !o.medal;
+  $("modalTitle").textContent = o.title || ""; $("modalText").textContent = o.text || "";
   $("modalStats").innerHTML = (o.stats || []).map(([l, v]) => `<div class="ms"><b>${esc(String(v))}</b><span>${esc(l)}</span></div>`).join("");
   const P = $("modalPrimary"), S = $("modalSecondary");
   P.textContent = (o.primary && o.primary.label) || "Дальше";
@@ -1598,7 +1661,7 @@ const rankOf = L => RANKS[Math.min(L - 1, RANKS.length - 1)];
 
 // ---------- задание дня (меняется каждый день, +50 XP) ----------
 const QUESTS = [
-  { t:"5 верных «На слух»", gids:["listen"], n:5 },
+  { t:"5 верных «На слух»", gids:["listen", "listenph"], n:5 },
   { t:"5 верных фраз «ресторан»", gids:["ph-food"], n:5 },
   { t:"10 верных в «Звуках»", gids:["o","u","i","c"], n:10 },
   { t:"5 верных фраз «отель»", gids:["ph-hotel"], n:5 },
@@ -1628,35 +1691,68 @@ function questProgress(score, gid){
 }
 
 // ---------- достижения ----------
+// Достижения (навык gamification-loops: «награда за достижение, а не за действие», «редкость по усилию»,
+// «информационная награда — видимый прогресс»). v — текущее значение, n — цель, tier — редкость:
+// 1 обычное (круг, бирюза), 2 редкое (восьмигранник, чернила), 3 легендарное (сельджукская звезда, позолота).
+const SOK = (s, k) => (s[k] || {}).ok || 0;   // верных ответов в наборе
 const BADGES = [
-  { id:"first", ic:"1", tone:"t-accent", t:"Первое слово",   d:"Первый верный ответ",             ok:g => g.total >= 1 },
-  { id:"warm", ic:"10", tone:"", t:"Разогрев",       d:"10 верных ответов",               ok:g => g.total >= 10 },
-  { id:"hundred", ic:"100", tone:"t-tulip", t:"Сотня",          d:"100 верных ответов",              ok:g => g.total >= 100 },
-  { id:"combo5", ic:"×5", tone:"t-accent", t:"Серия ×5",       d:"5 верных подряд",                 ok:g => g.bestCombo >= 5 },
-  { id:"combo15", ic:"×15", tone:"t-tulip", t:"Неудержимый",    d:"15 верных подряд",                ok:g => g.bestCombo >= 15 },
-  { id:"streak3", ic:"3д", tone:"", t:"Три дня",        d:"Занятия 3 дня подряд",            ok:g => g.streak >= 3 },
-  { id:"streak7", ic:"7д", tone:"t-accent", t:"Неделя",         d:"Занятия 7 дней подряд",           ok:g => g.streak >= 7 },
-  { id:"goal", ic:"20", tone:"t-tulip", t:"В цель",         d:"Выполнить цель дня",              ok:g => g.goals >= 1 },
-  { id:"quest", ic:"+50", tone:"", t:"Охотник",        d:"Выполнить задание дня",           ok:g => g.quest && g.quest.done },
-  { id:"ear", ic:"A·B", tone:"t-accent", t:"Турецкое ухо",   d:"20 верных «На слух»",             ok:(g,s) => (s.listen||{}).ok >= 20 },
-  { id:"blitz10", ic:"0:60", tone:"", t:"Молния",         d:"10 верных за один блиц",          ok:g => g.blitzBest >= 10 },
-  { id:"blitz20", ic:"0:60", tone:"t-tulip", t:"Гроза",          d:"20 верных за один блиц",          ok:g => g.blitzBest >= 20 },
-  { id:"o", ic:"ö", tone:"",  t:"Мастер ö",       d:"15 верных в паре o · ö",          ok:(g,s) => (s.o||{}).ok >= 15 },
-  { id:"u", ic:"ü", tone:"t-accent",  t:"Мастер ü",       d:"15 верных в паре u · ü",          ok:(g,s) => (s.u||{}).ok >= 15 },
-  { id:"i", ic:"ı", tone:"t-tulip",  t:"Мастер ı",       d:"15 верных в паре ı · i",          ok:(g,s) => (s.i||{}).ok >= 15 },
-  { id:"hotel", ic:"otel", tone:"", t:"Гость отеля",    d:"10 верных фраз «отель»",          ok:(g,s) => (s["ph-hotel"]||{}).ok >= 10 },
-  { id:"food", ic:"afiyet", tone:"t-accent", t:"Afiyet olsun",   d:"10 верных фраз «ресторан»",       ok:(g,s) => (s["ph-food"]||{}).ok >= 10 },
-  { id:"free", ic:"söz", tone:"t-tulip", t:"Меня поняли",    d:"5 фраз в «Свободно»",             ok:(g,s) => (s.free||{}).ok >= 5 },
-  { id:"memory", ic:"1·3·7", tone:"", t:"Память слона",   d:"10 повторений «на сегодня»",      ok:(g,s) => (s["ph-srs"]||{}).ok >= 10 },
-  { id:"level5", ic:"6", tone:"t-accent", t:"Стамбулец",      d:"Достичь 6-го уровня",             ok:g => levelOf(g.xp) >= 6 },
-  { id:"lesson1", ic:"10", tone:"t-tulip", t:"Первый урок",    d:"Пройти урок из 10 заданий",       ok:g => g.lessons >= 1 },
-  { id:"lesson10", ic:"×10", tone:"", t:"Прилежный",      d:"Пройти 10 уроков",                ok:g => g.lessons >= 10 },
+  { id:"first",   ic:"1",     tier:1, t:"Первое слово",   d:"Первый верный ответ",                  v:g => g.total, n:1 },
+  { id:"warm",    ic:"10",    tier:1, t:"Разогрев",       d:"10 верных ответов",                    v:g => g.total, n:10 },
+  { id:"hundred", ic:"100",   tier:2, t:"Сотня",          d:"100 верных ответов",                   v:g => g.total, n:100 },
+  { id:"combo5",  ic:"×5",    tier:1, t:"Серия ×5",       d:"5 верных подряд",                      v:g => g.bestCombo, n:5 },
+  { id:"combo15", ic:"×15",   tier:3, t:"Неудержимый",    d:"15 верных подряд",                     v:g => g.bestCombo, n:15 },
+  { id:"streak3", ic:"3",     tier:1, t:"Три дня",        d:"Занятия 3 дня подряд",                 v:g => g.streak, n:3 },
+  { id:"streak7", ic:"7",     tier:2, t:"Неделя",         d:"Занятия 7 дней подряд",                v:g => g.streak, n:7 },
+  { id:"goal",    ic:"20",    tier:1, t:"В цель",         d:"Выполнить цель дня",                   v:g => g.goals, n:1 },
+  { id:"quest",   ic:"+50",   tier:1, t:"Охотник",        d:"Выполнить задание дня",                v:g => g.quest && g.quest.done ? 1 : 0, n:1 },
+  { id:"lesson1", ic:"10",    tier:1, t:"Первый урок",    d:"Пройти урок из 10 заданий",            v:g => g.lessons, n:1 },
+  { id:"ear",     ic:"A·B",   tier:2, t:"Турецкое ухо",   d:"20 верных слов «На слух»",             v:(g,s) => SOK(s,"listen"), n:20 },
+  { id:"earph",   ic:"söz",   tier:2, t:"Слышу фразы",    d:"20 верных фраз «На слух»",             v:(g,s) => SOK(s,"listenph"), n:20 },
+  { id:"blitz10", ic:"0:60",  tier:2, t:"Молния",         d:"10 слов за один блиц",                 v:g => g.blitzBest, n:10 },
+  { id:"blitzph", ic:"0:60",  tier:2, t:"Скороговорка",   d:"8 фраз за один блиц",                  v:g => g.blitzBestPh, n:8 },
+  { id:"blitz20", ic:"20",    tier:3, t:"Гроза",          d:"20 слов за один блиц",                 v:g => g.blitzBest, n:20 },
+  { id:"o",       ic:"ö",     tier:2, t:"Мастер ö",       d:"15 верных в паре o · ö",               v:(g,s) => SOK(s,"o"), n:15 },
+  { id:"u",       ic:"ü",     tier:2, t:"Мастер ü",       d:"15 верных в паре u · ü",               v:(g,s) => SOK(s,"u"), n:15 },
+  { id:"i",       ic:"ı",     tier:2, t:"Мастер ı",       d:"15 верных в паре ı · i",               v:(g,s) => SOK(s,"i"), n:15 },
+  { id:"c",       ic:"ç",     tier:2, t:"Мастер ç",       d:"15 верных в паре c · ç · ş",           v:(g,s) => SOK(s,"c"), n:15 },
+  { id:"sounds",  ic:"öüıç",  tier:3, t:"Все звуки",      d:"Мастер всех четырёх пар звуков",       v:(g,s) => ["o","u","i","c"].filter(k => SOK(s,k) >= 15).length, n:4 },
+  { id:"clean",   ic:"90+",   tier:2, t:"Чистая речь",    d:"10 раз произнести на 90 и выше",       v:g => g.perfect, n:10 },
+  { id:"hotel",   ic:"otel",  tier:1, t:"Гость отеля",    d:"10 верных фраз «отель»",               v:(g,s) => SOK(s,"ph-hotel"), n:10 },
+  { id:"food",    ic:"afiyet",tier:1, t:"Afiyet olsun",   d:"10 верных фраз «ресторан»",            v:(g,s) => SOK(s,"ph-food"), n:10 },
+  { id:"free",    ic:"söyle", tier:2, t:"Меня поняли",    d:"5 фраз в «Свободно»",                  v:(g,s) => SOK(s,"free"), n:5 },
+  { id:"memory",  ic:"1·3·7", tier:2, t:"Память слона",   d:"10 повторений «на сегодня»",           v:(g,s) => SOK(s,"ph-srs"), n:10 },
+  { id:"level5",  ic:"6",     tier:3, t:"Стамбулец",      d:"Достичь 6-го уровня",                  v:g => levelOf(g.xp), n:6 },
+  { id:"lesson10",ic:"×10",   tier:3, t:"Прилежный",      d:"Пройти 10 уроков",                     v:g => g.lessons, n:10 },
 ];
+BADGES.forEach(b => b.ok = (g, s) => (b.v(g, s) || 0) >= b.n);
+const TIER_NAME = ["", "обычное", "редкое", "легендарное"];
+const badgeFrac = b => Math.max(0, Math.min(1, (b.v(game, stats) || 0) / b.n));
+// медаль: форма по редкости (круг / восьмигранник / восьмиконечная сельджукская звезда из двух квадратов);
+// не получена — контур, а внутри «поднимается вода» до доли прогресса
+function medalPath(tier){
+  const pt = (r, a) => `${(32 + r * Math.cos(a)).toFixed(2)},${(32 + r * Math.sin(a)).toFixed(2)}`;
+  if(tier === 1) return `M32 3a29 29 0 1 0 0.01 0Z`;
+  if(tier === 2) return "M" + [...Array(8)].map((_, k) => pt(29.5, (k * 45 + 22.5) * Math.PI / 180)).join("L") + "Z";
+  return "M" + [...Array(16)].map((_, k) => pt(k % 2 ? 31 * 0.765 : 31, (k * 22.5 - 90) * Math.PI / 180)).join("L") + "Z";
+}
+let medalSeq = 0;
+function medalHtml(b, on, big){
+  const d = medalPath(b.tier), id = "mc" + (++medalSeq), f = on ? 1 : badgeFrac(b);
+  const inner = `<path d="${d}" transform="translate(32 32) scale(.8) translate(-32 -32)" class="m-line"/>`;
+  const body = on ? `<path d="${d}" class="m-fill"/>${inner}`
+    : `<clipPath id="${id}"><path d="${d}"/></clipPath><path d="${d}" class="m-off"/>`
+      + (f > 0 ? `<rect x="0" y="${(64 - 64 * f).toFixed(1)}" width="64" height="64" clip-path="url(#${id})" class="m-water"/>` : "")
+      + `<path d="${d}" class="m-edge"/>`;
+  return `<span class="medal t${b.tier}${on ? "" : " off"}${big ? " big" : ""}" aria-hidden="true"><svg viewBox="0 0 64 64">${body}</svg><i translate="no"${b.ic.length > 3 ? ' class="long"' : ""}>${esc(b.ic)}</i></span>`;
+}
 function checkBadges(){
   normalizeGame();
   BADGES.forEach(b => {
     if(!game.badges.includes(b.id) && b.ok(game, stats)){
-      game.badges.push(b.id); toast(`Достижение: ${b.t}`);
+      game.badges.push(b.id); game.badgeDates[b.id] = dayStr(new Date());
+      // редкость = размер праздника: обычное — уведомление, редкое и легендарное — окно с медалью (во время блица — после него)
+      if(b.tier >= 2) milestone({ ic:b.tier === 3 ? "Efsane!" : "Harika!", medal:b, title:`Достижение: ${b.t}`, text:`${b.d}. Редкость: ${TIER_NAME[b.tier]}.`, primary:{ label:"Отлично!" } }, `Достижение: ${b.t}`);
+      else toast(`Достижение: ${b.t}`);
     }
   });
   try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
@@ -1665,10 +1761,25 @@ function checkBadges(){
 function renderBadges(){
   normalizeGame();
   $("badgeCount").textContent = `${game.badges.length} / ${BADGES.length}`;
-  $("badgeGrid").innerHTML = BADGES.map(b => {
-    const on = game.badges.includes(b.id);
-    return `<div class="badge${on ? (b.tone ? " " + b.tone : "") : " locked"}"><span class="ic${b.ic.length > 3 ? " long" : ""}" aria-hidden="true" translate="no">${esc(b.ic)}</span><span><b>${b.t}</b>${on ? `<span class="sr">получено</span>` : `<small>${b.d}</small>`}</span></div>`;
+  // сначала полученные, затем — ближе всего к получению (видно, к чему идти)
+  const got = BADGES.filter(b => game.badges.includes(b.id)), rest = BADGES.filter(b => !game.badges.includes(b.id)).sort((x, y) => badgeFrac(y) - badgeFrac(x) || x.tier - y.tier);
+  const near = rest.find(b => badgeFrac(b) > 0);
+  $("badgeNext").hidden = !near;
+  if(near) $("badgeNext").textContent = `Ближе всего: «${near.t}» — ${Math.min(near.v(game, stats) || 0, near.n)} из ${near.n}`;
+  $("badgeGrid").innerHTML = [...got, ...rest].map(b => {
+    const on = game.badges.includes(b.id), cur = Math.min(b.v(game, stats) || 0, b.n);
+    return `<button class="badge${on ? "" : " locked"}" data-b="${b.id}" aria-label="${esc(b.t)}: ${on ? "получено" : `${cur} из ${b.n}`}">${medalHtml(b, on)}<b>${b.t}</b><small>${on ? TIER_NAME[b.tier] : `${cur} / ${b.n}`}</small></button>`;
   }).join("");
+  $("badgeGrid").querySelectorAll(".badge").forEach(el => el.onclick = () => openBadge(el.dataset.b));
+}
+function openBadge(id){
+  const b = BADGES.find(x => x.id === id); if(!b) return;
+  const on = game.badges.includes(b.id), cur = Math.min(b.v(game, stats) || 0, b.n), dt = game.badgeDates[b.id];
+  const when = dt ? new Intl.DateTimeFormat("ru-RU", { day:"numeric", month:"long", year:"numeric" }).format(new Date(dt)) : "";
+  openSheet(b.t, `<div class="badge-card">${medalHtml(b, on, true)}<p class="bc-d">${esc(b.d)}</p>
+    <p class="bc-m">Редкость: ${TIER_NAME[b.tier]}</p>
+    ${on ? `<p class="bc-m">${when ? "Получено " + when : "Получено"}</p>`
+         : `<div class="bc-prog" role="progressbar" aria-valuemin="0" aria-valuemax="${b.n}" aria-valuenow="${cur}"><i style="width:${Math.round(cur / b.n * 100)}%"></i></div><p class="bc-m">${cur} из ${b.n}</p>`}</div>`);
 }
 
 // ---------- праздничный эффект (не показывается при «уменьшить движение») ----------
@@ -2153,9 +2264,10 @@ function sayText(text){
 // Образец: запись носителя, если есть, иначе синтез (случайный голос — разнообразие помогает слуху)
 // Образец звучит всегда: запись носителя, а если её нет или она не загрузилась — синтез.
 // onDone вызывается ровно один раз, даже если телефон «забыл» сообщить о конце речи.
-function playReference(text, onDone, varied){
-  let done = false, guard = null;
-  const finish = () => { if(done) return; done = true; clearTimeout(guard); onDone && onDone(); };
+function playReference(text, onDone, varied, onStart){
+  let done = false, guard = null, st = false;
+  const started = () => { if(!st){ st = true; onStart && onStart(); } };
+  const finish = () => { if(done) return; done = true; clearTimeout(guard); started(); onDone && onDone(); };
   const busy = speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending);
   speechSynthesis && speechSynthesis.cancel();
   const a = $("nativeAudio"); a.pause(); a.onended = null; a.onerror = null;
@@ -2167,7 +2279,7 @@ function playReference(text, onDone, varied){
     setTimeout(() => {
       const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = rate;
       u.onend = finish; u.onerror = finish;
-      speechSynthesis.speak(u);
+      speechSynthesis.speak(u); started();
       guard = setTimeout(finish, 1200 + Array.from(text).length * 140 / rate); // если onend не пришёл
     }, busy ? 150 : 30);
   };
@@ -2179,7 +2291,7 @@ function playReference(text, onDone, varied){
     let fellBack = false;
     const fallback = () => { if(fellBack || done) return; fellBack = true; clearTimeout(guard); speakSynth(); };
     a.onerror = () => { a.onerror = null; fallback(); };
-    a.play().catch(fallback);
+    a.play().then(started, fallback);
     guard = setTimeout(finish, 15000);
     return;
   }
@@ -2197,20 +2309,75 @@ function echo(){
 // ---------- на слух: различение звуков ----------
 let ls = null, lsLocked = false;
 function nextListen(){
-  const p = pickPair();
+  const phr = lsKind === "phrases";
+  const p = phr ? pickPhrasePair() : pickPair();
   const right = Math.random() < .5 ? "A" : "B";
   const words = right === "A" ? [p.target, p.partner] : [p.partner, p.target];
   const means = right === "A" ? [p.meaning, p.partnerMeaning] : [p.partnerMeaning, p.meaning];
-  ls = { answer:p.target, right, gid:p.gid };
+  const cur = ls = { answer:p.target, right, gid:p.gid, phrase:phr };
   item = { target:p.target, gid:p.gid, meaning:p.meaning };
-  $("lsA").innerHTML = `<b lang="tr" translate="no">${markDiff(words[0], words[1], true)}</b><small>${esc(means[0])}</small>`;
-  $("lsB").innerHTML = `<b lang="tr" translate="no">${markDiff(words[1], words[0], true)}</b><small>${esc(means[1])}</small>`;
+  const mark = (a, b) => phr ? diffWords(a, b) : markDiff(a, b, true);
+  $("lsA").innerHTML = `<b lang="tr" translate="no">${mark(words[0], words[1])}</b><small>${esc(means[0])}</small>`;
+  $("lsB").innerHTML = `<b lang="tr" translate="no">${mark(words[1], words[0])}</b><small>${esc(means[1])}</small>`;
   $("lsA").className = $("lsB").className = "ls-opt";
-  lsLocked = false;
+  $("listenCard").classList.toggle("phr", phr);
+  // Блиц: выбрать можно, только когда звук пошёл (было: частые нажатия наугад давали ~50% и рекорд без слушания —
+  // «доминирующая стратегия», навык game-design). Страховка 2 с — если звук так и не начался.
+  lsLocked = !!blitz;
+  const open = () => { if(ls === cur){ lsLocked = false; $("listenCard").classList.remove("wait"); } };
+  $("listenCard").classList.toggle("wait", lsLocked);
+  if(lsLocked) setTimeout(open, 2000);
+  scheduleFit();
+  if(phr){   // у фраз тем записи известны заранее (Common Voice / Tatoeba) — ждём их, чтобы звучал носитель, а не синтез
+    Promise.race([findRecordings(ls.answer), new Promise(z => setTimeout(z, 1200))])
+      .then(() => { if(ls === cur) setTimeout(() => playReference(cur.answer, null, true, open), 150); });
+    return;
+  }
   // подгружаем записи обоих слов, играем после короткой паузы
   findRecordings(words[0]); findRecordings(words[1]);
-  scheduleFit();
-  setTimeout(() => playReference(ls.answer, null, true), 300);
+  setTimeout(() => playReference(ls.answer, null, true, open), 300);
+}
+// ---------- «На слух»: фразы (выбор между двумя похожими фразами с записью носителя) ----------
+let lsKind = (() => { try { return localStorage.getItem("soyle-lskind") === "phrases" ? "phrases" : "words"; } catch(e){ return "words"; } })();
+let lsTopic = "all";
+function setLsKind(k){
+  if(blitz) endBlitz(true);                                       // рекорды слов и фраз раздельные — блиц не смешиваем
+  lsKind = k; try { localStorage.setItem("soyle-lskind", k); } catch(e){}
+  lsLabels(); renderChips(); nextListen();
+}
+function lsLabels(){
+  const phr = lsKind === "phrases";
+  document.querySelector("#listenCard .ls-q").textContent = phr ? "Какая фраза прозвучала?" : "Какое слово прозвучало?";
+  $("lsBlitz").title = phr ? "Сколько фраз различите за 60 секунд" : "Сколько пар различите за 60 секунд";
+  if(!blitz && $("lsResult").classList.contains("info"))
+    $("lsResult").innerHTML = `<span class="verdict">Послушайте и выберите ${phr ? "фразу, которая прозвучала" : "слово, которое прозвучало"}.</span>`;
+}
+const phWords = t => nphr(t).split(" ").filter(Boolean);
+function phraseSim(a, b){                                          // похожесть: общие слова + общие пары букв
+  const A = new Set(phWords(a)), B = new Set(phWords(b));
+  const inter = [...A].filter(w => B.has(w)).length, words = inter / (new Set([...A, ...B]).size || 1);
+  const bi = t => { const x = nphr(t).replace(/ /g, "_"), m = new Map(); for(let i = 0; i + 1 < x.length; i++){ const k = x.slice(i, i + 2); m.set(k, (m.get(k) || 0) + 1); } return m; };
+  const ba = bi(a), bb = bi(b); let common = 0, na = 0, nb = 0;
+  ba.forEach((v, k) => { na += v; common += Math.min(v, bb.get(k) || 0); }); bb.forEach(v => nb += v);
+  return words + (na + nb ? 2 * common / (na + nb) : 0) * 0.5;
+}
+function lsPhrasePool(topic){
+  return PHRASE_SETS.filter(g => topic === "all" || g.id === topic).flatMap(g => g.items.map(p => ({ tr:p.tr, ru:p.ru, topic:g.id })));
+}
+function pickPhrasePair(){
+  const pool = lsPhrasePool(lsTopic), all = lsPhrasePool("all");
+  let p, guard = 0;
+  do { p = pool[Math.floor(Math.random() * pool.length)]; } while(p.tr === lastKey && pool.length > 1 && ++guard < 10);
+  lastKey = p.tr;
+  // соперник — самая похожая фраза (сначала из той же темы), случайно из трёх лучших; не та же фраза и не тот же перевод
+  const rank = list => list.filter(q => nphr(q.tr) !== nphr(p.tr) && q.ru !== p.ru).map(q => [phraseSim(p.tr, q.tr), q]).sort((x, y) => y[0] - x[0]);
+  let r = rank(pool); if(r.length < 3) r = rank(all);
+  const q = r.slice(0, 3)[Math.floor(Math.random() * Math.min(3, r.length))][1];
+  return { target:p.tr, meaning:p.ru, partner:q.tr, partnerMeaning:q.ru, gid:"listenph" };
+}
+function diffWords(a, b){                                          // слова, которых нет в другой фразе, подчёркнуты
+  const B = new Set(phWords(b));
+  return a.split(/(\s+)/).map(w => /^\s+$/.test(w) || !w ? w : B.has(nphr(w)) ? esc(w) : `<span class="dw">${esc(w)}</span>`).join("");
 }
 function answerListen(which){
   if(!ls || lsLocked) return;
@@ -2221,19 +2388,27 @@ function answerListen(which){
   const r = $("lsResult");
   r.className = "result " + (ok ? "ok" : "bad");
   r.innerHTML = `<span class="verdict">${ok ? "Верно!" : "Нет, прозвучало «" + esc(ls.answer) + "»"}</span>`;
-  count("listen", ok ? 1 : 0);
-  if(blitz){ blitz.ok += ok ? 1 : 0; blitz.total++; updateBlitzBtn(); }
+  count(ls.phrase ? "listenph" : "listen", ok ? 1 : 0);
+  if(blitz){
+    blitz.ok += ok ? 1 : 0; blitz.total++;
+    if(!ok){ blitz.left = Math.max(0, blitz.left - BLITZ_PENALTY); r.innerHTML += ` <span class="penalty">−${BLITZ_PENALTY} с</span>`; }  // ошибка стоит времени: угадывание не выгодно
+    updateBlitzBtn();
+  }
   clearTimeout(lsNextTimer);
   lsNextTimer = setTimeout(nextListen, blitz ? (ok ? 350 : 900) : (ok ? 900 : 2000));
+  if(blitz && blitz.left <= 0) endBlitz();
 }
 
-let blitz = null, BLITZ_SEC = 60, lsNextTimer = null;
+let blitz = null, BLITZ_SEC = 60, BLITZ_PENALTY = 3, lsNextTimer = null;
+const BLITZ_BONUS = { words:2, phrases:3 };   // фразы длиннее — за минуту их меньше; бонус выше, чтобы ни один вид не был выгоднее (оценка: ~2 с на слово, ~3 с на фразу)
 function setOptionsEnabled(on){ $("lsA").disabled = $("lsB").disabled = !on; }
 function startBlitz(){
   if(blitz) return;
   clearTimeout(lsNextTimer); setOptionsEnabled(true);
-  blitz = { ok:0, total:0, left:BLITZ_SEC };
+  blitz = { ok:0, total:0, left:BLITZ_SEC, kind:lsKind };
   $("lsBlitz").classList.add("running"); updateBlitzBtn();
+  $("lsResult").className = "result info";
+  $("lsResult").innerHTML = `<span class="verdict">${BLITZ_SEC} секунд. Выбирайте, когда зазвучит${lsKind === "phrases" ? " фраза" : " слово"}; ошибка отнимает ${BLITZ_PENALTY} с.</span>`;
   blitz.timer = setInterval(() => { blitz.left--; updateBlitzBtn(); if(blitz.left <= 0) endBlitz(); }, 1000);
   nextListen();
 }
@@ -2242,23 +2417,24 @@ function endBlitz(quiet){
   if(!blitz) return;
   normalizeGame();
   clearInterval(blitz.timer); clearTimeout(lsNextTimer);   // больше никаких новых слов после конца
-  const got = blitz.ok, total = blitz.total, prevBest = game.blitzBest, record = got > prevBest;
-  if(record) game.blitzBest = got;
+  const kind = blitz.kind || "words", key = kind === "phrases" ? "blitzBestPh" : "blitzBest";
+  const got = blitz.ok, total = blitz.total, prevBest = game[key], record = got > prevBest;
+  if(record) game[key] = got;
   const lvlBefore = levelOf(game.xp);
-  const bonus = got * 2; game.xp += bonus;                   // бонус за блиц: +2 XP за каждый верный
+  const bonus = got * BLITZ_BONUS[kind]; game.xp += bonus;   // бонус за блиц: за каждый верный (слова 2, фразы 3 XP)
   if(levelOf(game.xp) > lvlBefore){ const L = levelOf(game.xp);
     deferred.push({ ic:"Tebrikler!", title:`Уровень ${L}: ${rankOf(L)}`, text:`Бонус за блиц поднял уровень. До следующего ${50 * L * L - game.xp} XP.`, primary:{ label:"Отлично!" } }); }
   blitz = null;
   $("lsBlitz").classList.remove("running"); setLbl($("lsBlitz"), "Блиц 60 с");
   lsLocked = true; setOptionsEnabled(false);
   const r = $("lsResult"); r.className = "result " + (record ? "ok" : "info");
-  r.innerHTML = `<span class="verdict">Блиц окончен: ${got} верных${record ? " — новый рекорд" : ` (рекорд ${game.blitzBest})`}</span>`;
+  r.innerHTML = `<span class="verdict">Блиц окончен: ${got} верных${record ? " — новый рекорд" : ` (рекорд ${game[key]})`}</span>`;
   checkBadges(); renderGame();
   try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
   const resume = () => { lsLocked = false; setOptionsEnabled(true); nextListen(); };
   if(quiet){ lsLocked = false; setOptionsEnabled(true); return; }
   if(record && got > 0) confetti();
-  showModal({ ic: record && got > 0 ? "Rekor!" : "Süre doldu", title: record && got > 0 ? "Новый рекорд блица" : "Блиц окончен",
+  showModal({ ic: record && got > 0 ? "Rekor!" : "Süre doldu", title: (record && got > 0 ? "Новый рекорд блица" : "Блиц окончен") + (kind === "phrases" ? ": фразы" : ""),
     text: record && got > 0 ? (prevBest ? `Прошлый рекорд: ${prevBest}. Вы улучшили его на ${got - prevBest}.` : "Первый рекорд установлен.") : `До рекорда (${prevBest}) не хватило ${prevBest - got + 1}. Ещё раз?`,
     stats:[["верно", got], ["точность", total ? Math.round(got / total * 100) + "%" : "—"], ["XP", "+" + bonus]],
     primary:{ label:"Ещё раз", fn:startBlitz }, secondary:{ label:"Закрыть", fn:resume } });
@@ -2603,7 +2779,7 @@ function setMode(m){
   if(m==="free" || m==="progress"){ $("chips").hidden = true; if(m==="progress"){ renderGame(); renderBadges(); renderStats(); } return; }
   $("chips").hidden = false;
   renderChips();
-  if(m==="listen") return nextListen();
+  if(m==="listen"){ lsLabels(); return nextListen(); }
   next();
 }
 $("tab-pairs").onclick = () => setMode("pairs");

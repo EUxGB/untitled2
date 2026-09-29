@@ -24,6 +24,17 @@ const URL = process.argv[2], OUT = process.argv[3];
         if(card.scrollHeight > card.clientHeight + 1) out.push('card-scroll'); return out; });
       if(cut.length) (info.cuts = info.cuts || []).push(tab + ': ' + cut.join(','));
     }
+    // «На слух» → фразы (выбор между похожими фразами) и медали достижений — на каждом размере
+    try {
+      await p.evaluate(() => { setMode('listen'); setLsKind('phrases'); }); await p.waitForTimeout(2500);
+      const lp = await p.evaluate(() => ({ answer: ls.answer, a: document.querySelector('#lsA b').textContent, b: document.querySelector('#lsB b').textContent,
+        src: (document.getElementById('nativeAudio').src || '').split('/').slice(-2).join('/'),
+        cut: [...document.querySelectorAll('#listenCard .ls-opt')].some(o => o.scrollHeight > o.clientHeight + 1) }));
+      (info.listenPhrases = info.listenPhrases || {})[name] = lp;
+      await p.screenshot({ path:`${OUT}/${name}-listen-phrases.png` });
+      await p.evaluate(() => { setLsKind('words'); setMode('progress'); document.getElementById('badgeGrid').scrollIntoView(); }); await p.waitForTimeout(400);
+      await p.screenshot({ path:`${OUT}/${name}-badges.png` });
+    } catch(e){ info.listenPhrasesError = String(e); }
     // на одном размере — проверить на живом сайте окна «Видео», «Перевод» и набор «живые фразы» (настоящая сеть)
     if(w === 390){
       const live = {};

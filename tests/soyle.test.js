@@ -281,7 +281,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('блиц: таймер, счёт верных, рекорд и достижение', async () => {
     const r = await p.evaluate(async r => { eval(r); BLITZ_SEC = 3; setMode('listen'); startBlitz();
-      for(let i = 0; i < 2; i++){ await new Promise(z => setTimeout(z, 420)); answerListen(ls.right); }
+      // в блице выбрать можно только после начала звука — ждём, пока варианты откроются
+      for(let i = 0; i < 2; i++){ await new Promise(z => setTimeout(z, 60)); for(let k = 0; k < 40 && lsLocked; k++) await new Promise(z => setTimeout(z, 50)); answerListen(ls.right); }
       const during = document.getElementById('lsBlitz').textContent;
       await new Promise(z => setTimeout(z, 3200)); BLITZ_SEC = 60;
       const res = [/^\d:\d\d · верно/.test(during), game.blitzBest, document.getElementById('lsResult').textContent.includes('рекорд'), document.getElementById('lsBlitz').textContent, blitz];
@@ -424,7 +425,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('блиц: праздники (новый уровень) не прерывают блиц, а показываются после итогов', async () => {
     const q = await openPage(browser); await q.clock.install();
     await q.evaluate(() => { MILESTONE_MODALS = true; todayQuest(); game.quest.done = true; game.xp = 48; BLITZ_SEC = 3; setMode('listen'); startBlitz(); });
-    await q.evaluate(() => answerListen(ls.right)); // уровень повышается во время блица
+    await q.clock.runFor(400); await q.evaluate(() => answerListen(ls.right)); // уровень повышается во время блица (варианты открылись со звуком)
     const during = await q.evaluate(() => document.getElementById('modal').hidden);
     await q.clock.runFor(3500);
     const t1 = await q.evaluate(() => document.getElementById('modalTitle').textContent); await q.click('#modalSecondary'); await q.clock.runFor(300);
@@ -628,7 +629,86 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('кольцо уровня и достижения-жетоны без эмодзи', async () => {
     const r = await p.evaluate(() => { game.xp = 125; renderGame(); renderBadges(); const off = parseFloat(document.getElementById('gbLevelRing').style.strokeDashoffset);
       return [document.getElementById('gbLevel2').textContent, off > 100 && off < 200, document.querySelectorAll('#badgeGrid .badge').length, BADGES.every(b => !/\p{Extended_Pictographic}/u.test(b.ic))]; });
-    eq(r, ['2', true, 22, true]);
+    eq(r, ['2', true, 27, true]);
+  });
+
+  console.log('«На слух» и блиц: фразы; честный блиц; медали достижений');
+  await test('«На слух» → «фразы»: две похожие фразы с записью, разный перевод, отличающиеся слова подчёркнуты; выбор запоминается', async () => {
+    const q = await openPage(browser);
+    await q.click('#tab-listen'); await q.click('#lsKindChip');
+    const r = await q.evaluate(() => { const voiced = new Set(PHRASE_SETS.flatMap(g => g.items.map(p => p.tr))); const out = [];
+      for(let i = 0; i < 30; i++){ nextListen(); const a = document.querySelector('#lsA b').textContent, b = document.querySelector('#lsB b').textContent;
+        out.push([voiced.has(a) && voiced.has(b), a !== b, document.querySelector('#lsA small').textContent !== document.querySelector('#lsB small').textContent, phraseSim(a, b) > 0]); }
+      return { ok: out.every(x => x.every(Boolean)), q: document.querySelector('.ls-q').textContent, dw: document.querySelectorAll('#lsA .dw, #lsB .dw').length > 0,
+        saved: localStorage.getItem('soyle-lskind'), chips: [...document.querySelectorAll('#chips .chip[data-g]')].map(c => c.dataset.g).slice(0, 3) }; });
+    await q.click('#chips .chip[data-g="food"]');
+    const topic = await q.evaluate(() => { const food = new Set(PHRASE_SETS.find(g => g.id === 'food').items.map(p => p.tr)); const t = [];
+      for(let i = 0; i < 15; i++){ nextListen(); t.push(food.has(ls.answer)); } return t.every(Boolean); });
+    const ans = await q.evaluate(() => { const s0 = (stats.listenph || {}).ok || 0, srs = localStorage.getItem('soyle-srs'); answerListen(ls.right);
+      return [((stats.listenph || {}).ok || 0) - s0, localStorage.getItem('soyle-srs') === srs, XP_WEIGHT.listenph]; });
+    const errs = q.errors; await q.context().close();
+    eq(r.ok, true); eq(r.q, 'Какая фраза прозвучала?'); eq(r.dw, true); eq(r.saved, 'phrases'); eq(r.chips, ['all', 'basic', 'hotel']);
+    eq(topic, true); eq(ans, [1, true, 0.4]); eq(errs, []);
+  });
+  await test('блиц честный: выбрать можно только после начала звука; ошибка −3 с; рекорды слов и фраз раздельные, бонус фраз 3 XP', async () => {
+    const q = await openPage(browser); await q.clock.install();
+    const r = await q.evaluate(r => { eval(r); window.__noOnEnd = true; setMode('listen'); setLsKind('phrases'); startBlitz();
+      const locked = [lsLocked, document.getElementById('listenCard').classList.contains('wait')]; answerListen('A'); const early = blitz.total;
+      return { locked, early }; }, RESET);
+    await q.clock.runFor(1500);   // фраза: запись/синтез через ~150–300 мс, варианты открываются со звуком
+    const r2 = await q.evaluate(() => { const open = !lsLocked; const left = blitz.left; answerListen(ls.right === 'A' ? 'B' : 'A');
+      return [open, left - blitz.left, document.getElementById('lsResult').textContent.includes('−3 с')]; });
+    await q.clock.runFor(2500);
+    const r3 = await q.evaluate(() => { answerListen(ls.right); const xp = game.xp; endBlitz(true); return [game.blitzBestPh, game.blitzBest, game.xp - xp]; });
+    await q.context().close();
+    eq(r.locked, [true, true]); eq(r.early, 0); eq(r2, [true, 3, true]); eq(r3, [1, 0, 3]);
+  });
+  await test('блиц не смешивает слова и фразы: переключение вида останавливает блиц', async () => {
+    const r = await p.evaluate(() => { setMode('listen'); setLsKind('words'); startBlitz(); setLsKind('phrases'); const out = [blitz, lsKind]; setLsKind('words'); return out; });
+    eq(r, [null, 'phrases']);
+  });
+  await test('медали: у каждой редкость и цель; не полученные — прогресс «7 / 10», впереди ближайшие; касание открывает карточку', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(r => { eval(r); game.total = 7; game.badges = ['first']; setMode('progress');
+      const cards = [...document.querySelectorAll('#badgeGrid .badge')];
+      return { all: BADGES.every(b => [1, 2, 3].includes(b.tier) && b.n > 0 && typeof b.v === 'function'), ids: new Set(BADGES.map(b => b.id)).size === BADGES.length,
+        first: cards[0].dataset.b, second: cards[1].dataset.b, prog: cards[1].querySelector('small').textContent, label: cards[1].getAttribute('aria-label'),
+        next: document.getElementById('badgeNext').textContent, shapes: [...new Set(BADGES.map(b => medalPath(b.tier)))].length,
+        tags: cards.every(c => c.tagName === 'BUTTON') }; }, RESET);
+    await q.click('#badgeGrid .badge[data-b="warm"]');
+    const sheet = await q.evaluate(() => [document.getElementById('sheet').hidden, document.getElementById('sheetTitle').textContent, document.querySelector('.bc-prog').getAttribute('aria-valuenow'), !!document.querySelector('#sheetBody .medal.off .m-water')]);
+    await q.context().close();
+    eq(r.all, true); eq(r.ids, true); eq(r.first, 'first'); eq(r.second, 'warm'); eq(r.prog, '7 / 10'); eq(r.label, 'Разогрев: 7 из 10');
+    eq(r.next, 'Ближе всего: «Разогрев» — 7 из 10'); eq(r.shapes, 3); eq(r.tags, true); eq(sheet, [false, 'Разогрев', '7', true]);
+  });
+  await test('редкая медаль — окно с медалью (после блица — после итогов); обычная — уведомление; дата получения; «Чистая речь» считает 90+', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(r => { eval(r); MILESTONE_MODALS = true; stats.o = { t:15, ok:15 }; checkBadges();
+      const m = [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, !!document.querySelector('#modalMedal .medal.t2')];
+      document.getElementById('modalPrimary').click();
+      game.total = 1; checkBadges(); const t = document.getElementById('toast').textContent;
+      const p0 = game.perfect; celebrate(document.getElementById('result'), 95); celebrate(document.getElementById('result'), 80);
+      return [m, t, game.badgeDates.o === new Date().toISOString().slice(0, 10), game.perfect - p0]; }, RESET);
+    const old = await q.evaluate(() => { game = { xp:10, badges:['first'] }; normalizeGame(); return [typeof game.badgeDates, game.perfect, game.blitzBestPh]; });
+    await q.context().close();
+    eq(r[0], [false, 'Достижение: Мастер ö', true]); eq(r[1], 'Достижение: Первое слово'); eq(r[2], true); eq(r[3], 1); eq(old, ['object', 0, 0]);
+  });
+  await test('фразы «На слух» помещаются: самая длинная пара на 360×640 и 390×844, без наложения и обрезки', async () => {
+    const q = await openPage(browser); const bad = [];
+    for(const [w, h] of [[360, 640], [390, 844]]){
+      await q.setViewportSize({ width:w, height:h });
+      const x = await q.evaluate(async () => { setMode('listen'); setLsKind('phrases');
+        const all = lsPhrasePool('all').sort((a, b) => b.tr.length + b.ru.length - a.tr.length - a.ru.length);
+        const pickPhrasePair0 = pickPhrasePair; pickPhrasePair = () => ({ target:all[0].tr, meaning:all[0].ru, partner:all[1].tr, partnerMeaning:all[1].ru, gid:'listenph' });
+        nextListen(); pickPhrasePair = pickPhrasePair0; await new Promise(z => setTimeout(z, 200)); autofit();
+        const card = document.getElementById('listenCard'), opts = [...card.querySelectorAll('.ls-opt')];
+        const cut = opts.some(o => o.scrollHeight > o.clientHeight + 1 || o.scrollWidth > o.clientWidth + 1);
+        const kids = [...card.children].filter(e => e.offsetParent); let overlap = false;
+        for(let i = 0; i + 1 < kids.length; i++) if(kids[i].getBoundingClientRect().bottom > kids[i+1].getBoundingClientRect().top + 1) overlap = true;
+        setLsKind('words'); return { cut, overlap, scroll: document.scrollingElement.scrollHeight > innerHeight + 1 }; });
+      if(x.cut || x.overlap || x.scroll) bad.push(`${w}x${h} ${JSON.stringify(x)}`);
+    }
+    await q.context().close(); eq(bad, []);
   });
 
   await test('автоподгонка: на низком экране сжимается, на высоком растягивается, прокрутки нет', async () => {
