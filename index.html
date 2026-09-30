@@ -609,7 +609,8 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .tabbar .tab{font-size:clamp(10px, 2.9vw, 11px); letter-spacing:-.01em}
 .tab-n{position:absolute; top:5px; left:calc(50% + 6px); min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--tulip); color:var(--on-accent); font:700 11px/18px var(--body); font-variant-numeric:tabular-nums}
 #card .target.mem-hide{color:var(--muted); letter-spacing:.04em}
-.grades{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; margin-top:10px}
+.grades{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; margin:0}
+.grades[hidden]{display:none}
 .grade{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-height:48px; padding:4px 2px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); font:inherit; touch-action:manipulation; cursor:pointer}
 .grade b{font-size:12.5px; letter-spacing:-.01em} .grade small{font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums}
 .grade:hover{border-color:var(--accent)}
@@ -713,6 +714,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       <div class="result info" id="result" aria-live="polite">
         <span class="verdict">Нажмите «Сказать» и произнесите слово.</span>
       </div>
+      <div class="grades" id="memGrades" role="group" aria-label="Как вспомнили" hidden></div>
       <div class="acts">
         <button class="act native" id="native"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-native"/></svg></span><span class="lbl">Носитель</span></button>
         <button class="act native" id="yg" title="Живые примеры с этим словом: фразы носителей с переводом и записями"><span class="ring"><svg class="ic" aria-hidden="true"><use href="#i-quote"/></svg></span><span class="lbl">Примеры</span></button>
@@ -1268,7 +1270,25 @@ function wordPool(topic){
   if(wordPools[topic]) return wordPools[topic];
   let pool = null; try { pool = JSON.parse(localStorage.getItem("soyle-words-" + topic)); } catch(e){}
   if(!pool || !Array.isArray(pool.items)) pool = { items:(WORD_SEEDS[topic] || []).map(([tr, ru]) => ({ tr, ru, seen:0 })), cat:0, cont:"" };
+  mergePhraseWords(topic, pool);
   return (wordPools[topic] = pool);
+}
+// Слова из фраз темы (просьба: «добавь слова из фраз в изучение слов»): каждое слово фраз с записью носителя,
+// с примером — фразой, откуда оно; значение — из ru-Викисловаря или машинный перевод (при первом показе).
+const PARTICLES = new Set(["mi","mı","mu","mü","de","da","ki","ve","ya"]);
+function phraseWordsOf(topic){
+  const g = PHRASE_SETS.find(x => x.id === topic); if(!g) return [];
+  const out = new Map();
+  g.items.forEach(p => nphr(p.tr).split(" ").forEach(w => { if(WORD_RE.test(w) && !PARTICLES.has(w) && !out.has(w)) out.set(w, p); }));
+  return [...out].map(([tr, p]) => ({ tr, ex:p.tr, exRu:p.ru }));
+}
+function mergePhraseWords(topic, pool){
+  const have = new Set(pool.items.map(w => nphr(w.tr)));
+  phraseWordsOf(topic).forEach(w => {
+    const old = pool.items.find(x => nphr(x.tr) === w.tr);
+    if(old){ if(!old.ex){ old.ex = w.ex; old.exRu = w.exRu; } return; }
+    if(!have.has(w.tr)) pool.items.push({ tr:w.tr, ru:"", seen:0, ex:w.ex, exRu:w.exRu, fromPhrase:true });
+  });
 }
 function saveWordPool(topic){ try { localStorage.setItem("soyle-words-" + topic, JSON.stringify(wordPool(topic))); } catch(e){} }
 function saveWordMeaning(topic, tr, ru){ const w = wordPool(topic).items.find(x => x.tr === tr); if(w){ w.ru = ru; saveWordPool(topic); } }
@@ -1299,11 +1319,13 @@ function pickWord(topic){
   const pool = wordPool(topic); if(!pool.items.length) return null;
   const fresh = pool.items.filter(w => !w.seen && w.tr !== lastKey);
   if(fresh.length < 5) growWords(topic);                    // новых мало — подгружаем ещё (в фоне)
-  const from = fresh.length ? fresh : pool.items.filter(w => w.tr !== lastKey);
+  const fromPh = fresh.filter(w => w.fromPhrase);           // сначала слова из фраз темы — они сразу пригодятся в фразах
+  const from = fromPh.length ? fromPh : fresh.length ? fresh : pool.items.filter(w => w.tr !== lastKey);
   const w = from[Math.floor(Math.random() * from.length)] || pool.items[0];
   w.seen = (w.seen || 0) + 1; saveWordPool(topic); lastKey = w.tr;
   const label = (PHRASE_SETS.find(g => g.id === topic) || {}).label || topic;
-  return { target:w.tr, translit:"", meaning:w.ru || "", tip:`Слово темы «${label}». Новые слова подгружаются сами, по мере изучения.`, gid:"w-" + topic, native:true, word:true, topic };
+  const tip = w.ex ? `Из фразы: «${w.ex}»${w.exRu ? " — " + w.exRu : ""}` : `Слово темы «${label}». Новые слова подгружаются сами, по мере изучения.`;
+  return { target:w.tr, translit:trToCyr(w.tr), meaning:w.ru || "", tip, gid:"w-" + topic, native:true, word:true, topic };
 }
 // русское значение: статья ru-Викисловаря (раздел турецкого языка, «Значение»), иначе машинный перевод
 const ruMeanCache = new Map();
@@ -1907,10 +1929,12 @@ function memPlan(now = Date.now()){
   const ahead = cards.filter(c => c.state !== 2 && (c.s != null || c.seen) && c.due > now && c.due <= now + LEARN_AHEAD).sort((a, b) => a.due - b.due);
   return { cards, day, due:[...due, ...seenDue], fresh, ahead, room };
 }
+const memSkipped = new Set();   // пропущенные без оценки в этом занятии — в очередь последними
 let mem = null;          // { card, phase:"study"|"prompt"|"answer"|"empty", hint:0, said:null, sinceNew:0 }
 function memPick(){
   const p = memPlan(), last = mem && mem.card ? cardKey(mem.card) : "";
-  const due = p.due.filter(c => cardKey(c) !== last || p.due.length === 1);
+  const byKey = list => [...list.filter(c => !memSkipped.has(cardKey(c))), ...list.filter(c => memSkipped.has(cardKey(c)))];
+  const due = byKey(p.due.filter(c => cardKey(c) !== last || p.due.length === 1));
   const since = mem ? mem.sinceNew || 0 : 0;
   // чередование: после 3 повторений — одна новая, пока есть место на сегодня
   if(p.fresh.length && (!due.length || since >= 3)) return { card:p.fresh[0], isNew:true };
@@ -1926,15 +1950,16 @@ function memSetButtons(phase, side){
   const cmp = $("compare"), nx = $("next");
   const prompt = phase === "prompt";
   setLbl(cmp, prompt ? (side === "rec" ? "Текст" : "Буквы") : "Сравнить"); setIc(cmp, prompt ? "help" : "compare"); cmp.disabled = phase === "empty";
-  setLbl(nx, phase === "study" ? "Запомнил" : prompt ? "Показать" : phase === "empty" ? "Ещё 5 новых" : "Оцените");
-  nx.disabled = phase === "answer";
+  setLbl(nx, phase === "study" ? "Запомнил" : prompt ? "Показать" : phase === "empty" ? "Ещё 5 новых" : "Пропустить");
+  nx.disabled = false;
+  if(phase !== "answer"){ $("memGrades").hidden = true; $("memGrades").innerHTML = ""; }
   $("speak").disabled = phase === "empty" || !SR;
   // до ответа «Носитель», «Примеры», «Синтез» выдали бы ответ на «сказать»; на «понять на слух» звук — это и есть вопрос
   const hide = prompt && side === "prod";
   $("native").disabled = hide || phase === "empty"; $("play").disabled = hide || phase === "empty" || !trVoice; $("yg").disabled = prompt || phase === "empty";
 }
 function memRender(){
-  const t = $("target"), c = mem.card, side = c.side;
+  const t = $("target"), c = mem.card, side = c ? c.side : null;   // «На сегодня всё» — карточки нет (было: падение)
   t.classList.add("phrase"); t.classList.remove("mem-hide");
   $("partner").hidden = false; $("partner").textContent = ""; $("nativeStatus").textContent = "";
   memSetButtons(mem.phase, side);
@@ -1964,13 +1989,15 @@ function memRender(){
     if(!c.ru) translateTr(c.tr).then(r => { if(mem && mem.card === c){ c.ru = r; $("meaning").textContent = r; } }).catch(() => {});
     $("tip").textContent = "";
     const now = Date.now(), names = ["Забыл", "Трудно", "Помню", "Легко"];
-    const grades = `<div class="grades" role="group" aria-label="Как вспомнили">${names.map((n, i) => {
+    const grades = `${names.map((n, i) => {
       const g = i + 1, wait = FSRS.review(mem.card, g, now).due - now;
-      return `<button class="grade g${g}${mem.suggest === g ? " suggest" : ""}" data-g="${g}" aria-label="${n}: повторить через ${fmtWait(wait)}"><b>${n}</b><small>${fmtWait(wait)}</small></button>`; }).join("")}</div>`;
+      return `<button class="grade g${g}${mem.suggest === g ? " suggest" : ""}" data-g="${g}" aria-label="${n}: повторить через ${fmtWait(wait)}"><b>${n}</b><small>${fmtWait(wait)}</small></button>`; }).join("")}`;
     const head = mem.said ? mem.said.html : `<span class="verdict">${side === "rec" ? "Вспомнили перевод?" : "Вспомнили, как сказать?"} Оцените честно — от этого зависит, когда фраза вернётся.</span>`;
     const r = $("result");
-    if(mem.said) setResult(mem.said.kind, mem.said.verdict, mem.said.extra + grades, mem.said.score); else { r.className = "result info"; r.innerHTML = head + grades; }
-    $("result").querySelectorAll(".grade").forEach(b => b.onclick = () => memGrade(+b.dataset.g));
+    if(mem.said) setResult(mem.said.kind, mem.said.verdict, mem.said.extra, mem.said.score); else { r.className = "result info"; r.innerHTML = head; }
+    // оценки — в отдельном блоке: микрофон и «Сравнить» пишут в пояснение и больше не стирают их (было: окно без выхода)
+    const gb = $("memGrades"); gb.innerHTML = grades; gb.hidden = false;
+    gb.querySelectorAll(".grade").forEach(b => b.onclick = () => memGrade(+b.dataset.g));
     if(side === "prod") memPlay(c.tr);                                    // обратная связь: правильный ответ голосом носителя
   } else {                                                                // пусто на сегодня
     const p = memPlan(), all = p.cards.filter(x => x.s != null), strong = all.filter(x => x.s >= 21).length;
@@ -2013,7 +2040,14 @@ function memHint(){
 }
 function evalRecall(alts){
   if(!mem || !mem.card) return;
-  if(mem.phase !== "prompt" || mem.card.side !== "prod"){ evalPhrase(alts); return; }   // повторить за носителем — просто произношение
+  if(mem.phase === "prompt" && mem.card.side === "rec"){   // повторили услышанное — показываем ответ и оценки
+    const c = mem.card, { score, ok, total, html } = compareText(c.tr, alts[0]), ps = pronScore(c.tr, alts), [g, label] = gradeOf(ps.score);
+    count("ph-srs", score);
+    mem.said = { kind:g, verdict:`Произношение: ${label} · ${ok} из ${total} слов. Вспомнили перевод? Оцените.`, score:ps.score,
+      extra:`<div class="diff" lang="tr" translate="no">${html}</div>${errsHtml(ps.words)}` };
+    mem.phase = "answer"; memRender(); return;
+  }
+  if(mem.phase !== "prompt" || mem.card.side !== "prod"){ evalPhrase(alts); return; }   // знакомство и ответ: просто произношение, оценки остаются
   const c = mem.card, { score, ok, total, html } = compareText(c.tr, alts[0]);
   const ps = pronScore(c.tr, alts), [g, label] = gradeOf(ps.score);
   count("mem-prod", score);                                              // опыт — по тому, насколько верно сказано по памяти
@@ -2049,9 +2083,11 @@ function memRestoreButtons(){                                           // вн�
   setLbl($("next"), "Дальше"); $("next").disabled = false; $("speak").disabled = !SR;
   $("native").disabled = false; $("yg").disabled = false; $("play").disabled = !trVoice;
   $("target").classList.remove("mem-hide");
+  $("memGrades").hidden = true; $("memGrades").innerHTML = "";
 }
 function memNextBtn(){
   if(!mem) return memNext();
+  if(mem.phase === "answer"){ memSkipped.add(cardKey(mem.card)); return memNext(); }   // без оценки: расписание не меняется, в этом занятии — позже
   if(mem.phase === "study") return memStudied();
   if(mem.phase === "prompt") return memReveal();
   if(mem.phase === "empty"){ const d = memDay(); d.extra = (d.extra || 0) + 5; memSaveDay(d); memNext(); }
@@ -2191,6 +2227,9 @@ function showWarn(t){ const w=$("warn"); w.textContent=t; w.hidden=false; }
 if(!SR){ showWarn("Этот браузер не умеет распознавать речь. Откройте файл в Google Chrome (на компьютере или Android)."); $("speak").disabled = true; }
 
 let myRecFor = null; // слово, к которому относится последняя запись вашего голоса
+// Разрешение на микрофон может так и не прийти (окно запроса на телефоне не закрыто) — не ждём дольше 4 с:
+// распознавание работает и без записи (было: кнопка навсегда «Слушаю…», остановить нельзя — найдено тестом случайных нажатий)
+function recordingReady(){ return Promise.race([startRecording(), new Promise(z => setTimeout(z, 4000))]); }
 async function startRecording(){
   if(!recordOn || !window.MediaRecorder) return;
   const forTarget = mode === "free" ? null : item && item.target;
@@ -2246,11 +2285,15 @@ function stopRecording(){ if(mediaRec && mediaRec.state==="recording") mediaRec.
 
 async function startListening(){
   if(!SR || listening) return;
+  if($("card").hidden || !item) return;          // раздел сменили, пока звучал образец (эхо) — микрофон не открываем
   speechSynthesis && speechSynthesis.cancel();
   listening = true;
   const btn = $("speak"); btn.classList.add("listening"); setLbl(btn, "Слушаю…");
   setResult("info", "Говорите…");
-  await startRecording();
+  const tok = ++listenTok; recStarting = true;
+  await recordingReady();
+  recStarting = false;
+  if(tok !== listenTok || !listening) return;     // остановили, пока ждали микрофон
   recognizer = new SR();
   recognizer.lang = "tr-TR"; recognizer.maxAlternatives = 5;
   recognizer.interimResults = false; recognizer.continuous = false;
@@ -2291,7 +2334,13 @@ async function startListening(){
   };
   try { recognizer.start(); } catch(e){ recognizer.onend(); }
 }
+let listenTok = 0, recStarting = false;
 function stopListening(){
+  if(listening && recStarting){                    // микрофон ещё не открылся — отменяем сразу
+    listenTok++; recStarting = false; listening = false; stopRecording();
+    const btn = $("speak"); btn.classList.remove("listening"); setLbl(btn, "Сказать"); setResult("info", "Остановлено.");
+    return;
+  }
   if(!(recognizer && listening)) return;
   const r = recognizer;
   try { r.abort(); } catch(e){}
@@ -2425,14 +2474,20 @@ function clarity(conf){
   const word = conf >= .85 ? "чётко" : conf >= .6 ? "понятно, но не совсем чётко" : "неразборчиво";
   return `<div class="alts">Уверенность распознавания: ${pct}% — ${word} (оценка Chrome, приблизительная)</div>`;
 }
+let freeTok = 0, freeStarting = false;
 async function freeListen(){
   if(!SR){ return setFree("bad", "Этот браузер не распознаёт речь. Откройте в Chrome или Edge."); }
+  if(freeOn && freeStarting){ freeTok++; freeStarting = false; freeOn = false; stopRecording();   // микрофон ещё не открылся — отмена
+    const b = $("freeSpeak"); b.classList.remove("listening"); setLbl(b, "Сказать"); setFree("info", "Остановлено."); return; }
   if(freeOn){ const r = freeRec; try { r && r.stop(); } catch(e){} setTimeout(() => { if(freeOn && freeRec === r) r.onend(); }, 1500); return; }
   freeOn = true; speechSynthesis && speechSynthesis.cancel();
   const btn = $("freeSpeak");
   btn.classList.add("listening"); setLbl(btn, "Закончил");
   $("freeLive").textContent = "…"; setFree("info", "Слушаю. Говорите по-турецки.");
-  await startRecording();
+  const tok = ++freeTok; freeStarting = true;
+  await recordingReady();
+  freeStarting = false;
+  if(tok !== freeTok || !freeOn) return;
   freeRec = new SR();
   // Android Chrome в режиме continuous присылает одну фразу много раз нарастающими кусками —
   // поэтому там слушаем одну фразу, а результат всегда собираем заново и убираем повторы
@@ -2559,7 +2614,8 @@ let echoPending = false;
 function echo(){
   if(!recordOn) return compareWithFreshRecording(); // телефон не пишет во время распознавания: образец → запись → образец → вы
   echoPending = true;
-  playReference(item.target, () => setTimeout(startListening, 250));
+  const it = item, m = mode;
+  playReference(item.target, () => setTimeout(() => { if(item === it && mode === m) startListening(); }, 250));   // сменили слово или раздел — не слушаем
 }
 
 // ---------- на слух: различение звуков ----------
@@ -2716,8 +2772,8 @@ function compareWithFreshRecording(){
   // Микрофон открывается только ПОСЛЕ образца: на Android открытый микрофон глушит воспроизведение
   playReference(target, async () => {
     let st;
-    try { st = await navigator.mediaDevices.getUserMedia({audio:true}); }
-    catch(e){ btn.disabled = false; setResult("bad", "Нет доступа к микрофону для записи."); return; }
+    try { st = await Promise.race([navigator.mediaDevices.getUserMedia({audio:true}), new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 6000))]); }   // разрешение не пришло — не держим кнопку выключенной
+    catch(e){ btn.disabled = false; setResult("bad", "Нет доступа к микрофону для записи. Разрешите микрофон и нажмите ещё раз."); return; }
     const ch = [], rec = new MediaRecorder(st);
     rec.ondataavailable = e => ch.push(e.data);
     rec.onstop = () => {

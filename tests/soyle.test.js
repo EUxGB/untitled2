@@ -7,6 +7,7 @@ const AXE = process.env.AXE && fs.existsSync(process.env.AXE) ? fs.readFileSync(
 
 let passed = 0, failed = 0;
 async function test(name, fn){
+  if(process.env.ONLY && !name.includes(process.env.ONLY)) return;   // ONLY="часть названия" — прогнать выбранные тесты
   try { await fn(); passed++; console.log('  ✓', name); }
   catch(e){ failed++; console.log('  ✗', name, '\n     ', e.message); }
 }
@@ -491,6 +492,100 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const errs = q.errors; await q.context().close(); eq(errs, []); eq(consoleErr, []);
   });
 
+  // Жалоба: «Память» → микрофон → оценки пропали, «Дальше» выключена — из окна не уйти. Проверяем ВСЕ разделы:
+  // сотни случайных нажатий (распознано верно / неверно / пусто / тишина), после каждого — есть ли путь дальше.
+  const STUCK = () => {
+    const vis = el => !!el && !el.hidden && el.offsetParent !== null, en = id => { const e = document.getElementById(id); return vis(e) && !e.disabled; };
+    if(!document.getElementById('modal').hidden) return [...document.querySelectorAll('#modal button')].some(b => vis(b) && !b.disabled) ? '' : 'окно без кнопок';
+    if(!document.getElementById('sheet').hidden) return en('sheetClose') ? '' : 'лист без «закрыть»';
+    if([...document.querySelectorAll('.tabbar .tab')].some(t => t.disabled)) return 'вкладка выключена';
+    if(mode === 'memory') return en('next') || [...document.querySelectorAll('#memGrades .grade')].some(vis) ? '' : `Память: нет выхода (фаза ${mem && mem.phase})`;
+    if(mode === 'pairs' || mode === 'phrases') return en('next') ? '' : `${mode}: «Дальше» выключена`;
+    if(mode === 'listen') return en('lsA') || en('lsB') || en('lsBlitz') || lsLocked ? '' : 'На слух: всё выключено';
+    if(mode === 'free') return en('freeSpeak') ? '' : 'Свободно: «Сказать» выключена';
+    return '';
+  };
+  const monkey = async (q, tabs, steps, seed) => {
+    let x = seed; const rnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+    const log = [], bad = [];
+    for(let i = 0; i < steps; i++){
+      const said = ['__T__', 'yanlış bir şey', '', '__SILENT__'][Math.floor(rnd() * 4)];
+      await q.evaluate(s => { window.__silent = s === '__SILENT__'; window.__say = s === '__T__' ? (item && item.target) || (ls && ls.answer) || 'merhaba' : s; }, said);
+      let target;
+      if(rnd() < 0.08) target = tabs[Math.floor(rnd() * tabs.length)];
+      else {
+        const n = await q.evaluate(() => {   // видимые и включённые; перед нажатием — прокрутить к кнопке и проверить, что её не закрывает другое
+          const pool = document.querySelectorAll('#modal:not([hidden]) button, #sheet:not([hidden]) button, .screen > section:not([hidden]) button, .chips:not([hidden]) button');
+          const list = [...pool].filter(b => b.offsetParent && !b.disabled && !b.closest('.backup') && !['bkYes','updateApp'].includes(b.id));
+          document.querySelectorAll('[data-m]').forEach(e => delete e.dataset.m); list.forEach((b, k) => b.dataset.m = String(k)); return list.length; });
+        if(!n){ bad.push(`шаг ${i}: нечего нажать (${await q.evaluate(() => mode)})`); break; }
+        target = `[data-m="${Math.floor(rnd() * n)}"]`;
+      }
+      const name = await q.evaluate(t => { const e = document.querySelector(t); if(!e) return t; const nm = e.id || e.textContent.trim().slice(0, 20);
+        if(!e.closest('.tabbar')){ e.scrollIntoView({ block:'center', inline:'center' }); const r = e.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+          if(!hit || !e.contains(hit)) return '(закрыто: ' + nm + ' ← ' + (hit ? (hit.id || hit.className.baseVal || hit.className || hit.tagName) : 'нет') + ' ' + mode + ')'; }
+        e.click(); return nm; }, target);
+      await q.waitForTimeout(20 + Math.floor(rnd() * 60));
+      for(let t = 0; t < 80 && await q.evaluate(() => listening); t++) await q.waitForTimeout(50);   // «Стоп» завершается запасным таймером через 1,5 с — ждём до 4 с   // распознавание завершается само
+      log.push(name); if(process.env.DEBUG_MONKEY) console.log('   ', i, await q.evaluate(() => mode), name);
+      const s = await q.evaluate(STUCK);
+      if(s){ bad.push(`шаг ${i} после «${name}»: ${s}; последние нажатия: ${log.slice(-6).join(' → ')}`); break; }
+      if(await q.evaluate(() => listening)) { bad.push(`шаг ${i}: микрофон завис после «${name}»`); break; }
+    }
+    return bad;
+  };
+  await test('разрешение на микрофон не приходит: «Сказать» не зависает — «Стоп» сразу возвращает кнопку, без записи распознаёт через 4 с', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(async () => { navigator.mediaDevices.getUserMedia = () => new Promise(() => {}); stream = null; recordOn = true;
+      setMode('pairs'); window.__say = item.target; const out = [];
+      document.getElementById('speak').click(); await new Promise(z => setTimeout(z, 200)); out.push(listening);
+      document.getElementById('speak').click(); await new Promise(z => setTimeout(z, 50)); out.push(listening, document.querySelector('#speak .lbl').textContent);
+      document.getElementById('speak').click(); await new Promise(z => setTimeout(z, 4400)); out.push(listening, document.getElementById('result').textContent.includes('из 100'));
+      setMode('free'); document.getElementById('freeSpeak').click(); await new Promise(z => setTimeout(z, 200)); out.push(freeOn);
+      document.getElementById('freeSpeak').click(); await new Promise(z => setTimeout(z, 50)); out.push(freeOn, document.querySelector('#freeSpeak .lbl').textContent);
+      setMode('pairs'); return out; });
+    const errs = q.errors; await q.context().close();
+    eq(r, [true, false, 'Сказать', false, true, true, false, 'Сказать']); eq(errs, []);
+  });
+  await test('случайные нажатия во всех разделах (по 120 на раздел): всегда есть путь дальше, нет ошибок JS', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    await q.evaluate(() => { trVoice = { name:'Test Türkçe', lang:'tr-TR' }; trVoices = [trVoice]; BLITZ_SEC = 8; });
+    const tabs = ['#tab-memory','#tab-pairs','#tab-phrases','#tab-listen','#tab-free','#tab-progress'], bad = [];
+    const goTab = async tab => {   // перейти в раздел можно всегда: окно/лист закрываются своими кнопками, остальное не должно перекрывать панель
+      if(await q.isVisible('#modal')) await q.click('#modal button:visible >> nth=-1');
+      if(await q.isVisible('#sheet')) await q.click('#sheetClose');
+      const cover = await q.evaluate(t => { const r = document.querySelector(t).getBoundingClientRect(), e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return e && !document.querySelector(t).contains(e) ? (e.id || e.className || e.tagName) : ''; }, tab);
+      if(cover) bad.push(`вкладку ${tab} закрывает «${cover}»`);
+      await q.click(tab, { timeout:3000 }).catch(e => bad.push(`не нажать ${tab}: ${e.message.split('\n')[0]}`));
+    };
+    for(const [k, tab] of tabs.entries()){ await goTab(tab); bad.push(...(await monkey(q, tabs, 120, 7 + k * 101)).map(b => tab + ' ' + b)); }
+    const errs = q.errors; await q.context().close(); eq(bad, []); eq(errs, []);
+  });
+  await test('прохождение по нажатиям: «Память» — 12 фраз подряд с микрофоном в каждой фазе; «Фразы», «Звуки», «На слух» идут дальше', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    await q.click('#tab-memory'); const seen = new Set(), steps = [];
+    for(let i = 0; i < 60 && seen.size < 12; i++){
+      const ph = await q.evaluate(() => { window.__say = mem && mem.card ? mem.card.tr : ''; return mem.phase; }); steps.push(ph);
+      if(ph !== 'empty'){ await q.click('#speak'); await q.waitForTimeout(60); for(let t = 0; t < 40 && await q.evaluate(() => listening); t++) await q.waitForTimeout(100); }   // микрофон в любой фазе
+      const ph2 = await q.evaluate(() => mem.phase);   // «понять»: сказали — сразу ответ; «сказать»: оценка по речи
+      if(ph2 === 'answer'){ seen.add(await q.evaluate(() => mem.card.tr)); await q.click('#memGrades .grade[data-g="3"]'); }
+      else await q.click('#next');
+      await q.waitForTimeout(40);
+      if(await q.evaluate(() => mem.phase === 'study' || mem.phase === 'prompt')) await q.evaluate(() => { const a = loadCards(); a.forEach(c => { if(c.due > Date.now() && c.state !== 2) c.due = Date.now() - 1; }); saveCards(a); });   // «прошло 10 минут»: короткие шаги наступили, дни — нет
+    }
+    const other = {};
+    for(const [tab, sel] of [['#tab-phrases', '#next'], ['#tab-pairs', '#next']]){
+      await q.click(tab); const t = new Set();
+      for(let i = 0; i < 8; i++){ await q.click('#speak'); await q.waitForTimeout(80); t.add(await q.evaluate(() => item.target)); await q.click(sel); }
+      other[tab] = t.size;
+    }
+    await q.click('#tab-listen'); const heard = new Set();
+    for(let i = 0; i < 6; i++){ await q.waitForTimeout(400); heard.add(await q.evaluate(() => ls.answer)); await q.evaluate(() => { clearTimeout(lsNextTimer); answerListen(ls.right); clearTimeout(lsNextTimer); nextListen(); }); }
+    const errs = q.errors; await q.context().close();
+    ok(seen.size >= 12, `в «Памяти» пройдено фраз: ${seen.size}; фазы: ${steps.join(',')}`);
+    ok(other['#tab-phrases'] >= 5 && other['#tab-pairs'] >= 4 && heard.size >= 3, JSON.stringify([other, heard.size])); eq(errs, []);
+  });
+
   console.log('Образец, Эхо и Синтез');
   const FAKE_VOICE = "trVoice = { name:'Test Türkçe', lang:'tr-TR' }; trVoices = [trVoice];";
   await test('«Синтез» произносит текущее слово', async () => {
@@ -655,15 +750,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const s3 = await q.evaluate(() => [mem.card.tr, document.getElementById('target').textContent, document.getElementById('meaning').textContent, document.querySelector('#next .lbl').textContent,
       document.querySelector('#compare .lbl').textContent, document.getElementById('yg').disabled, document.getElementById('native').disabled]);
     await q.click('#next');                                            // «Показать»
-    const s4 = await q.evaluate(() => [document.getElementById('target').textContent, [...document.querySelectorAll('#result .grade')].map(b => b.querySelector('b').textContent + ' ' + b.querySelector('small').textContent),
-      document.getElementById('next').disabled, document.querySelectorAll('#result .grade.suggest').length]);
-    await q.click('#result .grade[data-g="3"]');
+    const s4 = await q.evaluate(() => [document.getElementById('target').textContent, [...document.querySelectorAll('#memGrades .grade')].map(b => b.querySelector('b').textContent + ' ' + b.querySelector('small').textContent),
+      document.getElementById('next').disabled, document.querySelectorAll('#memGrades .grade.suggest').length]);
+    await q.click('#memGrades .grade[data-g="3"]');
     const s5 = await q.evaluate(t => { const c = loadCards().find(x => x.tr === t); return [c.state, c.step, Math.round((c.due - Date.now()) / 60e3), +c.s.toFixed(4), (stats['mem-rec'] || {}).ok]; }, s1[1]);
     const errs = q.errors; await q.context().close();
     eq(s1.slice(0, 1).concat(s1.slice(2)), ['study', true, 'Запомнил']);
     eq(s2, [true, null, 60, 1, 'study']);                              // первое вспоминание — через минуту; следующая новая пока в знакомстве
     eq(s3, [s1[1], '· · ·', 'Что значит эта фраза?', 'Показать', 'Текст', true, false]);
-    eq([s4[0], s4[1].length, s4[1][0], s4[2], s4[3]], [s1[1], 4, 'Забыл 1 мин', true, 0]);   // без речи оценку не подсказываем
+    eq([s4[0], s4[1].length, s4[1][0], s4[2], s4[3]], [s1[1], 4, 'Забыл 1 мин', false, 0]);   // «Пропустить» — выход без оценки   // без речи оценку не подсказываем
     eq(s5, [1, 1, 10, 2.3065, 1]);                                     // FSRS: «Помню» при первом вспоминании — шаг 10 мин, S0 = w[2]
     eq(errs, []);
   });
@@ -675,14 +770,37 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         document.getElementById('native').disabled, document.getElementById('play').disabled, document.querySelector('#compare .lbl').textContent];
       document.getElementById('compare').click(); a.push(document.getElementById('target').textContent);
       window.__say = 'tuvalet nerede'; startListening(); await new Promise(z => setTimeout(z, 150));
-      a.push(mem.phase, mem.suggest, document.querySelectorAll('#result .grade').length, !!document.querySelector('#result .score'), document.getElementById('target').textContent, (stats['mem-prod'] || {}).t);
+      a.push(mem.phase, mem.suggest, document.querySelectorAll('#memGrades .grade').length, !!document.querySelector('#result .score'), document.getElementById('target').textContent, (stats['mem-prod'] || {}).t);
       return a; });
     const r2 = await q.evaluate(async () => { const now = Date.now();
       saveCards([{ ...newMemCard('Hesap lütfen.', '', 'Счёт, пожалуйста.', 'prod', now), due:now - 1 }]); mem = null; memNext();
-      window.__say = 'hesap lütfen'; startListening(); await new Promise(z => setTimeout(z, 150)); return [mem.suggest, document.querySelector('#result .grade.suggest').dataset.g]; });
+      window.__say = 'hesap lütfen'; startListening(); await new Promise(z => setTimeout(z, 150)); return [mem.suggest, document.querySelector('#memGrades .grade.suggest').dataset.g]; });
     const errs = q.errors; await q.context().close();
     eq(r, ['prod', 'Как сказать: «Где туалет?»', '· · ·', true, true, 'Буквы', 'T······ n·····?', 'answer', 2, 4, true, 'Tuvalet nerede?', 1]);
     eq(r2, [3, '3']); eq(errs, []);
+  });
+  await test('жалоба: после ответа нажали микрофон — оценки остаются, «Пропустить» уводит дальше; «понять»: сказали — сразу ответ', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(async () => { const now = Date.now(); const wait = async () => { await new Promise(z => setTimeout(z, 60)); for(let t = 0; t < 40 && listening; t++) await new Promise(z => setTimeout(z, 50)); };
+      saveCards([{ ...newMemCard('Merhaba.', '', 'Привет.', 'rec', now), seen:true, due:now - 1 }, { ...newMemCard('Hesap lütfen.', '', 'Счёт.', 'rec', now), seen:true, due:now - 1 }]);
+      setMode('memory'); const first = mem.card.tr; window.__say = first;
+      document.getElementById('speak').click(); await wait();                               // «понять»: повторили вслух → ответ
+      const a = [mem.phase, document.querySelectorAll('#memGrades .grade').length];
+      document.getElementById('speak').click(); await wait();                               // микрофон ещё раз, уже на ответе
+      a.push(mem.phase, document.querySelectorAll('#memGrades .grade').length, document.getElementById('next').disabled, document.querySelector('#next .lbl').textContent);
+      document.getElementById('compare').click(); await new Promise(z => setTimeout(z, 300)); a.push(document.querySelectorAll('#memGrades .grade').length);
+      document.getElementById('next').click(); a.push(mem.card.tr !== first, loadCards().find(c => c.tr === first).s);   // пропуск: расписание не тронуто
+      return a; });
+    const errs = q.errors; await q.context().close();
+    eq(r, ['answer', 4, 'answer', 4, false, 'Пропустить', 4, true, null]); eq(errs, []);
+  });
+  await test('«На сегодня всё»: экран без карточки не падает, «Ещё 5 новых» продолжает', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => { saveCards([]); memSaveDay({ day:dayStr(new Date()), newN:10, extra:0, done:10 }); setMode('memory');
+      const a = [mem.phase, document.getElementById('target').textContent, document.querySelector('#next .lbl').textContent, document.getElementById('next').disabled];
+      document.getElementById('next').click(); a.push(mem.phase, memPlan().fresh.length); return a; });
+    const errs = q.errors; await q.context().close();
+    eq(r, ['empty', 'На сегодня всё', 'Ещё 5 новых', false, 'study', 5]); eq(errs, []);
   });
   await test('честная оценка не стоит очков: опыт за «понять на слух» одинаков при «Забыл» и «Помню»', async () => {
     const r = await p.evaluate(r => { eval(r); const now = Date.now(); const out = [];
@@ -1025,6 +1143,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   async function openWords(){ const q = await openInApp(); await q.route('**/*wiktionary.org/w/api.php**', r => r.fulfill({ json: WIKI(decodeURIComponent(r.request().url())) })); return q; }
   await test('«Фразы» → «слова»: слова выбранной темы с переводом, по счётчику в чипах; переключение обратно на фразы', async () => {
     const q = await openWords();
+    await q.evaluate(() => wordPool('food').items.forEach(w => { if(w.fromPhrase) w.seen = 1; }));   // здесь проверяем стартовые слова с переводом (слова из фраз — отдельный тест)
     await q.click('#tab-phrases'); await q.click('.chip[data-s="food"]'); await q.click('#kindChip');
     const r = await q.evaluate(() => [wordsKind, item.word, item.topic, WORD_SEEDS.food.map(x => x[0]).includes(item.target), document.getElementById('meaning').textContent,
       document.querySelector('.chip[data-s="food"]').textContent, document.getElementById('target').classList.contains('phrase'), localStorage.getItem('soyle-kind'), item.target, document.getElementById('result').textContent]);
@@ -1041,14 +1160,29 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await q.evaluate(async () => {
       localStorage.removeItem('soyle-words-hotel'); delete wordPools.hotel;
       const pool = wordPool('hotel'); const n0 = pool.items.length; pool.items.forEach(w => w.seen = 1);
+      const expN0 = new Set([...WORD_SEEDS.hotel.map(x => nphr(x[0])), ...phraseWordsOf('hotel').map(w => w.tr)]).size;   // стартовые + слова из фраз темы
+      const expAdd = ['otel', 'resepsiyon'].filter(w => !pool.items.some(x => nphr(x.tr) === w)).length;
       pickWord('hotel'); const grew = !!growing.hotel; await growing.hotel;    // новых не осталось — пошла подгрузка
       localStorage.removeItem('soyle-words-hotel'); delete wordPools.hotel; wordPool('hotel');   // заново: по порциям
       await growWords('hotel', 1); const n1 = wordPool('hotel').items.length, cont = wordPool('hotel').cont;
       await growWords('hotel', 1); const n2 = wordPool('hotel').items.length;
       const saved = JSON.parse(localStorage.getItem('soyle-words-hotel')).items.map(x => x.tr);
-      return [grew, n0, n1 - n0, cont, n2 - n1, saved.includes('resepsiyon'), saved.includes('oda servisi'), saved.some(x => /stanbul/i.test(x)), saved.filter(x => x === 'oda').length, saved.includes('lobi')]; });
+      return [grew, n0 === expN0, n1 - n0 === expAdd, cont, n2 - n1, saved.includes('resepsiyon'), saved.includes('oda servisi'), saved.some(x => /stanbul/i.test(x)), saved.filter(x => x === 'oda').length, saved.includes('lobi')]; });
     await q.context().close();
-    eq(r, [true, 12, 2, 'page|NEXT', 2, true, false, false, 1, true]);  // otel+resepsiyon; фраза, имя собственное и дубль «oda» не берутся
+    eq(r, [true, true, true, 'page|NEXT', 2, true, false, false, 1, true]);  // otel+resepsiyon; фраза, имя собственное и дубль «oda» не берутся
+  });
+  await test('слова из фраз темы — в изучении слов первыми, с примером-фразой; повторов нет, частицы (mi, da) не берутся', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => { localStorage.removeItem('soyle-words-food'); delete wordPools.food;
+      const pool = wordPool('food'), ph = phraseWordsOf('food'), keys = pool.items.map(w => nphr(w.tr));
+      setMode('phrases'); setKind(true); setId = 'food'; renderChips(); const picks = [];
+      for(let i = 0; i < 5; i++){ next(); picks.push([item.target, document.getElementById('tip').textContent.startsWith('Из фразы')]); }
+      const all = PHRASE_SETS.find(g => g.id === 'food').items.flatMap(p => nphr(p.tr).split(' '));
+      setKind(false); return { n:ph.length, dup:keys.length !== new Set(keys).size, covered: all.filter(w => WORD_RE.test(w) && !PARTICLES.has(w)).every(w => keys.includes(w)),
+        particles: keys.some(w => ['mi','mı','da','de'].includes(w)), picks }; });
+    const errs = q.errors; await q.context().close();
+    ok(r.n >= 20, 'слов из фраз «ресторан»: ' + r.n); eq([r.dup, r.covered, r.particles], [false, true, false]);
+    eq(r.picks.every(x => x[1]), true); eq(errs, []);
   });
   await test('русское значение слова — из статьи ru-Викисловаря («Значение»), без разметки', async () => {
     const q = await openWords();
