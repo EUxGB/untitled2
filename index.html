@@ -1641,7 +1641,7 @@ async function ctxLoad(){
   const c = ctx; c.loading = true; ctxRender();
   const qs = [c.word, ...[...c.forms].filter(f => f !== nphr(c.word)).slice(0, 2)];   // словарная форма и до двух форм из фраз
   // один запрос на форму: только фразы с русским переводом (запись, если есть, приходит в том же ответе)
-  const res = await Promise.all(qs.map(q => netFetch(`${TATOEBA}/unstable/sentences?lang=tur&trans:lang=rus&showtrans:lang=rus&include=audios&sort=relevance&limit=15&q=${encodeURIComponent(q)}`).then(r => r.json()).catch(() => ({}))));
+  const res = await Promise.all(qs.map(q => netFetch(`${TATOEBA}/unstable/sentences?lang=tur&trans:lang=rus&showtrans:lang=rus&include=audios&sort=relevance&limit=15&q=${encodeURIComponent(q)}`, 20000).then(r => r.json()).catch(() => ({}))));   // фон: ждём до 20 с (на живом сайте ответ шёл ~10 с)
   if(ctx !== c) return;
   const seen = new Set(c.list.map(x => nphr(x.tr))), found = [];
   res.flatMap(r => r.data || []).forEach(x => {
