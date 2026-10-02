@@ -99,8 +99,11 @@ const URL = process.argv[2], OUT = process.argv[3];
           const stat = o => { const v = Object.values(o); return { words:v.length, withExamples:v.filter(n => n > 0).length, avg:+(v.reduce((x, y) => x + y, 0) / (v.length || 1)).toFixed(1) }; };
           return { dict:stat(a), seeds:stat(b), none:[...Object.entries(a), ...Object.entries(b)].filter(x => !x[1]).map(x => x[0]) }; });
         await p.evaluate(() => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips(); wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); next(); });
-        await p.waitForTimeout(800); await p.click('#ctxMore').catch(() => {}); await p.waitForTimeout(4000);
-        live.ctxCard = await p.evaluate(() => ({ word:item.target, text:document.getElementById('partner').textContent, n:ctx && ctx.list.length }));
+        const t0 = Date.now();                                             // сколько ждать остальные примеры на живом сайте
+        await p.waitForFunction(() => ctx && ctx.loaded, null, { timeout:30000 }).catch(() => {});
+        const loadMs = Date.now() - t0; await p.click('#ctxMore').catch(() => {}); await p.waitForTimeout(300);
+        live.ctxCard = await p.evaluate(() => ({ word:item.target, text:document.getElementById('partner').textContent, n:ctx && ctx.list.length, loaded:!!(ctx && ctx.loaded) }));
+        live.ctxCard.loadMs = loadMs;
         await p.screenshot({ path:`${OUT}/${name}-word-context.png` });
         await p.evaluate(() => setKind(false));
       } catch(e){ live.ctxError = String(e); }
