@@ -528,7 +528,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
           if(!hit || !e.contains(hit)) return '(закрыто: ' + nm + ' ← ' + (hit ? (hit.id || hit.className.baseVal || hit.className || hit.tagName) : 'нет') + ' ' + mode + ')'; }
         e.click(); return nm; }, target);
       await q.waitForTimeout(20 + Math.floor(rnd() * 60));
-      for(let t = 0; t < 80 && await q.evaluate(() => listening); t++) await q.waitForTimeout(50);   // «Стоп» завершается запасным таймером через 1,5 с — ждём до 4 с   // распознавание завершается само
+      for(let t = 0; t < 180 && await q.evaluate(() => listening); t++) await q.waitForTimeout(50);   // ожидание микрофона до 4 с + «Стоп» через 1,5 с — ждём до 9 с (в CI упало на 4 с)   // распознавание завершается само
       log.push(name); if(process.env.DEBUG_MONKEY) console.log('   ', i, await q.evaluate(() => mode), name);
       const s = await q.evaluate(STUCK);
       if(s){ bad.push(`шаг ${i} после «${name}»: ${s}; последние нажатия: ${log.slice(-6).join(' → ')}`); break; }
