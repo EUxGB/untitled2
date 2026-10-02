@@ -1205,8 +1205,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); next();                                  // сразу после показа, до ответа сети
       return [item.target, document.querySelector('#partner .ctx-tr').textContent, document.querySelector('#partner .ctx-tr b').textContent, document.querySelector('#partner .ctx-ru').textContent, !!document.getElementById('ctxPlay')]; });
     await q.waitForFunction(() => ctx && ctx.loaded); const before = net.length;                                          // остальные примеры — в фоне, по одному запросу на форму
-    await q.click('#ctxMore');
-    const r2 = await q.evaluate(async () => { const out = [ctx.list.map(x => x.tr), document.querySelector('#partner .ctx-tr').textContent, document.querySelector('#partner .ctx-tr b').textContent, document.querySelector('#partner .ctx-n').textContent];
+    const r2 = await q.evaluate(async () => { document.getElementById('ctxMore').click();   // нажатие внутри страницы: без гонки с перерисовкой
+      const out = [ctx.list.map(x => x.tr), document.querySelector('#partner .ctx-tr').textContent, document.querySelector('#partner .ctx-tr b').textContent, document.querySelector('#partner .ctx-n').textContent];
       window.__played = []; document.getElementById('ctxPlay').click(); await new Promise(z => setTimeout(z, 60)); out.push(window.__played[0]);
       document.getElementById('ctxMore').click(); out.push(document.querySelector('#partner .ctx-tr').textContent); document.getElementById('ctxMore').click(); out.push(document.querySelector('#partner .ctx-tr').textContent);
       autofit(); const card = document.getElementById('card'); out.push(card.scrollHeight - card.clientHeight <= 1, document.scrollingElement.scrollHeight <= innerHeight + 1); return out; });
