@@ -1030,6 +1030,12 @@ PHRASE_SETS.forEach(g => {
 const NUM = { "1":"bir", "2":"iki", "3":"üç", "5":"beş", "10":"on", "20":"yirmi", "40":"kırk", "50":"elli", "100":"yüz" };
 const CONFUSABLE = [["o","ö"],["u","ü"],["ı","i"],["c","ç"],["ç","ş"],["c","ş"],["s","ş"],["g","ğ"],["c","s"]];
 
+// Внешние базы (Commons, Tatoeba, Викисловарь) могут не отвечать — запрос не ждёт дольше 10 с (было: «Ищу…» без конца,
+// а проверка живого сайта в CI висела 35 минут)
+function netFetch(url, ms = 10000){
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms);
+  return fetch(url, { signal:ctl.signal }).finally(() => clearTimeout(t));
+}
 // ---------- state ----------
 const $ = id => document.getElementById(id);
 let mode = "pairs", groupId = "o", setId = "hotel", item = null, lastKey = "";
@@ -1218,7 +1224,7 @@ async function loadNativeSet(){
     let cont = "", pages = 0;
     do {
       const url = `${API}&generator=categorymembers&gcmtype=file&gcmlimit=500&gcmtitle=${encodeURIComponent(cat)}${cont}`;
-      const r = await fetch(url).then(x=>x.json());
+      const r = await netFetch(url).then(x=>x.json());
       Object.values(r.query?.pages || {}).forEach(pg => {
         const w = wordFromTitle(pg.title), u = pg.imageinfo?.[0]?.url;
         if(!w || !u) return;
@@ -1457,7 +1463,7 @@ function growWords(topic, need = 15){
     let added = 0;
     while(added < need && pool.cat < cats.length){
       const u = `https://en.wiktionary.org/w/api.php?action=query&list=categorymembers&cmtype=page&cmlimit=50&format=json&origin=*&cmtitle=${encodeURIComponent("Category:tr:" + cats[pool.cat])}${pool.cont ? "&cmcontinue=" + encodeURIComponent(pool.cont) : ""}`;
-      const d = await fetch(u).then(r => r.json());
+      const d = await netFetch(u).then(r => r.json());
       (d.query && d.query.categorymembers || []).forEach(m => {
         const t = String(m.title); if(t[0] !== t[0].toLocaleLowerCase("tr-TR")) return;   // имена собственные (İstanbul) — не берём
         const w = t;
@@ -1488,7 +1494,7 @@ async function ruMeaning(word){
   if(ruMeanCache.has(word)) return ruMeanCache.get(word);
   let out = "";
   try {
-    const d = await fetch(`https://ru.wiktionary.org/w/api.php?action=parse&prop=wikitext&format=json&origin=*&page=${encodeURIComponent(word)}`).then(r => r.json());
+    const d = await netFetch(`https://ru.wiktionary.org/w/api.php?action=parse&prop=wikitext&format=json&origin=*&page=${encodeURIComponent(word)}`).then(r => r.json());
     const wt = d.parse && d.parse.wikitext && d.parse.wikitext["*"] || "";
     const tr = wt.split(/\n= \{\{-(?!tr-)/)[0], i = tr.indexOf("{{-tr-}}");
     const sec = i >= 0 ? tr.slice(i) : "";
@@ -1513,7 +1519,7 @@ function ruFrom(x){                     // перевод на русский �
 async function loadTatoebaSet(){
   const items = [], seen = new Set();
   for(let page = 0; page < 6 && items.length < 150; page++){
-    const d = await fetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&trans:lang=rus&showtrans:lang=rus&include=audios&sort=random&limit=100`).then(r => r.json());
+    const d = await netFetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&trans:lang=rus&showtrans:lang=rus&include=audios&sort=random&limit=100`).then(r => r.json());
     (d.data || []).forEach(x => {
       const words = String(x.text).trim().split(/\s+/).length, key = clean(x.text);
       const lic = (x.audios || []).filter(a => a.license);
@@ -1547,7 +1553,7 @@ async function describeNative(word){
   if(descCache.has(key)) return show(descCache.get(key));
   let txt = "Значение не найдено — нажмите «перевод».";
   try {
-    const r = await fetch(`https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(word.replace(/ /g,"_"))}`);
+    const r = await netFetch(`https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(word.replace(/ /g,"_"))}`);
     if(r.ok){
       const j = await r.json();
       const defs = (j.tr || []).flatMap(x => (x.definitions || []).map(d => ({ pos:x.partOfSpeech, text:d.definition.replace(/<[^>]+>/g,"").trim() }))).filter(d=>d.text).slice(0,3);
@@ -2547,7 +2553,7 @@ async function findRecordings(text, opts = {}){
   try {
     // 1) Lingua Libre: «LL-Q256 (tur)-Имя-слово.wav»
     const q = encodeURIComponent(`intitle:"LL-Q256" "${key}"`);
-    const r1 = await fetch(`${API}&generator=search&gsrnamespace=6&gsrlimit=50&gsrsearch=${q}`).then(r=>r.json());
+    const r1 = await netFetch(`${API}&generator=search&gsrnamespace=6&gsrlimit=50&gsrsearch=${q}`).then(r=>r.json());
     Object.values(r1.query?.pages || {}).forEach(pg => {
       const m = pg.title.match(/^File:LL-Q256 \(tur\)-(.+?)-(.+)\.(wav|ogg|mp3|flac)$/i);
       if(m && clean(m[2]) === key) add(pg.title, pg.imageinfo?.[0]?.url);
@@ -2555,7 +2561,7 @@ async function findRecordings(text, opts = {}){
     // 2) Wiktionary: «Tr-слово.ogg» и варианты
     const cap = key.charAt(0).toLocaleUpperCase("tr-TR") + key.slice(1);
     const titles = [key, cap].flatMap(w => ["ogg","wav","mp3","oga"].map(ext => `File:Tr-${w}.${ext}`)).join("|");
-    const r2 = await fetch(`${API}&titles=${encodeURIComponent(titles)}`).then(r=>r.json());
+    const r2 = await netFetch(`${API}&titles=${encodeURIComponent(titles)}`).then(r=>r.json());
     Object.values(r2.query?.pages || {}).forEach(pg => { if(!pg.missing) add(pg.title, pg.imageinfo?.[0]?.url); });
   } catch(e){ commonsFailed = true; }
   // 3) Tatoeba: целые фразы, записанные носителями (проверено CI: 9 из 99 фраз тренажёра есть целиком).
@@ -2563,7 +2569,7 @@ async function findRecordings(text, opts = {}){
 //    Берём только записи с лицензией: без лицензии файл отдаёт 403 (проверено CI) — автор не разрешил повторное использование.
   let tatoebaFailed = false;
   if(opts.commonsOnly) tatoebaFailed = true; else try {
-    const r3 = await fetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=5&include=audios&q=${encodeURIComponent(String(text).trim())}`).then(r => r.json());
+    const r3 = await netFetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=5&include=audios&q=${encodeURIComponent(String(text).trim())}`).then(r => r.json());
     (r3.data || []).filter(x => normPhrase(x.text) === normPhrase(text)).forEach(x => (x.audios || []).filter(a => a.license).forEach(a => {
       const url = tatoebaAudio(a.id); if(!seen.has(url)){ seen.add(url); found.push({ url, who: `${a.author || "носитель"} (Tatoeba)` }); }
     }));
@@ -3209,7 +3215,7 @@ async function tatoebaExamples(text){
   const words = normPhrase(text).split(" ").filter(Boolean);
   const q = words.length > 1 ? `"${normPhrase(text)}"` : words[0];
   const base = `${TATOEBA}/unstable/sentences?lang=tur&include=audios&showtrans:lang=rus&sort=relevance&limit=15&q=${encodeURIComponent(q)}`;
-  const [a, b] = await Promise.all([base + "&has_audio=yes", base + "&trans:lang=rus"].map(u => fetch(u).then(r => r.json()).catch(() => ({}))));
+  const [a, b] = await Promise.all([base + "&has_audio=yes", base + "&trans:lang=rus"].map(u => netFetch(u).then(r => r.json()).catch(() => ({}))));
   const byId = new Map();                          // одна фраза может прийти из обоих запросов — склеиваем перевод и запись
   [...(a.data || []), ...(b.data || [])].forEach(x => {
     const lic = (x.audios || []).filter(au => au.license), ru = ruFrom(x), e = byId.get(x.id);

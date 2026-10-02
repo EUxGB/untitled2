@@ -7,9 +7,15 @@ const URL = process.argv[2], OUT = process.argv[3];
   fs.mkdirSync(OUT, { recursive:true });
   const b = await chromium.launch();
   const log = [];
+  // общий предел 25 минут: сохранить то, что успели снять, и выйти
+  const save = () => fs.writeFileSync(`${OUT}/info.json`, JSON.stringify({ url: URL, taken: new Date().toISOString(), shots: log }, null, 2));
+  setTimeout(() => { log.push({ size:'—', error:'общий предел 25 минут: внешние базы не отвечают, снято не всё' }); save(); process.exit(0); }, 25 * 60e3).unref();
   for(const [w, h, name] of [[360, 640, 'android-360x640'], [390, 844, 'iphone-390x844'], [412, 915, 'android-412x915']]){
     const ctx = await b.newContext({ viewport:{ width:w, height:h }, deviceScaleFactor:2, isMobile:true, hasTouch:true, locale:'ru-RU' });
     const p = await ctx.newPage(); const errs = [];
+    // внешние базы могут не отвечать — ни одна проверка не ждёт дольше 5 минут (было: задача висела 35 минут, снимки не сохранились)
+    const ev0 = p.evaluate.bind(p);
+    p.evaluate = (fn, arg) => { let t; return Promise.race([ev0(fn, arg), new Promise((_, no) => { t = setTimeout(() => no(new Error('проверка дольше 5 минут: внешняя база не отвечает')), 300000); })]).finally(() => clearTimeout(t)); };
     p.on('pageerror', e => errs.push(e.message));
     await p.goto(URL, { waitUntil:'load' }); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1500);
     const info = await p.evaluate(() => ({ version: (document.getElementById('appVersion') || {}).textContent,
