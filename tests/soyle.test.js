@@ -1202,10 +1202,10 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.route('**/api.tatoeba.org/**', r => { if(/showtrans/.test(r.request().url())) net.push(r.request().url()); r.fulfill({ json:CTX_TATO }); });   // считаем только запросы примеров
     await q.setViewportSize({ width:360, height:640 });
     const r = await q.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
-      wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); next(); await new Promise(z => setTimeout(z, 100));
+      wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); next();                                  // сразу после показа, до ответа сети
       return [item.target, document.querySelector('#partner .ctx-tr').textContent, document.querySelector('#partner .ctx-tr b').textContent, document.querySelector('#partner .ctx-ru').textContent, !!document.getElementById('ctxPlay')]; });
-    const before = net.length;
-    await q.click('#ctxMore'); await q.waitForFunction(() => ctx && ctx.loaded);
+    await q.waitForFunction(() => ctx && ctx.loaded); const before = net.length;                                          // остальные примеры — в фоне, по одному запросу на форму
+    await q.click('#ctxMore');
     const r2 = await q.evaluate(async () => { const out = [ctx.list.map(x => x.tr), document.querySelector('#partner .ctx-tr').textContent, document.querySelector('#partner .ctx-tr b').textContent, document.querySelector('#partner .ctx-n').textContent];
       window.__played = []; document.getElementById('ctxPlay').click(); await new Promise(z => setTimeout(z, 60)); out.push(window.__played[0]);
       document.getElementById('ctxMore').click(); out.push(document.querySelector('#partner .ctx-tr').textContent); document.getElementById('ctxMore').click(); out.push(document.querySelector('#partner .ctx-tr').textContent);
@@ -1217,7 +1217,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         if(item.target !== w.tr || card.scrollHeight - card.clientHeight > 1 || document.scrollingElement.scrollHeight > innerHeight + 1 || e.scrollWidth > e.clientWidth + 1) bad.push(g.id + ': ' + w.ex); }
       return bad; });
     const errs = q.errors; await q.context().close(); eq(long, []);
-    eq(r, ['istemek', 'Bir oda istiyorum.', 'istiyorum.', 'Мне нужен номер.', true]); eq(before, 0);                       // первый пример — без обращения к сети
+    eq(r, ['istemek', 'Bir oda istiyorum.', 'istiyorum.', 'Мне нужен номер.', true]); eq(before, 3);                       // первый пример — без обращения к сети
     eq(r2, [['Bir oda istiyorum.', 'Ne istiyorsun?', 'Seninle konuşmak istiyorum.'], 'Ne istiyorsun?', 'istiyorsun?', 'пример 2 из 3 · нажмите — следующий',
       'https://api.tatoeba.org/v1/audios/55/file', 'Seninle konuşmak istiyorum.', 'Bir oda istiyorum.', true, true]); eq(errs, []);
   });

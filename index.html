@@ -1610,7 +1610,9 @@ function ctxInit(it){
   const w = it.target, pw = (wordPool(it.topic).items.find(x => x.tr === w)) || {}, d = PHRASE_DICT[w];
   ctx = { word:w, forms:new Set([nphr(w), ...(d ? d[1].split(" ") : [])]), list: pw.ex ? [{ tr:pw.ex, ru:pw.exRu || "", own:true }] : [],
     i:0, loaded:false, loading:false, fallback:$("partner").innerHTML };
-  if(ctx.list.length) ctxRender(); else ctxLoad();                  // своей фразы нет — сразу ищем примеры
+  ctxRender();
+  // остальные примеры подгружаются в фоне, пока вы читаете первый (было: после нажатия ждали дольше 4 с)
+  const c = ctx; if(c.list.length) setTimeout(() => { if(ctx === c) ctxLoad(); }, TESTMODE ? 0 : 700); else ctxLoad();
 }
 function ctxMark(tr){                                                // слово (в любой его форме) в примере выделено
   const base = nphr(ctx.word), verb = /m[ae]k$/.test(base) && base.length > 4, stem = verb ? base.slice(0, -3) : base;
@@ -1627,7 +1629,7 @@ function ctxRender(){
     const tb = el.querySelector("[data-tr]"); if(tb) tb.onclick = () => openTranslate(item.target);
     scheduleFit(); return;
   }
-  const more = ctx.loading ? "ищу ещё…" : !ctx.loaded ? "нажмите — ещё пример" : n > 1 ? `пример ${ctx.i + 1} из ${n} · нажмите — следующий` : "других примеров с переводом не нашлось";
+  const more = !ctx.loaded ? "ищу ещё примеры…" : n > 1 ? `пример ${ctx.i + 1} из ${n} · нажмите — следующий` : "других примеров с переводом не нашлось";
   el.innerHTML = `<span class="ctx">${x.own || x.audio ? `<button class="ctx-play" id="ctxPlay" aria-label="Слушать пример"><svg class="ic" aria-hidden="true"><use href="#i-speaker"/></svg></button>` : ""}`
     + `<button class="ctx-ex" id="ctxMore" aria-label="Пример: ${esc(x.tr)} — ${esc(x.ru)}. ${more}"><span class="ctx-tr" lang="tr" translate="no">${ctxMark(x.tr)}</span><span class="ctx-ru">${esc(x.ru)}</span><span class="ctx-n">${more}</span></button></span>`;
   $("ctxMore").onclick = ctxNext;
@@ -1638,15 +1640,23 @@ async function ctxLoad(){
   if(!ctx || ctx.loaded || ctx.loading) return;
   const c = ctx; c.loading = true; ctxRender();
   const qs = [c.word, ...[...c.forms].filter(f => f !== nphr(c.word)).slice(0, 2)];   // словарная форма и до двух форм из фраз
-  const res = await Promise.all(qs.map(q => tatoebaExamples(q).catch(() => ({ list:[] }))));
+  // один запрос на форму: только фразы с русским переводом (запись, если есть, приходит в том же ответе)
+  const res = await Promise.all(qs.map(q => netFetch(`${TATOEBA}/unstable/sentences?lang=tur&trans:lang=rus&showtrans:lang=rus&include=audios&sort=relevance&limit=15&q=${encodeURIComponent(q)}`).then(r => r.json()).catch(() => ({}))));
   if(ctx !== c) return;
-  const seen = new Set(c.list.map(x => nphr(x.tr)));
-  res.flatMap(r => r.list || []).forEach(x => { if(x.ru && !seen.has(nphr(x.tr)) && x.tr.split(" ").length <= 8){ seen.add(nphr(x.tr)); c.list.push(x); } });
-  c.list = c.list.slice(0, 6); c.loaded = true; c.loading = false; ctxRender();
+  const seen = new Set(c.list.map(x => nphr(x.tr))), found = [];
+  res.flatMap(r => r.data || []).forEach(x => {
+    const ru = ruFrom(x), k = nphr(x.text); if(!ru || seen.has(k) || x.text.split(" ").length > 8) return;
+    const lic = (x.audios || []).find(a => a.license); seen.add(k); found.push({ tr:x.text, ru, audio: lic ? tatoebaAudio(lic.id) : "" });
+  });
+  found.sort((a, b) => (!!b.audio - !!a.audio) || a.tr.length - b.tr.length);          // сначала с записью носителя, потом короткие
+  c.list.push(...found);
+  c.list = c.list.slice(0, 6); c.loaded = true; c.loading = false;
+  if(c.want && c.list.length > 1) c.i = 1;
+  ctxRender();
 }
 function ctxNext(){
-  if(!ctx || ctx.loading) return;
-  if(!ctx.loaded){ const c = ctx; ctxLoad().then(() => { if(ctx === c && c.list.length > 1){ c.i = 1; ctxRender(); } }); return; }
+  if(!ctx) return;
+  if(!ctx.loaded){ const c = ctx; c.want = true; ctxLoad(); return; }                    // ещё грузится — покажем следующий, как придут
   if(ctx.list.length > 1){ ctx.i = (ctx.i + 1) % ctx.list.length; ctxRender(); }
 }
 async function ctxPlay(x){                                           // только живые записи: фраза тренажёра или запись Tatoeba
