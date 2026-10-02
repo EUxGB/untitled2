@@ -6,6 +6,8 @@ const FILE = 'file://' + path.resolve(process.argv[2] || path.join(__dirname, '.
 const AXE = process.env.AXE && fs.existsSync(process.env.AXE) ? fs.readFileSync(process.env.AXE, 'utf8') : null;
 
 let passed = 0, failed = 0;
+const PHRASE_DICT_SRC = (() => { const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8'); const m = src.match(/const PHRASE_DICT = (\{[\s\S]*?\n\});/); return m ? eval('(' + m[1] + ')') : {}; })();
+const PHRASE_DICT_RU = lemma => (PHRASE_DICT_SRC[lemma] || [])[0];
 async function test(name, fn){
   if(process.env.ONLY && !name.includes(process.env.ONLY)) return;   // ONLY="часть названия" — прогнать выбранные тесты
   try { await fn(); passed++; console.log('  ✓', name); }
@@ -1171,18 +1173,40 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.context().close();
     eq(r, [true, true, true, 'page|NEXT', 2, true, false, false, 1, true]);  // otel+resepsiyon; фраза, имя собственное и дубль «oda» не берутся
   });
-  await test('слова из фраз темы — в изучении слов первыми, с примером-фразой; повторов нет, частицы (mi, da) не берутся', async () => {
-    const q = await openPage(browser);
-    const r = await q.evaluate(() => { localStorage.removeItem('soyle-words-food'); delete wordPools.food;
+  await test('слова из фраз — только из выверенного словаря: словарная форма, готовый перевод (не машинный), пример-фраза; многозначные не берутся', async () => {
+    const q = await openPage(browser); const net = [];
+    q.on('request', rq => { if(/mymemory|wiktionary/.test(rq.url())) net.push(rq.url()); });
+    const r = await q.evaluate(async () => { localStorage.removeItem('soyle-words-food'); delete wordPools.food;
       const pool = wordPool('food'), ph = phraseWordsOf('food'), keys = pool.items.map(w => nphr(w.tr));
       setMode('phrases'); setKind(true); setId = 'food'; renderChips(); const picks = [];
-      for(let i = 0; i < 5; i++){ next(); picks.push([item.target, document.getElementById('tip').textContent.startsWith('Из фразы')]); }
-      const all = PHRASE_SETS.find(g => g.id === 'food').items.flatMap(p => nphr(p.tr).split(' '));
-      setKind(false); return { n:ph.length, dup:keys.length !== new Set(keys).size, covered: all.filter(w => WORD_RE.test(w) && !PARTICLES.has(w)).every(w => keys.includes(w)),
-        particles: keys.some(w => ['mi','mı','da','de'].includes(w)), picks }; });
+      for(let i = 0; i < 6; i++){ next(); await new Promise(z => setTimeout(z, 30)); picks.push([item.target, document.getElementById('meaning').textContent, document.getElementById('tip').textContent.startsWith('Из фразы')]); }
+      const all = Object.keys(PHRASE_DICT), forms = [...PHRASE_FORMS.keys()];
+      const sizi = phraseWordsOf('talk').concat(PHRASE_SETS.flatMap(g => phraseWordsOf(g.id))).find(w => w.tr === 'sizi');
+      setKind(false); return { n:ph.length, dup:keys.length !== new Set(keys).size, picks, sizi: sizi && sizi.ru,
+        ruAll: PHRASE_SETS.every(g => phraseWordsOf(g.id).every(w => w.ru && w.ru === PHRASE_DICT[w.tr][0] && w.ex)),
+        dropped: ['artık', 'kadar', 'daha', 'sürer', 'bağlı', 'misiniz', 'miyim', 'yerinde', 'aç'].filter(f => PHRASE_FORMS.has(f) || all.includes(f)),
+        lemma: [PHRASE_FORMS.get('odada'), PHRASE_FORMS.get('istiyorum'), PHRASE_FORMS.get('anlamıyorum')], count: [all.length, forms.length] }; });
     const errs = q.errors; await q.context().close();
-    ok(r.n >= 20, 'слов из фраз «ресторан»: ' + r.n); eq([r.dup, r.covered, r.particles], [false, true, false]);
-    eq(r.picks.every(x => x[1]), true); eq(errs, []);
+    ok(r.n >= 15, 'слов из фраз «ресторан»: ' + r.n); eq([r.dup, r.ruAll, r.dropped, r.sizi], [false, true, [], 'вас (кого?)']);
+    eq(r.lemma, ['oda', 'istemek', 'anlamak']); ok(r.count[0] >= 140, String(r.count));
+    eq(r.picks.every(x => x[2] && x[1] === PHRASE_DICT_RU(x[0])), true, JSON.stringify(r.picks)); eq(net, []); eq(errs, []);   // перевод из словаря, сеть не нужна
+  });
+  await test('слово не из словаря и без статьи в Викисловаре: машинный перевод помечен как приблизительный', async () => {
+    const r = await p.evaluate(async () => { const t0 = translateTr; translateTr = async () => 'кошка'; ruMeanCache.delete('zzkedi'); const m = await ruMeaning('zzkedi'); translateTr = t0; return m; });
+    eq(r, '≈ кошка (машинный перевод, без контекста может быть неточным)');
+  });
+  await test('прежние словоформы с машинным переводом убираются: из набора слов и из «Памяти»; перевод словарных слов исправляется', async () => {
+    const q = await openPage(browser, { storage:{
+      'soyle-words-hotel': JSON.stringify({ items:[{ tr:'odada', ru:'в комнате', seen:1, fromPhrase:true }, { tr:'misiniz', ru:'ты', seen:1, fromPhrase:true }, { tr:'oda', ru:'номер', seen:2 }, { tr:'lobi', ru:'лобби', seen:0 }], cat:0, cont:'' }),
+      'soyle-srs': JSON.stringify([{ tr:'odada', ru:'в комнате', side:'rec', state:1, step:0, s:null, d:null, due:0, last:null, reps:0, seen:false },
+        { tr:'sizi', ru:'ваш', side:'rec', state:2, step:null, s:3, d:5, due:0, last:0, reps:2, seen:true },
+        { tr:'Hesap lütfen.', ru:'Счёт, пожалуйста.', side:'rec', state:2, step:null, s:3, d:5, due:0, last:0, reps:2, seen:true },
+        { tr:'lobi', ru:'лобби', side:'rec', state:1, step:0, s:null, d:null, due:0, last:null, reps:0, seen:false }]) } });
+    const r = await q.evaluate(() => { const pool = wordPool('hotel').items; const cards = loadCards();
+      return [pool.some(w => w.tr === 'odada'), pool.some(w => w.tr === 'misiniz'), pool.find(w => w.tr === 'oda').ru, pool.some(w => w.tr === 'lobi'),
+        cards.map(c => c.tr), cards.find(c => c.tr === 'sizi').ru, cards.find(c => c.tr === 'sizi').s]; });
+    const errs = q.errors; await q.context().close();
+    eq(r, [false, false, 'номер', true, ['sizi', 'Hesap lütfen.', 'lobi'], 'вас (кого?)', 3]); eq(errs, []);
   });
   await test('русское значение слова — из статьи ru-Викисловаря («Значение»), без разметки', async () => {
     const q = await openWords();

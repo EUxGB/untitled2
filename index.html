@@ -1273,21 +1273,176 @@ function wordPool(topic){
   mergePhraseWords(topic, pool);
   return (wordPools[topic] = pool);
 }
-// Слова из фраз темы (просьба: «добавь слова из фраз в изучение слов»): каждое слово фраз с записью носителя,
-// с примером — фразой, откуда оно; значение — из ru-Викисловаря или машинный перевод (при первом показе).
-const PARTICLES = new Set(["mi","mı","mu","mü","de","da","ki","ve","ya"]);
+// Слова из фраз темы (просьба: «добавь слова из фраз в изучение слов»). Жалоба: «без контекста отдельные слова
+// неправильно интерпретируются, например sizi» — машинный перевод одиночной словоформы ненадёжен. Поэтому берутся ТОЛЬКО
+// слова из этого словаря, составленного вручную: словарная форма, перевод с устойчивым значением и формы, в которых слово
+// стоит в фразах. Многозначные и служебные (artık, kadar, daha, sürer, bağlı, частицы mi/mı…) не берутся совсем.
+const PHRASE_DICT = {
+  "oda":["комната, номер", "oda odada odama odanızı"],
+  "anahtar":["ключ", "anahtar anahtarları anahtarın"],
+  "otel":["отель", "otel"],
+  "banyo":["ванная", "banyoyu"],
+  "asansör":["лифт", "asansörü"],
+  "duş":["душ", "duş"],
+  "tuvalet":["туалет", "tuvalet"],
+  "telefon":["телефон", "telefon"],
+  "elektrik":["электричество", "elektriğimiz"],
+  "şikayet":["жалоба", "şikayetimiz"],
+  "kahvaltı":["завтрак", "kahvaltı"],
+  "hesap":["счёт", "hesap"],
+  "bardak":["стакан", "bardak"],
+  "çay":["чай", "çay"],
+  "kahve":["кофе", "kahve"],
+  "su":["вода", "su"],
+  "bira":["пиво", "bira"],
+  "salata":["салат", "salata"],
+  "yemek":["еда, блюдо", "yemek yemekte"],
+  "peynir":["сыр", "peyniri"],
+  "içecek":["напиток", "içecek"],
+  "sipariş":["заказ", "sipariş"],
+  "taksi":["такси", "taksi"],
+  "otobüs":["автобус", "otobüsü"],
+  "tren":["поезд", "trene treni"],
+  "metro":["метро", "metroyla"],
+  "bilet":["билет", "biletler"],
+  "para":["деньги", "para paran paranız"],
+  "lira":["лира", "lira"],
+  "dolar":["доллар", "doların"],
+  "renk":["цвет", "rengi"],
+  "cüzdan":["кошелёк", "cüzdanım"],
+  "çanta":["сумка", "çantam"],
+  "doktor":["врач", "doktor doktora"],
+  "hastane":["больница", "hastane"],
+  "ambulans":["скорая помощь", "ambulans"],
+  "ağrı":["боль", "ağrın"],
+  "baş":["голова", "başın"],
+  "karın":["живот", "karnım"],
+  "sağlık":["здоровье", "sağlığım"],
+  "vitamin":["витамин", "vitamin"],
+  "alerji":["аллергия", "alerjim"],
+  "polis":["полиция", "polis"],
+  "yangın":["пожар", "yangın"],
+  "yardım":["помощь", "yardım"],
+  "akşam":["вечер", "akşam akşamlar"],
+  "gün":["день", "günler"],
+  "zaman":["время", "zaman"],
+  "iş":["работа, дело", "iş"],
+  "spor":["спорт", "spor"],
+  "ev":["дом", "evde"],
+  "sıra":["очередь", "sıra"],
+  "şey":["вещь, что-то", "şey"],
+  "isim":["имя", "isminiz"],
+  "ad":["имя", "adınız"],
+  "arkadaş":["друг, подруга", "arkadaşlar"],
+  "dost":["друг", "dostum"],
+  "barmen":["бармен", "barmen"],
+  "özür":["извинение", "özür"],
+  "yaş":["возраст", "yaşındasın"],
+  "İngilizce":["английский язык", "ingilizce"],
+  "Fransızca":["французский язык", "fransızca"],
+  "Japonca":["японский язык", "japonca"],
+  "iyi":["хороший, хорошо", "iyi"],
+  "çok":["очень, много", "çok"],
+  "biraz":["немного", "biraz"],
+  "hasta":["больной", "hasta"],
+  "hazır":["готовый", "hazır"],
+  "lezzetli":["вкусный", "lezzetli lezzetliymiş"],
+  "pahalı":["дорогой (о цене)", "pahalıdır"],
+  "farklı":["другой, разный", "farklı"],
+  "yüksek":["высокий", "yüksek"],
+  "uzak":["далёкий, далеко", "uzak uzaklıkta"],
+  "hızlı":["быстрый, быстро", "hızlı"],
+  "sessiz":["тихий", "sessiz"],
+  "tehlikeli":["опасный", "tehlikeli"],
+  "memnun":["довольный", "memnunum"],
+  "vegan":["веган", "veganım"],
+  "bugün":["сегодня", "bugün"],
+  "şimdi":["сейчас", "şimdi"],
+  "sonra":["потом", "sonra"],
+  "tekrar":["снова", "tekrar"],
+  "birazdan":["скоро, чуть позже", "birazdan"],
+  "sağ":["правый; право", "sağa"],
+  "ben":["я", "ben"],
+  "sen":["ты", "sen"],
+  "siz":["вы", "siz"],
+  "onlar":["они", "onlar"],
+  "bana":["мне", "bana"],
+  "sana":["тебе", "sana"],
+  "size":["вам", "size"],
+  "sizi":["вас (кого?)", "sizi"],
+  "bu":["это, этот", "bu"],
+  "herkes":["все (люди)", "herkes herkese"],
+  "biri":["кто-то", "biri"],
+  "ne":["что", "ne"],
+  "nerede":["где", "nerede neredeyiz"],
+  "nereden":["откуда", "nereden"],
+  "nasıl":["как", "nasıl nasıldı nasılsın nasılsınız"],
+  "hangi":["какой, который", "hangi"],
+  "kaç":["сколько", "kaç"],
+  "kim":["кто", "kimle"],
+  "bir":["один", "bir"],
+  "beş":["пять", "beş"],
+  "var":["есть, имеется", "var"],
+  "yok":["нет, не имеется", "yok yoktur"],
+  "değil":["не (отрицание)", "değil"],
+  "için":["для, за", "için"],
+  "lazım":["нужно", "lazım"],
+  "merhaba":["здравствуйте, привет", "merhaba"],
+  "günaydın":["доброе утро", "günaydın"],
+  "lütfen":["пожалуйста (просьба)", "lütfen"],
+  "teşekkürler":["спасибо", "teşekkürler"],
+  "hayır":["нет", "hayır"],
+  "tamam":["хорошо, ладно", "tamam"],
+  "pardon":["извините", "pardon"],
+  "affedersiniz":["извините", "affedersiniz"],
+  "görüşürüz":["увидимся", "görüşürüz"],
+  "imdat":["на помощь!", "imdat"],
+  "tabii":["конечно", "tabii"],
+  "umarım":["надеюсь", "umarım"],
+  "istemek":["хотеть", "ister istersin istiyor istiyorum"],
+  "gitmek":["идти, ехать", "gidebilirim gidiyorum gittin"],
+  "gelmek":["приходить, приезжать", "geldiniz gelin geliyor"],
+  "almak":["брать, покупать", "alabilir alacağım alıyorum"],
+  "vermek":["давать", "ver verelim"],
+  "yapmak":["делать", "yapayım yapmak yaptın yapıyorsun"],
+  "konuşmak":["говорить, разговаривать", "konuşmuyorum konuşur konuşuyorlar konuşuyorsun"],
+  "beklemek":["ждать", "bekleyeceğiz bekleyin"],
+  "anlamak":["понимать", "anlamadım anlamıyorum"],
+  "bilmek":["знать", "biliyor"],
+  "sevmek":["любить", "sever sevmiyorum"],
+  "içmek":["пить", "içer içmem"],
+  "çalışmak":["работать", "çalışıyorum"],
+  "yaşamak":["жить", "yaşıyorsun"],
+  "kalmak":["оставаться, останавливаться", "kalıyorsun"],
+  "çağırmak":["звать, вызывать", "çağırayım çağırsın çağırın"],
+  "durdurmak":["останавливать", "durdurun"],
+  "getirmek":["приносить", "getirin"],
+  "göstermek":["показывать", "göstereyim"],
+  "bulmak":["находить", "bulurum"],
+  "denemek":["пробовать", "deneyelim"],
+  "kullanmak":["пользоваться", "kullanabilir"],
+  "ödemek":["платить", "ödemek"],
+  "hissetmek":["чувствовать", "hissediyorum"],
+  "kaybolmak":["потеряться", "kayboldum"],
+  "acıkmak":["проголодаться", "acıktım"],
+  "görünmek":["выглядеть", "görünüyor"],
+  "bakmak":["смотреть", "bakalım"],
+};
+const PHRASE_FORMS = new Map();          // форма из фразы → словарная форма
+Object.entries(PHRASE_DICT).forEach(([lemma, [, forms]]) => forms.split(" ").forEach(f => PHRASE_FORMS.set(f, lemma)));
 function phraseWordsOf(topic){
   const g = PHRASE_SETS.find(x => x.id === topic); if(!g) return [];
   const out = new Map();
-  g.items.forEach(p => nphr(p.tr).split(" ").forEach(w => { if(WORD_RE.test(w) && !PARTICLES.has(w) && !out.has(w)) out.set(w, p); }));
-  return [...out].map(([tr, p]) => ({ tr, ex:p.tr, exRu:p.ru }));
+  g.items.forEach(p => nphr(p.tr).split(" ").forEach(f => { const lemma = PHRASE_FORMS.get(f); if(lemma && !out.has(lemma)) out.set(lemma, { tr:lemma, ru:PHRASE_DICT[lemma][0], ex:p.tr, exRu:p.ru, form:f }); }));
+  return [...out.values()];
 }
 function mergePhraseWords(topic, pool){
-  const have = new Set(pool.items.map(w => nphr(w.tr)));
-  phraseWordsOf(topic).forEach(w => {
-    const old = pool.items.find(x => nphr(x.tr) === w.tr);
-    if(old){ if(!old.ex){ old.ex = w.ex; old.exRu = w.exRu; } return; }
-    if(!have.has(w.tr)) pool.items.push({ tr:w.tr, ru:"", seen:0, ex:w.ex, exRu:w.exRu, fromPhrase:true });
+  const cur = phraseWordsOf(topic), keep = new Set(cur.map(w => nphr(w.tr)));
+  pool.items = pool.items.filter(w => !w.fromPhrase || keep.has(nphr(w.tr)));          // прежние словоформы с машинным переводом — убрать
+  cur.forEach(w => {
+    const old = pool.items.find(x => nphr(x.tr) === nphr(w.tr));
+    if(old){ old.ex = w.ex; old.exRu = w.exRu; old.form = w.form; if(old.fromPhrase || !old.ru) old.ru = w.ru; return; }
+    pool.items.push({ tr:w.tr, ru:w.ru, seen:0, ex:w.ex, exRu:w.exRu, form:w.form, fromPhrase:true });
   });
 }
 function saveWordPool(topic){ try { localStorage.setItem("soyle-words-" + topic, JSON.stringify(wordPool(topic))); } catch(e){} }
@@ -1324,7 +1479,7 @@ function pickWord(topic){
   const w = from[Math.floor(Math.random() * from.length)] || pool.items[0];
   w.seen = (w.seen || 0) + 1; saveWordPool(topic); lastKey = w.tr;
   const label = (PHRASE_SETS.find(g => g.id === topic) || {}).label || topic;
-  const tip = w.ex ? `Из фразы: «${w.ex}»${w.exRu ? " — " + w.exRu : ""}` : `Слово темы «${label}». Новые слова подгружаются сами, по мере изучения.`;
+  const tip = w.ex ? `Из фразы: «${w.ex}»${w.exRu ? " — " + w.exRu : ""}${w.form && w.form !== nphr(w.tr) ? ` (там в форме «${w.form}»)` : ""}` : `Слово темы «${label}». Новые слова подгружаются сами, по мере изучения.`;
   return { target:w.tr, translit:trToCyr(w.tr), meaning:w.ru || "", tip, gid:"w-" + topic, native:true, word:true, topic };
 }
 // русское значение: статья ru-Викисловаря (раздел турецкого языка, «Значение»), иначе машинный перевод
@@ -1343,7 +1498,7 @@ async function ruMeaning(word){
       out = line.replace(/\{\{[^{}]*\}\}/g, "").replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, "$1").replace(/'{2,3}/g, "").replace(/\s+/g, " ").replace(/^[\s,;:]+|[\s,;:]+$/g, "").trim();
     }
   } catch(e){}
-  if(!out){ try { out = await translateTr(word); } catch(e){} }
+  if(!out){ try { const mt = await translateTr(word); if(mt) out = `≈ ${mt} (машинный перевод, без контекста может быть неточным)`; } catch(e){} }
   ruMeanCache.set(word, out); return out;
 }
 
@@ -2101,6 +2256,20 @@ function updateMemTab(){
   if(el){ el.textContent = n > 99 ? "99+" : n; el.hidden = !n; }
   $("tab-memory").setAttribute("aria-label", n ? `Память: повторить ${n}` : "Память");
 }
+(function cleanWordCards(){            // одиночные словоформы из фраз попадали в «Память» с машинным переводом («sizi») — убрать или исправить
+  const all = loadCards(); if(!all.length) return;
+  const raw = new Set(PHRASE_SETS.concat([{ items:OLD_PHRASES }]).flatMap(g => g.items.flatMap(p => nphr(p.tr).split(" "))));
+  const seeds = new Set(Object.values(WORD_SEEDS).flat().map(x => nphr(x[0])));
+  const lemmas = new Map(Object.keys(PHRASE_DICT).map(l => [nphr(l), l]));
+  let changed = false;
+  const out = all.filter(c => {
+    const k = nphr(c.tr); if(k.includes(" ")) return true;
+    if(lemmas.has(k)){ const ru = PHRASE_DICT[lemmas.get(k)][0]; if(c.ru !== ru && !seeds.has(k)){ c.ru = ru; changed = true; } return true; }
+    if(raw.has(k) && !seeds.has(k)){ changed = true; return false; }
+    return true;
+  });
+  if(changed) saveCards(out);
+})();
 (function migrateMistakes(){
   const old = loadList("soyle-mistakes"); if(!old.length) return;
   const all = loadCards(), now = Date.now();
