@@ -88,6 +88,22 @@ const URL = process.argv[2], OUT = process.argv[3];
           return r; });
         await p.screenshot({ path:`${OUT}/${name}-words.png` });
       } catch(e){ live.wordsError = String(e); }
+      // слово в контексте: у скольких слов есть примеры с переводом (фраза тренажёра и Tatoeba) — проверка, что функция полезна
+      try {
+        live.ctx = await p.evaluate(async () => {
+          const lemmas = Object.keys(PHRASE_DICT), step = Math.max(1, Math.floor(lemmas.length / 40)), sample = lemmas.filter((_, i) => i % step === 0).slice(0, 40);
+          const seeds = Object.values(WORD_SEEDS).flat().map(x => x[0]).filter(w => !PHRASE_DICT[w]).filter((_, i) => i % 6 === 0).slice(0, 15);
+          const count = async (w, own) => { ctx = { word:w, forms:new Set([nphr(w), ...(PHRASE_DICT[w] ? PHRASE_DICT[w][1].split(' ') : [])]), list: own ? [{ tr:'-', ru:'-', own:true }] : [], i:0, loaded:false, loading:false, fallback:'' };
+            const c = ctx; item = { target:'-' }; await ctxLoad(); return c.list.length - (own ? 1 : 0); };
+          const a = {}, b = {}; for(const w of sample) a[w] = await count(w, true); for(const w of seeds) b[w] = await count(w, false);
+          const stat = o => { const v = Object.values(o); return { words:v.length, withExamples:v.filter(n => n > 0).length, avg:+(v.reduce((x, y) => x + y, 0) / (v.length || 1)).toFixed(1) }; };
+          return { dict:stat(a), seeds:stat(b), none:[...Object.entries(a), ...Object.entries(b)].filter(x => !x[1]).map(x => x[0]) }; });
+        await p.evaluate(() => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips(); wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); next(); });
+        await p.waitForTimeout(800); await p.click('#ctxMore').catch(() => {}); await p.waitForTimeout(4000);
+        live.ctxCard = await p.evaluate(() => ({ word:item.target, text:document.getElementById('partner').textContent, n:ctx && ctx.list.length }));
+        await p.screenshot({ path:`${OUT}/${name}-word-context.png` });
+        await p.evaluate(() => setKind(false));
+      } catch(e){ live.ctxError = String(e); }
       // что слышит пользователь на «Носителе» для фраз (жалоба: «нет носителя с такой фразой и других фраз»)
       try {
         live.nativePhrases = await p.evaluate(async () => {

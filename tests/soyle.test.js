@@ -528,11 +528,12 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
           if(!hit || !e.contains(hit)) return '(закрыто: ' + nm + ' ← ' + (hit ? (hit.id || hit.className.baseVal || hit.className || hit.tagName) : 'нет') + ' ' + mode + ')'; }
         e.click(); return nm; }, target);
       await q.waitForTimeout(20 + Math.floor(rnd() * 60));
-      for(let t = 0; t < 180 && await q.evaluate(() => listening); t++) await q.waitForTimeout(50);   // ожидание микрофона до 4 с + «Стоп» через 1,5 с — ждём до 9 с (в CI упало на 4 с)   // распознавание завершается само
+      let t = 0; for(; t < 180 && await q.evaluate(() => listening); t++) await q.waitForTimeout(50);   // ожидание микрофона до 4 с + «Стоп» 1,5 с
+      if(t >= 180){ bad.push(`шаг ${i}: микрофон не выключился за 9 с после «${name}» (раздел ${await q.evaluate(() => mode)}; ошибки JS: ${JSON.stringify(q.errors)}); последние: ${log.slice(-8).join(' → ')}`); break; }
       log.push(name); if(process.env.DEBUG_MONKEY) console.log('   ', i, await q.evaluate(() => mode), name);
       const s = await q.evaluate(STUCK);
       if(s){ bad.push(`шаг ${i} после «${name}»: ${s}; последние нажатия: ${log.slice(-6).join(' → ')}`); break; }
-      if(await q.evaluate(() => listening)) { bad.push(`шаг ${i}: микрофон завис после «${name}»`); break; }
+      // «завис» = микрофон не выключался 9 секунд подряд (отложенный старт при «Сравнить» — не зависание)
     }
     return bad;
   };
@@ -1190,6 +1191,50 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(r.n >= 15, 'слов из фраз «ресторан»: ' + r.n); eq([r.dup, r.ruAll, r.dropped, r.sizi], [false, true, [], 'вас (кого?)']);
     eq(r.lemma, ['oda', 'istemek', 'anlamak']); ok(r.count[0] >= 140, String(r.count));
     eq(r.picks.every(x => x[2] && x[1] === PHRASE_DICT_RU(x[0])), true, JSON.stringify(r.picks)); eq(net, []); eq(errs, []);   // перевод из словаря, сеть не нужна
+  });
+  const CTX_TATO = { data:[
+    { id:1, text:'Bir oda istiyorum.', translations:[[{ lang:'rus', text:'Мне нужен номер.' }]], audios:[] },               // та же фраза, что в тренажёре — не повторяется
+    { id:2, text:'Ne istiyorsun?', translations:[[{ lang:'rus', text:'Чего ты хочешь?' }]], audios:[{ id:55, author:'x', license:'CC BY 4.0' }] },
+    { id:3, text:'Seninle konuşmak istiyorum.', translations:[[{ lang:'rus', text:'Я хочу с тобой поговорить.' }]], audios:[] },
+    { id:4, text:'İstemek başarmanın yarısıdır.', translations:[], audios:[] } ] };                                         // без перевода — не показывается
+  await test('слово в контексте: на карточке слова — фраза тренажёра с переводом (без сети), слово выделено; «ещё» — примеры Tatoeba с переводом', async () => {
+    const q = await openPage(browser); const net = [];
+    await q.route('**/api.tatoeba.org/**', r => { if(/showtrans/.test(r.request().url())) net.push(r.request().url()); r.fulfill({ json:CTX_TATO }); });   // считаем только запросы примеров
+    await q.setViewportSize({ width:360, height:640 });
+    const r = await q.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
+      wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); next(); await new Promise(z => setTimeout(z, 100));
+      return [item.target, document.querySelector('#partner .ctx-tr').textContent, document.querySelector('#partner .ctx-tr b').textContent, document.querySelector('#partner .ctx-ru').textContent, !!document.getElementById('ctxPlay')]; });
+    const before = net.length;
+    await q.click('#ctxMore'); await q.waitForFunction(() => ctx && ctx.loaded);
+    const r2 = await q.evaluate(async () => { const out = [ctx.list.map(x => x.tr), document.querySelector('#partner .ctx-tr').textContent, document.querySelector('#partner .ctx-tr b').textContent, document.querySelector('#partner .ctx-n').textContent];
+      window.__played = []; document.getElementById('ctxPlay').click(); await new Promise(z => setTimeout(z, 60)); out.push(window.__played[0]);
+      document.getElementById('ctxMore').click(); out.push(document.querySelector('#partner .ctx-tr').textContent); document.getElementById('ctxMore').click(); out.push(document.querySelector('#partner .ctx-tr').textContent);
+      autofit(); const card = document.getElementById('card'); out.push(card.scrollHeight - card.clientHeight <= 1, document.scrollingElement.scrollHeight <= innerHeight + 1); return out; });
+    const long = await q.evaluate(async () => { const bad = [];   // самые длинные примеры каждой темы помещаются на 360×640
+      for(const g of PHRASE_SETS){ const w = phraseWordsOf(g.id).sort((a, b) => b.ex.length + b.exRu.length - a.ex.length - a.exRu.length)[0]; if(!w) continue;
+        setId = g.id; wordPool(g.id).items.forEach(x => x.seen = x.tr === w.tr ? 0 : 1); lastKey = ''; next(); await new Promise(z => setTimeout(z, 60)); autofit();
+        const card = document.getElementById('card'), e = document.getElementById('ctxMore');
+        if(item.target !== w.tr || card.scrollHeight - card.clientHeight > 1 || document.scrollingElement.scrollHeight > innerHeight + 1 || e.scrollWidth > e.clientWidth + 1) bad.push(g.id + ': ' + w.ex); }
+      return bad; });
+    const errs = q.errors; await q.context().close(); eq(long, []);
+    eq(r, ['istemek', 'Bir oda istiyorum.', 'istiyorum.', 'Мне нужен номер.', true]); eq(before, 0);                       // первый пример — без обращения к сети
+    eq(r2, [['Bir oda istiyorum.', 'Ne istiyorsun?', 'Seninle konuşmak istiyorum.'], 'Ne istiyorsun?', 'istiyorsun?', 'пример 2 из 3 · нажмите — следующий',
+      'https://api.tatoeba.org/v1/audios/55/file', 'Seninle konuşmak istiyorum.', 'Bir oda istiyorum.', true, true]); eq(errs, []);
+  });
+  await test('слово без своей фразы: пример ищется сразу; примеров нет или нет сети — на карточке остаётся прежняя строка', async () => {
+    const q = await openPage(browser);
+    await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json:CTX_TATO }));
+    const r = await q.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
+      const pool = wordPool('hotel'); pool.items.push({ tr:'lobi', ru:'лобби', seen:0 }); pool.items.forEach(x => x.seen = x.tr === 'lobi' ? 0 : 1); next();
+      for(let t = 0; t < 40 && !(ctx && ctx.loaded); t++) await new Promise(z => setTimeout(z, 50));
+      return [item.target, ctx.list.length, document.querySelector('#partner .ctx-ru').textContent]; });
+    const q2 = await openPage(browser);
+    const r2 = await q2.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
+      const pool = wordPool('hotel'); pool.items.push({ tr:'lobi', ru:'лобби', seen:0 }); pool.items.forEach(x => x.seen = x.tr === 'lobi' ? 0 : 1); next();
+      for(let t = 0; t < 60 && !(ctx && ctx.loaded); t++) await new Promise(z => setTimeout(z, 50));
+      return [ctx.loaded, ctx.list.length, !!document.querySelector('#partner .ctx'), /перевод/.test(document.getElementById('partner').textContent)]; });
+    const errs = [...q.errors, ...q2.errors]; await q.context().close(); await q2.context().close();
+    eq(r, ['lobi', 3, 'Чего ты хочешь?']);   // первым — пример с записью носителя eq(r2, [true, 0, false, true]); eq(errs, []);
   });
   await test('слово не из словаря и без статьи в Викисловаре: машинный перевод помечен как приблизительный', async () => {
     const r = await p.evaluate(async () => { const t0 = translateTr; translateTr = async () => 'кошка'; ruMeanCache.delete('zzkedi'); const m = await ruMeaning('zzkedi'); translateTr = t0; return m; });

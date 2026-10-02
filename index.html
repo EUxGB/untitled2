@@ -618,6 +618,19 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .grade.g1 b{color:var(--bad)}
 .grade.suggest{border:2px solid var(--accent); background:var(--accent-soft)}
 .mem-left{display:block; margin-top:6px; font-size:12px; font-weight:400; color:var(--muted); font-variant-numeric:tabular-nums}
+
+/* слово в контексте: пример с переводом на карточке слова */
+.ctx{display:flex; align-items:center; justify-content:center; gap:8px; text-align:left}
+.ctx-ex{display:flex; flex-direction:column; gap:1px; min-height:44px; min-width:0; padding:5px 12px; border:1px solid var(--line); border-radius:14px; background:var(--surface); font:inherit; color:inherit; text-align:left; cursor:pointer; touch-action:manipulation}
+.ctx-ex:hover, .ctx-play:hover{border-color:var(--accent)}
+.ctx-ex:focus-visible, .ctx-play:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.ctx-tr{font:600 15px/1.25 var(--display); color:var(--ink); overflow-wrap:anywhere}
+.ctx-tr b{font-weight:700; color:var(--accent-ink); background:var(--accent-soft); border-radius:4px; padding:0 3px}
+.ctx-ru{font-size:13px; line-height:1.25; color:var(--ink-2)}
+.ctx-n{font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums}
+.ctx-play{flex:none; width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--accent); display:grid; place-items:center; cursor:pointer; touch-action:manipulation}
+.ctx-play .ic{width:20px; height:20px}
+@media (max-height: 600px){ #card .result{min-height:58px} .ctx-n{display:none} .ctx-ex{padding:3px 10px} .ctx-tr{font-size:14px} .ctx-ru{font-size:12px} }   /* низкий экран: без строки-подсказки */
 </style>
 </head>
 <body>
@@ -1589,19 +1602,74 @@ function pickPhrase(){
   lastKey = p.tr; return { target:p.tr, translit:p.tl, meaning:p.ru, tip:p.focus, gid:"ph-"+setId };
 }
 
+// ---------- слово в контексте: пример с переводом прямо на карточке слова ----------
+// Просьба: «без контекста отдельные слова неправильно интерпретируются». Первый пример — фраза тренажёра, откуда слово
+// (перевод выверен, есть запись носителя, сеть не нужна); «ещё» — фразы Tatoeba с переводом, написанным людьми.
+let ctx = null;
+function ctxInit(it){
+  const w = it.target, pw = (wordPool(it.topic).items.find(x => x.tr === w)) || {}, d = PHRASE_DICT[w];
+  ctx = { word:w, forms:new Set([nphr(w), ...(d ? d[1].split(" ") : [])]), list: pw.ex ? [{ tr:pw.ex, ru:pw.exRu || "", own:true }] : [],
+    i:0, loaded:false, loading:false, fallback:$("partner").innerHTML };
+  if(ctx.list.length) ctxRender(); else ctxLoad();                  // своей фразы нет — сразу ищем примеры
+}
+function ctxMark(tr){                                                // слово (в любой его форме) в примере выделено
+  const base = nphr(ctx.word), verb = /m[ae]k$/.test(base) && base.length > 4, stem = verb ? base.slice(0, -3) : base;
+  const hit = k => ctx.forms.has(k) || (stem.length >= 4 && k.startsWith(stem))
+    || (verb && /[aeıioöuü]$/.test(stem) && k.startsWith(stem.slice(0, -1)) && /^[ıiuü]yor/.test(k.slice(stem.length - 1)))   // iste- → istiyor
+    || (verb && stem.length >= 3 && stem.endsWith("t") && k.startsWith(stem.slice(0, -1) + "d"));                              // git- → gidiyor
+  return tr.split(/(\s+)/).map(t => { const k = nphr(t); return k && hit(k) ? `<b>${esc(t)}</b>` : esc(t); }).join("");
+}
+function ctxRender(){
+  if(!ctx || !item || item.target !== ctx.word) return;
+  const el = $("partner"), n = ctx.list.length, x = ctx.list[ctx.i];
+  if(!x){
+    el.innerHTML = ctx.loading ? "Ищу пример в контексте…" : ctx.fallback;
+    const tb = el.querySelector("[data-tr]"); if(tb) tb.onclick = () => openTranslate(item.target);
+    scheduleFit(); return;
+  }
+  const more = ctx.loading ? "ищу ещё…" : !ctx.loaded ? "нажмите — ещё пример" : n > 1 ? `пример ${ctx.i + 1} из ${n} · нажмите — следующий` : "других примеров с переводом не нашлось";
+  el.innerHTML = `<span class="ctx">${x.own || x.audio ? `<button class="ctx-play" id="ctxPlay" aria-label="Слушать пример"><svg class="ic" aria-hidden="true"><use href="#i-speaker"/></svg></button>` : ""}`
+    + `<button class="ctx-ex" id="ctxMore" aria-label="Пример: ${esc(x.tr)} — ${esc(x.ru)}. ${more}"><span class="ctx-tr" lang="tr" translate="no">${ctxMark(x.tr)}</span><span class="ctx-ru">${esc(x.ru)}</span><span class="ctx-n">${more}</span></button></span>`;
+  $("ctxMore").onclick = ctxNext;
+  const pb = $("ctxPlay"); if(pb) pb.onclick = () => ctxPlay(x);
+  scheduleFit();
+}
+async function ctxLoad(){
+  if(!ctx || ctx.loaded || ctx.loading) return;
+  const c = ctx; c.loading = true; ctxRender();
+  const qs = [c.word, ...[...c.forms].filter(f => f !== nphr(c.word)).slice(0, 2)];   // словарная форма и до двух форм из фраз
+  const res = await Promise.all(qs.map(q => tatoebaExamples(q).catch(() => ({ list:[] }))));
+  if(ctx !== c) return;
+  const seen = new Set(c.list.map(x => nphr(x.tr)));
+  res.flatMap(r => r.list || []).forEach(x => { if(x.ru && !seen.has(nphr(x.tr)) && x.tr.split(" ").length <= 8){ seen.add(nphr(x.tr)); c.list.push(x); } });
+  c.list = c.list.slice(0, 6); c.loaded = true; c.loading = false; ctxRender();
+}
+function ctxNext(){
+  if(!ctx || ctx.loading) return;
+  if(!ctx.loaded){ const c = ctx; ctxLoad().then(() => { if(ctx === c && c.list.length > 1){ c.i = 1; ctxRender(); } }); return; }
+  if(ctx.list.length > 1){ ctx.i = (ctx.i + 1) % ctx.list.length; ctxRender(); }
+}
+async function ctxPlay(x){                                           // только живые записи: фраза тренажёра или запись Tatoeba
+  let url = x.audio;
+  if(!url){ const recs = await findRecordings(x.tr).catch(() => null); url = recs && recs[0] && recs[0].url; }
+  if(!url){ $("nativeStatus").textContent = "Записи этого примера нет."; return; }
+  speechSynthesis && speechSynthesis.cancel();
+  const a = $("nativeAudio"); a.pause(); a.src = url; a.play().catch(() => {});
+}
+let cardLoading = false;       // на карточке «Загружаю…», а item — ещё прошлое слово
 function next(){
-  stopListening();
+  stopListening(); cardLoading = false;
   if(mode==="phrases" && setId==="native" && !nativeSet){
     ensureNativeSet();
     $("target").textContent = nativeSetLoading ? "Загружаю записи носителей…" : "Не удалось загрузить записи";
     $("target").classList.add("phrase"); $("meaning").textContent = "Источник: Wikimedia Commons (Lingua Libre, Wiktionary)";
-    $("partner").hidden = true; $("tip").textContent = ""; return;
+    $("partner").hidden = true; $("tip").textContent = ""; cardLoading = true; return;
   }
   if(mode==="phrases" && setId==="tatoeba" && !tatoebaSet){
     ensureTatoebaSet();
     $("target").textContent = tatoebaLoading ? "Загружаю фразы носителей…" : "Не удалось загрузить фразы";
     $("target").classList.add("phrase"); $("meaning").textContent = "Источник: Tatoeba — фразы, записанные носителями";
-    $("partner").hidden = true; $("tip").textContent = ""; return;
+    $("partner").hidden = true; $("tip").textContent = ""; cardLoading = true; return;
   }
   item = mode==="pairs" ? pickPair() : pickPhrase();
   if(!item){
@@ -1626,6 +1694,7 @@ function next(){
     const dm = $("delMine"); if(dm) dm.onclick = () => askRemoveMine(dm, item.target);
     const tb = $("partner").querySelector("[data-tr]"); if(tb) tb.onclick = () => openTranslate(item.target);
     $("partner").hidden = false;
+    if(item.word) ctxInit(item); else ctx = null;      // слово — сразу с примером в контексте
   }
   const q = encodeURIComponent(item.target.replace(/[.,!?]/g,"").trim());
   nativeIdx = 0;
@@ -2461,14 +2530,16 @@ function stopRecording(){ if(mediaRec && mediaRec.state==="recording") mediaRec.
 async function startListening(){
   if(!SR || listening) return;
   if($("card").hidden || !item) return;          // раздел сменили, пока звучал образец (эхо) — микрофон не открываем
+  if(cardLoading){ setResult("info", "Набор ещё загружается — подождите пару секунд."); return; }
   speechSynthesis && speechSynthesis.cancel();
   listening = true;
   const btn = $("speak"); btn.classList.add("listening"); setLbl(btn, "Слушаю…");
   setResult("info", "Говорите…");
   const tok = ++listenTok; recStarting = true;
   await recordingReady();
+  if(tok !== listenTok) return;                   // эту попытку отменили, пока ждали микрофон (флаг ожидания принадлежит новой попытке)
   recStarting = false;
-  if(tok !== listenTok || !listening) return;     // остановили, пока ждали микрофон
+  if(!listening) return;
   recognizer = new SR();
   recognizer.lang = "tr-TR"; recognizer.maxAlternatives = 5;
   recognizer.interimResults = false; recognizer.continuous = false;
@@ -2661,8 +2732,9 @@ async function freeListen(){
   $("freeLive").textContent = "…"; setFree("info", "Слушаю. Говорите по-турецки.");
   const tok = ++freeTok; freeStarting = true;
   await recordingReady();
+  if(tok !== freeTok) return;
   freeStarting = false;
-  if(tok !== freeTok || !freeOn) return;
+  if(!freeOn) return;
   freeRec = new SR();
   // Android Chrome в режиме continuous присылает одну фразу много раз нарастающими кусками —
   // поэтому там слушаем одну фразу, а результат всегда собираем заново и убираем повторы
@@ -3252,6 +3324,7 @@ function openExamples(text){
 function setMode(m){
   try { if(location.hash.slice(1) !== m) history.replaceState(null, "", "#" + m); } catch(e){}
   if(listening) stopListening();
+  cardLoading = false;
   closeSheet();
   if(blitz && m !== "listen") endBlitz(true);
   mode = m;
