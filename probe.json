@@ -1,0 +1,227 @@
+[
+  {
+    "url": "https://api.tatoeba.org/v1/sentences?lang=tur&has_audio=yes&limit=3",
+    "status": 400,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"message\":\"Required parameter \\u0022sort\\u0022 missing\",\"url\":\"\\/v1\\/sentences?lang=tur\\u0026amp;has_audio=yes\\u0026amp;limit=3\",\"code\":400}"
+  },
+  {
+    "url": "https://api.tatoeba.org/v1/sentences?lang=tur&has_audio=yes&limit=3&include=audios",
+    "status": 400,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"message\":\"Required parameter \\u0022sort\\u0022 missing\",\"url\":\"\\/v1\\/sentences?lang=tur\\u0026amp;has_audio=yes\\u0026amp;limit=3\\u0026amp;include=audios\",\"code\":400}"
+  },
+  {
+    "url": "https://api.tatoeba.org/v1/sentences?lang=tur&has_audio=yes&q=te%C5%9Fekk%C3%BCr&limit=3&showtrans=rus",
+    "status": 400,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"message\":\"Required parameter \\u0022sort\\u0022 missing\",\"url\":\"\\/v1\\/sentences?lang=tur\\u0026amp;has_audio=yes\\u0026amp;q=te%C5%9Fekk%C3%BCr\\u0026amp;limit=3\\u0026amp;showtrans=rus\",\"code\":400}"
+  },
+  {
+    "url": "https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&limit=2",
+    "status": 400,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"message\":\"Required parameter \\u0022sort\\u0022 missing\",\"url\":\"\\/unstable\\/sentences?lang=tur\\u0026amp;has_audio=yes\\u0026amp;limit=2\",\"code\":400}"
+  },
+  {
+    "url": "https://api.tatoeba.org/unstable/audios?lang=tur&limit=2",
+    "status": 200,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"data\":[{\"id\":66596,\"created\":null,\"author\":\"civiricus\",\"license\":\"\",\"attribution_url\":\"https:\\/\\/tatoeba.org\\/user\\/profile\\/civiricus\",\"download_url\":\"https:\\/\\/api.tatoeba.org\\/unstable\\/audio\\/66596\\/file\",\"modified\":null,\"sentence\":{\"id\":1167848,\"text\":\"Y\\u00fcr\\u00fcme \\u015feklini be\\u011feniyorum.\",\"lang\":\"tur\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"duran\",\"is_unapproved\":false}},{\"id\":68301,\"created\":null,\"author\":\"civiricus\",\"license\":\"\",\"attribution_url\":\"https:\\/\\/tatoeba.org\\/user\\/profile\\/civiricus\",\"download_url\":\"https:\\/\\/api.tatoeba.org\\/unstable\\/audio\\/68301\\/file\",\"modified\":null,\"sentence\":{\"id\":1253320,\"text\":\"Bal\\u0131k sever misiniz?\",\"lang\":\"tur\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"duran\",\"is_unapproved\":false}}],\"paging\":{\"total\":1152,\"has_next\":true,\"next\":\"https:\\/\\/api.tatoeba.org\\/unstable\\/audios?lang=tur\\u0026limit=2\\u0026after=68301\"}}"
+  },
+  {
+    "url": "https://api.mymemory.translated.net/get?q=Hesab%C4%B1%20alabilir%20miyim%3F&langpair=tr|ru",
+    "status": 200,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"responseData\":{\"translatedText\":\"\\u041c\\u043e\\u0436\\u043d\\u043e \\u043c\\u043d\\u0435 \\u0441\\u0447\\u0435\\u0442?\",\"match\":0.85},\"quotaFinished\":false,\"mtLangSupported\":null,\"responseDetails\":\"\",\"responseStatus\":200,\"responderId\":null,\"exception_code\":null,\"matches\":[{\"id\":0,\"segment\":\"Hesab\\u0131 alabilir miyim?\",\"translation\":\"\\u041c\\u043e\\u0436\\u043d\\u043e \\u043c\\u043d\\u0435 \\u0441\\u0447\\u0435\\u0442?\",\"source\":\"tr-TR\",\"target\":\"ru-RU\",\"quality\":70,\"reference\":\"Machine Translation.\",\"usage-count\":2,\"subject\":false,\"created-by\":\"MT!\",\"last-updated-by\":\"MT!\",\"create-date\":\"2026-10-03 16:44:57\",\"last-update-date\":\"2026-10-03 16:44:57\",\"match\":0.85,\"penalty\":null,\"model\":\"neural\"},{\"id\":\"427311730\",\"segment\":\"Ehliyetinizi alabilir miyim?\",\"translation\":\"\\u041c\\u043e\\u0433\\u0443 \\u043b\\u0438 \\u044f \\u043f\\u043e\\u043b\\u0443\\u0447\\u0438\\u0442\\u044c \\u0432\\u0430\\u0448\\u0438 \\u0432\\u043e\\u0434\\u0438\\u0442\\u0435\\u043b\\u044c\\u0441\\u043a\\u0438\\u0435 \\u043f\\u0440\\u0430\\u0432\\u0430?\",\"source\":\"tr-TR\",\"target\":\"ru-RU\",\"quality\":\"74\",\"reference\":null,\"usage-count\":2,\"subject\":\"All\",\"created-by\":\"MateCat\",\"last-updated-by\":\"MateCat\",\"create-date\":\"2020-02-06 09:26:43\",\"last-update-date\":\"2020-02-06 09:26:43\",\"match\":0.67,\"penalty\":0},{\"id\":\"427302039\",\"segment\":\"Bir imza alabilir miyim?\",\"translation\":\"\\u041c\\u043e\\u0436\\u0435\\u0442\\u0435 \\u043f\\u043e\\u0434\\u043f\\u0438\\u0441\\u0430\\u0442\\u044c \\u043f\\u043e\\u0436\\u0430\\u043b\\u0443\\u0439\\u0442\\u0441\\u0430?\",\"source\":\"tr-TR\",\"target\":\"ru-RU\",\"quality\":\"74\",\"reference\":null,\"usage-count\":2,\"subject\":\"All\",\"created-by\":\"MateCat\",\"last-updated-by\":\"MateCat\",\"create-date\":\"2020-02-05 10:05:32\",\"last-update-date\":\"2020-02-05 10:05:32\",\"match\":0.67,\"penalty\":0}]}"
+  },
+  {
+    "url": "https://youglish.com/public/emb/widget.js",
+    "status": 200,
+    "cors": null,
+    "type": "text/javascript",
+    "body": "var YG=function(D,F){var e={},x={},S=[],i=\"4.3\";console.log(\"yg widget vers: \"+i);var n,W,Y=1,L=1024,k=2048,G=4096,H=!1;var a=!1;function r(e){W=e}var M={NONE:0,YG:1,PARTNER:2};var B={LEFT:1,RIGHT:2,TOP:4,BOTTOM:8};function U(e){var t=\"???\";switch(Number(e)){case B.TOP:t=\"plc_top\";break;case B.BOTTOM:t=\"plc_bottom\";break;case B.LEFT:t=\"plc_left\";break;case B.RIGHT:t=\"plc_right\"}return t}var z=\"%%AF%%\",q={ad_network_name:\"google adsense\",responsive:!0,code:\"<ins class='adsbygoogle' style='display:block' data-ad-client='ca-pub-4884889260645232' data-ad-slot='7940721009' data-ad-format='\"+z+\"'></ins>\"},V=30;var Z=120;var j={PLAYER:1,OUTDATED_BROWSER:2,TIMEOUT:3,GENERIC:4};W_ACTION={ERROR:1,WIDGET_RESIZE:2,SERVER_HIT:3,ADV:4,SEARCH_DONE:20,VIDEO_CHANGE:21,CAPTION_CHANGE:22,CAPTION_CONSUMED:23,PLAYER_READY:40,PLAYER_STATECHANGE:41,PLAYER_SPEED_UPDATED:42,YT_IFRAME_READY:43,DOC_READY:44,UNREADY:100};var t=!(P_ACTION={PLAY:1,REPLAY:2,PAUSE:3,PREV:4,NEXT:5,DELTA:6,SEARCH:7,SIZE:8,SETPLAYERSPEED:9,SETDELAYSTART:10});function l(e){try{return JSON.parse(e)}catch(e){}return\"\"}function o(e){if(\"https://youglish.com\"===(e.origin||e.originalEvent.origin)){var t=l(e.data);if(t&&t.wid&&t.action){if(!x[t.wid])return;if(x[t.wid].serverHit(),t.action===W_ACTION.DOC_READY)x[t.wid].broadcast(\"onWidgetReady\",t);else if(t.action===W_ACTION.YT_IFRAME_READY)x[t.wid].broadcast(\"onYouTubeReady\",t);else if(t.action===W_ACTION.PLAYER_READY)x[t.wid].setReady(!0),x[t.wid].broadcast(\"onPlayerReady\",t);else if(t.action===W_ACTION.WIDGET_RESIZE){var o=t.update===F||1==t.update;x[t.wid].resize(t.width,t.height,o)}else t.action===W_ACTION.ADV?(a=1==t.is_partner,console.log(\"------------v: \"+i),console.log(\"Ads raw data: \"+e.data),console.log(\"-> key used: \"+t.key+\" -isPartner: \"+a+\" -adToDisplay: \"+function(e){var t=\"???\";switch(Number(e)){case M.NONE:t=\"NONE\";break;case M.YG:t=\"YG\";break;case M.PARTNER:t=\"PARTNER\"}return t}(t.ads_display)),console.log(\"-> YGAds: \"+t.ads_code+\" -YGLocations: \"+t.ads_loc),console.log(\"------------\"),x[t.wid].setAdConfig(t.ads_display,l(t.ads_code),t.ads_loc,1==Number(t.show_logo))):t.action===W_ACTION.SEARCH_DONE?(x[t.wid].display(),x[t.wid].broadcast(\"onSearchDone\",t),x[t.wid].broadcast(\"onFetchDone\",t)):t.action===W_ACTION.VIDEO_CHANGE?x[t.wid].broadcast(\"onVideoChange\",t):t.action===W_ACTION.CAPTION_CHANGE?x[t.wid].broadcast(\"onCaptionChange\",t):t.action===W_ACTION.CAPTION_CONSUMED?x[t.wid].broadcast(\"onCaptionConsumed\",t):t.action===W_ACTION.PLAYER_STATECH"
+  },
+  {
+    "url": "https://context.reverso.net/translation/turkish-russian/%C3%A7ay",
+    "status": 403,
+    "cors": null,
+    "type": "text/html; charset=UTF-8",
+    "body": "двоичные данные, байт: 5689"
+  },
+  {
+    "url": "https://api.reverso.net/translate/v1/translation",
+    "status": 403,
+    "cors": null,
+    "type": "text/html; charset=UTF-8",
+    "body": "двоичные данные, байт: 5627"
+  },
+  {
+    "url": "https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=random&limit=2&showtrans=rus",
+    "status": 400,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"message\":\"Invalid value for parameter \\u0027showtrans\\u0027: must be one of: all, none, matching\",\"url\":\"\\/unstable\\/sentences?lang=tur\\u0026amp;has_audio=yes\\u0026amp;sort=random\\u0026amp;limit=2\\u0026amp;showtrans=rus\",\"code\":400}"
+  },
+  {
+    "url": "https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=random&limit=2&include=audios",
+    "status": 200,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"data\":[{\"id\":5853725,\"text\":\"Yava\\u015flad\\u0131m.\",\"lang\":\"tur\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"deyta\",\"is_unapproved\":false,\"audios\":[{\"id\":1254954,\"created\":\"2025-03-22T06:29:03+00:00\",\"author\":\"futurk\",\"license\":\"\",\"attribution_url\":\"https:\\/\\/tatoeba.org\\/user\\/profile\\/futurk\",\"download_url\":\"https:\\/\\/api.tatoeba.org\\/unstable\\/audio\\/1254954\\/file\",\"modified\":\"2025-03-22T06:29:03+00:00\"}]},{\"id\":946520,\"text\":\"Ben mutluyum.\",\"lang\":\"tur\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"duran\",\"is_unapproved\":false,\"audios\":[{\"id\":1048145,\"created\":\"2022-06-22T22:40:06+00:00\",\"author\":\"CVTR\",\"license\":\"\",\"attribution_url\":\"https:\\/\\/tatoeba.org\\/user\\/profile\\/CVTR\",\"download_url\":\"https:\\/\\/api.tatoeba.org\\/unstable\\/audio\\/1048145\\/file\",\"modified\":\"2022-06-22T22:40:06+00:00\"}]}],\"paging\":{\"total\":1141,\"has_next\":true,\"next\":\"https:\\/\\/api.tatoeba.org\\/unstable\\/sentences?lang=tur&has_audio=yes&sort=random%3A882375075&limit=2&include=audios&after=16738363.000000%2C946520\"}}"
+  },
+  {
+    "url": "https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=relevance&limit=3&q=Te%C5%9Fekk%C3%BCr%20ederim",
+    "status": 200,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"data\":[{\"id\":403944,\"text\":\"\\u00c7ok te\\u015fekk\\u00fcr ederim!\",\"lang\":\"tur\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"soliloquist\",\"is_unapproved\":false}],\"paging\":{\"total\":1,\"has_next\":false}}"
+  },
+  {
+    "url": "https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=words&limit=3&trans:lang=rus&showtrans=rus",
+    "status": 400,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"message\":\"Invalid value for parameter \\u0027showtrans\\u0027: must be one of: all, none, matching\",\"url\":\"\\/unstable\\/sentences?lang=tur\\u0026amp;has_audio=yes\\u0026amp;sort=words\\u0026amp;limit=3\\u0026amp;trans:lang=rus\\u0026amp;showtrans=rus\",\"code\":400}"
+  },
+  {
+    "url": "https://api.tatoeba.org/unstable/audio/66596/file",
+    "status": 404,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"message\":\"Not Found\",\"url\":\"\\/unstable\\/audio\\/66596\\/file\",\"code\":404}"
+  },
+  {
+    "url": "https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&sort=words&limit=5&trans:lang=rus&showtrans=matching&showtrans:lang=rus&include=audios",
+    "status": 400,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"message\":\"Invalid usage of parameter \\u0027showtrans:lang\\u0027 or \\u0027showtrans\\u0027: these two cannot be used together\",\"url\":\"\\/unstable\\/sentences?lang=tur\\u0026amp;has_audio=yes\\u0026amp;sort=words\\u0026amp;limit=5\\u0026amp;trans:lang=rus\\u0026amp;showtrans=matching\\u0026amp;showtrans:lang=rus\\u0026amp;include=audios\",\"code\":400}"
+  },
+  {
+    "url": "https://api.tatoeba.org/v1/audios/1161844/file",
+    "status": 200,
+    "cors": "*",
+    "type": "audio/mpeg",
+    "body": "двоичные данные, байт: 26787"
+  },
+  {
+    "url": "https://api.tatoeba.org/unstable/sentences?lang=tur&has_audio=yes&trans:lang=rus&showtrans:lang=rus&include=audios&sort=random&limit=2",
+    "status": 200,
+    "cors": "*",
+    "type": "application/json",
+    "body": "{\"data\":[{\"id\":3365045,\"text\":\"Ya\\u015flan\\u0131yorsun.\",\"lang\":\"tur\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"deyta\",\"is_unapproved\":false,\"audios\":[{\"id\":1047955,\"created\":\"2022-06-21T10:49:34+00:00\",\"author\":\"pinari\",\"license\":\"\",\"attribution_url\":\"https:\\/\\/tatoeba.org\\/user\\/profile\\/pinari\",\"download_url\":\"https:\\/\\/api.tatoeba.org\\/unstable\\/audio\\/1047955\\/file\",\"modified\":\"2022-06-21T10:49:34+00:00\"}],\"translations\":[{\"id\":5547336,\"text\":\"\\u0422\\u044b \\u0441\\u0442\\u0430\\u0440\\u0435\\u0435\\u0448\\u044c.\",\"lang\":\"rus\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"marafon\",\"is_unapproved\":false,\"is_direct\":false,\"audios\":[]},{\"id\":5547337,\"text\":\"\\u0412\\u044b \\u0441\\u0442\\u0430\\u0440\\u0435\\u0435\\u0442\\u0435.\",\"lang\":\"rus\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"marafon\",\"is_unapproved\":false,\"is_direct\":false,\"audios\":[]},{\"id\":5902272,\"text\":\"\\u0422\\u044b \\u0441\\u0442\\u0430\\u043d\\u043e\\u0432\\u0438\\u0448\\u044c\\u0441\\u044f \\u0441\\u0442\\u0430\\u0440\\u0448\\u0435.\",\"lang\":\"rus\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"marafon\",\"is_unapproved\":false,\"is_direct\":false,\"audios\":[]},{\"id\":5902276,\"text\":\"\\u0412\\u044b \\u0441\\u0442\\u0430\\u043d\\u043e\\u0432\\u0438\\u0442\\u0435\\u0441\\u044c \\u0441\\u0442\\u0430\\u0440\\u0448\\u0435.\",\"lang\":\"rus\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"marafon\",\"is_unapproved\":false,\"is_direct\":false,\"audios\":[]},{\"id\":5902277,\"text\":\"\\u0422\\u044b \\u0432\\u0437\\u0440\\u043e\\u0441\\u043b\\u0435\\u0435\\u0448\\u044c.\",\"lang\":\"rus\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"marafon\",\"is_unapproved\":false,\"is_direct\":false,\"audios\":[]},{\"id\":5902278,\"text\":\"\\u0412\\u044b \\u0432\\u0437\\u0440\\u043e\\u0441\\u043b\\u0435\\u0435\\u0442\\u0435.\",\"lang\":\"rus\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"marafon\",\"is_unapproved\":false,\"is_direct\":false,\"audios\":[]}]},{\"id\":4932215,\"text\":\"Sadece bir sorum daha var.\",\"lang\":\"tur\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"duran\",\"is_unapproved\":false,\"audios\":[{\"id\":273574,\"created\":null,\"author\":\"civiricus\",\"license\":\"\",\"attribution_url\":\"https:\\/\\/tatoeba.org\\/user\\/profile\\/civiricus\",\"download_url\":\"https:\\/\\/api.tatoeba.org\\/unstable\\/audio\\/273574\\/file\",\"modified\":null}],\"translations\":[{\"id\":3544239,\"text\":\"\\u0423 \\u043c\\u0435\\u043d\\u044f \\u0435\\u0449\\u0451 \\u043e\\u0434\\u0438\\u043d \\u0432\\u043e\\u043f\\u0440\\u043e\\u0441.\",\"lang\":\"rus\",\"script\":null,\"license\":\"CC BY 2.0 FR\",\"owner\":\"marafon\",\"is_unapproved\":false,\"is_direct\":false,\"audios\":[]},{\"id\":4107473,\"text\":\"\\u0"
+  },
+  {
+    "categories": "ru.wiktionary.org",
+    "out": {
+      "Категория:Фрукты/tr": 8,
+      "Категория:Медицина/tr": 7,
+      "Категория:Животные/tr": 2,
+      "Категория:Время/tr": 5,
+      "Категория:Транспорт/tr": 2,
+      "Категория:Профессии/tr": 48,
+      "Категория:Напитки/tr": 0,
+      "Категория:Погода/tr": 0,
+      "Категория:Жилище/tr": 2,
+      "Категория:Части тела/tr": 0,
+      "Категория:Мебель/tr": 10,
+      "Категория:Одежда/tr": 9,
+      "Категория:Посуда/tr": 5,
+      "Категория:Деньги/tr": 7,
+      "Категория:Болезни/tr": 59,
+      "Категория:Путешествия/tr": 3,
+      "Категория:Торговля/tr": 7,
+      "Категория:Семья/tr": 1,
+      "Категория:Здания/tr": 4,
+      "Категория:Овощи/tr": 2,
+      "Категория:Еда/tr": "нет",
+      "Категория:Цвета/tr": "нет",
+      "Категория:Туризм/tr": 1,
+      "Категория:Гостиницы/tr": "нет",
+      "Категория:Числительные/tr": "нет"
+    }
+  },
+  {
+    "categories": "en.wiktionary.org",
+    "out": {
+      "Category:tr:Mammals": 1,
+      "Category:tr:Colors": 32,
+      "Category:tr:Time": 35,
+      "Category:tr:Beverages": 18,
+      "Category:tr:Medicine": 103,
+      "Category:tr:Birds": 3,
+      "Category:tr:Foods": 54,
+      "Category:tr:Occupations": 371,
+      "Category:tr:Anatomy": 129,
+      "Category:tr:Fruits": 54,
+      "Category:tr:Clothing": 63,
+      "Category:tr:Vegetables": 43,
+      "Category:tr:Buildings": 43,
+      "Category:tr:Diseases": 27,
+      "Category:tr:Transport": 13,
+      "Category:tr:Money": 9,
+      "Category:tr:Rooms": 20,
+      "Category:tr:Furniture": 26,
+      "Category:tr:Vehicles": 21,
+      "Category:tr:Travel": 4,
+      "Category:tr:Weather": 9,
+      "Category:tr:Kitchenware": 16,
+      "Category:tr:Body parts": 18,
+      "Category:tr:Family members": 0,
+      "Category:tr:Shops": 6,
+      "Category:tr:Tourism": 1,
+      "Category:tr:Cooking": 36,
+      "Category:tr:Emotions": 15,
+      "Category:tr:Hotels": 4
+    }
+  },
+  {
+    "url": "https://ru.wiktionary.org/w/api.php?action=parse&page=ekmek&prop=wikitext&format=json&origin=*",
+    "status": 200,
+    "cors": "*",
+    "type": "application/json; charset=utf-8",
+    "body": "{\"parse\":{\"title\":\"ekmek\",\"pageid\":6165,\"wikitext\":{\"*\":\"= {{-tr-}} =\\n\\n=== \\u041c\\u043e\\u0440\\u0444\\u043e\\u043b\\u043e\\u0433\\u0438\\u0447\\u0435\\u0441\\u043a\\u0438\\u0435 \\u0438 \\u0441\\u0438\\u043d\\u0442\\u0430\\u043a\\u0441\\u0438\\u0447\\u0435\\u0441\\u043a\\u0438\\u0435 \\u0441\\u0432\\u043e\\u0439\\u0441\\u0442\\u0432\\u0430 ===\\n{{\\u043f\\u0430\\u0434\\u0435\\u0436\\u0438 tr\\n|nom-sg=ekmek\\n|nom-pl=ekmekler\\n}}\\n\\n<b><u>e</u>k-mek</b>\\n\\n=== \\u041f\\u0440\\u043e\\u0438\\u0437\\u043d\\u043e\\u0448\\u0435\\u043d\\u0438\\u0435 ===\\n\\n{{transcription|}}\\n{{\\u0434\\u043b\\u0438\\u043d\\u0430 \\u0441\\u043b\\u043e\\u0432\\u0430|5|lang=tr}}\\n\\n=== \\u0421\\u0435\\u043c\\u0430\\u043d\\u0442\\u0438\\u0447\\u0435\\u0441\\u043a\\u0438\\u0435 \\u0441\\u0432\\u043e\\u0439\\u0441\\u0442\\u0432\\u0430 ===\\n\\n==== \\u0417\\u043d\\u0430\\u0447\\u0435\\u043d\\u0438\\u0435 ====\\n\\n[[\\u0445\\u043b\\u0435\\u0431]]\\n\\n=== \\u0420\\u043e\\u0434\\u0441\\u0442\\u0432\\u0435\\u043d\\u043d\\u044b\\u0435 \\u0441\\u043b\\u043e\\u0432\\u0430 ===\\n\\n[[ekim]]\\n\\n=== \\u042d\\u0442\\u0438\\u043c\\u043e\\u043b\\u043e\\u0433\\u0438\\u044f ===\\n\\n\\u041e\\u0442 \\u043a\\u043e\\u0440\\u043d\\u044f \\u00abek-\\u00bb ([[\\u0441\\u0435\\u044f\\u0442\\u044c]]).\"}}}"
+  },
+  {
+    "url": "https://ru.wiktionary.org/w/api.php?action=query&list=categorymembers&cmtitle=%D0%9A%D0%B0%D1%82%D0%B5%D0%B3%D0%BE%D1%80%D0%B8%D1%8F%3A%D0%95%D0%B4%D0%B0%2Ftr&cmlimit=30&cmtype=page&format=json&origin=*",
+    "status": 200,
+    "cors": "*",
+    "type": "application/json; charset=utf-8",
+    "body": "{\"batchcomplete\":\"\",\"query\":{\"categorymembers\":[]}}"
+  },
+  {
+    "tatoebaAudioHeaders": {
+      "access-control-allow-origin": "*",
+      "connection": "keep-alive",
+      "content-type": "application/json",
+      "date": "Sat, 03 Oct 2026 16:45:14 GMT",
+      "server": "nginx/1.22.1",
+      "transfer-encoding": "chunked"
+    },
+    "status": 403
+  },
+  {
+    "url": "https://api.tatoeba.org/v1/audios/1161844/file",
+    "status": 200,
+    "cors": "*",
+    "type": "audio/mpeg",
+    "body": "28 bytes (обрезано)"
+  },
+  {
+    "youglishWidget": {
+      "ok": false,
+      "error": {
+        "wid": "yg",
+        "action": 1,
+        "code": 3
+      }
+    }
+  }
+]
