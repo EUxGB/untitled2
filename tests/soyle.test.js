@@ -1377,8 +1377,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(await q.evaluate(() => [!!ct, document.getElementById('modal').hidden]), [false, false], JSON.stringify(trace)); await q.click('#modalPrimary'); await q.waitForTimeout(60);
     eq(await q.evaluate(() => !!document.getElementById('ctDayEnd')), true);
     await q.click('#ctDayEnd'); await q.waitForTimeout(60);
-    eq(await q.evaluate(() => [document.getElementById('modalTitle').textContent, document.getElementById('modalStats').textContent.includes('потрачено')]), ['День 1 прожит', true]);
-    await q.click('#modalPrimary'); await q.waitForTimeout(60);
+    eq(await q.evaluate(() => [document.getElementById('modalTitle').textContent, document.getElementById('modalStats').textContent.includes('потрачено'), document.getElementById('modalPrimary').textContent.startsWith('Повторить фразы дня')]), ['День 1 прожит', true, true]);
+    await q.click('#modalSecondary'); await q.waitForTimeout(60);                                        // «Новый день» (первая кнопка — повтор фраз дня)
     eq(await q.evaluate(() => [city.day, city.done.length, city.min, document.getElementById('ctDay').textContent, JSON.parse(localStorage.getItem('soyle-city')).day]), [2, 0, 540, 'Дела на сегодня — 3 из 3', 2]);
     const errs = q.errors; await q.context().close(); eq(errs, []);
   });
@@ -1602,6 +1602,30 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.greet, ['Her zamanki yere mi?', "Evet, Taksim'e.", 'traffic']); eq(r.arrive, [160, 'Sana yüz altmış olsun.']); eq(r.taxiTo, 150);
     eq(r.none, 'Senin için her zaman var, komşu. Başka?'); eq(r.credit, [true, 60, 0, 'Sonra ödersin, komşu.', true]); eq(r.veresiye, 'Tabii komşu, yazıyorum. Sonra ödersin.');
     eq(r.when, ['Tamam komşu, bir saat sonra bakarım.', ['fixed']]); eq(r.when0, 'Bugün bakamam. Yarın sabah gelirim, olur mu?'); eq(errs, []);
+  });
+  await test('Повторить фразы дня: сказанное верно копится за день; в итогах дня первая кнопка — «Повторить фразы дня (N)» → очередь «Памяти» только из них, после неё — возврат в «Город»; при пустом дне — «Новый день»', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'sofor'; cityStart('taxi'); });
+    await ctPick(q, 0); await ctSay(q, 'taksime lütfen'); await ctNext(q); await ctPick(q, 0); await ctSay(q, 'meydana lütfen'); await ctNext(q);
+    const said = await q.evaluate(() => { cityLeave(); ct = null; return city.todaySaid; });
+    const m0 = await q.evaluate(() => { cityDayEnd(); return [document.getElementById('modalPrimary').textContent, document.getElementById('modalSecondary').textContent]; });
+    await q.click('#modalPrimary'); await q.waitForTimeout(80);
+    const m1 = await q.evaluate(() => [mode, mem && mem.card && mem.card.tr, mem && mem.phase, document.getElementById('memDue').textContent]);
+    const seen = new Set();
+    for(let i = 0; i < 14; i++){
+      const st = await q.evaluate(() => ({ mode, phase: mem && mem.phase, tr: mem && mem.card && mem.card.tr }));
+      if(st.mode !== 'memory') break;
+      if(st.tr) seen.add(st.tr);
+      if(st.phase === 'study' || st.phase === 'prompt'){ await q.click('#next'); }
+      else if(st.phase === 'answer'){ await q.click('#memGrades .grade[data-g="3"]'); }
+      else break;
+      await q.waitForTimeout(60);
+    }
+    const end = await q.evaluate(() => [mode, memFilter, city.todaySaid.length]);
+    const empty = await q.evaluate(() => { city.todaySaid = []; cityDayEnd(); const t = document.getElementById('modalPrimary').textContent; document.getElementById('modalSecondary').click(); return t; });
+    const errs = q.errors; await q.context().close();
+    eq(said, ["Taksim'e lütfen.", 'Meydana lütfen.']); eq(m0, ['Повторить фразы дня (2)', 'Новый день']);
+    eq(m1[0], 'memory'); ok(said.includes(m1[1]), 'первая карточка: ' + m1[1]); eq([...seen].sort(), said.slice().sort());
+    eq(end, ['city', null, 2]); eq(empty, 'Новый день'); eq(errs, []);
   });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];

@@ -2230,8 +2230,16 @@ function memTopicPool(){
   for(let i = 0; lists.some(l => i < l.length); i++) lists.forEach(l => { if(l[i]) out.push(l[i]); });
   return out;
 }
+// «Повторить фразы дня» из «Города»: очередь только из этих карточек (memFilter — множество турецких фраз), без лимита новых; после неё — обратно в «Город»
+let memFilter = null;
 function memPlan(now = Date.now()){
   const cards = loadCards(), day = memDay();
+  if(memFilter){
+    const mine = cards.filter(c => memFilter.has(c.tr));
+    const due = mine.filter(c => (c.s != null || c.seen) && c.due <= now), fresh = mine.filter(c => c.s == null && !c.seen);
+    const ahead = mine.filter(c => c.state !== 2 && (c.s != null || c.seen) && c.due > now).sort((a, b) => a.due - b.due);   // всё сказанное сегодня — сейчас, без ожидания
+    return { cards, day, due, fresh, ahead, room:fresh.length };
+  }
   const due = cards.filter(c => c.s != null && c.due <= now).sort((a, b) => FSRS.retrievability(a, now) - FSRS.retrievability(b, now));
   const seenDue = cards.filter(c => c.s == null && c.seen && c.due <= now);       // изучены, ждут первого вспоминания
   const room = Math.max(0, NEW_PER_DAY + (day.extra || 0) - day.newN);
@@ -2336,7 +2344,9 @@ function memNext(){
   nativeIdx = 0; synthSlow = false; echoPending = false;
   memRender(); updateMemTab();
 }
-function memEmpty(){ mem.phase = "empty"; memSetButtons("empty"); memRender(); updateMemTab(); }
+function memEmpty(){
+  if(memFilter){ memFilter = null; toast("Фразы дня повторены"); setMode("city"); return; }       // повтор фраз дня закончен — обратно в «Город»
+  mem.phase = "empty"; memSetButtons("empty"); memRender(); updateMemTab(); }
 function memStore(c){ const all = loadCards(), i = all.findIndex(x => cardKey(x) === cardKey(c)); if(i >= 0) all[i] = c; else all.push(c); saveCards(all); }
 function memStudied(){                                                   // «Запомнил»: первое знакомство, вспоминание — через минуту
   const c = { ...mem.card, seen:true, due:Date.now() + 60e3 }, d = memDay();
@@ -3960,6 +3970,7 @@ function cityLikes(m, alts){
 function cityAccept(m, alts, polite, score, names){
   const n = ct.node, line = m.say[0];
   ct.n++; ct.ok++; city.said++; city.ok++;
+  if(line && !city.todaySaid.includes(line)){ city.todaySaid.push(line); memEnroll(line, m.ru); }   // «фразы дня» и карточка «Памяти» — сразу, даже если сцену не доиграли
   if(polite && !ct.polite && !(m.fx && m.fx.rel)){ ct.polite = true; cityFx({ rel:1 }); }
   const liked = cityLikes(m, alts); if(liked) cityFx({ rel:liked });
   if(m.xp !== false){ if(score >= 90) skillBump("dil"); if(!ct.sawRu) skillBump("kulak"); if(polite || liked) skillBump("nezaket"); }   // способности растут от успехов
@@ -4076,9 +4087,10 @@ function cityDayEnd(){
   const carryTxt = city.carry.length ? ` Не успели: ${city.carry.map(id => SCENES[id].title).join(", ")} — перенесено на завтра.` : "";
   showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${city.done.length}.${carryTxt} ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}`,
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
-    primary:{ label:"Новый день", fn:cityNewDay },
-    secondary:{ label:"Остаться", fn:cityRender } });
+    primary: city.todaySaid.length ? { label:`Повторить фразы дня (${Math.min(5, city.todaySaid.length)})`, fn:cityReview } : { label:"Новый день", fn:cityNewDay },
+    secondary: city.todaySaid.length ? { label:"Новый день", fn:cityNewDay } : { label:"Остаться", fn:cityRender } });
 }
+function cityReview(){ memFilter = new Set(city.todaySaid.slice(-5)); setMode("memory"); }
 function memEnroll(tr, ru){ try { const all = loadCards(); if(all.some(c => c.tr === tr)) return; all.push(newMemCard(tr, trToCyr(tr), ru, "rec", Date.now())); saveCards(all); updateMemTab(); } catch(e){} }
 function cityLeave(){ speechSynthesis && speechSynthesis.cancel(); if(ct) clearTimeout(ct.timer); if(ctOn){ ctTok++; ctOn = false; try { ctRec && ctRec.stop(); } catch(e){} const b = ctEl("ctSpeak"); b.classList.remove("listening"); setLbl(b, "Сказать"); } npcTok++; }
 ctEl("ctSpeak").onclick = cityListen;
