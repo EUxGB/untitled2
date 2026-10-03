@@ -64,6 +64,7 @@
 | `webapp-testing` | anthropics/skills (165K) | проверка: осмотр экранов, нажатия, логи консоли — реализовано в `tests/` |
 | `frontend-design` | anthropics/skills (928K) | любое изменение внешнего вида: план токенов (цвет/шрифт/раскладка), проверка на шаблонность |
 | `responsive-design` | wshobson/agents (19.5K) | размеры под экран: fluid-значения (clamp/calc), dvh, зоны нажатия ≥ 44px |
+| `using-superpowers`, `brainstorming`, `writing-plans`, `executing-plans`, `test-driven-development`, `systematic-debugging`, `verification-before-completion`, `requesting-code-review`, `subagent-driven-development` | obra/superpowers (293K звёзд; по просьбе пользователя 2026-10-03) | **процесс любой работы**: новая функция → `brainstorming` (классифицировать: spike / bounded / architectural; вопросы по одному; дизайн в чате или спек в `docs/superpowers/specs/`, одобрение — потом `writing-plans` → план в `docs/superpowers/plans/`); код — только после падающего теста (`test-driven-development`); ошибка/упавший тест → `systematic-debugging` (сначала причина, потом правка); перед «готово/опубликовано» — `verification-before-completion` (свежий прогон команды, выход и числа — в ответе); перед публикацией крупного — `requesting-code-review` отдельным агентом |
 | на будущее: `playwright-cli` | microsoft (167K) | видео/трассировки тестов |
 
 Макет нового вида (Claude Design, по frontend-design): https://claude.ai/artifact/LJwX1w4VPH9jx2gVjskWqp —
