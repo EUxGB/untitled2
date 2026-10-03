@@ -43,7 +43,7 @@ const INIT = () => {
 };
 async function openPage(browser, opts = {}){
   const ctx = await browser.newContext({ viewport:{ width:390, height:844 }, userAgent: opts.android ? 'Mozilla/5.0 (Linux; Android 14) Chrome/128 Mobile' : undefined, colorScheme: opts.scheme || 'light' });
-  const p = await ctx.newPage(); p.errors = []; p.on('pageerror', e => p.errors.push(e.message));
+  const p = await ctx.newPage(); p.errors = []; p.on('pageerror', e => p.errors.push((e.stack || e.message).split('\n').slice(0, 3).join(' | ')));   // со стеком: видно, где упало
   // тесты не зависят от сети: всё внешнее, что не подменено ниже, отклоняется (как в CI, так и локально)
   await p.route(u => /^https?:/.test(u.href) && !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(u.href), r => r.abort());
   await p.route('**/*googleapis*/**', r => r.abort());
@@ -72,7 +72,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
 
   console.log('Загрузка и режимы');
   await test('страница открывается без ошибок во всех режимах', async () => {
-    for(const m of ['pairs','phrases','listen','free']) await p.evaluate(m => setMode(m), m);
+    for(const m of ['pairs','phrases','listen','free','city']) await p.evaluate(m => setMode(m), m);
     eq(p.errors, []);
   });
   await test('все наборы фраз на месте и без пустых полей', async () => {
@@ -492,7 +492,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q = await openPage(browser); const consoleErr = [];
     q.on('console', m => { if(m.type() === 'error' && !/Failed to load resource|ERR_|from origin 'null'.*woff2|woff2.*from origin 'null'/.test(m.text())) consoleErr.push(m.text()); });
     await q.evaluate(() => { window.__say = 'merhaba'; });
-    for(const tab of ['#tab-pairs','#tab-phrases','#tab-listen','#tab-free','#tab-progress']){
+    for(const tab of ['#tab-pairs','#tab-phrases','#tab-listen','#tab-free','#tab-city','#tab-progress']){
       await q.click(tab); await q.waitForLoadState('networkidle');
       const ids = await q.evaluate(() => [...document.querySelectorAll('.screen > section:not([hidden]) button, .chips button')].filter(b => b.offsetParent && !b.disabled && !['bkYes','updateApp'].includes(b.id)).map((b, i) => { b.dataset.probe = String(i); return String(i); }));
       for(const id of ids){
@@ -519,6 +519,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     if(mode === 'pairs' || mode === 'phrases') return en('next') ? '' : `${mode}: «Дальше» выключена`;
     if(mode === 'listen') return en('lsA') || en('lsB') || en('lsBlitz') || lsLocked ? '' : 'На слух: всё выключено';
     if(mode === 'free') return en('freeSpeak') ? '' : 'Свободно: «Сказать» выключена';
+    if(mode === 'city') return en('ctSpeak') || en('ctShow') || en('ctNext') || [...document.querySelectorAll('.ct-task, .ct-note, #ctDayEnd')].some(b => vis(b) && !b.disabled)
+      || document.querySelector('#ctTr.veil') ? '' : `Город: нет пути дальше (${ct ? ct.id + '/' + ct.nodeId : 'дом'})`;   // .veil — собеседник ещё говорит
     return '';
   };
   const monkey = async (q, tabs, steps, seed) => {
@@ -526,7 +528,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const log = [], bad = [];
     for(let i = 0; i < steps; i++){
       const said = ['__T__', 'yanlış bir şey', '', '__SILENT__'][Math.floor(rnd() * 4)];
-      await q.evaluate(s => { window.__silent = s === '__SILENT__'; window.__say = s === '__T__' ? (item && item.target) || (ls && ls.answer) || 'merhaba' : s; }, said);
+      await q.evaluate(s => { window.__silent = s === '__SILENT__'; window.__say = s === '__T__' ? (mode === 'city' && ct && ct.node && ct.node.moves ? ct.node.moves[0].say[0] : (item && item.target) || (ls && ls.answer) || 'merhaba') : s; }, said);
       let target;
       if(rnd() < 0.08) target = tabs[Math.floor(rnd() * tabs.length)];
       else {
@@ -567,7 +569,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('случайные нажатия во всех разделах (по 120 на раздел): всегда есть путь дальше, нет ошибок JS', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
     await q.evaluate(() => { trVoice = { name:'Test Türkçe', lang:'tr-TR' }; trVoices = [trVoice]; BLITZ_SEC = 8; });
-    const tabs = ['#tab-memory','#tab-pairs','#tab-phrases','#tab-listen','#tab-free','#tab-progress'], bad = [];
+    const tabs = ['#tab-city','#tab-memory','#tab-pairs','#tab-phrases','#tab-listen','#tab-free','#tab-progress'], bad = [];
     const goTab = async tab => {   // перейти в раздел можно всегда: окно/лист закрываются своими кнопками, остальное не должно перекрывать панель
       if(await q.isVisible('#modal')) await q.click('#modal button:visible >> nth=-1');
       if(await q.isVisible('#sheet')) await q.click('#sheetClose');
@@ -647,12 +649,12 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     }
     await q.context().close(); eq(bad, []);
   });
-  await test('нижняя панель: 5 разделов, активный подсвечен, «Свободно» и «Прогресс» открываются', async () => {
+  await test('нижняя панель: 7 разделов, активный подсвечен, «Свободно» и «Прогресс» открываются', async () => {
     const r = await p.evaluate(() => { const tabs = [...document.querySelectorAll('.tabbar .tab')].map(t => t.id);
       document.getElementById('tab-free').click(); const free = !document.getElementById('freeCard').hidden && document.getElementById('tab-free').getAttribute('aria-pressed');
       document.getElementById('tab-progress').click(); const prog = !document.getElementById('progressView').hidden && document.getElementById('card').hidden;
       document.getElementById('tab-pairs').click(); return [tabs, free, prog]; });
-    eq(r, [['tab-memory','tab-pairs','tab-phrases','tab-listen','tab-free','tab-progress'], 'true', true]);
+    eq(r, [['tab-city','tab-memory','tab-pairs','tab-phrases','tab-listen','tab-free','tab-progress'], 'true', true]);
   });
   await test('игра видна всегда: верхняя панель обновляется после ответа, нажатие открывает «Прогресс»', async () => {
     const r = await p.evaluate(r => { eval(r); renderGame(); const ring0 = document.getElementById('tbRing').style.strokeDashoffset;
@@ -1325,6 +1327,128 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r, 'хлеб');
   });
 
+  console.log('«Город» (Mahalle): разговоры с последствиями');
+  const openCity = async (opts) => { const q = await openPage(browser, opts); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-city'); await q.waitForTimeout(100); return q; };
+  const ctSay = async (q, t) => { await q.evaluate(t => { window.__say = t; window.__silent = !t; }, t); await q.click('#ctSpeak'); await q.waitForTimeout(120);
+    return q.evaluate(() => ({ res: document.getElementById('ctResult').textContent, npc: document.getElementById('ctTr').textContent, pat: ct && ct.patience, next: !document.getElementById('ctNext').disabled, chips: !document.getElementById('ctChips').hidden, money: city.money })); };
+  const ctNext = async q => { await q.click('#ctNext'); await q.waitForTimeout(60); };
+  await test('Город: такси — что вы сказали, меняет исход; ошибка стоит терпения, после двух — подсказки; цена на слух; «üstü kalsın» — чаевые и отношение; сцена идёт в «Память»', async () => {
+    const q = await openCity();
+    const home = await q.evaluate(() => [document.querySelectorAll('.ct-task:not([disabled])').length, document.getElementById('ctDay').textContent, city.money, city.min]);
+    eq(home, [3, 'Дела на сегодня — 3 из 3', 500, 540]);
+    await q.click('.ct-task[data-scene="taxi"]'); await q.waitForTimeout(80);
+    const start = await q.evaluate(() => [document.getElementById('ctTr').textContent, document.getElementById('ctRu').hidden, document.getElementById('ctSpeak').disabled, document.getElementById('ctWho').textContent]);
+    eq(start, ['Buyurun, nereye?', true, false, 'Шофёр']);       // без озвучки в браузере текст открыт сразу
+    const wrong = await ctSay(q, 'kadıköy'); ok(/Кадыкёй/.test(wrong.res) && wrong.next, wrong.res);       // не туда — шофёр «понял» и едет не туда
+    await ctNext(q); const fix = await ctSay(q, 'pardon taksime lütfen'); ok(/на Таксим/.test(fix.res) && /Вежливость/.test(fix.res), fix.res);   // исправились; «lütfen» замечено
+    await ctNext(q); eq((await q.evaluate(() => document.getElementById('ctTr').textContent)), "Taksim'in neresi?");
+    const m1 = await ctSay(q, 'bla bla'); eq([m1.pat, m1.chips, m1.next], [2, false, false]); ok(/не понял/.test(m1.res), m1.res);
+    const m2 = await ctSay(q, ''); eq([m2.pat, m2.chips], [1, true]);                                      // тишина — тоже промах; подсказки после второго
+    const chips = await q.evaluate(() => [...document.querySelectorAll('.ct-chip b')].map(b => b.textContent)); eq(chips, ['Meydana lütfen.', 'Fark etmez.']);
+    await q.evaluate(() => { window.__spoken = []; trVoice = { name:'T', lang:'tr-TR' }; trVoices = [trVoice]; document.querySelector('.ct-chip').click(); });
+    eq(await q.evaluate(() => [window.__spoken[0], document.getElementById('ctResult').textContent.includes('Скажите это сами')]), ['Meydana lütfen.', true]);   // подсказка звучит, но сказать надо самому
+    await q.evaluate(() => { trVoice = null; trVoices = []; });
+    const ok1 = await ctSay(q, 'meydan'); ok(ok1.next && !ok1.chips, ok1.res);
+    await ctNext(q); const tr = await ctSay(q, 'olur'); ok(tr.next, tr.res); const minBefore = await q.evaluate(() => city.min);
+    await ctNext(q);                                                                                        // пробка: +25 мин
+    const pay = await q.evaluate(() => [city.min, document.getElementById('ctTr').textContent, document.getElementById('ctPay').hidden, document.getElementById('ctSpeak').disabled, [...document.querySelectorAll('.ct-note')].map(b => b.dataset.v)]);
+    eq(pay, [minBefore + 1, 'Geldik. Yüz seksen lira.', false, true, ['100', '200', '500']]);
+    await q.click('.ct-note[data-v="200"]'); await q.waitForTimeout(50);
+    eq(await q.evaluate(() => [city.money, ct.change, document.getElementById('ctResult').textContent.includes('сдача 20')]), [320, 20, true]);
+    await ctNext(q); const tip = await ctSay(q, 'üstü kalsın'); ok(/Сдачи не надо/.test(tip.res), tip.res); await ctNext(q); await q.waitForTimeout(80);
+    const end = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.money, city.rel, city.done.map(d => [d.id, d.kind, d.ok]), loadCards().filter(c => /Taksim|kalsın|Meydana|Olur/.test(c.tr)).map(c => c.tr).sort()]);
+    eq(end, [false, 'Такси до Таксима — получилось', 300, { taxi:2 }, [['taxi', 'ok', 6]], ['Meydana lütfen.', 'Olur, sorun değil.', "Pardon, Taksim'e lütfen!", 'Üstü kalsın.']]);   // −180 проезд −20 чаевые; +1 за «lütfen», +1 за чаевые
+    await q.click('#modalPrimary'); await q.waitForTimeout(60);
+    // недоплата: цену не расслышали — терпение −1, купюры больше денег выключены
+    await q.click('.ct-task[data-scene="bakkal"]'); await q.waitForTimeout(80);
+    await ctSay(q, 'hoş bulduk'); await ctNext(q);
+    const shop = await ctSay(q, 'ekmek ve su lütfen'); ok(/Взяли: хлеб, вода/.test(shop.res) && /Осталось: яйца/.test(shop.res) && !shop.next, shop.res);
+    const none = await ctSay(q, 'peynir var mı'); ok(/нет/.test(none.res) && none.pat === 3, none.res);                 // нет такого товара — не промах
+    const last = await ctSay(q, 'yumurta'); ok(/Всё из списка/.test(last.res) && last.next, last.res); await ctNext(q);
+    eq(await q.evaluate(() => [...document.querySelectorAll('.ct-note')].map(b => [b.dataset.v, b.disabled])), [['100', false], ['200', false], ['500', true]]);   // 300 ₺ на руках: 500 дать нельзя
+    await q.click('.ct-note[data-v="100"]'); await q.waitForTimeout(50);
+    eq(await q.evaluate(() => [ct.patience, document.getElementById('ctTr').textContent, city.money]), [2, 'On lira daha.', 300]);
+    await q.click('.ct-note[data-v="200"]'); await q.waitForTimeout(50); await ctNext(q);
+    const bye = await ctSay(q, 'kolay gelsin'); ok(bye.next, bye.res); await ctNext(q); await q.waitForTimeout(80);
+    eq(await q.evaluate(() => [document.getElementById('modalTitle').textContent, city.money, city.rel.bakkal, city.flags && city.flags.bakkalFriend]), ['Bakkal — лавка у дома — получилось', 190, 4, 1]);   // +1 «hoş bulduk», +1 «lütfen», +2 «kolay gelsin»
+    await q.context().close();
+  });
+  await test('Город: терпение кончилось — сцена провалена с последствиями; «Показать» на телефоне — путь без речи и без опыта; итог дня и новый день; всё сохраняется', async () => {
+    const q = await openCity();
+    await q.click('.ct-task[data-scene="kapici"]'); await q.waitForTimeout(80);
+    const xp0 = await q.evaluate(() => game.xp);
+    await ctSay(q, 'merhaba kolay gelsin'); await ctNext(q);
+    const r1 = await ctSay(q, 'sıcak su yok'); ok(r1.next, r1.res); await ctNext(q);
+    const r2 = await ctSay(q, '5 numara'); ok(/Номер пять/.test(r2.res), r2.res); await ctNext(q);     // цифра от распознавателя понимается как номер
+    const r3 = await ctSay(q, 'çok acil bugün lütfen'); ok(/срочно/.test(r3.res), r3.res); await ctNext(q);
+    const xp1 = await q.evaluate(() => game.xp); ok(xp1 > xp0, 'опыт за реплики');
+    await ctSay(q, 'xxx'); await ctSay(q, 'yyy'); await q.click('#ctShow'); await q.waitForTimeout(50);
+    const ph = await q.evaluate(() => [document.getElementById('ctResult').textContent, game.xp]);
+    ok(/показали на телефоне/.test(ph[0]) && /без опыта/.test(ph[0]), ph[0]); eq(ph[1], xp1);          // телефон: без опыта
+    await ctNext(q); await q.waitForTimeout(80);
+    const end = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.done.map(d => [d.id, d.kind]), city.rel, loadCards().some(c => c.tr === 'Sıcak su yok.')]);
+    eq(end, [false, 'Kapıcı — нет горячей воды — получилось', [['kapici', 'ok']], { kapici:2 }, true]);   // горячая вода сегодня; «kolay gelsin» и «lütfen» — отношение; сказанное — в «Память»
+    await q.click('#modalPrimary'); await q.waitForTimeout(60);
+    // провал: три промаха подряд у bakkal
+    await q.click('.ct-task[data-scene="bakkal"]'); await q.waitForTimeout(80);
+    const money0 = await q.evaluate(() => city.money);
+    await ctSay(q, 'merhaba'); await ctNext(q);
+    await ctSay(q, 'zzz'); await ctSay(q, 'zzz'); await ctSay(q, 'zzz'); await q.waitForTimeout(80);
+    const fail = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.money, city.done.find(d => d.id === 'bakkal').kind, document.getElementById('modalText').textContent]);
+    eq(fail.slice(0, 4), [false, 'Bakkal — лавка у дома — не вышло', money0 - 160, 'bad']); ok(/Что стоило сказать: «Ekmek lütfen»/.test(fail[4]), fail[4]);
+    await q.click('#modalPrimary'); await q.waitForTimeout(60);
+    const homeNow = await q.evaluate(() => [document.querySelectorAll('.ct-task.done').length, document.querySelector('.ct-task.done.bad') !== null, !!document.getElementById('ctDayEnd'), JSON.parse(localStorage.getItem('soyle-city')).done.length]);
+    eq(homeNow, [2, true, false, 2]);
+    // третья сцена — такси «на телефоне» до конца, потом итоги дня
+    await q.click('.ct-task[data-scene="taxi"]'); await q.waitForTimeout(80);
+    const trace = [];
+    for(let i = 0; i < 6 && await q.evaluate(() => !!ct); i++){
+      trace.push(await q.evaluate(() => [ct.nodeId, document.getElementById('ctPay').hidden, document.getElementById('ctShow').disabled, document.getElementById('modal').hidden]));
+      if(await q.evaluate(() => !document.getElementById('ctPay').hidden)) await q.click('.ct-note:not([disabled]) >> nth=-1'); else await q.click('#ctShow', { timeout:2000 }).catch(e => trace.push('show: ' + e.message.split('\n')[0]));
+      await q.waitForTimeout(40); if(await q.evaluate(() => ct && ct.resolved)) await ctNext(q); await q.waitForTimeout(40);
+    }
+    eq(await q.evaluate(() => [!!ct, document.getElementById('modal').hidden]), [false, false], JSON.stringify(trace)); await q.click('#modalPrimary'); await q.waitForTimeout(60);
+    eq(await q.evaluate(() => !!document.getElementById('ctDayEnd')), true);
+    await q.click('#ctDayEnd'); await q.waitForTimeout(60);
+    const day = await q.evaluate(() => [document.getElementById('modalTitle').textContent, document.getElementById('modalStats').textContent.includes('потрачено')]);
+    eq(day, ['День 1 прожит', true]);
+    await q.click('#modalPrimary'); await q.waitForTimeout(60);
+    const day2 = await q.evaluate(() => [city.day, city.done.length, city.min, document.getElementById('ctDay').textContent, JSON.parse(localStorage.getItem('soyle-city')).day]);
+    eq(day2, [2, 0, 540, 'Дела на сегодня — 3 из 3', 2]);
+    const errs = q.errors; await q.context().close(); eq(errs, []);
+  });
+  await test('Город: собеседник говорит голосом персонажа; турецкий текст открывается после звука; перевод по нажатию стоит терпения (один раз)', async () => {
+    const q = await openCity();
+    await q.evaluate(() => { trVoice = { name:'A', lang:'tr-TR' }; trVoices = [trVoice, { name:'B', lang:'tr-TR' }]; window.__spoken = []; window.__noOnEnd = true; });
+    await q.click('.ct-task[data-scene="bakkal"]'); await q.waitForTimeout(30);
+    const during = await q.evaluate(() => [window.__spoken, document.getElementById('ctTr').classList.contains('veil'), document.getElementById('ctSpeak').disabled]);
+    eq(during, [['Hoş geldin komşu! Buyur.'], true, true]);                                    // пока говорит — текст размыт, микрофон ждёт
+    await q.waitForTimeout(1200 + 'Hoş geldin komşu! Buyur.'.length * 150 + 100);           // onend не пришёл — страховка открывает
+    const after = await q.evaluate(() => [document.getElementById('ctTr').classList.contains('veil'), document.getElementById('ctSpeak').disabled]);
+    eq(after, [false, false]);
+    await q.evaluate(() => { window.__noOnEnd = false; });
+    const rev = await q.evaluate(() => { document.getElementById('ctTr').click(); const a = [document.getElementById('ctRu').hidden, document.getElementById('ctRu').textContent, ct.patience]; document.getElementById('ctTr').click(); a.push(ct.patience); return a; });
+    eq(rev, [false, 'Добро пожаловать, сосед! Слушаю.', 2, 2]);                               // перевод открыт, терпение −1, повторное нажатие бесплатно
+    await q.evaluate(() => { window.__spoken = []; document.getElementById('ctReplay').click(); }); await q.waitForTimeout(120);
+    const voice = await q.evaluate(() => [window.__spoken[0], document.querySelector('.ct-pat').getAttribute('aria-label')]);
+    eq(voice, ['Hoş geldin komşu! Buyur.', 'Терпение собеседника: 2 из 3']);
+    await q.context().close();
+  });
+  await test('Город помещается на 360×640, 390×844 и 412×915 без прокрутки страницы: дом, сцена с подсказками, оплата, итог', async () => {
+    const q = await openPage(browser); const bad = [];
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { localStorage.removeItem('soyle-city'); city = Object.assign({}, CITY_START); ct = null; setMode('city'); }); await q.waitForTimeout(80);
+      const check = async name => { const r = await q.evaluate(() => { autofit(); const card = document.getElementById('cityCard');
+          const cut = [...card.querySelectorAll('.result, .ct-tr, .ct-task, .ct-chip')].filter(e => e.offsetParent && e.scrollHeight > e.clientHeight + 1).length;
+          return [document.documentElement.scrollHeight <= innerHeight + 1, card.scrollHeight - card.clientHeight <= 1, cut, [...document.querySelectorAll('.tabbar .tab')].every(t => t.scrollWidth <= t.clientWidth + 1)]; });
+        if(r.some(x => x !== true && x !== 0)) bad.push(`${w}×${h} ${name}: ${JSON.stringify(r)}`); };
+      await check('дом');
+      await q.click('.ct-task[data-scene="taxi"]'); await q.waitForTimeout(60); await check('сцена');
+      await ctSay(q, 'a'); await ctSay(q, 'b'); await check('подсказки');
+      await ctSay(q, 'taksim'); await ctNext(q); await ctSay(q, 'meydan'); await ctNext(q); await ctSay(q, 'olur'); await ctNext(q); await check('оплата');
+    }
+    await q.context().close(); eq(bad, []);
+  });
   console.log('Резервная копия прогресса');
   await test('код копии: весь прогресс, без настроек устройства; русские и турецкие буквы не портятся', async () => {
     const r = await p.evaluate(() => { localStorage.setItem('soyle-rec-conflict','1'); localStorage.setItem('soyle-voice','X'); saveList('soyle-mine', [{ tr:'Çok güzel, teşekkürler' }]);
