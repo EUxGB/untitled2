@@ -620,12 +620,14 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 /* Поле-настолка: кольцо 7×7 из кнопок-клеток (зона нажатия ≥ 44px на 360px), внутри кольца — дела дня и кубик; срезки — пунктирные улицы под ним */
 .bd{position:relative; display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); grid-template-rows:repeat(7, minmax(0, 1fr)); gap:3px; width:100%; aspect-ratio:1; max-width:420px; margin:0 auto}
 .bd-streets{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; fill:none; stroke:var(--line); stroke-width:.06; stroke-dasharray:.18 .14}
-.bd-cell{position:relative; min-width:0; min-height:0; padding:0 0 4px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:600 max(9px, calc(10px * var(--fit)))/1.1 var(--body); display:flex; align-items:flex-end; justify-content:center; cursor:default; overflow:hidden}
+.bd-cell{position:relative; min-width:0; min-height:0; padding:0 1px 4px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:600 9px/1.1 var(--body); letter-spacing:-.02em; display:flex; align-items:flex-end; justify-content:center; cursor:default; overflow:hidden; white-space:nowrap}
+@media (min-width:400px){ .bd-cell{font-size:10px} }
 .bd-cell.place{border-color:color-mix(in srgb, var(--accent) 45%, var(--line))}
 .bd-cell.event{background:#F3E8CF; color:var(--ink); font:700 max(14px, calc(18px * var(--fit)))/1 var(--display); align-items:center; padding-bottom:0}
 .bd-cell.home{background:var(--ink); color:var(--bg); border-color:var(--ink)}
 .bd-cell.reach{cursor:pointer; outline:2px solid var(--accent); outline-offset:-2px; background:color-mix(in srgb, var(--accent) 14%, var(--surface))}
 .bd-cell.reach:hover{background:color-mix(in srgb, var(--accent) 24%, var(--surface))}
+.bd-cell.home.reach{background:color-mix(in srgb, var(--accent) 40%, var(--ink)); color:var(--bg)}
 .bd-cell:disabled{cursor:default; opacity:1}
 .bd-cell .bd-pin{position:absolute; top:3px; right:3px; width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 2px var(--surface)}
 .bd-cell .bd-pin.closed{background:var(--muted)} .bd-cell .bd-pin.done{background:var(--ok)}
@@ -3420,10 +3422,10 @@ function cityTaxiTo(i){                                            // такси
   cityStart("taxi", { dest:i });
 }
 function cityTaxiAsk(){                                            // кнопка «Taksi çağır»: до ближайшего несделанного дела
-  const id = cityPlanIds().find(x => SCENES[x] && !cityDoneId(x) && cellOfScene(x) >= 0 && cellOfScene(x) !== city.pos);
+  const id = cityPlanIds().find(x => SCENES[x] && x !== "taxi" && !cityDoneId(x) && cellOfScene(x) >= 0 && cellOfScene(x) !== city.pos);
   if(!id){ toast("Такси некуда: дела рядом или сделаны."); return; }
   const i = cellOfScene(id), price = 100 + 10 * boardDist(city.pos, i);
-  showModal({ ic:"Taksi!", title:`Такси до «${BOARD[i].title}»`, text:`Примерно ${price} ₺ и 25 минут, зато без кубика. Договариваться с водителем — по-турецки.`,
+  showModal({ ic:"Taksi!", title:`Такси до ${BOARD[i].gen || ("«" + BOARD[i].title + "»")}`, text:`Примерно ${price} ₺ и 25 минут, зато без кубика. Договариваться с водителем — по-турецки.`,
     primary:{ label:"Вызвать", fn:() => cityTaxiTo(i) }, secondary:{ label:"Не надо", fn:cityRender } });
 }
 function cityStart(id, opts){
