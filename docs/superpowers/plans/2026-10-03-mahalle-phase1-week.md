@@ -2,18 +2,20 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Превратить три сцены «Города» в первую неделю жизни в квартале: календарь с зарплатой и часами работы,
-8 персонажей с характером и отношениями, способности игрока, типы узлов `call` и `code`, повтор фраз дня, плитка и медали,
-генератор проверок всех сцен и 10 новых сцен; одновременно убрать «Звуки» и пары слов в «На слух».
+**Goal:** Превратить три сцены «Города» в первую неделю квартала-настолки: поле из 24 клеток с кубиком и выбором, колода из
+10 событий (смешных и опасных), календарь с зарплатой и часами работы, персонажи с характером (разные люди на одном месте),
+способности игрока, типы узлов `call` и `code`, повтор фраз дня, плитка и медали, генератор проверок всех сцен и 10 новых сцен;
+одновременно убрать «Звуки» и пары слов в «На слух».
 
 **Architecture:** Всё — в `index.html` (один файл, правило проекта), блок «Город» (сейчас строки ~3212–3600) расширяется
-новыми константами (`CHARS`, `WEEK_PLAN`, `SKILLS`) и функциями с префиксом `city*`/`ct*`; состояние — `city` (`soyle-city`,
-версия 2, нормализация `cityNormalize`). Проверки сцен — новый файл `tests/city.test.js` (генератор по `SCENES`), остальное —
-в `tests/soyle.test.js`. Код — только после падающего теста.
+константами (`BOARD`, `DECK`, `CHARS`, `WEEK_PLAN`, `SKILLS`) и функциями с префиксом `city*`/`ct*`; дом `#ctHome` становится
+полем (SVG-кольцо 8×6, внутри — дела дня, кубик, карта события); сцены и карты событий — один движок (`SCENES`, узлы);
+состояние — `city` (`soyle-city`, версия 2, нормализация `cityNormalize`). Проверки сцен и карт — новый файл `tests/city.test.js`
+(генератор по `SCENES`), остальное — в `tests/soyle.test.js`. Код — только после падающего теста.
 
 **Tech Stack:** vanilla JS в одном файле, Web Speech API, `localStorage`; тесты Playwright 1.56 (`npm test` = `tests/soyle.test.js` + `tests/real-media.test.js`).
 
-**Spec:** `docs/superpowers/specs/2026-10-03-mahalle-world-design.md` (§1–§17; эта фаза — §15 «Фаза 1»).
+**Spec:** `docs/superpowers/specs/2026-10-03-mahalle-world-design.md` (§1–§17; эта фаза — §15 «Фаза 1»; поле — §4а, колода — §9а).
 
 ## Global Constraints
 
@@ -33,10 +35,13 @@
 Проверки, которых спек не называет, но которые встретит игрок; каждая закреплена тестом в указанной задаче:
 
 1. Старое сохранение `soyle-city` v1 (без `ver`, `rel` по сценам, `money` 120) открывается без ошибок и не теряет день — задача 3.
-2. Игрок вернулся в «Город» на следующий календарный день с незаконченной сценой: сцена продолжается, зарплата/перенос считаются по `city.day`, а не по дате — задача 4.
-3. 21:00 наступило посреди сцены: сцена доигрывается, перенос — только для не начатых дел — задача 4.
-4. Способность повысилась во время сцены (окно `milestone`): окно не перекрывает выбор ответа — показывается после итога сцены (`deferred`, как медали в блице) — задача 6.
-5. «Повторить фразы дня» при пустом списке (все реплики провалены) — кнопки нет; при ≥ 1 — очередь только из них, после — возврат в «Город» — задача 9.
+2. Игрок вернулся в «Город» на следующий календарный день с незаконченной сценой: сцена продолжается, зарплата/перенос считаются по `city.day`, а не по дате — задача 6.
+3. 21:00 наступило посреди сцены: сцена доигрывается, перенос — только для не начатых дел — задача 6.
+4. Способность повысилась во время сцены (окно `milestone`): окно не перекрывает выбор ответа — показывается после итога сцены (`deferred`, как медали в блице) — задача 8.
+5. «Повторить фразы дня» при пустом списке (все реплики провалены) — кнопки нет; при ≥ 1 — очередь только из них, после — возврат в «Город» — задача 11.
+6. Бросили кубик и ушли из раздела / закрыли приложение: бросок сохранён (`city.roll`), подсветка восстанавливается, второй бросок без хода невозможен — задача 4.
+7. Все дела сделаны, фишка далеко от дома: «Eve dön» считает время по расстоянию, и если 21:00 наступает по дороге — день всё равно заканчивается дома без провала — задача 4.
+8. Клетка «?» выпала, когда колода дня исчерпана (10 карт, условия `when` не выполнены): клетка ведёт себя как пустая, без ошибки — задача 5.
 
 ---
 
@@ -116,9 +121,10 @@ await test('каждая сцена помещается на 360×640, 390×844
 - Test: `tests/soyle.test.js` (раздел «Город»).
 
 **Interfaces:**
-- Produces: `const CHARS = { sofor:{ name:"Шофёр Али", initial:"A", voice:0, patience:3, trait:"…", likes:{ words:["üstü kalsın"], firstTry:false } }, bakkal:{…}, kapici:{…}, komsu:{ …patience:4 }, pazarci:{ …patience:2 }, berber:{…}, eczaci:{ …likes:{ words:["teşekkür ederim"], firstTry:true } }, usta:{…} }` — значения из таблицы §8; `SCENES.taxi.char = "sofor"`, `bakkal → "bakkal"`, `kapici → "kapici"`.
+- Produces: `const CHARS = { sofor:{ name:"Шофёр Али", initial:"A", voice:0, patience:3, trait:"…", likes:{ words:["üstü kalsın"], firstTry:false } }, sofor_hasan:{ name:"Хасан-амджа", patience:2, likes:{ quiet:true } }, sofor_emre:{ name:"Эмре", likes:{ words:["kısa yoldan"] } }, bakkal:{…}, bakkal_emre:{ name:"Эмре, сын Хасана", when: city => city.min >= 18*60 }, kapici:{…}, komsu:{ …patience:4 }, pazarci:{ …patience:2 }, berber:{…}, eczaci:{ …likes:{ words:["teşekkür ederim"], firstTry:true } }, usta:{…} }` — значения из таблицы §8 и пулов §4а; `SCENES.taxi.pool = ["sofor","sofor_hasan","sofor_emre"]`, `SCENES.bakkal.pool = ["bakkal","bakkal_emre"]`, `SCENES.kapici.char = "kapici"`.
+- `function pickChar(scene) → string` — `scene.char`, либо из `scene.pool` с весом `1 + (city.rel[c] || 0)` среди тех, у кого `when` не ложно (`TESTMODE`: `window.__char || pool[0]`); результат — `ct.char`; `npcSay`, терпение, `likes`, имя (`#ctWho`), инициал — по `ct.char`. Узел может иметь `npcBy:{ [charId]: "реплика" }` — замена `npc` для этого персонажа (и `againBy`).
 - `function cityNormalize()` — `city = Object.assign({}, CITY_START, city)`; `ver:2`; переносит `rel` со сцен на персонажей (`taxi→sofor`), `money = Math.max(money, 1500)` при миграции с v1; гарантирует объекты `rel, mastery, seen, flags, played, skill`, массивы `done, carry, todaySaid`, числа `debt, haggleWins`.
-- `const charOf = scene => CHARS[scene.char]`; `city.rel[charId]`; `cityFx({rel})` пишет в `city.rel[ct.scene.char]` (сцена без `char` — отношения не копятся).
+- `city.rel[charId]`; `cityFx({rel})` пишет в `city.rel[ct.char]` (сцена без персонажа — отношения не копятся).
 - `CITY_START` дополняется: `ver:2, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, money:3500`.
 
 - [ ] **Step 1: Падающий тест:**
@@ -135,16 +141,83 @@ await test('Город: сохранение v1 переносится (rel сц
 ```
    (`openPage` принимает `opts.storage` — добавить в harness: `addInitScript` кладёт пары в `localStorage` до загрузки; заглушка `speechSynthesis.speak` пишет `window.__lastVoice = u.voice && u.voice.name`; ожидание голоса — `trVoices[CHARS.komsu.voice % 3].name`.)
 - [ ] **Step 2: Прогнать — падает** (`ver` undefined).
-- [ ] **Step 3: Реализовать** `CHARS`, `cityNormalize`, `char` у трёх сцен, терпение и голос по персонажу, `cityFx` по `char`; дом и итоги дня показывают имена из `CHARS`.
+- [ ] **Step 3: Реализовать** `CHARS`, `cityNormalize`, `pickChar`/`pool`/`npcBy` (у такси — три водителя с разными `greet`/`again`: Хасан-амджа «Nereye.» / «Hı?», Эмре «Abi nereye? Kısa yoldan mı gidelim?»), терпение и голос по персонажу, `cityFx` по `ct.char`; дом и итоги дня показывают имена из `CHARS`. Тест: `window.__char = 'sofor_hasan'` → `#ctWho` «Хасан-амджа», `#ctTr` «Nereye.», `ct.patience === 2`.
 - [ ] **Step 4: Прогнать** `ONLY="Город" node tests/soyle.test.js` и `node tests/city.test.js` → зелёные (существующие тесты города могут ссылаться на `city.rel.taxi` — обновить на `sofor`).
 - [ ] **Step 5: Commit:** `"Город: персонажи CHARS (голос, терпение, характер), отношения по персонажам, сохранение v2 с переносом"`.
 
 ---
 
-### Task 4: Календарь: неделя, зарплата, часы работы, перенос дел (спек §7)
+### Task 4: Поле и ход — `BOARD`, кубик, переходы, визит, «Eve dön», такси (спек §4а)
 
 **Files:**
-- Modify: `index.html` — константы `SALARY = 3500`, `DAY_START = 9*60`, `DAY_END = 21*60`, `WEEK_PLAN` (таблица §7, недели 1–3; id сцен, которых ещё нет, допустимы — `cityPlanFor` пропускает неизвестные), `SCENES[*].open`; функции `cityDow()`, `cityWeek()`, `cityPlanFor(day)`, `cityOpenNow(id)`, `cityNewDay()`; `cityRender` (закрытые дела с часами, `disabled`), `cityDayEnd` (перенос, зарплата через `cityNewDay`), `cityStart` (запрет закрытых).
+- Modify: `index.html` — разметка `#ctHome`: `<svg id="ctBoard">` (кольцо 8×6), внутри кольца `#ctInner` (дела дня `#ctTasks`, кубик `#ctDice`, текст), кнопки `#ctRoll` («Zar at»), `#ctHomeBtn` («Eve dön»), `#ctTaxi` («Taksi çağır»); константы `BOARD` (24 клетки по таблице §4а), `SHORTCUTS = [[3,10],[14,21]]`, `STEP_MIN = 10`; функции `boardDist(a, b)`, `boardReach(from, n)`, `cityRoll()`, `cityMoveTo(i)`, `cityArrive(i)`, `cityVisit(i)`, `cityGoHome()`, `cityTaxiTo(i)`; `cityRender` рисует поле; `cityStart(id)` вызывается только из `cityArrive`; CSS `.bd-cell`, `.bd-cell.reach`, `.bd-pin`, `.bd-token`, `.bd-cell.place/.event/.home` (палитра проекта: вода Босфора — места, тюльпан — только опасность/запись, песочный — события), всё через `var(--fit)`; `STUCK` в тестах.
+- Test: `tests/soyle.test.js` (новый блок «Поле»), `tests/city.test.js` (граф поля).
+
+**Interfaces:**
+- `const BOARD = [{ id:"ev", kind:"home", title:"Дом", scenes:["su","cilingir","kargo","goc","tesisatci","elektrikci"] }, { id:"kapici", kind:"place", title:"Подъезд", scenes:["kapici","aidat"] }, { id:"bakkal", … }, { id:"q3", kind:"event" }, …]` — ровно 24, порядок §4а; `BOARD[i].xy` — координаты клетки на сетке 8×6 по периметру по часовой стрелке от (0,0).
+- `function boardDist(a, b) → number` — кратчайший путь по кольцу (в обе стороны) с учётом `SHORTCUTS` (вес 2); `function boardReach(from, n) → number[]` — индексы с `0 < boardDist ≤ n`.
+- `function cityRoll()` — если `city.roll` уже есть — ничего; иначе `city.roll = TESTMODE ? (window.__dice || 1) : 1 + Math.floor(Math.random() * 6)`; подсветка `boardReach(city.pos, city.roll)`; `citySave()`.
+- `function cityMoveTo(i)` — только если `i ∈ boardReach(city.pos, city.roll)`: `city.min += STEP_MIN * boardDist(city.pos, i)`, `city.pos = i`, `city.roll = null`, `city.visited.push(i)`, затем `cityArrive(i)`.
+- `function cityArrive(i)` — `kind:"place"`: дело дня на этой клетке (`city.plan` ∩ `BOARD[i].scenes`, не в `done`, открыто по часам) → `cityStart(id)`; иначе `cityVisit(i)` (окно «Зайти?»: «Зайти» → мини-сцена `visit_<place>` из `SCENES` если есть, иначе +5 мин и +0; «Дальше»); `kind:"event"` → `cityDraw()` (задача 5; до неё — как пустая); `kind:"home"` → если `city.min >= 18*60` или все дела сделаны — предложение «Итоги дня», иначе ничего; `kind:"empty"` — ничего.
+- `function cityGoHome()` — `city.min += STEP_MIN * boardDist(city.pos, 0)`, `city.pos = 0`, `cityDayEnd()`; при `city.min >= 21*60` в любой момент после хода — `cityGoHome()` автоматически (сцена, если идёт, доигрывается).
+- `function cityTaxiTo(i)` — сцена `taxi` с целью «до <BOARD[i].title>» (параметр `ct.dest = i`); по `end.kind !== "bad"` фишка переносится в `i` без шагов; цена сцены (`pay`) — как в сцене.
+- Дом (`cityRender`): дела дня — булавки `.bd-pin` на клетках и список в `#ctInner`; закрытое по часам — серая булавка с `title` часов; `#ctRoll` выключена, пока есть `city.roll`; подсвеченные клетки — кнопки (`<g role="button" tabindex="0">`, зона нажатия ≥ 44 px через прозрачный `rect`).
+- Monkey `STUCK` для дома: есть `#ctRoll:not([disabled])` или `.bd-cell.reach` или `#ctHomeBtn` или окно.
+
+- [ ] **Step 1: Падающие тесты:**
+
+```js
+await test('Поле: 24 клетки кольцом, срезки, расстояния в обе стороны; бросок подсвечивает клетки ≤ N, остановка раньше, шаг 10 мин; место с делом — сцена, без дела — «Зайти?»; бросок сохраняется; «Eve dön» и 21:00', async () => {
+  const q = await openCity();
+  const r = await q.evaluate(() => { const out = {};
+    out.n = BOARD.length; out.kinds = BOARD.filter(b => b.kind === 'event').length;
+    out.dist = [boardDist(0, 23), boardDist(0, 12), boardDist(3, 10), boardDist(2, 11)];     // 1 (назад), 12, 2 (срезка), 9 → через срезку 3→10: 1+2+1 = 4
+    window.__dice = 3; cityRoll(); out.reach = boardReach(0, 3); out.rollBtn = document.getElementById('ctRoll').disabled;
+    out.lit = [...document.querySelectorAll('.bd-cell.reach')].length; out.savedRoll = JSON.parse(localStorage.getItem('soyle-city')).roll;
+    cityMoveTo(2); out.afterMove = [city.pos, city.min, city.roll, !!ct && ct.id];                 // bakkal — дело дня → сцена
+    return out; });
+  const r2 = await q.evaluate(() => { cityLeave(); ct = null; city.plan = ['taxi']; city.pos = 0; window.__dice = 2; cityRoll(); cityMoveTo(2);
+    return { modal: document.getElementById('modalTitle').textContent, pos: city.pos }; });                               // bakkal без дела → «Зайти?»
+  const r3 = await q.evaluate(() => { document.getElementById('modalSecondary').click(); city.pos = 12; city.min = 20 * 60; cityGoHome(); return { pos: city.pos, min: city.min, modal: document.getElementById('modalTitle').textContent }; });
+  await q.context().close();
+  eq([r.n, r.kinds], [24, 6]); eq(r.dist, [1, 12, 2, 4]); eq(r.reach.sort((a, b) => a - b), [1, 2, 3, 21, 22, 23]); eq([r.rollBtn, r.lit, r.savedRoll], [true, 6, 3]);
+  eq(r.afterMove, [2, 540 + 20, null, 'bakkal']); eq([r2.modal, r2.pos], ['Лавка на углу — зайти?', 2]); eq(r3, { pos:0, min: 20 * 60 + 120, modal: 'День 1 прожит' });
+});
+await test('Поле помещается на 360×640, 390×844, 412×915: зоны нажатия клеток ≥ 44 px, дела внутри кольца, кнопки видны', …);   // по образцу «Город помещается»
+```
+   В `tests/city.test.js`: граф поля связный, срезки в существующие клетки, каждая сцена §5 недели 1 привязана хотя бы к одной клетке (`BOARD.some(b => b.scenes.includes(id))`, кроме `event:true`).
+- [ ] **Step 2: Прогнать — падает** (`BOARD` не определён).
+- [ ] **Step 3: Реализовать** по Interfaces. Поле — SVG `viewBox="0 0 328 246"` (8×41 × 6×41), клетка 36×36 с зоной 41×41 (+ внешний отступ карточки = ≥ 44 на экране при `--fit ≥ 1`; при `--fit < 1` на 360×640 зона всё равно ≥ 44 px — проверить тестом, иначе уменьшить `#ctInner`). Фишка — круг с инициалом «S». Движение — без анимации при `prefers-reduced-motion`, иначе переход 200 мс.
+- [ ] **Step 4: Прогнать** «Поле», «Город», monkey, `city.test.js` → зелёные. Существующие тесты города, которые запускали сцену кнопкой `.ct-task` — переписать на `cityStart(id)` из страницы (сцена всё ещё запускается напрямую в тестах) или на бросок с `window.__dice`.
+- [ ] **Step 5: Снимки** дома на трёх размерах — глазами (frontend-design: не шаблонная «монополия»; формы клеток — скруглённые, значки мест из спрайта, подписи 10–11 px).
+- [ ] **Step 6: Commit:** `"Город: поле-настолка — 24 клетки, кубик с выбором (остановка раньше, срезки), булавки дел, «Зайти?», «Eve dön», такси-переезд"`.
+
+---
+
+### Task 5: Колода событий `DECK` — 10 карт фазы 1 (спек §9а)
+
+**Files:**
+- Modify: `index.html` — `DECK = ["kedi","balkon","kopek","yankesici","yagmur","dugun","simitci","mac","dolmusyanlis","kimlik"]` (id мини-сцен в `SCENES` с `event:true`, `mood`, `when(city)`), `cityDraw()`, `cityArrive` (ветка `event`), флаги `flags.kedi/wet/semsiye/yarali` и их утренние следствия в `cityNewDay` (задача 6: `kedi` → дело «mama» в bakkal: ход `shop` с товаром `kedi maması`; `wet` → с вероятностью 0,5 (`TESTMODE`: по `window.__sick`) дело `doktor` — пока сцены doktor нет (фаза 3) → `eczane`); узел `timed:{ sec:5 }` для карманника (микрофон открывается сразу, не успели — промах); узел с `minScore:70` для «Git!».
+- Test: `tests/soyle.test.js` (по одному сценарию на карту с особой механикой: kedi → флаг и дело утром; kopek → минимальная оценка и укус; yankesici → таймер; yagmur → зонт/`wet`; dolmusyanlis → перенос на 6 клеток), `tests/city.test.js` (все карты проходят генератор; `mood` ∈ множества; опасная карта не первая в день 1).
+
+**Interfaces:**
+- `function cityDraw() → string|null` — карты из `DECK`, не в `city.deckUsed`, с `when(city) !== false`; день 1 и `deckUsed.length === 0` → только `mood !== "danger"`; `TESTMODE`: `window.__card || первая подходящая`; нет карт → `null` (клетка как пустая). Вытянутая → `city.deckUsed.push(id)`, `cityStart(id)` (сцена-событие: `#ctPlace` = «Событие», без цели, `fail` карты — её «плохой» исход).
+- Узел `timed:{ sec }` — `cityNode` сам нажимает «Сказать» (микрофон открыт), по истечении `sec` без ответа — `cityMiss("time")`; `TESTMODE`: `window.__slow` имитирует просрочку.
+- Ход с `minScore:70` — принимается только при `pronScore ≥ minScore` (ключевые слова недостаточно); Dil ≥ 3 → `minScore − 10`.
+- Флаги: `cityFx({ flag })` уже пишет `city.flags[flag] = city.day`; добавить `unflag` для «зонт купили».
+
+- [ ] **Step 1: Падающие тесты** (сценарии из Files; у каждого ожидания по таблице §9а: `kedi` → `city.flags.kedi === 1`, утром `city.plan` содержит `"mama"`; `kopek` при `__say = 'git'` с оценкой < 70 → «обход» `min + 20`, второй провал → `pos` = клетка 8? нет — hastane вне поля: `money − 300`, `min + 120`, флаг `yarali`; `yankesici` при `__slow` → `money − 200`; `yagmur` без «şemsiye» → `flags.wet`; `dolmusyanlis` без вопроса → `pos` сдвинут на 6 по кольцу, `min + 30`; граф/содержимое всех 10 — генератор).
+- [ ] **Step 2: Прогнать — падает.**
+- [ ] **Step 3: Реализовать** карты (турецкий короткий, смешное — в тексте исхода по-русски и в реплике персонажа) и механики `timed`/`minScore`.
+- [ ] **Step 4: Прогнать** «Город», `city.test.js`, monkey → зелёные.
+- [ ] **Step 5: Commit:** `"Город: колода событий — 10 карт (кот, чай с балкона, собака, карманник, дождь, свадьба, симитчи, матч, не тот долмуш, kimlik), таймер и минимальная оценка"`.
+
+---
+
+### Task 6: Календарь: неделя, зарплата, часы работы, перенос дел (спек §7)
+
+**Files:**
+- Modify: `index.html` — константы `SALARY = 3500`, `DAY_START = 9*60`, `DAY_END = 21*60`, `WEEK_PLAN` (таблица §7, недели 1–3; id сцен, которых ещё нет, допустимы — `cityPlanFor` пропускает неизвестные), `SCENES[*].open`; функции `cityDow()`, `cityWeek()`, `cityPlanFor(day)`, `cityOpenNow(id)`, `cityNewDay()`; `cityRender` (булавки закрытых дел — серые, с часами), `cityDayEnd` (перенос, зарплата через `cityNewDay`), `cityArrive` (закрытое место → «Закрыто: пн–пт 09:00–17:00», без сцены).
 - Test: `tests/soyle.test.js`.
 
 **Interfaces:**
@@ -162,17 +235,17 @@ await test('Город: календарь — день 1 понедельник
   const q = await openCity();
   const r = await q.evaluate(() => { const out = {};
     out.start = [cityDow(), cityWeek(), city.money, city.plan];
-    city.min = 21 * 60 + 5; cityRender(); out.lateDisabled = [...document.querySelectorAll('.ct-task')].every(b => b.disabled);
+    city.min = 21 * 60 + 5; cityRender(); out.lateDisabled = document.getElementById('ctRoll').disabled && !!document.getElementById('ctHomeBtn');
     city.done = [{ id:'taxi', kind:'ok', short:'', ok:1, n:1, took:10, spent:180 }]; cityDayEnd(); document.getElementById('modalPrimary').click();
     out.day2 = [city.day, cityDow(), city.plan.slice(0, 2), city.carry, city.money];
     SCENES.banka = Object.assign({}, SCENES.kapici, { title:'Банк', char:undefined, open:{ days:[1,2,3,4,5], from:540, to:1020 } }); city.plan = ['banka']; city.min = 17 * 60 + 1; cityRender();
-    out.bankClosed = [document.querySelector('.ct-task[data-scene="banka"]').disabled, cityOpenNow('banka').text];
+    out.bankClosed = [!!document.querySelector('.bd-pin.closed'), cityOpenNow('banka').text]; city.pos = 16; window.__dice = 1; cityRoll(); cityMoveTo(17); out.noScene = ct === null;
     city.day = 7; city.debt = 200; city.money = 100; cityNewDay(); out.monday = [cityDow(), city.money, city.debt];
     return out; });
   await q.context().close();
   eq(r.start, [1, 1, 3500, ['taxi', 'bakkal', 'kapici']]); eq(r.lateDisabled, true);
   eq(r.day2, [2, 2, ['bakkal', 'kapici'], [], 3500 - 180]);   // перенесённые дела — первыми, зарплаты во вторник нет
-  eq(r.bankClosed, [true, 'пн–пт 09:00–17:00']); eq(r.monday, [1, 100 + 3500 - 200, 0]);
+  eq(r.bankClosed, [true, 'пн–пт 09:00–17:00']); eq(r.noScene, true); eq(r.monday, [1, 100 + 3500 - 200, 0]);
 });
 ```
 - [ ] **Step 2: Прогнать — падает** (`cityDow` не определена).
@@ -182,7 +255,7 @@ await test('Город: календарь — день 1 понедельник
 
 ---
 
-### Task 5: Характер персонажа в игре: `likes`, узел `chat` (спек §8 таблица)
+### Task 7: Характер персонажа в игре: `likes`, узел `chat` (спек §8 таблица)
 
 **Files:**
 - Modify: `index.html` — `cityAccept` (бонус `likes`), `SCENES.taxi` (узел `chat` после `traffic`: Али жалуется на пробки: «Bu trafik hiç bitmiyor ya.» → ходы «Evet, çok yoğun.» (+1 rel, `go:"arrive"`) / «Hı hı.» (`go:"arrive"`)); `SCENES.bakkal.greet` ход «Hoş bulduk!» уже даёт +1 — через `likes.words` вместо `fx.rel`.
@@ -211,7 +284,7 @@ await test('Город: характер — за то, что персонаж 
 
 ---
 
-### Task 6: Способности игрока `kulak`, `dil`, `nezaket` (спек §8а; `pazarlik` — фаза 2)
+### Task 8: Способности игрока `kulak`, `dil`, `nezaket` (спек §8а; `pazarlik` — фаза 2)
 
 **Files:**
 - Modify: `index.html` — `SKILLS`, `SKILL_LVLS`, `skillLvl`, `skillBump`, `cityXpMult`, `ctAcceptScore`, `npcRate`; хуки в `cityAccept` (dil ≥ 90, kulak без перевода, nezaket вежливость), `cityAnswer` (порог), `ctBump` (dil 3), `cityStart` (nezaket 3: терпение +1), `cityReveal` (nezaket 4: бесплатно), `cityFx` (nezaket 5: rel ×2), `cityNode` (nezaket 2: `greetAlt`), `npcSay` (rate), `award` (множитель для `gid === "city"`), `cityEnd` (отложенные окна уровней).
@@ -252,7 +325,7 @@ await test('Город: способности — счётчики и уров�
 
 ---
 
-### Task 7: Типы узлов `code` (число на слух) и сцены-звонки `call` (спек §6)
+### Task 9: Типы узлов `code` (число на слух) и сцены-звонки `call` (спек §6)
 
 **Files:**
 - Modify: `index.html` — `cityNode` (ветка `n.code`), `cityCode(v)`, `ctButtons` (`code` как `pay`), `ctMoves` (ход «Tekrar eder misiniz?» в `phone` сценах), `cityAnswer` (ход `repeat`), `cityPhone` (запрет в `phone`), `npcSay` (rate ≥ 1.0 в `phone`), `#ctInitial` (значок `i-phone`), CSS `.ct-code` (как `.ct-note`, `min-height:44px`), `STUCK` в тестах.
@@ -276,7 +349,7 @@ await test('Город: узел «число на слух» — три вар�
 
 ---
 
-### Task 8: Эффекты отношений (спек §8: sofor, bakkal, kapici, usta, eczaci — пороги 3 и 6)
+### Task 10: Эффекты отношений (спек §8: sofor, bakkal, kapici, usta, eczaci — пороги 3 и 6)
 
 **Files:**
 - Modify: `index.html` — `ctNodeFor(id)` (варианты узла по условию), `cityPrice(price)` (скидки), ветка `pay` в `cityNode` (veresiye), `SCENES.taxi` (`greet` → при sofor ≥ 3 `go:"traffic"` минуя `where`: вариант узла с `npc:"Her zamanki yere mi?"`), `SCENES.bakkal.list` (при ≥ 3 `none` пуст), `SCENES.kapici.when` (при ≥ 3 сразу `today`).
@@ -285,7 +358,7 @@ await test('Город: узел «число на слух» — три вар�
 **Interfaces:**
 - Узел может иметь `variants:[{ if:{ rel:{ char, min } }, ...поля узла }]`; `function ctNodeFor(id) → node` — первый подходящий вариант, слитый поверх узла (`Object.assign({}, n, v)` без поля `variants`); `cityNode` и бот тестов используют `ctNodeFor`.
 - `function cityPrice(price) → number` — sofor ≥ 6 в сценах `char:"sofor"`, usta ≥ 6 в `char:"usta"`: `Math.floor(price * 0.9 / 5) * 5`; иначе `price`. `pay.price` везде проходит через `cityPrice` (реплика цены собеседника остаётся прежней — «Yüz seksen lira» — но при скидке узел-вариант даёт другую реплику: `variants` со своим `npc` и `pay.price`; проще и честнее: скидка — отдельный вариант узла с собственной ценой и репликой «Sana yüz altmış olsun.»). Решение: **скидки — варианты узлов**, `cityPrice` не нужен (YAGNI); удалить из Files.
-- Veresiye: в `cityNode` ветка `pay`: если `city.money < price` и `ct.scene.char === "bakkal"` и `city.rel.bakkal >= 6` → `city.debt += price - city.money; ct.spent += city.money; city.money = 0`; реплика «Sonra ödersin, komşu.»; `cityResolve(p.go, "ok", …)`. Долг гасится в `cityNewDay` по понедельникам (задача 4).
+- Veresiye: в `cityNode` ветка `pay`: если `city.money < price` и `ct.scene.char === "bakkal"` и `city.rel.bakkal >= 6` → `city.debt += price - city.money; ct.spent += city.money; city.money = 0`; реплика «Sonra ödersin, komşu.»; `cityResolve(p.go, "ok", …)`. Долг гасится в `cityNewDay` по понедельникам (задача 6).
 
 - [ ] **Step 1: Падающий тест:**
 
@@ -300,7 +373,7 @@ await test('Город: отношения открывают варианты �
 
 ---
 
-### Task 9: Повтор фраз дня (спек §10)
+### Task 11: Повтор фраз дня (спек §10)
 
 **Files:**
 - Modify: `index.html` — `cityEnd` (накопление `city.todaySaid`), `cityDayEnd` (кнопка `secondary` «Повторить фразы дня (N)»), `memFilter` и `memPlan` (очередь только из фильтра), `memEmpty` (при фильтре — возврат в «Город»), `memRender` (подпись «Фразы дня»).
@@ -324,10 +397,10 @@ await test('Город: «Повторить фразы дня» — очере�
 
 ---
 
-### Task 10: Дом, персонажи, способности, плитка «Прогресс», медали (спек §8 «дома», §8а «видны дома», §11)
+### Task 12: Дом, персонажи, способности, плитка «Прогресс», медали (спек §8 «дома», §8а «видны дома», §11)
 
 **Files:**
-- Modify: `index.html` — разметка `#ctHome`: `#ctChars` (ряд персонажей), `#ctSkills` (четыре полосы); `openChar(id)` (окно: имя, характер, где встречали, уровень, следующий порог); «Прогресс»: плитка `#gbCity` (`день N · неделя W`, `дел хорошо / всего`, `₺`, `знакомых`), `openCityStats()`; `BADGES` += `hafta` (tier 2, `v: () => city.days, n:7`), `komsu` (tier 2, `v: () => Math.max(0, ...Object.values(city.rel)), n:6`); CSS `.ct-char`, `.ct-skill` (через `var(--fit)`); `renderGame` заполняет плитку.
+- Modify: `index.html` — разметка `#ctInner` (внутри кольца поля): вкладки-чипы «Дела · Люди · Умения» → `#ctTasks` / `#ctChars` (ряд персонажей) / `#ctSkills` (четыре полосы); `openChar(id)` (окно: имя, характер, где встречали, уровень, следующий порог); «Прогресс»: плитка `#gbCity` (`день N · неделя W`, `дел хорошо / всего`, `₺`, `знакомых`), `openCityStats()`; `BADGES` += `hafta` (tier 2, `v: () => city.days, n:7`), `komsu` (tier 2, `v: () => Math.max(0, ...Object.values(city.rel)), n:6`); CSS `.ct-char`, `.ct-skill` (через `var(--fit)`); `renderGame` заполняет плитку.
 - Test: `tests/soyle.test.js` (тест «Город помещается» + дом с персонажами на 3 размерах; `openChar`; медали; monkey).
 
 **Interfaces:**
@@ -348,13 +421,13 @@ await test('Город: дома — персонажи с уровнем отн
 
 ---
 
-### Task 11: Десять сцен недели 1 (спек §5, таблица «Неделя 1»)
+### Task 13: Десять сцен недели 1 (спек §5, таблица «Неделя 1»)
 
 **Files:**
-- Modify: `index.html` — `SCENES` += `simit, dolmus, istanbulkart, firin, market, cay, lokanta, eczane, komsu, su`; `PHRASE_DICT`/`FORM_GLOSS`/`FUNC_GLOSS` — слова всех новых `say`; `WEEK_PLAN` недели 1 уже ссылается на них (задача 4).
+- Modify: `index.html` — `SCENES` += `simit, dolmus, istanbulkart, firin, market, cay, lokanta, eczane, komsu, su`; `PHRASE_DICT`/`FORM_GLOSS`/`FUNC_GLOSS` — слова всех новых `say`; `WEEK_PLAN` недели 1 уже ссылается на них (задача 6); каждая сцена привязана к клетке `BOARD` (задача 4).
 - Test: `tests/city.test.js` покрывает автоматически (граф, содержимое, бот, помещается); `tests/soyle.test.js` — по одному сценарному тесту на особые механики: `eczane` (узел `code`: «Günde iki kez» → варианты `1×/2×/3×/4×`; после 19:00 вариант `nöbetçi` +20 мин), `su` (`phone:true`, `#num` адрес), `komsu` (`patience 4`, ходы «согласиться на чай» / «вежливо отказаться» → разные `end.kind`, «ellerinize sağlık» в `likes`), `lokanta`/`cay` (`char:"usta"`, «afiyet olsun» → ответ «Elinize sağlık»).
 
-**Interfaces:** формат сцены — как у существующих (§3 спека) плюс поля этой фазы: `char`, `open`, `phone`, узлы `code`, `variants`, `chat`, `greetAlt`.
+**Interfaces:** формат сцены — как у существующих (§3 спека) плюс поля этой фазы: `char`, `open`, `phone`, `pool`, `npcBy`, узлы `code`, `variants`, `chat`, `greetAlt`; сцены дома (`su`) запускаются с клетки 0 кнопкой «Telefon» (список звонков дня).
 
 Для каждой сцены (делать по одной, коммит на каждую или на пары):
 - [ ] **Step 1: Граф и содержимое на бумаге** — в комментарии над сценой: цель, узлы (5–9), ≥ 3 концовок (`ok/near/bad`), развилка по смыслу, цены кратны 5, где `pay`/`code`/`chat`.
@@ -377,7 +450,7 @@ await test('Город: дома — персонажи с уровнем отн
 
 ---
 
-### Task 12: Документация, экраны CI, публикация фазы
+### Task 14: Документация, экраны CI, публикация фазы
 
 **Files:**
 - Modify: `CLAUDE.md` — разделы «Что уже реализовано» (Город: неделя, персонажи, способности, типы узлов, повтор фраз дня, плитка; «Звуки» убраны; `tests/city.test.js`), таблица навыков (писать, что применено), «Что сломалось» — только если было.
@@ -394,6 +467,6 @@ await test('Город: дома — персонажи с уровнем отн
 
 ## Самопроверка плана (выполнена при написании)
 
-- Покрытие спека для фазы 1: §5 неделя 1 → задача 11; §6 `call`/`code` → 7; §7 → 4; §8 персонажи, характер, пороги → 3, 5, 8, 10; §8а → 6 (кроме `pazarlik` — фаза 2); §10 → 9; §11 → 10 (`hafta`, `komsu`; `pazarlikci`, `mahalleli` — фазы 2–3); §12 → 1; §13 → 3; §14 → 2 (+ сценарные тесты в каждой задаче); §16 риск голосов — проверка на устройстве пользователя после публикации (задача 12, шаг 4).
-- Имена сквозные: `CHARS`, `cityNormalize`, `cityDow`, `cityWeek`, `cityPlanFor`, `cityOpenNow`, `cityNewDay`, `cityLikes`, `SKILLS`, `SKILL_LVLS`, `skillLvl`, `skillBump`, `cityXpMult`, `ctAcceptScore`, `npcRate`, `cityCode`, `ctNodeFor`, `memFilter`, `cityReview`, `cityCharsHtml`, `citySkillsHtml`, `openChar`, `openCityStats`.
-- Не делаем в этой фазе: `haggle`, `pazarlik`, события `EVENTS`, итоги недели, сцены недель 2–3, медали `pazarlikci`/`mahalleli`.
+- Покрытие спека для фазы 1: §4а поле, кубик, визиты, такси, пулы → 4, 3; §9а колода (10 карт) → 5; §5 неделя 1 → 13; §6 `call`/`code` → 9; §7 → 6; §8 персонажи, характер, пороги → 3, 7, 10, 12; §8а → 8 (кроме `pazarlik` — фаза 2); §10 → 11; §11 → 12 (`hafta`, `komsu`; `pazarlikci`, `mahalleli` — фазы 2–3); §12 → 1; §13 → 3, 4; §14 → 2, 4 (+ сценарные тесты в каждой задаче); §16 риск голосов и невезения — проверка на устройстве пользователя и по `info.json` после публикации (задача 14).
+- Имена сквозные: `BOARD`, `SHORTCUTS`, `STEP_MIN`, `boardDist`, `boardReach`, `cityRoll`, `cityMoveTo`, `cityArrive`, `cityVisit`, `cityGoHome`, `cityTaxiTo`, `DECK`, `cityDraw`, `pickChar`, `CHARS`, `cityNormalize`, `cityDow`, `cityWeek`, `cityPlanFor`, `cityOpenNow`, `cityNewDay`, `cityLikes`, `SKILLS`, `SKILL_LVLS`, `skillLvl`, `skillBump`, `cityXpMult`, `ctAcceptScore`, `npcRate`, `cityCode`, `ctNodeFor`, `memFilter`, `cityReview`, `cityCharsHtml`, `citySkillsHtml`, `openChar`, `openCityStats`.
+- Не делаем в этой фазе: `haggle`, `pazarlik`, утренние события `EVENTS`, карты колоды 11–30, итоги недели, сцены недель 2–3, медали `pazarlikci`/`mahalleli`.
