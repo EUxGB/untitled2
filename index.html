@@ -618,12 +618,18 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-pat{display:inline-flex; gap:3px} .ct-pat i{width:8px; height:8px; border-radius:50%; border:1.5px solid var(--accent); display:inline-block} .ct-pat i.on{background:var(--accent)}
 .ct-home{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0; width:100%}
 /* Поле-настолка: кольцо 7×7 из кнопок-клеток (зона нажатия ≥ 44px на 360px), внутри кольца — дела дня и кубик; срезки — пунктирные улицы под ним */
-.bd{position:relative; display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); grid-template-rows:repeat(7, minmax(0, 1fr)); gap:3px; width:100%; aspect-ratio:1; max-width:420px; margin:0 auto}
+.bd{position:relative; display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); grid-template-rows:repeat(9, minmax(44px, 1fr)); gap:3px; width:100%; flex:1 1 auto; min-height:calc(9 * 44px + 8 * 3px); max-width:440px; margin:0 auto}
 .bd-streets{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; fill:none; stroke:var(--line); stroke-width:.06; stroke-dasharray:.18 .14}
-.bd-cell{position:relative; min-width:0; min-height:0; padding:0 1px 4px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:600 9px/1.1 var(--body); letter-spacing:-.02em; display:flex; align-items:flex-end; justify-content:center; cursor:default; overflow:hidden; white-space:nowrap}
-@media (min-width:400px){ .bd-cell{font-size:10px} }
+.bd-cell{position:relative; min-width:0; min-height:0; padding:0 1px 3px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:0; cursor:default; overflow:hidden; white-space:nowrap}
+.bd-ic{position:absolute; left:50%; top:4px; width:62%; height:52%; transform:translateX(-50%); fill:none; stroke:var(--accent); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; opacity:.3; pointer-events:none}
+.bd-cell.event .bd-ic{stroke:var(--near)} .bd-cell.home .bd-ic{stroke:var(--bg); opacity:.45}
+.bd-tr{position:relative; font:700 9.5px/1.1 var(--body); letter-spacing:-.02em; text-shadow:0 0 3px var(--surface), 0 0 3px var(--surface)}
+.bd-ru{position:relative; font:500 7.5px/1.1 var(--body); color:var(--muted); letter-spacing:-.02em; text-shadow:0 0 3px var(--surface), 0 0 3px var(--surface)}
+.bd-cell.home .bd-tr, .bd-cell.home .bd-ru{text-shadow:none; color:var(--bg)} .bd-cell.home .bd-ru{opacity:.8}
+.bd-cell.event .bd-tr{font-size:14px}
+@media (min-width:400px){ .bd-tr{font-size:10.5px} .bd-ru{font-size:8.5px} }
 .bd-cell.place{border-color:color-mix(in srgb, var(--accent) 45%, var(--line))}
-.bd-cell.event{background:#F3E8CF; color:var(--ink); font:700 max(14px, calc(18px * var(--fit)))/1 var(--display); align-items:center; padding-bottom:0}
+.bd-cell.event{background:#F3E8CF; color:var(--ink)}
 .bd-cell.home{background:var(--ink); color:var(--bg); border-color:var(--ink)}
 .bd-cell.reach{cursor:pointer; outline:2px solid var(--accent); outline-offset:-2px; background:color-mix(in srgb, var(--accent) 14%, var(--surface))}
 .bd-cell.reach:hover{background:color-mix(in srgb, var(--accent) 24%, var(--surface))}
@@ -633,7 +639,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .bd-cell .bd-pin.closed{background:var(--muted)} .bd-cell .bd-pin.done{background:var(--ok)}
 .bd-cell .bd-token{position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:var(--tulip); box-shadow:0 0 0 2px var(--surface)}
 .bd-cell.home .bd-token, .bd-cell.home .bd-pin{box-shadow:0 0 0 2px var(--ink)}
-.bd-inner{grid-area:2 / 2 / 7 / 7; display:flex; flex-direction:column; gap:calc(6px * var(--fit)); min-height:0; min-width:0; padding:calc(6px * var(--fit)) 4px; text-align:left; background:color-mix(in srgb, var(--bg) 88%, transparent); border-radius:12px}
+.bd-inner{grid-area:2 / 2 / 9 / 7; display:flex; flex-direction:column; gap:calc(6px * var(--fit)); min-height:0; min-width:0; padding:calc(6px * var(--fit)) 4px; text-align:left; background:color-mix(in srgb, var(--bg) 88%, transparent); border-radius:12px}
 .ct-day{margin:0; font:700 max(13px, calc(15px * var(--fit)))/1.2 var(--display); text-align:left}
 .ct-tasks{display:flex; flex-direction:column; gap:3px; margin:0; padding:0; list-style:none; min-height:0; overflow:hidden}
 .ct-task{display:flex; align-items:baseline; gap:6px; text-align:left; font-size:max(11px, calc(12px * var(--fit))); line-height:1.25; color:var(--ink); min-width:0}
@@ -645,7 +651,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-rolled{font:700 max(20px, calc(26px * var(--fit)))/1 var(--display); color:var(--accent); min-width:1.2em}
 .ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px}
 #ctDayEnd{width:100%; min-height:44px}
-.ct-intro{text-align:left; margin:0; font-size:12px; line-height:1.3}
+.ct-intro{text-align:left; margin:0; font-size:11.5px; line-height:1.3; color:var(--muted)}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
 .ct-goal{margin:0; font-size:13px; color:var(--muted); text-align:left; display:flex; gap:8px; align-items:baseline} .ct-goal > span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
 .ct-npc{display:flex; gap:10px; align-items:flex-start}
@@ -741,6 +747,29 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 6.5h6l2 2h9v10h-17z"/></symbol>
     <symbol id="i-restore" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/></symbol>
+    <!-- клетки поля: линейные значки мест квартала (фон под подписью) -->
+    <symbol id="b-ev" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4zM10 20v-6h4v6"/></symbol>
+    <symbol id="b-kapici" viewBox="0 0 24 24"><path d="M6 3h12v18H6zM6 21h12M14.5 12.5h.01"/></symbol>
+    <symbol id="b-bakkal" viewBox="0 0 24 24"><path d="M4 10h16l-1.5 9h-13zM8 10l3-6M16 10l-3-6M9.5 13.5v3M14.5 13.5v3"/></symbol>
+    <symbol id="b-event" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01"/></symbol>
+    <symbol id="b-durak" viewBox="0 0 24 24"><path d="M5 5h14v10H5zM5 15v3h3v-3M16 15v3h3v-3M5 10h14M8 12.5h.01M16 12.5h.01"/></symbol>
+    <symbol id="b-simit" viewBox="0 0 24 24"><path d="M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0-16 0M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0"/></symbol>
+    <symbol id="b-metro" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM7.5 16V8l4.5 5 4.5-5v8"/></symbol>
+    <symbol id="b-taksi" viewBox="0 0 24 24"><path d="M5 14l1.5-5h11L19 14M3 14h18v4H3zM6 18v2M18 18v2M7 11.5h10M10 5h4v4"/></symbol>
+    <symbol id="b-firin" viewBox="0 0 24 24"><path d="M4 13c0-3 3-5 8-5s8 2 8 5v5H4zM9 11c0 1.5 1 2.5 1 4M14 11c0 1.5 1 2.5 1 4"/></symbol>
+    <symbol id="b-eczane" viewBox="0 0 24 24"><path d="M9 4h6v5h5v6h-5v5H9v-5H4V9h5z"/></symbol>
+    <symbol id="b-hastane" viewBox="0 0 24 24"><path d="M4 21V7h16v14M4 21h16M9 21v-5h6v5M12 9.5v4M10 11.5h4"/></symbol>
+    <symbol id="b-pazar" viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5M3 9c1 2 3 2 4 0 1 2 3 2 4 0 1 2 3 2 4 0 1 2 3 2 4 0M5 10v10h14V10M9 20v-5h6v5"/></symbol>
+    <symbol id="b-cay" viewBox="0 0 24 24"><path d="M8 4h8l-1 6c0 2-1 3-3 3s-3-1-3-3zM9 17h6v3H9zM12 13v4M7.5 8h9"/></symbol>
+    <symbol id="b-lokanta" viewBox="0 0 24 24"><path d="M13 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0-10 0M3 4v6M5 4v6M4 10v10M20 4c-2 2-2 6 0 8v8"/></symbol>
+    <symbol id="b-market" viewBox="0 0 24 24"><path d="M3 4h3l2.5 11h10l2-7H7M10 20h.01M17 20h.01"/></symbol>
+    <symbol id="b-ptt" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 7l9 7 9-7"/></symbol>
+    <symbol id="b-berber" viewBox="0 0 24 24"><path d="M6 7m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0M6 17m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0M8 8.5l12 9M8 15.5l12-9"/></symbol>
+    <symbol id="b-kahve" viewBox="0 0 24 24"><path d="M5 9h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4zM16 11h2a2 2 0 0 1 0 4h-2M8 4c0 1 1 1 1 2M12 4c0 1 1 1 1 2M4 21h14"/></symbol>
+    <symbol id="b-iskele" viewBox="0 0 24 24"><path d="M12 5m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0M12 7v14M5 13c0 5 3 8 7 8s7-3 7-8M3 13h4M17 13h4"/></symbol>
+    <symbol id="b-park" viewBox="0 0 24 24"><path d="M12 21v-5M12 16c-4 0-6-3-5-6 0-3 2-5 5-5s5 2 5 5c1 3-1 6-5 6zM8 21h8"/></symbol>
+    <symbol id="b-komsu" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM12 4v16M4 12h16M6 6c1.5 1.5 1.5 4.5 0 6M18 6c-1.5 1.5-1.5 4.5 0 6"/></symbol>
+    <symbol id="b-meydan" viewBox="0 0 24 24"><path d="M12 3v5M8 8h8M6 8c0 4 2 6 6 6s6-2 6-6M12 14v7M7 21h10M9 11c1 1 2 1.5 3 1.5s2-.5 3-1.5"/></symbol>
   </defs>
 </svg>
 <div class="app">
@@ -787,7 +816,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       <div class="ct-head"><span class="ct-place" id="ctPlace"></span><span class="ct-res" id="ctRes"></span></div>
       <div class="ct-home" id="ctHome">
         <div class="bd" id="ctBoard" role="group" aria-label="Квартал: клетки поля">
-          <svg class="bd-streets" viewBox="0 0 7 7" aria-hidden="true" preserveAspectRatio="none"><path d="M3.5 .5V6.5M.5 3.5H6.5"/></svg>
+          <svg class="bd-streets" viewBox="0 0 7 9" aria-hidden="true" preserveAspectRatio="none"><path d="M3.5 .5V8.5M.5 4.5H6.5"/></svg>
           <div class="bd-inner" id="ctInner">
             <p class="ct-day" id="ctDay"></p>
             <ul class="ct-tasks" id="ctTasks"></ul>
@@ -795,9 +824,9 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
               <button class="btn primary ct-roll" id="ctRoll">Zar at</button><b class="ct-rolled" id="ctRolled" aria-live="polite"></b>
             </div>
             <div class="ct-homebtns"><button class="linkbtn" id="ctTaxi">Taksi çağır</button><button class="linkbtn" id="ctHomeBtn">Eve dön</button></div>
+            <p class="hint ct-intro" id="ctIntro"></p>
           </div>
         </div>
-        <p class="hint ct-intro" id="ctIntro"></p>
       </div>
       <div class="ct-scene" id="ctScene" hidden>
         <p class="ct-goal"><span id="ctGoal" title=""></span><button class="linkbtn" id="ctBack">к делам</button></p>
@@ -3155,38 +3184,43 @@ const CITY_START = { ver:2, day:1, money:3500, min:9 * 60, rel:{}, done:[], said
 // Поле-настолка (спек §4а): кольцо из 24 клеток по периметру сетки 7×7 (по часовой от дома в левом верхнем углу), две срезки-улицы.
 // kind: home — дом (звонки, визиты мастеров), place — место со сценами, event — клетка «?» (карта из колоды). dat — дательный падеж для такси («Eczaneye lütfen»).
 const BOARD = [
-  { id:"ev",      kind:"home",  title:"Дом",               short:"Ev",      dat:"Eve",            scenes:["su", "cilingir", "kargo", "goc", "tesisatci", "elektrikci"] },
-  { id:"kapici",  kind:"place", title:"Подъезд",           short:"Kapıcı",  dat:"Eve",            scenes:["kapici", "aidat"] },
-  { id:"bakkal",  kind:"place", title:"Bakkal",            short:"Bakkal",  dat:"Bakkala",        gen:"лавки", scenes:["bakkal", "mama"] },
-  { id:"q3",      kind:"event", title:"Что-то случилось" },
-  { id:"durak",   kind:"place", title:"Остановка долмуша", short:"Durak",   dat:"Durağa",         gen:"остановки", scenes:["dolmus"] },
-  { id:"simitci", kind:"place", title:"Симитчи",           short:"Simit",   dat:"Simitçiye",      gen:"симитчи", scenes:["simit"] },
-  { id:"metro",   kind:"place", title:"Метро",             short:"Metro",   dat:"Metroya",        gen:"метро", scenes:["metro", "istanbulkart"] },
-  { id:"q7",      kind:"event", title:"Что-то случилось" },
-  { id:"taksi",   kind:"place", title:"Стоянка такси",     short:"Taksi",   dat:"Taksi durağına", gen:"стоянки", scenes:["taxi"] },
-  { id:"firin",   kind:"place", title:"Пекарня",           short:"Fırın",   dat:"Fırına",         gen:"пекарни", scenes:["firin"] },
-  { id:"q10",     kind:"event", title:"Что-то случилось" },
-  { id:"eczane",  kind:"place", title:"Аптека",            short:"Eczane",  dat:"Eczaneye",       gen:"аптеки", scenes:["eczane", "veteriner"] },
-  { id:"pazar",   kind:"place", title:"Площадь рынка",     short:"Pazar",   dat:"Pazara",         gen:"рынка", scenes:["pazar", "manav", "kasap"] },
-  { id:"cay",     kind:"place", title:"Çay bahçesi",       short:"Çay",     dat:"Çay bahçesine",  gen:"чайной", scenes:["cay"] },
-  { id:"q14",     kind:"event", title:"Что-то случилось" },
-  { id:"lokanta", kind:"place", title:"Локанта",           short:"Lokanta", dat:"Lokantaya",      gen:"локанты", scenes:["lokanta"] },
-  { id:"market",  kind:"place", title:"Супермаркет",       short:"Market",  dat:"Markete",        gen:"супермаркета", scenes:["market", "spor"] },
-  { id:"ptt",     kind:"place", title:"PTT и банк",        short:"PTT",     dat:"PTT'ye",         gen:"почты", scenes:["ptt", "banka", "fatura", "telefon"] },
-  { id:"q18",     kind:"event", title:"Что-то случилось" },
-  { id:"berber",  kind:"place", title:"Берберь",           short:"Berber",  dat:"Berbere",        gen:"берберя", scenes:["kuafor", "terzi"] },
-  { id:"iskele",  kind:"place", title:"Пристань",          short:"İskele",  dat:"İskeleye",       gen:"пристани", scenes:["vapur", "balikci", "otopark"] },
-  { id:"q21",     kind:"event", title:"Что-то случилось" },
-  { id:"komsu",   kind:"place", title:"Дом Айше-тейзе",    short:"Komşu",   dat:"Ayşe teyzeye",   gen:"Айше-тейзе", scenes:["komsu", "misafir"] },
-  { id:"meydan",  kind:"place", title:"Площадь",           short:"Meydan",  dat:"Meydana",        gen:"площади", scenes:["muhtar", "noter", "doktor", "emlakci"] },
+  { id:"ev",        kind:"home",  title:"Дом",               short:"Ev",      ru:"дом",        ic:"b-ev",        dat:"Eve",            scenes:["su", "cilingir", "kargo", "goc", "tesisatci", "elektrikci"] },
+  { id:"kapici",    kind:"place", title:"Подъезд",           short:"Kapıcı",  ru:"подъезд",   ic:"b-kapici",    dat:"Eve",            gen:"подъезда", scenes:["kapici", "aidat"] },
+  { id:"bakkal",    kind:"place", title:"Bakkal",            short:"Bakkal",  ru:"лавка",      ic:"b-bakkal",    dat:"Bakkala",        gen:"лавки", scenes:["bakkal", "mama"] },
+  { id:"q3",        kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
+  { id:"durak",     kind:"place", title:"Остановка долмуша", short:"Durak",   ru:"долмуш",  ic:"b-durak",     dat:"Durağa",         gen:"остановки", scenes:["dolmus"] },
+  { id:"simitci",   kind:"place", title:"Симитчи",           short:"Simit",   ru:"симитчи",    ic:"b-simit",     dat:"Simitçiye",      gen:"симитчи", scenes:["simit"] },
+  { id:"metro",     kind:"place", title:"Метро",             short:"Metro",   ru:"метро",      ic:"b-metro",     dat:"Metroya",        gen:"метро", scenes:["metro", "istanbulkart"] },
+  { id:"q7",        kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
+  { id:"taksi",     kind:"place", title:"Стоянка такси",     short:"Taksi",   ru:"такси",      ic:"b-taksi",     dat:"Taksi durağına", gen:"стоянки", scenes:["taxi"] },
+  { id:"firin",     kind:"place", title:"Пекарня",           short:"Fırın",   ru:"пекарня",    ic:"b-firin",     dat:"Fırına",         gen:"пекарни", scenes:["firin"] },
+  { id:"q10",       kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
+  { id:"eczane",    kind:"place", title:"Аптека",            short:"Eczane",  ru:"аптека",     ic:"b-eczane",    dat:"Eczaneye",       gen:"аптеки", scenes:["eczane", "veteriner"] },
+  { id:"hastane",   kind:"place", title:"Больница",          short:"Hastane", ru:"больница",   ic:"b-hastane",   dat:"Hastaneye",      gen:"больницы", scenes:["hastane"] },
+  { id:"pazar",     kind:"place", title:"Площадь рынка",     short:"Pazar",   ru:"рынок",      ic:"b-pazar",     dat:"Pazara",         gen:"рынка", scenes:["pazar", "manav", "kasap"] },
+  { id:"cay",       kind:"place", title:"Çay bahçesi",       short:"Çay",     ru:"чайная",     ic:"b-cay",       dat:"Çay bahçesine",  gen:"чайной", scenes:["cay"] },
+  { id:"q15",       kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
+  { id:"lokanta",   kind:"place", title:"Локанта",           short:"Lokanta", ru:"столовая",   ic:"b-lokanta",   dat:"Lokantaya",      gen:"локанты", scenes:["lokanta"] },
+  { id:"market",    kind:"place", title:"Супермаркет",       short:"Market",  ru:"магазин",    ic:"b-market",    dat:"Markete",        gen:"супермаркета", scenes:["market", "spor"] },
+  { id:"ptt",       kind:"place", title:"PTT и банк",        short:"PTT",     ru:"почта", ic:"b-ptt",      dat:"PTT'ye",         gen:"почты", scenes:["ptt", "banka", "fatura", "telefon"] },
+  { id:"q19",       kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
+  { id:"berber",    kind:"place", title:"Берберь",           short:"Berber",  ru:"стрижка", ic:"b-berber",    dat:"Berbere",        gen:"берберя", scenes:["kuafor", "terzi"] },
+  { id:"kahvehane", kind:"place", title:"Kahvehane",         short:"Kahve",   ru:"кофейня",    ic:"b-kahve",     dat:"Kahvehaneye",    gen:"кофейни", scenes:["kahvehane"] },
+  { id:"iskele",    kind:"place", title:"Пристань",          short:"İskele",  ru:"пристань",   ic:"b-iskele",    dat:"İskeleye",       gen:"пристани", scenes:["vapur", "balikci", "otopark"] },
+  { id:"q23",       kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
+  { id:"park",      kind:"place", title:"Парк",              short:"Park",    ru:"парк",       ic:"b-park",      dat:"Parka",          gen:"парка", scenes:["park"] },
+  { id:"komsu",     kind:"place", title:"Дом Айше-тейзе",    short:"Komşu",   ru:"соседка",    ic:"b-komsu",     dat:"Ayşe teyzeye",   gen:"Айше-тейзе", scenes:["komsu", "misafir"] },
+  { id:"meydan",    kind:"place", title:"Площадь",           short:"Meydan",  ru:"площадь",    ic:"b-meydan",    dat:"Meydana",        gen:"площади", scenes:["muhtar", "noter", "doktor", "emlakci"] },
+  { id:"q27",       kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
 ];
-const SHORTCUTS = [[3, 15], [9, 21]];       // улицы через квартал: вес 2 шага
+const SHORTCUTS = [[3, 17, 3], [10, 24, 2]];   // улицы через квартал: [откуда, куда, шагов] — вертикальная (ряд 3) и горизонтальная (строка 4)
 const STEP_MIN = 10;                         // минут на клетку
 const DAY_END = 21 * 60;
-const boardXY = i => i <= 6 ? [i, 0] : i <= 12 ? [6, i - 6] : i <= 18 ? [18 - i, 6] : [0, 24 - i];     // столбец, строка в сетке 7×7
+const BOARD_COLS = 7, BOARD_ROWS = 9;        // кольцо 28 клеток по периметру 7×9: сверху 7, справа 8, снизу 6, слева 7
+const boardXY = i => i <= 6 ? [i, 0] : i <= 14 ? [6, i - 6] : i <= 20 ? [20 - i, 8] : [0, 28 - i];     // столбец, строка
 function boardNeighbors(i){
   const n = BOARD.length, out = [[(i + 1) % n, 1], [(i + n - 1) % n, 1]];
-  SHORTCUTS.forEach(([a, b]) => { if(a === i) out.push([b, 2]); if(b === i) out.push([a, 2]); });
+  SHORTCUTS.forEach(([a, b, w]) => { if(a === i) out.push([b, w]); if(b === i) out.push([a, w]); });
   return out;
 }
 function boardDistAll(from){                 // кратчайшие пути по кольцу в обе стороны и через срезки (Дейкстра на 24 узлах)
@@ -3304,8 +3338,13 @@ const SCENES = {
         ] },
       traffic:{ npc:"Yolda trafik var, biraz uzun sürer. Olur mu?", ru:"На дороге пробка, будет дольше. Нормально?", again:"Trafik var. Gidelim mi, gitmeyelim mi?", againRu:"Пробка. Едем или нет?",
         moves:[
-          { key:["olur", "tamam", "sorun değil", "sorun yok", "evet", "peki", "gidelim"], say:["Olur, sorun değil.", "Tamam, gidelim."], ru:"Хорошо, не проблема.", go:"arrive", fx:{ min:25 } },
+          { key:["olur", "tamam", "sorun değil", "sorun yok", "evet", "peki", "gidelim"], say:["Olur, sorun değil.", "Tamam, gidelim."], ru:"Хорошо, не проблема.", go:"chat", fx:{ min:25 } },
           { key:["hayır", "olmaz", "metro", "inmek", "ineyim", "kalsın"], say:["O zaman kalsın, metroyla giderim."], ru:"Тогда не надо, поеду на метро.", go:"metro", fx:{ min:40, money:-30 } },
+        ] },
+      chat:{ onlyChar:"sofor", elseGo:"arrive", npc:"Bu trafik hiç bitmiyor ya.", ru:"Эти пробки никогда не кончаются, а.", again:"Trafik berbat, değil mi?", againRu:"Пробки ужасные, правда?",
+        moves:[
+          { key:["evet", "yoğun", "çok", "berbat", "haklısınız"], say:["Evet, çok yoğun."], ru:"Да, очень плотно. (поддержать разговор)", go:"arrive", like:true },
+          { key:["hı", "hıhı", "hmm", "evet evet"], say:["Hı hı."], ru:"Угу. (отмахнуться)", go:"arrive" },
         ] },
       metro:{ end:{ kind:"near", text:"Вы поехали на метро: 40 минут с пересадкой, зато всего 30 ₺. Шофёр пожал плечами — не обиделся.", fx:{} } },
       wrong:{ npc:"Kadıköy mü? Tamam, vapur iskelesine gidiyoruz.", ru:"В Кадыкёй? Хорошо, едем к пристани парома.", again:"Kadıköy, değil mi?", againRu:"В Кадыкёй, верно?",
@@ -3330,7 +3369,7 @@ const SCENES = {
     nodes:{
       greet:{ npc:"Hoş geldin komşu! Buyur.", ru:"Добро пожаловать, сосед! Слушаю.", again:"Buyur, ne lazım?", againRu:"Слушаю, что нужно?",
         moves:[
-          { key:["hoş bulduk", "hoşbulduk"], say:["Hoş bulduk!"], ru:"Рад быть здесь! (ответ на «hoş geldin»)", go:"list", fx:{ rel:1 } },
+          { key:["hoş bulduk", "hoşbulduk"], say:["Hoş bulduk!"], ru:"Рад быть здесь! (ответ на «hoş geldin»)", go:"list" },
           { key:["merhaba", "iyi günler", "selam", "günaydın", "kolay gelsin"], say:["Merhaba!"], ru:"Здравствуйте!", go:"list" },
         ] },
       list:{ npc:"Ne lazım?", ru:"Что нужно?", again:"Anlamadım. Ne lazım: ekmek, su?", againRu:"Не понял. Что нужно: хлеб, вода?", shop:true, extra:[
@@ -3611,7 +3650,8 @@ function cityBoard(){
   BOARD.forEach((c, i) => { const [x, y] = boardXY(i), b = document.createElement("button"); b.type = "button"; b.dataset.i = i;
     b.className = `bd-cell ${c.kind}${reach.has(i) ? " reach" : ""}`; b.style.gridArea = `${y + 1} / ${x + 1}`; b.disabled = !reach.has(i);
     b.setAttribute("aria-label", `${c.title}${i === city.pos ? " — вы здесь" : ""}${pins[i] !== undefined ? ", дело дня" : ""}${reach.has(i) ? ", можно пойти" : ""}`);
-    b.innerHTML = `${c.kind === "event" ? "?" : esc(c.short)}${i === city.pos ? '<span class="bd-token" aria-hidden="true"></span>' : ""}${pins[i] !== undefined ? `<span class="bd-pin ${pins[i]}" aria-hidden="true"></span>` : ""}`;
+    b.innerHTML = `<svg class="bd-ic" aria-hidden="true"><use href="#${c.ic}"/></svg><span class="bd-tr" lang="tr" translate="no">${esc(c.short)}</span><span class="bd-ru">${esc(c.ru)}</span>`
+      + `${i === city.pos ? '<span class="bd-token" aria-hidden="true"></span>' : ""}${pins[i] !== undefined ? `<span class="bd-pin ${pins[i]}" aria-hidden="true"></span>` : ""}`;
     b.onclick = () => cityMoveTo(i); bd.insertBefore(b, ctEl("ctInner")); });
   const left = plan.filter(id => !cityDoneId(id)).length;
   ctEl("ctDay").textContent = allDone ? "Все дела сделаны — домой." : `Дела на сегодня — ${left} из ${plan.length}`;
@@ -3708,7 +3748,9 @@ function ctTaxiNode(id, n){
   return n;
 }
 function cityNode(id, replyHtml){
-  const n0 = ct.scene.nodes[id]; if(!n0) return; const n = ctTaxiNode(id, n0);
+  const n0 = ct.scene.nodes[id]; if(!n0) return;
+  if(n0.onlyChar && n0.onlyChar !== ct.char && n0.elseGo) return cityNode(n0.elseGo, replyHtml);      // узел только для этого персонажа (болтливый шофёр)
+  const n = ctTaxiNode(id, n0);
   ct.node = n; ct.nodeId = id; ct.tries = 0; ct.revealed = false; ct.resolved = false; ct.pendingGo = null; ct.polite = false; ct.pick = null; ct.peeked = false;
   if(n.end) return cityEnd(n.end);
   ct.firstTime = !(city.seen || (city.seen = {}))[n.npc]; city.seen[n.npc] = 1;      // первую встречу с репликой переводим бесплатно
@@ -3850,10 +3892,19 @@ function cityAnswer(alts){
   if(!best) return cityMiss();
   cityAccept(best.m, alts, polite, 100);
 }
+// Характер: за то, что персонаж ценит (слова из likes.words, поддержанный разговор like:true, точность с первой попытки firstTry) — +1 сверх вежливости, по разу за сцену
+function cityLikes(m, alts){
+  const L = CHARS[ct.char] && CHARS[ct.char].likes; if(!L) return 0; let bonus = 0;
+  const heardN = alts.map(nphr).join(" | ");
+  if(!ct.liked && ((L.words || []).some(w => ctHas(heardN, w)) || m.like)){ ct.liked = true; bonus++; }
+  if(L.firstTry && !ct.likedFirst && ct.tries === 0){ ct.likedFirst = true; bonus++; }
+  return bonus;
+}
 function cityAccept(m, alts, polite, score, names){
   const n = ct.node, line = m.say[0];
   ct.n++; ct.ok++; city.said++; city.ok++;
   if(polite && !ct.polite && !(m.fx && m.fx.rel)){ ct.polite = true; cityFx({ rel:1 }); }
+  const liked = cityLikes(m, alts); if(liked) cityFx({ rel:liked });
   ctBump(line, score >= 70 && !(ct.peeked && mastery(line) >= 2));          // реплика растёт в освоении, только если сказана чисто и без подглядывания
   if(m.xp !== false) count("city", 1);
   const lvl = mastery(line), grown = lvl >= 3 ? " Реплика освоена: дальше — по памяти." : lvl === 2 ? " В следующий раз — только первые буквы." : "";
@@ -3872,10 +3923,10 @@ function cityAccept(m, alts, polite, score, names){
   }
   if(m.fx) cityFx(m.fx);
   ct.lines.push({ tr:line, ru:m.ru, ok:true });
-  cityResolve(m.go, "ok", `${head}<span class="verdict">${esc(ctWho())} понял: «${esc(m.ru)}»</span><div class="alts">Вы сказали: «${esc(alts[0])}».${m.fx && m.fx.rel ? " Собеседнику приятно." : polite ? " Вежливость замечена." : ""}${grown}</div>${tail}`);
+  cityResolve(m.go, "ok", `${head}<span class="verdict">${esc(ctWho())} понял: «${esc(m.ru)}»</span><div class="alts">Вы сказали: «${esc(alts[0])}».${(m.fx && m.fx.rel) || liked ? " Собеседнику приятно." : polite ? " Вежливость замечена." : ""}${grown}</div>${tail}`);
 }
 function cityMiss(why, ps){
-  const n = ct.node; ct.tries++; ct.n++; city.said++; count("city", 0);
+  const n = ct.node; ct.tries++; ct.n++; ct.misses = (ct.misses || 0) + 1; city.said++; count("city", 0);
   ct.patience = Math.max(0, ct.patience - 1); city.min += ct.scene.missMin || 2; cityRes();
   if(ct.patience <= 0){ const first = ct.pick || ctMoves(n)[0]; ct.lines.push({ tr:first ? first.say[0] : "", ru:first ? first.ru : "", ok:false }); return cityEnd(Object.assign({ kind:"bad" }, ct.scene.fail), true); }
   const again = ctAgain(n) || "Efendim?", againRu = n.againRu || "Простите?";
@@ -3924,18 +3975,21 @@ function cityResolve(go, kind, html){
 function cityNextNode(){ if(!ct || !ct.resolved || !ct.pendingGo) return; const go = ct.pendingGo; cityNode(go); }
 function cityEnd(end, failed){
   cityFx(end.fx);
+  const L = CHARS[ct.char] && CHARS[ct.char].likes, quiet = !!(L && L.quiet && !failed && !ct.misses && ct.ok > 0);
+  if(quiet) cityFx({ rel:1 });                                               // молчун ценит, когда его ни разу не переспросили
   const kind = end.kind || "ok", short = kind === "ok" ? "получилось" : kind === "near" ? "так себе" : "не вышло";
   const took = city.min - ct.startMin, spent = ct.spent;
   if(!ct.scene.event) city.done = city.done.filter(d => d.id !== ct.id).concat([{ id:ct.id, kind, short, ok:ct.ok, n:ct.n, took, spent }]);   // событие — не дело дня
   const learned = ct.lines.filter(l => l.ok && l.tr), missed = ct.lines.filter(l => !l.ok && l.tr);
   learned.forEach(l => memEnroll(l.tr, l.ru));                                   // сказанное в разговоре — в «Память», повторится по расписанию
   citySave();
-  const id = ct.id, dest = ct.dest, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title;
+  const id = ct.id, ct0 = ct.char, dest = ct.dest, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title;
   if(dest !== null && kind !== "bad"){ city.pos = dest; city.roll = null; city.visited.push(dest); citySave(); }     // доехали — фишка на месте
   ct = null; cityRender();
   const stats = [["время", `${took} мин`], ["потрачено", `${spent} ₺`], ["реплик верно", `${learned.length}`]];
   showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: title + " — " + short, text: end.text + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
     stats, primary:{ label:"К делам", fn:() => { cityRender(); if(dest !== null && kind !== "bad") cityArrive(dest); } } });
+  if(quiet) $("modalText").textContent += ` ${CHARS[ct0].name} оценил: ни одного переспроса.`;
 }
 function cityDayEnd(){
   const okN = city.done.filter(d => d.kind === "ok").length, spent = city.done.reduce((a, d) => a + d.spent, 0);
@@ -3994,6 +4048,7 @@ const FORM_GLOSS = {
   üşümüyor:"не мёрзнет (üşümüyor musun — тебе не холодно?)", kilitledin:"ты запер", açar:"открывает (açar mısınız — откройте, пожалуйста)",
 };
 const FUNC_GLOSS = {
+  yoğun:"плотный, напряжённый (trafik çok yoğun — движение очень плотное)", hı:"угу, ага (hı hı — поддакивание)",
   gel:"иди сюда, подойди", git:"уходи, иди", pisi:"кис (pisi pisi — кис-кис)", böyle:"так, таким образом (böyle giderim — так и пойду)",
   veresiye:"в долг, в кредит (у знакомого продавца)", nakit:"наличные", vereyim:"дам (давайте дам)",
   o:"он, она, оно; тот (o zaman — тогда)", on:"десять", fark:"разница (fark etmez — без разницы, всё равно)", etmez:"не делает (fark etmez — без разницы)", hepsi:"всё, все (hepsi bu kadar — это всё)",

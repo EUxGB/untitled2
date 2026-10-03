@@ -1356,7 +1356,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(/показали на телефоне/.test(ph[0]) && /без опыта/.test(ph[0]), ph[0]); eq(ph[1], xp1);          // телефон: без опыта
     await ctNext(q); await q.waitForTimeout(80);
     const end = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.done.map(d => [d.id, d.kind]), city.rel, loadCards().some(c => c.tr === 'Sıcak su yok.')]);
-    eq(end, [false, 'Kapıcı — нет горячей воды — получилось', [['kapici', 'ok']], { kapici:2 }, true]);
+    eq(end, [false, 'Kapıcı — нет горячей воды — получилось', [['kapici', 'ok']], { kapici:4 }, true]);   // +1 kolay gelsin (ход), +1 likes «kolay gelsin», +1 просьба понята с первой попытки (likes.firstTry), +1 «lütfen»
     await q.click('#modalPrimary'); await q.waitForTimeout(60);
     await q.evaluate(() => cityStart('bakkal')); await q.waitForTimeout(80);
     const money0 = await q.evaluate(() => city.money);
@@ -1412,11 +1412,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.pool, ['sofor_hasan', 'Хасан-амджа', 'Nereye.', 2, 'H']); eq(r.def, ['sofor', 'Buyurun, nereye?']); eq(errs, []);
   });
   console.log('«Город»: поле-настолка (кубик, клетки, визит, домой, такси)');
-  await test('Поле: 24 клетки кольцом 7×7, две срезки, расстояния в обе стороны; бросок подсвечивает клетки ≤ N, остановка раньше, шаг 10 мин; место с делом — сцена, без дела — «Зайти?»; бросок сохраняется; «Eve dön»', async () => {
+  await test('Поле: 28 клеток кольцом 7×9, две улицы-срезки, расстояния в обе стороны; бросок подсвечивает клетки ≤ N, остановка раньше, шаг 10 мин; место с делом — сцена, без дела — «Зайти?»; бросок сохраняется; «Eve dön»', async () => {
     const q = await openCity();
     const r = await q.evaluate(() => { const out = {};
       out.n = BOARD.length; out.events = BOARD.filter(b => b.kind === 'event').length; out.home = [BOARD[0].kind, city.pos];
-      out.dist = [boardDist(0, 23), boardDist(0, 12), boardDist(3, 15), boardDist(2, 11)];
+      out.dist = [boardDist(0, 27), boardDist(0, 14), boardDist(3, 17), boardDist(10, 24), boardDist(2, 11)];
       window.__dice = 3; cityRoll(); out.reach = boardReach(0, 3).sort((a, b) => a - b); out.rollBtn = document.getElementById('ctRoll').disabled;
       out.lit = document.querySelectorAll('.bd-cell.reach').length; out.savedRoll = JSON.parse(localStorage.getItem('soyle-city')).roll; out.rolled = document.getElementById('ctRolled').textContent;
       window.__dice = 6; cityRoll(); out.secondRoll = city.roll;                                   // второй бросок без хода невозможен
@@ -1424,10 +1424,10 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return out; });
     const r2 = await q.evaluate(() => { cityLeave(); ct = null; city.plan = ['taxi']; city.pos = 0; cityRender(); window.__dice = 2; cityRoll(); cityMoveTo(2);
       return { modal: document.getElementById('modalTitle').textContent, pos: city.pos, hidden: document.getElementById('modal').hidden }; });   // bakkal без дела → «Зайти?»
-    const r3 = await q.evaluate(() => { document.getElementById('modalSecondary').click(); city.pos = 12; city.min = 20 * 60; cityGoHome(); return { pos: city.pos, min: city.min, modal: document.getElementById('modalTitle').textContent }; });
+    const r3 = await q.evaluate(() => { document.getElementById('modalSecondary').click(); city.pos = 14; city.min = 20 * 60; cityGoHome(); return { pos: city.pos, min: city.min, modal: document.getElementById('modalTitle').textContent }; });
     const errs = q.errors; await q.context().close();
-    eq([r.n, r.events, r.home], [24, 6, ['home', 0]]); eq(r.dist, [1, 8, 2, 7]); eq(r.reach, [1, 2, 3, 21, 22, 23]); eq([r.rollBtn, r.lit, r.savedRoll, r.rolled, r.secondRoll], [true, 6, 3, '3', 3]);
-    eq(r.afterMove, [2, 540 + 20 + 1, null, 'bakkal', 0]);   // +1 мин — реплика собеседника eq(r2, { modal:'Bakkal — зайти?', pos:2, hidden:false }); eq(r3, { pos:0, min: 20 * 60 + 80, modal:'День 1 прожит' }); eq(errs, []);
+    eq([r.n, r.events, r.home], [28, 7, ['home', 0]]); eq(r.dist, [1, 9, 3, 2, 9]); eq(r.reach, [1, 2, 3, 25, 26, 27]); eq([r.rollBtn, r.lit, r.savedRoll, r.rolled, r.secondRoll], [true, 6, 3, '3', 3]);
+    eq(r.afterMove, [2, 540 + 20 + 1, null, 'bakkal', 0]);   // +1 мин — реплика собеседника eq(r2, { modal:'Bakkal — зайти?', pos:2, hidden:false }); eq(r3, { pos:0, min: 20 * 60 + 90, modal:'День 1 прожит' });   // 14 → 0: кольцом вперёд 14, через улицу 10→24 — 10, кольцом назад — 9 шагов eq(errs, []);
   });
   await test('Поле: клетка «?» тянет карту; дом при всех сделанных делах — итоги дня; 21:00 — день заканчивается сам; такси довозит до клетки (цена по расстоянию, числом на слух)', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; });
@@ -1441,6 +1441,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return out; });
     await ctPick(q, 0); const a = await ctSay(q, 'eczaneye lütfen'); await ctNext(q);
     const node = await q.evaluate(() => ct.nodeId); await ctPick(q, 0); await ctSay(q, 'olur sorun değil'); await ctNext(q);
+    await ctPick(q, 1); await ctSay(q, 'hı hı'); await ctNext(q);                                                     // болтливый Али: разговор о пробках
     const pay = await q.evaluate(() => [ct.nodeId, ct.node.pay.price, document.getElementById('ctTr').textContent]);
     await q.click('.ct-note[data-v="200"]'); await q.waitForTimeout(40); await ctNext(q); await ctPick(q, 1); await ctSay(q, 'teşekkürler iyi günler'); await ctNext(q); await q.waitForTimeout(80);
     const end = await q.evaluate(() => { const t = document.getElementById('modalTitle').textContent; document.getElementById('modalPrimary').click(); return [t, city.pos, document.getElementById('modalTitle').textContent]; });
@@ -1500,7 +1501,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       out.day2 = [city.day, cityDow(), city.plan.slice(0, 2), city.carry, city.money];
       SCENES.banka = Object.assign({}, SCENES.kapici, { title:'Банк', char:undefined }); city.plan = ['banka']; city.min = 17 * 60 + 1; cityRender();
       out.bankClosed = [!!document.querySelector('.bd-pin.closed'), cityOpenNow('banka').text, document.querySelector('.ct-task.closed span').textContent];
-      city.pos = 16; window.__dice = 1; cityRoll(); cityMoveTo(17); out.noScene = [ct === null, document.getElementById('modal').hidden];
+      city.pos = 17; window.__dice = 1; cityRoll(); cityMoveTo(18); out.noScene = [ct === null, document.getElementById('modal').hidden];   // 18 — PTT и банк
       city.min = 10 * 60; out.bankOpen = cityOpenNow('banka'); city.day = 6; out.pazarSat = cityOpenNow('pazar').open; city.day = 7; out.pazarSun = cityOpenNow('pazar');
       city.debt = 200; city.money = 100; cityNewDay(); out.monday = [cityDow(), city.money, city.debt];
       // план дня: 3 из набора недели, вчерашние не повторяются, пока есть другие
@@ -1514,6 +1515,25 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.bankClosed, [true, 'пн–пт 09:00–17:00', 'пн–пт 09:00–17:00']); eq(r.noScene, [true, true]); eq(r.bankOpen.open, true); eq(r.pazarSat, true); eq([r.pazarSun.open, r.pazarSun.text], [false, 'вт и сб']);
     eq(r.monday, [1, 100 + 3500 - 200, 0]); eq(r.fresh.length, 3); ok(r.fresh.every(id => ['x1', 'x2', 'x3'].includes(id)), 'вчерашние повторились: ' + r.fresh.join()); eq(errs, []);
   });
+  await test('Характер: за то, что персонаж любит, отношение растёт сверх вежливости (один раз за сцену); узел-разговор у болтливого шофёра даёт +1 за поддержку, молчун его пропускает; аптекарша ценит точность с первой попытки; молчун — ни одного переспроса', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'sofor'; cityStart('taxi'); });
+    await ctPick(q, 0); await ctSay(q, 'taksime lütfen'); await ctNext(q); await ctPick(q, 0); await ctSay(q, 'meydana lütfen'); await ctNext(q);
+    await ctPick(q, 0); await ctSay(q, 'olur sorun değil'); await ctNext(q);
+    const chat = await q.evaluate(() => ({ node: ct.nodeId, npc: document.getElementById('ctTr').textContent, opts: [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent), rel: city.rel.sofor || 0 }));
+    await ctPick(q, 0); const r = await ctSay(q, 'evet çok yoğun'); const rel = await q.evaluate(() => city.rel.sofor);
+    const r2 = await q.evaluate(() => { cityLeave(); ct = null; city.rel = {}; window.__char = 'sofor_hasan'; cityStart('taxi'); return ct.char; });
+    await ctPick(q, 0); await ctSay(q, 'taksime lütfen'); await ctNext(q); await ctPick(q, 0); await ctSay(q, 'meydana lütfen'); await ctNext(q); await ctPick(q, 0); await ctSay(q, 'olur sorun değil'); await ctNext(q);
+    const hasan = await q.evaluate(() => [ct.nodeId, document.getElementById('ctTr').textContent]);
+    await q.click('.ct-note[data-v="200"]'); await q.waitForTimeout(40); await ctNext(q); await ctPick(q, 1); await ctSay(q, 'teşekkürler iyi günler'); await ctNext(q); await q.waitForTimeout(80);
+    const quiet = await q.evaluate(() => { const t = document.getElementById('modalText').textContent; document.getElementById('modalPrimary').click(); return [city.rel.sofor_hasan, /ни одного переспроса|молчал/i.test(t)]; });
+    const first = await q.evaluate(() => { cityLeave(); ct = null; city.rel = {};
+      SCENES.t = { title:'t', char:'eczaci', who:'Z', initial:'Z', place:'p', goal:'g', start:'a', fail:{ text:'f', fx:{} }, nodes:{ a:{ npc:'Kaç tane?', ru:'…', again:'?', againRu:'?', moves:[{ key:['#num'], say:['İki tane.'], ru:'две', go:'e' }] }, e:{ end:{ kind:'ok', text:'e', fx:{} } } } };
+      cityStart('t'); return ct.char; });
+    await ctPick(q, 0); const f1 = await ctSay(q, 'iki tane'); const relZ = await q.evaluate(() => city.rel.eczaci);
+    const errs = q.errors; await q.context().close();
+    eq([chat.node, chat.npc, chat.opts.length, chat.rel], ['chat', 'Bu trafik hiç bitmiyor ya.', 2, 2]); ok(/приятно/.test(r.res), r.res); eq(rel, 3);   // 2 — два «lütfen» (вежливость считается в каждой реплике), +1 за поддержанный разговор
+    eq(r2, 'sofor_hasan'); eq(hasan[0], 'arrive'); eq(quiet, [4, true]);   // 3 вежливых реплики + 1 за тишину eq(first, 'eczaci'); ok(f1.next, f1.res); eq(relZ, 1); eq(errs, []);
+  });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
@@ -1524,7 +1544,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         const vis = id => { const e = document.getElementById(id); if(!e || !e.offsetParent) return false; const r = e.getBoundingClientRect(); return r.bottom <= innerHeight && r.top >= 0; };
         return { small, cells: cells.length, page: document.documentElement.scrollHeight <= innerHeight + 1, card: card.scrollHeight - card.clientHeight <= 1, innerCut: inner.scrollHeight > inner.clientHeight + 1,
           tasks: document.querySelectorAll('#ctTasks .ct-task').length, roll: vis('ctRoll'), home: vis('ctHomeBtn'), taxi: vis('ctTaxi') }; });
-      if(r.small || r.cells !== 24 || !r.page || !r.card || r.innerCut || r.tasks !== 3 || !r.roll || !r.home || !r.taxi) bad.push(`${w}×${h}: ${JSON.stringify(r)}`);
+      if(r.small || r.cells !== 28 || !r.page || !r.card || r.innerCut || r.tasks !== 3 || !r.roll || !r.home || !r.taxi) bad.push(`${w}×${h}: ${JSON.stringify(r)}`);
     }
     await q.context().close(); eq(bad, []);
   });
