@@ -3740,11 +3740,12 @@ function cityStart(id, opts){
 }
 function ctResult(kind, html){ const r = ctEl("ctResult"); r.className = "result " + kind; r.innerHTML = html; scheduleFit(); }
 function ctButtons(){
-  const n = ct && ct.node, busy = !ct || ct.resolved || !n || !!n.end || !!n.pay;
+  const n = ct && ct.node, busy = !ct || ct.resolved || !n || !!n.end || !!n.pay || !!n.code;
   ctEl("ctSpeak").disabled = busy || !SR; ctEl("ctShow").disabled = busy;
   ctEl("ctNext").disabled = !(ct && ct.resolved);
   ctEl("ctReplay").disabled = !ct || !n || !!n.end;
-  ctEl("ctPay").hidden = !(n && n.pay && !ct.resolved);
+  ctEl("ctPay").hidden = !(n && (n.pay || n.code) && !ct.resolved);
+  if(ct && ct.scene.phone) ctEl("ctShow").disabled = true;
 }
 // Реплика собеседника: синтез голосом персонажа; текст по-турецки открывается, когда звук прозвучал; перевод — по нажатию (стоит терпения)
 let npcTok = 0;
@@ -3787,8 +3788,15 @@ function cityNode(id, replyHtml){
     ctEl("ctPay").innerHTML = n.pay.notes.map(v => `<button class="ct-note" data-v="${v}" aria-label="Дать ${v} лир"${v > city.money ? " disabled" : ""}><span>${v}</span><small>₺</small></button>`).join("");
     ctEl("ctPay").querySelectorAll(".ct-note").forEach(b => b.onclick = () => cityPay(+b.dataset.v));
   }
+  if(n.code){                                                                            // число на слух: варианты-кнопки (3; при Kulak 3 — все 4)
+    const want = skillLvl("kulak") >= 3 ? 4 : 3; let opts = n.code.options.slice(0, want); if(!opts.includes(n.code.value)) opts[opts.length - 1] = n.code.value;
+    if(!TESTMODE) opts = opts.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+    ctEl("ctPay").innerHTML = opts.map(v => `<button class="ct-note ct-code" data-v="${esc(String(v))}" lang="tr" translate="no"><span>${esc(String(v))}</span></button>`).join("");
+    ctEl("ctPay").querySelectorAll(".ct-code").forEach(b => b.onclick = () => cityCode(b.dataset.v));
+  }
+  if(ct.scene.phone) ctEl("ctInitial").innerHTML = '<svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>';
   cityOptions();
-  ctResult("info", replyHtml || `<span class="verdict">${n.pay ? "Сколько дать? Послушайте цену." : "Слушайте. Потом выберите, что ответить, и скажите это по-турецки."}</span>`);
+  ctResult("info", replyHtml || `<span class="verdict">${n.pay ? "Сколько дать? Послушайте цену." : n.code ? "Какое число прозвучало? Выберите." : "Слушайте. Потом выберите, что ответить, и скажите это по-турецки."}</span>`);
   ctButtons(); ctEl("ctSpeak").disabled = true; ctEl("ctShow").disabled = true;
   city.min += 1; cityRes();
   clearTimeout(ct.timer); ct.timedOut = false;
@@ -3810,8 +3818,11 @@ function ctMoves(n){
     if(ct.bought.size) out.push({ key:n.done.key, say:n.done.say, ru:n.done.ru, doneShop:true });
     if(!ct.bought.size) (n.extra || []).filter(m => !m.hide).forEach(m => out.push(m));   // ходы лавки помимо товаров («в долг?») — пока ничего не взяли; обычные ходы со своим go
     return out; }
-  return n.moves.filter(m => !m.hide);
+  const out = (n.moves || []).filter(m => !m.hide);
+  if(ct.scene.phone && !n.code && !n.pay) out.push(REPEAT_MOVE);          // по телефону экран не покажешь — всегда можно переспросить
+  return out;
 }
+const REPEAT_MOVE = { key:["tekrar", "tekrar eder misiniz", "anlamadım", "bir daha"], say:["Tekrar eder misiniz?"], ru:"Повторите, пожалуйста?", repeat:true, xp:false };
 const mastery = tr => (city.mastery || {})[tr] || 0;
 function ctLineHtml(m){
   const line = m.say[0], lvl = ct.peeked ? 0 : mastery(line);
@@ -3894,6 +3905,7 @@ function cityAnswer(alts){
   const heardN = alts.map(nphr).join(" | "); ctRaw = alts.join(" | ");
   const polite = POLITE.some(p => ctHas(heardN, p));
   const pick = ct.pick;
+  if((pick && pick.repeat) || (!pick && ct.scene.phone && REPEAT_MOVE.key.some(k => ctHas(heardN, k)))) return cityRepeat();
   if(pick){                                                                            // выбрали ответ — оцениваем, как сказали именно его
     const line = pick.say[0], ps = pronScore(line.replace(/['’]/g, ""), alts), keyHit = pick.key.some(k => ctHas(heardN, k));   // Taksim'e → taksime: так пишет распознаватель
     if(pick.minScore){ const need = pick.minScore - (typeof skillLvl === "function" && skillLvl("dil") >= 3 ? 10 : 0);              // нужна уверенность: только оценка, ключевого слова мало
@@ -3958,8 +3970,15 @@ function cityMiss(why, ps){
   const detail = ps ? `${errsHtml(ps.words)}<div class="alts">Послушайте реплику в карточке (значок звука) и скажите ещё раз.</div>` : `<div class="alts">${ct.pick ? "Скажите выбранную реплику ещё раз." : "Выберите ответ в карточках и скажите его."} Терпения осталось: ${ct.patience}. Без речи — «Показать».</div>`;
   ctResult("bad", `${ps ? `<div class="res-head">${scoreHtml(ps.score, "Произношение")}<div class="res-body">` : ""}<span class="verdict">${why ? esc(why) : `${esc(ctWho())} не понял.`}</span>${detail}${ps ? "</div></div>" : ""}`);
 }
+function cityRepeat(){   // «Tekrar eder misiniz?» по телефону: первый раз бесплатно, дальше стоит терпения
+  if(ct.repeated){ ct.patience = Math.max(0, ct.patience - 1); city.min += 1; cityRes(); if(ct.patience <= 0){ ct.lines.push({ tr:"", ru:"", ok:false }); return cityEnd(Object.assign({ kind:"bad" }, ct.scene.fail), true); } }
+  ct.repeated = true; ct.pick = null; ct.peeked = false; cityOptions();
+  ctResult("info", `<span class="verdict">Повторяет.</span><div class="alts">${ct.repeated && ct.patience < 3 ? "Ещё раз просить — снова терпение." : "Второй раз переспросить будет стоить терпения."}</div>`);
+  cityReplay();
+}
 function cityPhone(){   // показали фразу на экране телефона: поняли, но разговора не вышло — без опыта, дольше
-  const n = ct.node; if(!n || n.end || n.pay || ct.resolved) return;
+  const n = ct.node; if(!n || n.end || n.pay || n.code || ct.resolved) return;
+  if(ct.scene.phone) return ctResult("info", `<span class="verdict">По телефону экран не покажешь.</span><div class="alts">Скажите сами или попросите повторить: «Tekrar eder misiniz?»</div>`);
   const m = ct.pick || ctMoves(n)[0]; if(!m) return;
   ct.phoned = true; city.min += 3; ct.n++;
   if(n.shop && (m.item || m.doneShop || !m.go)){ if(m.item){ ct.bought.add(m.item); } else { Object.keys(n.items).forEach(it => ct.bought.add(it)); }
@@ -3969,6 +3988,17 @@ function cityPhone(){   // показали фразу на экране тел�
   if(m.fx) cityFx(Object.assign({}, m.fx, { rel:0 }));
   ct.lines.push({ tr:m.say[0], ru:m.ru, ok:false });
   cityResolve(m.go, "near", `<span class="verdict">Вы показали на телефоне: «${esc(m.say[0])}»</span><div class="alts">${esc(m.ru.replace(/\.$/, ""))}. Поняли, но разговора не вышло — без опыта.</div>`);
+}
+function cityCode(v){
+  const n = ct.node, c = n.code; if(!c || ct.resolved) return;
+  if(String(v) === String(c.value)){
+    ct.n++; ct.ok++; city.said++; city.ok++; count("city", 1); if(ct.tries === 0) skillBump("kulak");
+    return cityResolve(c.go, "ok", `<span class="verdict">Верно: ${esc(String(c.value))}.</span><div class="alts">Число поняли на слух.</div>`);
+  }
+  ct.tries++; ct.misses = (ct.misses || 0) + 1; ct.patience = Math.max(0, ct.patience - 1); city.min += 1; cityRes(); count("city", 0);
+  if(ct.patience <= 0){ ct.lines.push({ tr:"", ru:"", ok:false }); return cityEnd(Object.assign({ kind:"bad" }, ct.scene.fail), true); }
+  const again = ctAgain(n) || n.npc; ctEl("ctTr").textContent = again; ctEl("ctTr").classList.remove("veil"); ctEl("ctRu").textContent = n.againRu || n.ru; npcSay(again);
+  ctResult("bad", `<span class="verdict">Не то число.</span><div class="alts">Послушайте ещё раз (значок звука) и выберите.</div>`);
 }
 function cityPay(v){
   const n = ct.node, p = n.pay; if(!p || ct.resolved) return;
@@ -4073,6 +4103,7 @@ const FORM_GLOSS = {
   üşümüyor:"не мёрзнет (üşümüyor musun — тебе не холодно?)", kilitledin:"ты запер", açar:"открывает (açar mısınız — откройте, пожалуйста)",
 };
 const FUNC_GLOSS = {
+  tekrar:"снова, ещё раз (tekrar eder misiniz — повторите?)", eder:"делает (tekrar eder misiniz — не повторите ли?)",
   yoğun:"плотный, напряжённый (trafik çok yoğun — движение очень плотное)", hı:"угу, ага (hı hı — поддакивание)",
   gel:"иди сюда, подойди", git:"уходи, иди", pisi:"кис (pisi pisi — кис-кис)", böyle:"так, таким образом (böyle giderim — так и пойду)",
   veresiye:"в долг, в кредит (у знакомого продавца)", nakit:"наличные", vereyim:"дам (давайте дам)",

@@ -1561,6 +1561,31 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(a.next, a.res); eq(c1, { dil:1, kulak:1, nez:1 }); eq(c2, { kulak:1, nez:2 });
     eq(during, [true, 1, ['dil']]); ok(/Такси до Таксима/.test(after[0]), after[0]); eq(after[1], 'Dil 1'); eq(errs, []);
   });
+  await test('Узел «число на слух»: три варианта (четыре при Kulak 3), верный — дальше и Kulak +1 с первой попытки, неверный — терпение −1 и переспрос; звонок: без «Показать», значок трубки, «Tekrar eder misiniz?» первый раз бесплатно, потом −1', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; });
+    const r = await q.evaluate(() => { const out = {};
+      SCENES.cd = { title:'cd', who:'K', initial:'K', place:'p', goal:'g', start:'a', fail:{ text:'f', fx:{} }, nodes:{
+        a:{ npc:'Numaranız on yedi.', ru:'Ваш номер семнадцать.', again:'On yedi.', againRu:'Семнадцать.', code:{ value:'17', options:['17', '7', '70', '27'], go:'e' } },
+        e:{ end:{ kind:'ok', text:'e', fx:{} } } } };
+      cityStart('cd'); out.btns = [...document.querySelectorAll('#ctPay .ct-code')].map(b => b.textContent); out.ui = [document.getElementById('ctPay').hidden, document.getElementById('ctSpeak').disabled, document.getElementById('ctShow').disabled];
+      cityCode('7'); out.wrong = [ct.patience, document.getElementById('ctTr').textContent, ct.resolved];
+      cityCode('17'); out.right = [ct.resolved, (city.skill.kulak || {}).n || 0];
+      cityLeave(); ct = null; city.skill.kulak = { n:15, lvl:3 }; cityStart('cd'); out.four = document.querySelectorAll('#ctPay .ct-code').length; cityCode('17'); out.first = city.skill.kulak.n;
+      cityLeave(); ct = null; city.skill = {};
+      SCENES.ph = { title:'ph', who:'Su Dünyası', initial:'S', place:'Телефон', phone:true, goal:'g', start:'a', fail:{ text:'f', fx:{} }, nodes:{
+        a:{ npc:'Alo, Su Dünyası, buyurun.', ru:'Алло, «Су Дюньясы», слушаю.', again:'Buyurun?', againRu:'Слушаю?', moves:[{ key:['damacana', 'su'], say:['Bir damacana su lütfen.'], ru:'Одну бутыль воды, пожалуйста.', go:'e' }] },
+        e:{ end:{ kind:'ok', text:'e', fx:{} } } } };
+      cityStart('ph'); out.phone = [document.getElementById('ctShow').disabled, !!document.querySelector('#ctInitial svg use[href="#i-phone"]'), [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent).pop(), ct.patience];
+      return out; });
+    await ctPick(q, 1); const rep1 = await ctSay(q, 'tekrar eder misiniz');
+    const rep2 = await ctSay(q, 'tekrar eder misiniz');
+    const ph = await q.evaluate(() => { cityPhone(); return [document.getElementById('ctResult').textContent, ct.resolved, city.min]; });
+    await ctPick(q, 0); const ok1 = await ctSay(q, 'bir damacana su lütfen');
+    const errs = q.errors; await q.context().close();
+    eq(r.btns.length, 3); ok(r.btns.includes('17'), r.btns.join()); eq(r.ui, [false, true, true]); eq(r.wrong, [2, 'On yedi.', false]); eq(r.right, [true, 0]);   // после ошибки Kulak не растёт
+    eq(r.four, 4); eq(r.first, 16); eq(r.phone, [true, true, 'Повторите, пожалуйста?', 3]);
+    eq([rep1.pat, rep1.npc], [3, 'Alo, Su Dünyası, buyurun.']); eq(rep2.pat, 2); ok(/телефон/i.test(ph[0]) && !ph[1], ph[0]); ok(ok1.next, ok1.res); eq(errs, []);
+  });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
