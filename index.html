@@ -3151,7 +3151,7 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 // (узлы, ветки, флаги). Собеседник говорит синтезом: это персонаж, а не образец для подражания (записей всех реплик нет нигде).
 // Сцена: nodes[id] = { npc, ru, moves:[{ key:[слова, по которым узнаём ответ], say:[как сказать], ru, go, fx, hide }],
 //   again (переспрос), pay:{ price, notes }, end:{ kind, text, fx } }. fx: { money, min, rel, flag }.
-const CITY_START = { ver:2, day:1, money:500, min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, pos:0, roll:null, visited:[], plan:null };
+const CITY_START = { ver:2, day:1, money:3500, min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, pos:0, roll:null, visited:[], plan:null };
 // Поле-настолка (спек §4а): кольцо из 24 клеток по периметру сетки 7×7 (по часовой от дома в левом верхнем углу), две срезки-улицы.
 // kind: home — дом (звонки, визиты мастеров), place — место со сценами, event — клетка «?» (карта из колоды). dat — дательный падеж для такси («Eczaneye lütfen»).
 const BOARD = [
@@ -3197,10 +3197,45 @@ function boardDistAll(from){                 // кратчайшие пути п
 }
 const boardDist = (a, b) => boardDistAll(a)[b];
 const boardReach = (from, n) => boardDistAll(from).map((d, i) => d > 0 && d <= n ? i : -1).filter(i => i >= 0);
-const cityPlanIds = () => city.plan || CITY_PLAN;
+const cityPlanIds = () => city.plan || [];
 const cityDoneId = id => city.done.some(d => d.id === id);
 const cityErrandAt = i => cityPlanIds().find(id => (BOARD[i].scenes || []).includes(id) && SCENES[id] && !cityDoneId(id) && cityOpenNow(id).open);
-function cityOpenNow(id){ return { open:true }; }      // часы работы — задача календаря; пока всё открыто
+// Календарь недели (спек §7; решение пользователя 20:00 — «начало всегда разное»): дела дня — случайные 3 из набора открытых недель,
+// без повторов вчерашних, пока есть другие; закреплено только первое дело первого дня — bakkal. Зарплата по понедельникам, часы работы, перенос несделанного.
+const SALARY = 3500, DAY_START = 9 * 60, PLAN_SIZE = 3;
+const WEEK_SETS = [
+  ["bakkal", "taxi", "kapici", "simit", "dolmus", "istanbulkart", "firin", "market", "cay", "lokanta", "eczane", "komsu", "su"],
+  ["kuafor", "kargo", "pazar", "manav", "ptt", "fatura", "terzi", "kasap", "banka", "telefon", "balikci", "tesisatci", "cilingir"],
+  ["muhtar", "noter", "goc", "doktor", "hastane", "vapur", "metro", "otopark", "emlakci", "aidat", "elektrikci", "veteriner", "spor", "misafir"],
+];
+const OPEN_HOURS = {                             // по умолчанию — до 21:00 ежедневно
+  banka:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, ptt:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, noter:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 },
+  muhtar:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, goc:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, fatura:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 },
+  pazar:{ days:[2, 6] }, kuafor:{ days:[1, 2, 3, 4, 5, 6] },
+};
+const DOW_RU = ["", "пн", "вт", "ср", "чт", "пт", "сб", "вс"];
+const cityDow = () => (city.day - 1) % 7 + 1;      // 1 = понедельник
+const cityWeek = () => Math.ceil(city.day / 7);
+function cityOpenNow(id, day = city.day, min = city.min){
+  const dow = (day - 1) % 7 + 1, h = OPEN_HOURS[id];
+  if(min >= DAY_END) return { open:false, text:"после 21:00 — завтра" };
+  if(!h) return { open:true };
+  const daysTxt = h.days.length === 5 ? "пн–пт" : h.days.length === 6 ? "пн–сб" : h.days.map(d => DOW_RU[d]).join(" и ");
+  const hoursTxt = h.from !== undefined ? ` ${fmtClock(h.from)}–${fmtClock(h.to)}` : "";
+  const open = h.days.includes(dow) && (h.from === undefined || (min >= h.from && min < h.to));
+  return { open, text: daysTxt + hoursTxt };
+}
+function cityPlanFor(day){
+  const week = Math.ceil(day / 7), unlocked = WEEK_SETS.slice(0, Math.min(3, week)).flat().filter(id => SCENES[id] && !SCENES[id].event);
+  const carry = (city.carry || []).filter(id => SCENES[id]), prev = new Set(city.prevPlan || []);
+  const openToday = id => { const h = OPEN_HOURS[id]; return !h || h.days.includes((day - 1) % 7 + 1); };
+  let pool = unlocked.filter(id => !carry.includes(id) && openToday(id));
+  const fresh = pool.filter(id => !prev.has(id)); if(fresh.length >= PLAN_SIZE - carry.length) pool = fresh;
+  const plan = carry.slice();
+  if(day === 1 && pool.includes("bakkal")){ plan.push("bakkal"); pool = pool.filter(id => id !== "bakkal"); }   // первое дело первого дня — знакомое: лавка
+  while(plan.length < PLAN_SIZE && pool.length){ const k = TESTMODE ? 0 : Math.floor(Math.random() * pool.length); plan.push(pool.splice(k, 1)[0]); }
+  return plan;
+}
 // Колода событий: карта тянется на клетке «?», без повтора в день, с условием when; в день 1 первая карта — не опасная; в тестах — window.__card
 const DECK = ["kedi", "balkon", "kopek", "yankesici", "yagmur", "dugun", "simitci", "mac", "dolmusyanlis", "kimlik"];
 function cityDraw(){
@@ -3219,8 +3254,11 @@ function cityMorning(){
     if(sick){ if(!plan.includes("eczane")) plan.push("eczane"); toast("Вчерашний дождь: горло болит — зайдите в аптеку."); } }
 }
 function cityNewDay(){
-  city.day++; city.days++; city.done = []; city.min = 9 * 60; city.money += 500; city.pos = 0; city.roll = null; city.visited = []; city.deckUsed = []; city.todaySaid = [];
-  city.plan = CITY_PLAN.slice(); cityMorning(); citySave(); cityRender(); toast("Новый день: +500 ₺ на расходы");
+  city.prevPlan = (city.plan || []).slice(); city.day++; city.days++; city.done = []; city.min = DAY_START; city.pos = 0; city.roll = null; city.visited = []; city.deckUsed = []; city.todaySaid = [];
+  const payday = cityDow() === 1;
+  if(payday){ city.money += SALARY; if(city.debt){ city.money -= city.debt; city.debt = 0; } }
+  city.plan = cityPlanFor(city.day); city.carry = []; cityMorning(); citySave(); cityRender();
+  toast(payday ? `Pazartesi: maaş +${SALARY} ₺` : `${DOW_RU[cityDow()]}, день ${city.day}`);
 }
 // Числа словами для реплик с ценой («Yüz yetmiş lira»)
 const TR_ONES = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"], TR_TENS = ["", "on", "yirmi", "otuz", "kırk", "elli", "altmış", "yetmiş", "seksen", "doksan"];
@@ -3244,7 +3282,6 @@ const CHARS = {
   eczaci:      { name:"Эджзаджи Зейнеп",  initial:"Z", voice:7, patience:3, trait:"Строгая, точная, не любит «примерно».", likes:{ words:["teşekkür ederim"], firstTry:true } },
   usta:        { name:"Уста Кемаль",      initial:"K", voice:8, patience:3, trait:"Спокойный, скуп на слова, гордится кухней.", likes:{ words:["eline sağlık", "elinize sağlık", "ellerinize sağlık"] } },
 };
-const CITY_PLAN = ["taxi", "bakkal", "kapici"];
 const POLITE = ["lütfen", "teşekkür", "teşekkürler", "sağ ol", "sağ olun", "kolay gelsin", "iyi günler", "hayırlı işler", "rica ederim"];
 const TR_NUMS = { sıfır:0, bir:1, iki:2, üç:3, dört:4, beş:5, altı:6, yedi:7, sekiz:8, dokuz:9, on:10, yirmi:20, otuz:30, kırk:40, elli:50, altmış:60, yetmiş:70, seksen:80, doksan:90, yüz:100 };
 const SCENES = {
@@ -3526,7 +3563,8 @@ function cityNormalize(){
   const obj = k => { if(!city[k] || typeof city[k] !== "object" || Array.isArray(city[k])) city[k] = {}; }, arr = k => { if(!Array.isArray(city[k])) city[k] = []; };
   ["rel", "mastery", "seen", "flags", "played", "skill"].forEach(obj); ["done", "carry", "todaySaid"].forEach(arr);
   if(typeof city.debt !== "number") city.debt = 0; if(typeof city.haggleWins !== "number") city.haggleWins = 0;
-  if(!Array.isArray(city.plan)) city.plan = CITY_PLAN.slice(); if(!Array.isArray(city.visited)) city.visited = []; if(!Array.isArray(city.deckUsed)) city.deckUsed = [];
+  if(!Array.isArray(city.visited)) city.visited = []; if(!Array.isArray(city.deckUsed)) city.deckUsed = []; if(!Array.isArray(city.prevPlan)) city.prevPlan = [];
+  if(!Array.isArray(city.plan)) city.plan = cityPlanFor(city.day);
   if(typeof city.pos !== "number" || !BOARD[city.pos]) city.pos = 0; if(typeof city.roll !== "number") city.roll = null;
   if(city.ver !== 2){
     const rel = {}; Object.entries(city.rel).forEach(([k, v]) => { const c = REL_V1[k] || k; rel[c] = (rel[c] || 0) + v; }); city.rel = rel;
@@ -3558,7 +3596,7 @@ function cityRes(){
 function cityRender(){
   const home = !ct;
   ctEl("ctHome").hidden = !home; ctEl("ctScene").hidden = home;
-  ctEl("ctPlace").textContent = home ? `Mahalle · день ${city.day}` : ct.scene.place;
+  ctEl("ctPlace").textContent = home ? `Mahalle · ${DOW_RU[cityDow()]}, день ${city.day}` : ct.scene.place;
   cityRes();
   if(home) cityBoard();
   scheduleFit();
@@ -3601,7 +3639,10 @@ function cityMoveTo(i){
 function cityArrive(i){
   const c = BOARD[i]; cityRender();
   if(city.min >= DAY_END && !ct) return cityGoHome();                           // 21:00 — день закончился по дороге
-  if(c.kind === "place"){ const id = cityErrandAt(i); if(id) return cityStart(id); return cityVisit(i); }
+  if(c.kind === "place"){ const id = cityErrandAt(i); if(id) return cityStart(id);
+    const closed = cityPlanIds().find(x => (c.scenes || []).includes(x) && SCENES[x] && !cityDoneId(x));
+    if(closed){ const op = cityOpenNow(closed); toast(`${SCENES[closed].title}: закрыто (${op.text}).`); return; }
+    return cityVisit(i); }
   if(c.kind === "event"){ if(typeof cityDraw === "function") cityDraw(); return; }
   if(c.kind === "home"){ const plan = cityPlanIds().filter(id => SCENES[id]); if(plan.length && plan.every(cityDoneId)) return cityDayEnd(); }
 }
@@ -3899,7 +3940,9 @@ function cityEnd(end, failed){
 function cityDayEnd(){
   const okN = city.done.filter(d => d.kind === "ok").length, spent = city.done.reduce((a, d) => a + d.spent, 0);
   const rels = Object.entries(city.rel).filter(([, v]) => v > 0).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} +${v}`).join(", ");
-  showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${city.done.length}. ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}`,
+  city.carry = cityPlanIds().filter(id => SCENES[id] && !cityDoneId(id)); citySave();
+  const carryTxt = city.carry.length ? ` Не успели: ${city.carry.map(id => SCENES[id].title).join(", ")} — перенесено на завтра.` : "";
+  showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${city.done.length}.${carryTxt} ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}`,
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
     primary:{ label:"Новый день", fn:cityNewDay },
     secondary:{ label:"Остаться", fn:cityRender } });

@@ -1274,7 +1274,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('Город: выбор ответа карточками — что сказать, видно сразу по-русски; выбранная раскрывается (турецкий + чтение), говорите её; выбор меняет исход; перевод первой реплики бесплатно', async () => {
     const q = await openCity();
     const home = await q.evaluate(() => [document.querySelectorAll('.ct-task:not(.done)').length, document.getElementById('ctDay').textContent, city.money, city.min]);
-    eq(home, [3, 'Дела на сегодня — 3 из 3', 500, 540]);
+    eq(home, [3, 'Дела на сегодня — 3 из 3', 3500, 540]);   // первая зарплата — в понедельник дня 1
     await q.evaluate(() => cityStart('taxi')); await q.waitForTimeout(80);
     const start = await q.evaluate(() => [document.getElementById('ctTr').textContent, document.getElementById('ctSpeak').disabled, document.getElementById('ctWho').textContent, [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)]);
     eq(start, ['Buyurun, nereye?', false, 'Шофёр Али', ['На Таксим, пожалуйста.']]);           // варианты — сразу, по-русски; скрытые ходы (Кадыкёй) не показываются
@@ -1295,7 +1295,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await ctPick(q, 1); const metro = await ctSay(q, 'kalsın metroyla giderim'); ok(/на метро/.test(metro.res) && metro.next, metro.res);
     await ctNext(q); await q.waitForTimeout(80);
     const end = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.money, city.min, loadCards().filter(c => /Taksim|Fark|metroyla/.test(c.tr)).map(c => c.tr).sort()]);
-    eq(end, [false, 'Такси до Таксима — так себе', 470, 540 + 1 + 1 + 2 + 1 + 40, ['Fark etmez.', 'O zaman kalsın, metroyla giderim.', "Taksim'e lütfen."]]);   // метро: −30 ₺, +40 мин; сказанное — в «Память»
+    eq(end, [false, 'Такси до Таксима — так себе', 3470, 540 + 1 + 1 + 2 + 1 + 40, ['Fark etmez.', 'O zaman kalsın, metroyla giderim.', "Taksim'e lütfen."]]);   // метро: −30 ₺, +40 мин; сказанное — в «Память»
     await q.click('#modalPrimary'); await q.waitForTimeout(60);
     // освоение: уровень 1 — без чтения; уровень 2 — первые буквы; подсмотрели — уровень не растёт
     await q.evaluate(() => { city.done = []; cityRender(); }); await q.evaluate(() => cityStart('taxi')); await q.waitForTimeout(80);
@@ -1487,9 +1487,32 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const errs = q.errors; await q.context().close();
     eq(r.deck, [10, true, 5]); ok(r.first && r.first !== 'kopek' && r.firstMood !== 'danger', 'первая карта дня 1: ' + r.first); eq(r.rain !== 'yagmur', true); eq(r.repeat !== 'kedi', true); eq(r.empty, null);
     eq(r.cardStarted, ['kedi', 'Событие']); ok(cat.next, cat.res); eq([r2.flag, r2.done, r2.title], [1, 0, 'Кот увязался — получилось']); eq([r2.plan, r2.mamaCell], [['mama'], 2]);
-    eq([r2.dogPat, r2.minScore], [2, 70]); ok(!d1.next, d1.res); eq(d1s, [1, 20]); ok(/Укусила|укусил/i.test(bite[3]) || /не вышло/.test(bite[0]), bite[0] + bite[3]); eq([bite[1] > 0, bite[2]], [true, 1000 - 300]);   // флаг хранит номер дня; после «нового дня» +500 ₺
+    eq([r2.dogPat, r2.minScore], [2, 70]); ok(!d1.next, d1.res); eq(d1s, [1, 20]); ok(/Укусила|укусил/i.test(bite[3]) || /не вышло/.test(bite[0]), bite[0] + bite[3]); eq([bite[1] > 0, bite[2]], [true, 3500 - 300]);   // флаг хранит номер дня; день 2 — без зарплаты
     eq([r3.t, r3.money], ['Карманник — не вышло', 1000 - 200]); eq(r3.rainNode, 'start');
     eq([r4.wet > 0, r4.sick, r4.wetAfter], [true, true, undefined]); eq(r5[0], 'Не тот долмуш — не вышло'); eq([r5[1], r5[2] - 600 >= 30], [10, true]); eq(errs, []);
+  });
+  await test('Календарь: день 1 — понедельник, зарплата 3500 и план из набора недели (bakkal первым), после 21:00 несделанное переносится первым, закрытое по часам не запускается и помечено, в понедельник зарплата и списание долга, вчерашние дела не повторяются', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => { const out = {};
+      out.start = [cityDow(), cityWeek(), city.money, city.plan, SALARY];
+      city.min = 21 * 60 + 5; cityRender(); out.late = [document.getElementById('ctRoll').disabled, !document.getElementById('ctHomeBtn').hidden];
+      city.done = [{ id:'taxi', kind:'ok', short:'', ok:1, n:1, took:10, spent:180 }]; cityDayEnd(); out.dayEndText = document.getElementById('modalText').textContent; document.getElementById('modalPrimary').click();
+      out.day2 = [city.day, cityDow(), city.plan.slice(0, 2), city.carry, city.money];
+      SCENES.banka = Object.assign({}, SCENES.kapici, { title:'Банк', char:undefined }); city.plan = ['banka']; city.min = 17 * 60 + 1; cityRender();
+      out.bankClosed = [!!document.querySelector('.bd-pin.closed'), cityOpenNow('banka').text, document.querySelector('.ct-task.closed span').textContent];
+      city.pos = 16; window.__dice = 1; cityRoll(); cityMoveTo(17); out.noScene = [ct === null, document.getElementById('modal').hidden];
+      city.min = 10 * 60; out.bankOpen = cityOpenNow('banka'); city.day = 6; out.pazarSat = cityOpenNow('pazar').open; city.day = 7; out.pazarSun = cityOpenNow('pazar');
+      city.debt = 200; city.money = 100; cityNewDay(); out.monday = [cityDow(), city.money, city.debt];
+      // план дня: 3 из набора недели, вчерашние не повторяются, пока есть другие
+      SCENES.x1 = Object.assign({}, SCENES.kapici, { title:'x1' }); SCENES.x2 = Object.assign({}, SCENES.kapici, { title:'x2' }); SCENES.x3 = Object.assign({}, SCENES.kapici, { title:'x3' });
+      WEEK_SETS[0].push('x1', 'x2', 'x3'); city.prevPlan = ['bakkal', 'taxi', 'kapici']; city.done = []; city.carry = []; cityNewDay(); out.fresh = city.plan;
+      delete SCENES.x1; delete SCENES.x2; delete SCENES.x3; delete SCENES.banka; WEEK_SETS[0].splice(-3, 3);
+      return out; });
+    const errs = q.errors; await q.context().close();
+    eq(r.start, [1, 1, 3500, ['bakkal', 'taxi', 'kapici'], 3500]); eq(r.late, [true, true]); ok(/не успели: .*Bakkal/i.test(r.dayEndText), r.dayEndText);
+    eq(r.day2, [2, 2, ['bakkal', 'kapici'], [], 3500]);                                 // перенесённые — первыми; зарплаты во вторник нет
+    eq(r.bankClosed, [true, 'пн–пт 09:00–17:00', 'пн–пт 09:00–17:00']); eq(r.noScene, [true, true]); eq(r.bankOpen.open, true); eq(r.pazarSat, true); eq([r.pazarSun.open, r.pazarSun.text], [false, 'вт и сб']);
+    eq(r.monday, [1, 100 + 3500 - 200, 0]); eq(r.fresh.length, 3); ok(r.fresh.every(id => ['x1', 'x2', 'x3'].includes(id)), 'вчерашние повторились: ' + r.fresh.join()); eq(errs, []);
   });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];
