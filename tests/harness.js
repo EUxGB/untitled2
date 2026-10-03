@@ -30,7 +30,7 @@ const INIT = () => {
   window.__log = [];
   navigator.mediaDevices.getUserMedia = async () => { window.__log.push('mic'); const c = new AudioContext(), d = c.createMediaStreamDestination(), o = c.createOscillator(); o.connect(d); o.start(); return d.stream; };
   window.SpeechSynthesisUtterance = function(t){ this.text = t; };
-  window.__spoken = []; speechSynthesis.speak = u => { window.__spoken.push(u.text); window.__log.push('synth'); if(!window.__noOnEnd) setTimeout(() => u.onend && u.onend(), 10); };
+  window.__spoken = []; speechSynthesis.speak = u => { window.__spoken.push(u.text); window.__lastVoice = u.voice && u.voice.name; window.__lastRate = u.rate; window.__log.push('synth'); if(!window.__noOnEnd) setTimeout(() => u.onend && u.onend(), 10); };
   HTMLMediaElement.prototype.play = function(){
     (window.__played = window.__played || []).push(this.src);
     if(this.src.includes('broken')) return Promise.reject(new Error('load failed'));

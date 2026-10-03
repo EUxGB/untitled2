@@ -3108,17 +3108,33 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 // (узлы, ветки, флаги). Собеседник говорит синтезом: это персонаж, а не образец для подражания (записей всех реплик нет нигде).
 // Сцена: nodes[id] = { npc, ru, moves:[{ key:[слова, по которым узнаём ответ], say:[как сказать], ru, go, fx, hide }],
 //   again (переспрос), pay:{ price, notes }, end:{ kind, text, fx } }. fx: { money, min, rel, flag }.
-const CITY_START = { day:1, money:500, min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0 };
+const CITY_START = { ver:2, day:1, money:500, min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0 };
+// Персонажи квартала (спек §8, §4а): у каждого свой голос, терпение, характер (виден в репликах) и то, за что он прибавляет отношение.
+// На одном месте — разные люди (`pool` у сцены): кто встретится — случай с весом 1 + отношения; в тестах — window.__char или первый.
+const CHARS = {
+  sofor:       { name:"Шофёр Али",        initial:"A", voice:0, patience:3, trait:"Разговорчивый, жалуется на пробки, зовёт «abi».", likes:{ words:["üstü kalsın"] } },
+  sofor_hasan: { name:"Хасан-амджа",      initial:"H", voice:1, patience:2, trait:"Молчун, радио на всю. Не любит, когда переспрашивают.", likes:{ quiet:true } },
+  sofor_emre:  { name:"Эмре",             initial:"E", voice:2, patience:3, trait:"Молодой, гонит, предлагает «короткий путь».", likes:{ words:["kısa yoldan"] } },
+  bakkal:      { name:"Бакал Хасан",      initial:"H", voice:1, patience:3, trait:"Радушный, всех зовёт «komşu», предлагает лишнее.", likes:{ words:["hoş bulduk", "kolay gelsin"] } },
+  bakkal_emre: { name:"Эмре, сын Хасана", initial:"E", voice:2, patience:3, trait:"Вечером за прилавком; сидит в телефоне, но вежлив.", likes:{ words:["kolay gelsin"] }, when: c => c.min >= 18 * 60 },
+  kapici:      { name:"Капыджи Мехмет",   initial:"M", voice:3, patience:3, trait:"Немногословный, ворчит, но делает.", likes:{ words:["kolay gelsin"], firstTry:true } },
+  komsu:       { name:"Айше-тейзе",       initial:"A", voice:4, patience:4, trait:"Хлебосольная, настойчиво кормит, расспрашивает.", likes:{ words:["ellerinize sağlık", "elinize sağlık"] } },
+  pazarci:     { name:"Пазарджи Юсуф",    initial:"Y", voice:5, patience:2, trait:"Громкий, шутит, уважает тех, кто торгуется.", likes:{ words:["kolay gelsin"], haggle:true } },
+  berber:      { name:"Берберь Эрдем",    initial:"E", voice:6, patience:3, trait:"Болтливый, сплетничает про квартал.", likes:{ words:[] } },
+  eczaci:      { name:"Эджзаджи Зейнеп",  initial:"Z", voice:7, patience:3, trait:"Строгая, точная, не любит «примерно».", likes:{ words:["teşekkür ederim"], firstTry:true } },
+  usta:        { name:"Уста Кемаль",      initial:"K", voice:8, patience:3, trait:"Спокойный, скуп на слова, гордится кухней.", likes:{ words:["eline sağlık", "elinize sağlık", "ellerinize sağlık"] } },
+};
 const CITY_PLAN = ["taxi", "bakkal", "kapici"];
 const POLITE = ["lütfen", "teşekkür", "teşekkürler", "sağ ol", "sağ olun", "kolay gelsin", "iyi günler", "hayırlı işler", "rica ederim"];
 const TR_NUMS = { sıfır:0, bir:1, iki:2, üç:3, dört:4, beş:5, altı:6, yedi:7, sekiz:8, dokuz:9, on:10, yirmi:20, otuz:30, kırk:40, elli:50, altmış:60, yetmiş:70, seksen:80, doksan:90, yüz:100 };
 const SCENES = {
-  taxi:{ title:"Такси до Таксима", who:"Шофёр", initial:"Ş", place:"У дома, стоянка такси",
+  taxi:{ title:"Такси до Таксима", who:"Шофёр", initial:"Ş", place:"У дома, стоянка такси", pool:["sofor", "sofor_hasan", "sofor_emre"],
     goal:"Доехать до площади Таксим. Не переплатить.",
     start:"greet",
     fail:{ text:"Шофёр не понял, куда вам, и уехал с другим пассажиром. Вы доехали на метро: дольше и с пересадкой.", fx:{ min:45, money:-30 } },
     nodes:{
       greet:{ npc:"Buyurun, nereye?", ru:"Пожалуйста, куда?", again:"Efendim? Nereye gideceğiz?", againRu:"Простите? Куда поедем?",
+        npcBy:{ sofor_hasan:"Nereye.", sofor_emre:"Abi nereye? Kısa yoldan mı gidelim?" }, againBy:{ sofor_hasan:"Hı?", sofor_emre:"Nereye abi?" },
         moves:[
           { key:["taksim"], say:["Taksim'e lütfen.", "Taksim Meydanı'na lütfen."], ru:"На Таксим, пожалуйста.", go:"where" },
           { key:["merhaba", "iyi günler", "selam", "günaydın"], say:["Merhaba!"], ru:"Здравствуйте!", go:"greet", xp:false, hide:true },
@@ -3150,7 +3166,7 @@ const SCENES = {
       tip:{ end:{ kind:"ok", text:"Шофёр заулыбался: «Sağ olun abi!» Чаевые здесь не обязательны, но «üstü kalsın» — это по-местному.", fx:{ tipChange:true } } },
       done:{ end:{ kind:"ok", text:"Вы на Таксиме. Шофёр понял вас с первого раза — так и должно быть.", fx:{} } },
     } },
-  bakkal:{ title:"Bakkal — лавка у дома", who:"Бакал Хасан", initial:"H", place:"Лавка на углу",
+  bakkal:{ title:"Bakkal — лавка у дома", who:"Бакал Хасан", initial:"H", place:"Лавка на углу", pool:["bakkal", "bakkal_emre"],
     goal:"Купить хлеб, воду и яйца. Запомниться хозяину.",
     start:"greet",
     fail:{ text:"Хасан развёл руками: «Anlamadım, kusura bakma». Вы ушли без покупок; хлеб придётся искать в супермаркете — дальше и дороже.", fx:{ min:30, money:-160 } },
@@ -3185,7 +3201,7 @@ const SCENES = {
       local:{ end:{ kind:"ok", text:"«Kolay gelsin» — так говорят местные. Хасан запомнил вас: в следующий раз отложит свежий хлеб.", fx:{ flag:"bakkalFriend" } } },
       done:{ end:{ kind:"ok", text:"Покупки сделаны. Хасан кивнул — вежливо, но пока вы для него просто покупатель.", fx:{} } },
     } },
-  kapici:{ title:"Kapıcı — нет горячей воды", who:"Капыджи Мехмет", initial:"M", place:"Подъезд, каморка у входа",
+  kapici:{ title:"Kapıcı — нет горячей воды", who:"Капыджи Мехмет", initial:"M", place:"Подъезд, каморка у входа", char:"kapici",
     goal:"Объяснить, что нет горячей воды, и добиться, чтобы починили сегодня.",
     start:"greet",
     fail:{ text:"Мехмет так и не понял, в чём дело, и ушёл выносить мусор. Вечером вы мылись холодной водой.", fx:{ min:10, flag:"coldShower" } },
@@ -3216,16 +3232,41 @@ const SCENES = {
       tomorrow:{ end:{ kind:"near", text:"Вы согласились на завтра. Вежливо, но сегодня придётся мыться холодной водой. Можно было сказать «çok acil».", fx:{ min:5, flag:"coldShower" } } },
     } },
 };
-let city = (() => { try { return Object.assign({}, CITY_START, JSON.parse(localStorage.getItem("soyle-city")) || {}); } catch(e){ return Object.assign({}, CITY_START); } })();
+let city = (() => { try { return JSON.parse(localStorage.getItem("soyle-city")) || {}; } catch(e){ return {}; } })();   // сырое сохранение; к версии 2 приводит cityNormalize
+// Сохранение всегда приводится к версии 2: недостающие поля, отношения по персонажам (v1 хранил их по сценам), старым игрокам — не меньше 1500 ₺
+const REL_V1 = { taxi:"sofor", bakkal:"bakkal", kapici:"kapici" };
+function cityNormalize(){
+  const fresh = !city || !Object.keys(city).length, ver = fresh ? 2 : city.ver;   // версия смотрится ДО слияния с CITY_START (там уже ver:2); новая игра — сразу v2
+  city = Object.assign({}, CITY_START, city || {}); city.ver = ver;
+  const obj = k => { if(!city[k] || typeof city[k] !== "object" || Array.isArray(city[k])) city[k] = {}; }, arr = k => { if(!Array.isArray(city[k])) city[k] = []; };
+  ["rel", "mastery", "seen", "flags", "played", "skill"].forEach(obj); ["done", "carry", "todaySaid"].forEach(arr);
+  if(typeof city.debt !== "number") city.debt = 0; if(typeof city.haggleWins !== "number") city.haggleWins = 0;
+  if(city.ver !== 2){
+    const rel = {}; Object.entries(city.rel).forEach(([k, v]) => { const c = REL_V1[k] || k; rel[c] = (rel[c] || 0) + v; }); city.rel = rel;
+    city.money = Math.max(city.money, 1500); city.ver = 2;
+  }
+}
+cityNormalize();
+const pickChar = scene => {                        // персонаж сцены: заданный, либо из пула места — знакомые встречаются чаще (вес 1 + отношения)
+  if(scene.char) return scene.char;
+  const pool = (scene.pool || []).filter(c => CHARS[c] && (!CHARS[c].when || CHARS[c].when(city)));
+  if(!pool.length) return null;
+  if(TESTMODE) return pool.includes(window.__char) ? window.__char : pool[0];
+  const w = pool.map(c => 1 + Math.max(0, city.rel[c] || 0)); let r = Math.random() * w.reduce((a, b) => a + b, 0);
+  for(let i = 0; i < pool.length; i++){ r -= w[i]; if(r < 0) return pool[i]; } return pool[0];
+};
+const ctWho = () => (ct && CHARS[ct.char] ? CHARS[ct.char].name : ct ? ct.scene.who : "");
+const ctNpc = n => (n.npcBy && ct && n.npcBy[ct.char]) || n.npc;
+const ctAgain = n => (n.againBy && ct && n.againBy[ct.char]) || n.again;
 function citySave(){ try { localStorage.setItem("soyle-city", JSON.stringify(city)); } catch(e){} }
 const fmtClock = m => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const fmtMoney = n => `${n < 0 ? "−" : ""}${Math.abs(n)} ₺`;
 let ct = null;   // активная сцена: { id, scene, node, tries, patience, lines:[], ok, n, bought:Set, spent, startMin, change, revealed, resolved, pendingGo, phoned }
 const ctEl = id => $(id);
 function cityRes(){
-  const pat = ct ? ct.patience : 3;
+  const pat = ct ? ct.patience : 3, max = ct ? Math.max(pat, CHARS[ct.char] ? CHARS[ct.char].patience : 3) : 3;
   ctEl("ctRes").innerHTML = `<span class="ct-money">${fmtMoney(city.money)}</span><span class="ct-time"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg>${fmtClock(city.min)}</span>`
-    + (ct ? `<span class="ct-pat" aria-label="Терпение собеседника: ${pat} из 3" title="Терпение собеседника">${[0, 1, 2].map(i => `<i${i < pat ? ' class="on"' : ""}></i>`).join("")}</span>` : "");
+    + (ct ? `<span class="ct-pat" aria-label="Терпение собеседника: ${pat} из ${max}" title="Терпение собеседника">${Array.from({ length:max }, (_, i) => `<i${i < pat ? ' class="on"' : ""}></i>`).join("")}</span>` : "");
 }
 function cityRender(){
   const home = !ct;
@@ -3240,15 +3281,16 @@ function cityRender(){
       + (allDone ? `<button class="btn primary big" id="ctDayEnd">Итоги дня</button>` : "");
     ctEl("ctTasks").querySelectorAll("[data-scene]").forEach(b => b.onclick = () => cityStart(b.dataset.scene));
     const de = ctEl("ctDayEnd"); if(de) de.onclick = cityDayEnd;
-    ctEl("ctIntro").textContent = city.days ? `Отношения: ${Object.entries(city.rel).map(([k, v]) => `${SCENES[k] ? SCENES[k].who : k} ${v > 0 ? "+" : ""}${v}`).join(", ") || "пока ни с кем"}`
+    ctEl("ctIntro").textContent = city.days ? `Отношения: ${Object.entries(city.rel).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} ${v > 0 ? "+" : ""}${v}`).join(", ") || "пока ни с кем"}`
       : "Вы переехали в стамбульский квартал. Говорите с людьми голосом — они отвечают и реагируют на то, что вы сказали. Ошибки стоят денег и времени.";
   }
   scheduleFit();
 }
 function cityStart(id){
   const scene = SCENES[id]; if(!scene) return;
-  ct = { id, scene, node:null, tries:0, patience:3, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
-  ctEl("ctGoal").textContent = "Цель: " + scene.goal; ctEl("ctGoal").title = scene.goal; ctEl("ctWho").textContent = scene.who;
+  const char = pickChar(scene), pat = CHARS[char] ? CHARS[char].patience : 3;
+  ct = { id, scene, char, node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
+  ctEl("ctGoal").textContent = "Цель: " + scene.goal; ctEl("ctGoal").title = scene.goal; ctEl("ctWho").textContent = ctWho();
   cityRender();
   cityNode(scene.start);
 }
@@ -3265,7 +3307,7 @@ let npcTok = 0;
 function npcSay(text, onDone){
   const tok = ++npcTok, finish = () => { if(tok !== npcTok) return; npcTok++; onDone && onDone(); };
   if(!(trVoices.length || trVoice)){ setTimeout(finish, 30); return; }
-  const idx = ct ? Object.keys(SCENES).indexOf(ct.id) : 0, v = trVoices[idx % trVoices.length] || trVoice;
+  const idx = ct && CHARS[ct.char] ? CHARS[ct.char].voice : ct ? Object.keys(SCENES).indexOf(ct.id) : 0, v = trVoices[idx % trVoices.length] || trVoice;
   const busy = speechSynthesis.speaking || speechSynthesis.pending; speechSynthesis.cancel();
   let done = false; const once = () => { if(done) return; done = true; finish(); };
   setTimeout(() => {
@@ -3281,8 +3323,8 @@ function cityNode(id, replyHtml){
   if(n.end) return cityEnd(n.end);
   ct.firstTime = !(city.seen || (city.seen = {}))[n.npc]; city.seen[n.npc] = 1;      // первую встречу с репликой переводим бесплатно
   const tr = ctEl("ctTr"), ru = ctEl("ctRu");
-  tr.textContent = n.npc; tr.classList.add("veil"); ru.hidden = true; ru.textContent = n.ru;
-  ctEl("ctInitial").textContent = ct.scene.initial;
+  tr.textContent = ctNpc(n); tr.classList.add("veil"); ru.hidden = true; ru.textContent = n.ru;
+  ctEl("ctInitial").textContent = CHARS[ct.char] ? CHARS[ct.char].initial : ct.scene.initial;
   ctEl("ctLive").textContent = "";
   if(n.pay){
     if(city.money < n.pay.price){ ct.lines.push({ tr:"", ru:"", ok:false });            // денег не хватило — сцена заканчивается плохо
@@ -3294,7 +3336,7 @@ function cityNode(id, replyHtml){
   ctResult("info", replyHtml || `<span class="verdict">${n.pay ? "Сколько дать? Послушайте цену." : "Слушайте. Потом выберите, что ответить, и скажите это по-турецки."}</span>`);
   ctButtons(); ctEl("ctSpeak").disabled = true; ctEl("ctShow").disabled = true;
   city.min += 1; cityRes();
-  npcSay(n.npc, () => { if(ct && ct.node === n){ tr.classList.remove("veil"); ctButtons(); scheduleFit(); } });
+  npcSay(ctNpc(n), () => { if(ct && ct.node === n){ tr.classList.remove("veil"); ctButtons(); scheduleFit(); } });
   scheduleFit();
 }
 // Варианты ответа — карточки по-русски: игрок выбирает, ЧТО сказать (это и есть выбор в сцене), потом говорит это по-турецки.
@@ -3345,7 +3387,7 @@ function cityReveal(){   // перевод реплики: первая встр
   if(ctEl("ctRu").hidden){ ctEl("ctRu").hidden = false; if(!ct.revealed && !ct.firstTime && (trVoices.length || trVoice)){ ct.revealed = true; ct.patience = Math.max(0, ct.patience - 1); cityRes(); } }
   scheduleFit();
 }
-function cityReplay(){ if(!ct || !ct.node || ct.node.end) return; ctEl("ctTr").classList.add("veil"); npcSay(ct.node.npc, () => { if(ct) { ctEl("ctTr").classList.remove("veil"); ctButtons(); } }); }
+function cityReplay(){ if(!ct || !ct.node || ct.node.end) return; ctEl("ctTr").classList.add("veil"); npcSay(ctNpc(ct.node), () => { if(ct) { ctEl("ctTr").classList.remove("veil"); ctButtons(); } }); }
 // распознавание ответа: одна фраза, без записи своего голоса (в разговоре она не нужна, а на Android мешает)
 let ctRec = null, ctOn = false, ctTok = 0, ctRaw = "";
 function cityListen(){
@@ -3429,16 +3471,16 @@ function cityAccept(m, alts, polite, score, names){
   }
   if(m.fx) cityFx(m.fx);
   ct.lines.push({ tr:line, ru:m.ru, ok:true });
-  cityResolve(m.go, "ok", `${head}<span class="verdict">${ct.scene.who} понял: «${esc(m.ru)}»</span><div class="alts">Вы сказали: «${esc(alts[0])}».${m.fx && m.fx.rel ? " Собеседнику приятно." : polite ? " Вежливость замечена." : ""}${grown}</div>${tail}`);
+  cityResolve(m.go, "ok", `${head}<span class="verdict">${esc(ctWho())} понял: «${esc(m.ru)}»</span><div class="alts">Вы сказали: «${esc(alts[0])}».${m.fx && m.fx.rel ? " Собеседнику приятно." : polite ? " Вежливость замечена." : ""}${grown}</div>${tail}`);
 }
 function cityMiss(why, ps){
   const n = ct.node; ct.tries++; ct.n++; city.said++; count("city", 0);
   ct.patience = Math.max(0, ct.patience - 1); city.min += 2; cityRes();
   if(ct.patience <= 0){ const first = ct.pick || ctMoves(n)[0]; ct.lines.push({ tr:first ? first.say[0] : "", ru:first ? first.ru : "", ok:false }); return cityEnd(Object.assign({ kind:"bad" }, ct.scene.fail), true); }
-  const again = n.again || "Efendim?", againRu = n.againRu || "Простите?";
+  const again = ctAgain(n) || "Efendim?", againRu = n.againRu || "Простите?";
   ctEl("ctTr").textContent = again; ctEl("ctTr").classList.remove("veil"); ctEl("ctRu").textContent = againRu; npcSay(again);
   const detail = ps ? `${errsHtml(ps.words)}<div class="alts">Послушайте реплику в карточке (значок звука) и скажите ещё раз.</div>` : `<div class="alts">${ct.pick ? "Скажите выбранную реплику ещё раз." : "Выберите ответ в карточках и скажите его."} Терпения осталось: ${ct.patience}. Без речи — «Показать».</div>`;
-  ctResult("bad", `${ps ? `<div class="res-head">${scoreHtml(ps.score, "Произношение")}<div class="res-body">` : ""}<span class="verdict">${why ? esc(why) : `${ct.scene.who} не понял.`}</span>${detail}${ps ? "</div></div>" : ""}`);
+  ctResult("bad", `${ps ? `<div class="res-head">${scoreHtml(ps.score, "Произношение")}<div class="res-body">` : ""}<span class="verdict">${why ? esc(why) : `${esc(ctWho())} не понял.`}</span>${detail}${ps ? "</div></div>" : ""}`);
 }
 function cityPhone(){   // показали фразу на экране телефона: поняли, но разговора не вышло — без опыта, дольше
   const n = ct.node; if(!n || n.end || n.pay || ct.resolved) return;
@@ -3466,7 +3508,7 @@ function cityFx(fx){
   if(!fx) return;
   if(fx.money){ city.money += fx.money; if(fx.money < 0 && ct) ct.spent -= fx.money; }
   if(fx.min) city.min += fx.min;
-  if(fx.rel){ city.rel[ct.id] = (city.rel[ct.id] || 0) + fx.rel; }
+  if(fx.rel && ct && ct.char){ city.rel[ct.char] = (city.rel[ct.char] || 0) + fx.rel; }
   if(fx.flag){ (city.flags = city.flags || {})[fx.flag] = city.day; }
   if(fx.tipChange && ct.change){ city.money -= ct.change; ct.spent += ct.change; ct.change = 0; }
   cityRes();
@@ -3492,7 +3534,7 @@ function cityEnd(end, failed){
 }
 function cityDayEnd(){
   const okN = city.done.filter(d => d.kind === "ok").length, spent = city.done.reduce((a, d) => a + d.spent, 0);
-  const rels = Object.entries(city.rel).filter(([, v]) => v > 0).map(([k, v]) => `${SCENES[k] ? SCENES[k].who : k} +${v}`).join(", ");
+  const rels = Object.entries(city.rel).filter(([, v]) => v > 0).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} +${v}`).join(", ");
   showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${city.done.length}. ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}`,
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
     primary:{ label:"Новый день", fn:() => { city.day++; city.days++; city.done = []; city.min = 9 * 60; city.money += 500; citySave(); cityRender(); toast("Новый день: +500 ₺ на расходы"); } },

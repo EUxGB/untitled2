@@ -1277,7 +1277,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(home, [3, 'Дела на сегодня — 3 из 3', 500, 540]);
     await q.click('.ct-task[data-scene="taxi"]'); await q.waitForTimeout(80);
     const start = await q.evaluate(() => [document.getElementById('ctTr').textContent, document.getElementById('ctSpeak').disabled, document.getElementById('ctWho').textContent, [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)]);
-    eq(start, ['Buyurun, nereye?', false, 'Шофёр', ['На Таксим, пожалуйста.']]);           // варианты — сразу, по-русски; скрытые ходы (Кадыкёй) не показываются
+    eq(start, ['Buyurun, nereye?', false, 'Шофёр Али', ['На Таксим, пожалуйста.']]);           // варианты — сразу, по-русски; скрытые ходы (Кадыкёй) не показываются
     const picked = await ctPick(q, 0);
     eq(picked, ["На Таксим, пожалуйста.Taksim'e lütfen.[таксиме лютфен]"]);                 // уровень 0: турецкий + чтение кириллицей
     eq(await q.evaluate(() => !!document.querySelector('#ctOpts [data-ear]')), true);         // можно послушать (синтез)
@@ -1398,6 +1398,18 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.evaluate(() => { window.__spoken = []; }); await ctPick(q, 0); await q.click('#ctOpts [data-ear]'); await q.waitForTimeout(80);
     eq(await q.evaluate(() => window.__spoken), ['Hoş bulduk!']);                             // послушать свою реплику — синтез
     await q.context().close();
+  });
+  await test('Город: сохранение v1 переносится (rel сцен → персонажи, деньги ≥ 1500, ver 2); персонажи CHARS: голос, терпение, имя; пул разных людей на одном месте (водитель по window.__char, свои реплики)', async () => {
+    const q = await openCity({ storage:{ 'soyle-city': JSON.stringify({ day:3, money:120, min:600, rel:{ taxi:2, bakkal:5 }, done:[], said:4, ok:3, days:2 }) } });
+    const r = await q.evaluate(async () => { trVoices = [{ name:'A', lang:'tr-TR' }, { name:'B', lang:'tr-TR' }, { name:'C', lang:'tr-TR' }]; trVoice = trVoices[0];
+      SCENES.t = { title:'t', who:'Айше', char:'komsu', place:'p', goal:'g', start:'a', fail:{ text:'f', fx:{} }, nodes:{ a:{ npc:'Buyur.', ru:'…', again:'?', againRu:'?', moves:[{ key:['*'], say:['Tamam.'], ru:'ок', go:'e' }] }, e:{ end:{ kind:'ok', text:'e', fx:{} } } } };
+      cityStart('t'); await new Promise(z => setTimeout(z, 120)); const out = { ver: city.ver, rel: Object.assign({}, city.rel), money: city.money, day: city.day, pat: ct.patience, voice: window.__lastVoice, want: trVoices[CHARS.komsu.voice % 3].name, who: document.getElementById('ctWho').textContent, arrays: [Array.isArray(city.carry), Array.isArray(city.todaySaid), typeof city.skill, typeof city.played, city.debt] };
+      cityFx({ rel:1 }); out.relAfter = city.rel.komsu; cityLeave(); ct = null;
+      window.__char = 'sofor_hasan'; cityStart('taxi'); out.pool = [ct.char, document.getElementById('ctWho').textContent, document.getElementById('ctTr').textContent, ct.patience, document.getElementById('ctInitial').textContent];
+      cityLeave(); ct = null; window.__char = null; cityStart('taxi'); out.def = [ct.char, document.getElementById('ctTr').textContent]; return out; });
+    const errs = q.errors; await q.context().close();
+    eq([r.ver, r.day, r.money], [2, 3, 1500]); eq(r.rel, { sofor:2, bakkal:5 }); eq(r.pat, 4); eq(r.voice, r.want); eq(r.who, 'Айше-тейзе'); eq(r.arrays, [true, true, 'object', 'object', 0]); eq(r.relAfter, 1);
+    eq(r.pool, ['sofor_hasan', 'Хасан-амджа', 'Nereye.', 2, 'H']); eq(r.def, ['sofor', 'Buyurun, nereye?']); eq(errs, []);
   });
   await test('Город помещается на 360×640, 390×844 и 412×915 без прокрутки страницы: дом, сцена с карточками, промах с оценкой, оплата', async () => {
     const q = await openPage(browser); const bad = [];
