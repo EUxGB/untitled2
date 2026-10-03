@@ -157,7 +157,7 @@
   },
   {
    "tr": "İyi hafta sonları.",
-   "ru": "Хороших выходных.",
+   "ru": "Хороших выходных (hafta sonu — выходные).",
    "cv": true
   },
   {
@@ -309,7 +309,7 @@
    "cv": true
   },
   {
-   "tr": "Ama evde internet yok",
+   "tr": "Ama evde internet yok.",
    "ru": "Но дома нет интернета.",
    "cv": true
   },
@@ -622,7 +622,7 @@
   },
   {
    "tr": "Biletinizi görebilir miyim?",
-   "ru": "Можно ваш билет?",
+   "ru": "Можно посмотреть ваш билет?",
    "cv": true
   },
   {
@@ -762,7 +762,7 @@
    "cv": true
   },
   {
-   "tr": "Daha uygun fiyat istiyorum",
+   "tr": "Daha uygun fiyat istiyorum.",
    "ru": "Я хочу цену получше.",
    "cv": true
   },
@@ -869,7 +869,7 @@
   },
   {
    "tr": "Bozuk paran var mı?",
-   "ru": "У тебя есть мелочь?",
+   "ru": "У тебя есть мелочь? (bozuk para — мелочь)",
    "cv": true
   },
   {
@@ -883,12 +883,12 @@
    "cv": true
   },
   {
-   "tr": "Değiştirmek istiyorum",
+   "tr": "Değiştirmek istiyorum.",
    "ru": "Я хочу поменять (обменять).",
    "cv": true
   },
   {
-   "tr": "Faturamı ödemek istiyorum",
+   "tr": "Faturamı ödemek istiyorum.",
    "ru": "Я хочу оплатить счёт (за свет, связь, интернет).",
    "cv": true
   },
@@ -947,7 +947,7 @@
   },
   {
    "tr": "Evet, soğuk aldım galiba!",
-   "ru": "Да, кажется, я простудился!",
+   "ru": "Да, кажется, я простудился! (soğuk almak — простудиться)",
    "cv": true
   },
   {
@@ -1591,7 +1591,7 @@
   },
   {
    "tr": "Nasılsınız?",
-   "ru": "Как вы?",
+   "ru": "Как вы поживаете?",
    "cv": true
   }
  ]

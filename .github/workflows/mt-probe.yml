@@ -1,8 +1,6 @@
 name: Проверка машинного перевода
 on:
   workflow_dispatch:
-  push:
-    branches: [content-prep]
 permissions:
   contents: write
 jobs:

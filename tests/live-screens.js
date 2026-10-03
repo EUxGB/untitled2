@@ -75,19 +75,29 @@ const URL = process.argv[2], OUT = process.argv[3];
         await p.screenshot({ path:`${OUT}/${name}-live-phrases.png` });
         live.pagesOpened = ctx.pages().length;
       } catch(e){ live.error = String(e); }
-      // слова по темам: переключатель, тема «ресторан», пополнение из Викисловаря, русские значения
+      // слова по темам: переключатель, тема «ресторан», выверенные списки, значения слов набора «с записями»
       try {
         await p.evaluate(() => { closeSheet(); setMode('phrases'); });
         await p.click('#kindChip'); await p.click('.chip[data-s="food"]'); await p.waitForTimeout(2500);
         live.words = await p.evaluate(async () => {
           const r = { word: item.target, meaning: document.getElementById('meaning').textContent, pool0: wordPool('food').items.length };
-          r.added = await growWords('food', 20); r.pool1 = wordPool('food').items.length; r.sample = wordPool('food').items.slice(-8).map(x => x.tr);
-          r.meanings = {}; for(const w of r.sample.slice(0, 5)) r.meanings[w] = await ruMeaning(w);
+          r.pools = PHRASE_SETS.map(g => [g.id, wordPool(g.id).items.length, wordPool(g.id).items.filter(x => !x.ru || /≈/.test(x.ru)).length]);   // слов в теме, из них без выверенного перевода
+          // набор «с записями» (случайные слова из Wikimedia): значение по-русски, английского текста быть не должно
+          r.native = {}; for(const w of ['mahkûm', 'sarma', 'kedi', 'bulut', 'anahtarlık', 'göstermek']){ const m = await Promise.race([ruMeaning(w), new Promise(z => setTimeout(() => z('нет ответа за 25 с'), 25000))]); r.native[w] = m; }
+          r.nativeEnglish = Object.entries(r.native).filter(([, m]) => /[a-z]{4,}/i.test(m)).map(x => x[0]);
           r.examples = {}; for(const w of ['çay', 'oda', 'bilet', 'ilaç', 'hesap']){ const e = await tatoebaExamples(w); r.examples[w] = [e.list.length, e.list.filter(x => x.audio).length, e.list.filter(x => x.ru).length]; }
           const recs = await findRecordings(item.target); r.recs = recs && recs.length;
           return r; });
         await p.screenshot({ path:`${OUT}/${name}-words.png` });
       } catch(e){ live.wordsError = String(e); }
+      // набор «с записями»: карточка слова «mahkûm» — значение по-русски (жалоба: «откуда-то взялся английский»)
+      try {
+        await p.evaluate(() => { setKind(false); window.__ns = nativeSet; nativeSet = [{ tr:'mahkûm', tl:'', ru:'', focus:'Послушайте носителя и повторите.', n:1 }]; setId = 'native'; lastKey = ''; renderChips(); next(); });
+        await p.waitForFunction(() => !/Ищу/.test(document.getElementById('meaning').textContent), null, { timeout:30000 }).catch(() => {});
+        live.nativeCard = await p.evaluate(() => ({ word: item.target, meaning: document.getElementById('meaning').textContent }));
+        await p.screenshot({ path:`${OUT}/${name}-native-meaning.png` });
+        await p.evaluate(() => { nativeSet = window.__ns; setId = 'hotel'; renderChips(); next(); });
+      } catch(e){ live.nativeError = String(e); }
       // слово в контексте: у скольких слов есть примеры с переводом (фраза тренажёра и Tatoeba) — проверка, что функция полезна
       try {
         live.ctx = await p.evaluate(async () => {
@@ -98,7 +108,7 @@ const URL = process.argv[2], OUT = process.argv[3];
           const a = {}, b = {}; for(const w of sample) a[w] = await count(w, true); for(const w of seeds) b[w] = await count(w, false);
           const stat = o => { const v = Object.values(o); return { words:v.length, withExamples:v.filter(n => n > 0).length, avg:+(v.reduce((x, y) => x + y, 0) / (v.length || 1)).toFixed(1) }; };
           return { dict:stat(a), seeds:stat(b), none:[...Object.entries(a), ...Object.entries(b)].filter(x => !x[1]).map(x => x[0]) }; });
-        await p.evaluate(() => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips(); wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); next(); });
+        await p.evaluate(() => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips(); wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); lastKey = ''; next(); });
         const t0 = Date.now();                                             // сколько ждать остальные примеры на живом сайте
         await p.waitForFunction(() => ctx && ctx.loaded, null, { timeout:30000 }).catch(() => {});
         const loadMs = Date.now() - t0; await p.click('#ctxMore').catch(() => {}); await p.waitForTimeout(300);

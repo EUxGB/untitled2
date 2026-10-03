@@ -157,9 +157,23 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await p.evaluate(() => [nativeSet.map(i => i.tr).sort(), nativeCache.get('merhaba').length]);
     eq(r[0], ['köy','merhaba']); ok(r[1] >= 2);
   });
-  await test('у слова из набора появляется значение из Викисловаря', async () => {
-    await p.evaluate(() => { item = { target:'köy', native:true }; descCache.clear(); describeNative('köy'); });
-    await p.waitForTimeout(100); ok((await p.textContent('#meaning')).includes('test meaning'));
+  await test('набор «с записями»: значение слова — по-русски, английского текста нет (жалоба: «mahkûm — откуда-то взялся английский»)', async () => {
+    const q = await openPage(browser); const asked = [];
+    await q.route('**/ru.wiktionary.org/**', r => r.fulfill({ json: /sarma/.test(decodeURIComponent(r.request().url()))
+      ? { parse:{ wikitext:{ '*':"= {{-az-}} =\n==== Значение ====\n# [[чужое]]\n\n= {{-tr-}} =\n==== Значение ====\n# [[заворачивание]] {{пример|x}}\n# {{кулин.|tr}} [[голубцы]], [[долма]]\n#: пример\n\n=== Этимология ===\n= {{-tt-}} =\n==== Значение ====\n# [[лишнее]]\n" } } } : { error:{ code:'missingtitle' } } }));
+    await q.route('**/en.wiktionary.org/**', r => r.fulfill({ json:{ tr:[{ partOfSpeech:'Noun', definitions:[{ definition:'<a>convict</a>' }, { definition:'prisoner' }, { definition:'captive' }] }] } }));
+    await q.route('**/api.mymemory.translated.net/**', r => { const u = decodeURIComponent(r.request().url()); asked.push(u.split('?')[1]);
+      r.fulfill({ json:{ responseStatus:200, responseData:{ translatedText: u.includes('langpair=en|ru') ? 'осуждённый; заключённый; пленник' : 'заключенный' } } }); });
+    const show = async w => { await q.evaluate(w => { setMode('phrases'); nativeSet = [{ tr:w, tl:'', ru:'', focus:'x', n:1 }]; setId = 'native'; lastKey = ''; next(); }, w);
+      await q.waitForFunction(() => !/Ищу/.test(document.getElementById('meaning').textContent)); return q.evaluate(() => [document.getElementById('meaning').textContent, item.meaning]); };
+    const known = await show('köy'), wikt = await show('sarma'), gloss = await show('mahkûm');
+    const errs = q.errors; await q.context().close();
+    eq(known, ['деревня', 'деревня']);                                             // слово из выверенного списка — без сети
+    eq(wikt[0], 'заворачивание; голубцы, долма');                                  // ru-Викисловарь: раздел турецкого, до трёх значений, без разметки
+    eq(gloss[0], '≈ осуждённый; заключённый; пленник (машинный перевод толкования из Викисловаря)');
+    eq(gloss[1], gloss[0]);                                                        // и в «Память» слово уйдёт с этим значением, не пустым
+    eq([known, wikt, gloss].some(x => /англ|convict|prisoner/i.test(x[0])), false);
+    eq(asked, ['q=convict; prisoner; captive&langpair=en|ru']); eq(errs, []);
   });
 
   console.log('Игра и повторения');
@@ -1104,6 +1118,29 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.tl, ['доору деиль ми', 'гюзель', 'ярдым эдин', 'хесап лютфен']);
     eq(nv, [`без записи (${r.old.length})`, true]);
   });
+  await test('фразы из жизни: список в программе совпадает с выверенным (tests/voiced-phrases.json); редкие фразы не идут в темы, слова и «Память», но остались в «На слух»', async () => {
+    const vp = JSON.parse(fs.readFileSync(path.join(__dirname, 'voiced-phrases.json'), 'utf8'));
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => { setMode('phrases'); setId = 'shop'; const picked = new Set(); for(let i = 0; i < 400; i++) picked.add(pickPhrase().target);
+      const mem = memTopicPool().map(x => x.tr), first = memTopicPool().slice(0, 9).map(x => x.tr);
+      return { voiced: Object.fromEntries(Object.entries(VOICED).map(([k, l]) => [k, l.map(x => [x[0], x[1]])])), rare: [...RARE], picked: [...picked], mem, first,
+        ls: lsPhrasePool('all').map(x => x.tr), shop: PHRASE_SETS.find(g => g.id === 'shop').items.map(x => [x.tr, !!x.rare]),
+        words: PHRASE_SETS.flatMap(g => phraseWordsOf(g.id).map(w => w.tr)), n: PHRASE_SETS.reduce((a, g) => a + g.items.filter(x => !x.rare).length, 0),
+        fixed: ['Çok affedersiniz.', 'Peki nasılsın?', 'Metroyla gidiyorum.', 'Bakar mısınız?'].map(t => PHRASE_SETS.flatMap(g => g.items).find(x => x.tr === t).ru),
+        old: ['Bunun Türkçesi ne?', 'Bu doğru değil mi?'].map(t => (OLD_PHRASES.find(x => x.tr === t) || {}).ru), alerji: PHRASE_SETS.flatMap(g => g.items).find(x => x.tr === 'Alerjim var.').tl }; });
+    await q.context().close();
+    eq(r.voiced, Object.fromEntries(Object.entries(vp).map(([k, l]) => [k, l.map(x => [x.tr, x.ru])])));        // один источник — без расхождений
+    eq(r.rare.sort(), Object.values(vp).flat().filter(x => x.rare).map(x => x.tr).sort());
+    ok(r.rare.includes('Herkes trene!') && r.rare.includes('Bana biraz para ver.') && r.rare.length >= 10, r.rare.join());
+    eq(r.rare.filter(t => r.picked.includes(t) || r.mem.includes(t)), []);                                       // не в теме и не в «Памяти»
+    eq(r.rare.filter(t => !r.ls.includes(t)), []);                                                               // но не удалены — «На слух»
+    eq(r.shop.findIndex(x => x[1]) >= r.shop.filter(x => !x[1]).length, true);                                   // редкие — в конце списка
+    eq(r.words.filter(w => ['Japonca', 'Fransızca', 'barmen', 'dolar'].includes(w)), []);                        // и слова из них не учатся
+    ok(r.n >= 280, 'фраз из жизни: ' + r.n);
+    eq(r.first, ['Tabii ki.', 'Bir oda istiyorum.', 'İyi akşamlar.', 'Hesap lütfen.', 'Hey, taksi!', 'Çok pahalıdır.', 'Alerjim var.', 'İngilizce biliyor musunuz?', 'Ambulans çağırın!']);   // «Память»: по одной из каждой темы, с самого нужного
+    eq(r.fixed, ['Простите, пожалуйста.', 'А ты как?', 'Я еду на метро.', 'Извините, можно вас? (так подзывают официанта, продавца)']);
+    eq(r.old, ['Как это по-турецки?', 'Это верно, не так ли?']); eq(r.alerji, 'алержим вар');
+  });
   await test('у каждой фразы тем есть файл записи: Common Voice — в audio/cv (index.json + mp3), Tatoeba — id записи', async () => {
     const dir = path.join(__dirname, '..', 'audio', 'cv');
     const idx = JSON.parse(fs.readFileSync(path.join(dir, 'index.json'), 'utf8')).phrases;
@@ -1162,7 +1199,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     if(u.includes('ru.wiktionary')) return { parse:{ title:'ekmek', wikitext:{ '*':"= {{-tr-}} =\n\n=== Морфологические и синтаксические свойства ===\n{{падежи tr\n|nom-sg=ekmek\n}}\n\n==== Значение ====\n\n# [[хлеб]] {{пример|Ekmek aldım.}}\n\n=== Этимология ===\n" } } };
     return {};
   };
-  const WORDS_FOOD = [['menü','меню'],['hesap','счёт'],['ekmek','хлеб'],['çay','чай'],['kahve','кофе'],['garson','официант'],['tuz','соль'],['şeker','сахар'],['çatal','вилка'],['bıçak','нож'],['kaşık','ложка'],['tabak','тарелка'],['bardak','стакан'],['peynir','сыр']];
+  const WORDS_FOOD = eval((fs.readFileSync(FILE.replace('file://', ''), 'utf8').match(/\n  food:(\[\["menü".*?\]\]),\n/) || [])[1]);   // стартовые слова темы — из программы
   async function openWords(){ const q = await openInApp(); await q.route('**/*wiktionary.org/w/api.php**', r => r.fulfill({ json: WIKI(decodeURIComponent(r.request().url())) })); return q; }
   await test('«Фразы» → «слова»: слова выбранной темы с переводом, по счётчику в чипах; переключение обратно на фразы', async () => {
     const q = await openWords();
@@ -1178,21 +1215,18 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.slice(0, 4), [true, true, 'food', true]); eq(r[4], Object.fromEntries(WORDS_FOOD)[r[8]]);   // русский перевод темы, не английское значение из Викисловаря ok(/^ресторан \(\d+\)$/.test(r[5]), r[5]); eq(r[6], false); eq(r[7], 'words'); ok(/произнесите слово/.test(r[9]), r[9]);
     eq(back, [false, false, true]); eq(errs, []);
   });
-  await test('пополнение: новые слова темы подгружаются из Викисловаря (одиночные слова, продолжение списка), сохраняются', async () => {
-    const q = await openWords();
-    const r = await q.evaluate(async () => {
-      localStorage.removeItem('soyle-words-hotel'); delete wordPools.hotel;
-      const pool = wordPool('hotel'); const n0 = pool.items.length; pool.items.forEach(w => w.seen = 1);
-      const expN0 = new Set([...WORD_SEEDS.hotel.map(x => nphr(x[0])), ...phraseWordsOf('hotel').map(w => w.tr)]).size;   // стартовые + слова из фраз темы
-      const expAdd = ['otel', 'resepsiyon'].filter(w => !pool.items.some(x => nphr(x.tr) === w)).length;
-      pickWord('hotel'); const grew = !!growing.hotel; await growing.hotel;    // новых не осталось — пошла подгрузка
-      localStorage.removeItem('soyle-words-hotel'); delete wordPools.hotel; wordPool('hotel');   // заново: по порциям
-      await growWords('hotel', 1); const n1 = wordPool('hotel').items.length, cont = wordPool('hotel').cont;
-      await growWords('hotel', 1); const n2 = wordPool('hotel').items.length;
-      const saved = JSON.parse(localStorage.getItem('soyle-words-hotel')).items.map(x => x.tr);
-      return [grew, n0 === expN0, n1 - n0 === expAdd, cont, n2 - n1, saved.includes('resepsiyon'), saved.includes('oda servisi'), saved.some(x => /stanbul/i.test(x)), saved.filter(x => x === 'oda').length, saved.includes('lobi')]; });
-    await q.context().close();
-    eq(r, [true, true, true, 'page|NEXT', 2, true, false, false, 1, true]);  // otel+resepsiyon; фраза, имя собственное и дубль «oda» не берутся
+  await test('слова тем — только выверенные списки: из сети не подгружаются, перевод есть у каждого; сохранённые слова из Викисловаря уходят, счёт «видел» остаётся', async () => {
+    const q = await openPage(browser, { storage:{ 'soyle-words-hotel': JSON.stringify({ items:[{ tr:'oda', ru:'номер', seen:2 }, { tr:'lobi', ru:'лобби', seen:0 }, { tr:'sarma', ru:'заворачивание', seen:1 }], cat:1, cont:'x' }) } });
+    const net = []; q.on('request', rq => { if(/wiktionary|mymemory/.test(rq.url())) net.push(rq.url()); });
+    const r = await q.evaluate(() => { setMode('phrases'); setKind(true);
+      const all = PHRASE_SETS.map(g => wordPool(g.id).items), hotel = wordPool('hotel').items;
+      const odaSeen = hotel.find(x => x.tr === 'oda').seen; hotel.forEach(w => w.seen = 1); setId = 'hotel'; const w = pickWord('hotel');            // новых не осталось — подгрузки нет, слово всё равно даётся
+      const dup = Object.entries(WORD_SEEDS).filter(([, l]) => new Set(l.map(x => x[0])).size !== l.length).map(x => x[0]);
+      return [all.every(l => l.length >= 30), all.flat().filter(x => !x.ru || /≈|машинн/.test(x.ru)).map(x => x.tr), hotel.some(x => x.tr === 'lobi' || x.tr === 'sarma'),
+        odaSeen === 2, !!w && !!w.meaning, typeof growWords, dup,
+        Object.values(WORD_SEEDS).flat().filter(x => !/^[a-zçğıöşüâîû]{2,16}$/.test(x[0])).map(x => x[0]), w.tip]; });
+    await q.waitForTimeout(200); const errs = q.errors; await q.context().close();
+    eq(r.slice(0, 8), [true, [], false, true, true, 'undefined', [], []]); ok(/Перевод проверен вручную|Из фразы/.test(r[8]), r[8]); eq(net, []); eq(errs, []);
   });
   await test('слова из фраз — только из выверенного словаря: словарная форма, готовый перевод (не машинный), пример-фраза; многозначные не берутся', async () => {
     const q = await openPage(browser); const net = [];
@@ -1222,7 +1256,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.route('**/api.tatoeba.org/**', r => { if(/showtrans/.test(r.request().url())) net.push(r.request().url()); r.fulfill({ json:CTX_TATO }); });   // считаем только запросы примеров
     await q.setViewportSize({ width:360, height:640 });
     const r = await q.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
-      wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); next();                                  // сразу после показа, до ответа сети
+      wordPool('hotel').items.forEach(x => x.seen = x.tr === 'istemek' ? 0 : 1); lastKey = ''; next();                    // сразу после показа, до ответа сети
+      // lastKey = '': иначе, если setKind случайно уже показал «istemek», слово не повторяется подряд и тест падал (редкий сбой, 1 из ~60)
       return [item.target, document.querySelector('#partner .ctx-tr').textContent, document.querySelector('#partner .ctx-tr b').textContent, document.querySelector('#partner .ctx-ru').textContent, !!document.getElementById('ctxPlay')]; });
     await q.waitForFunction(() => ctx && ctx.loaded); const before = net.length;                                          // остальные примеры — в фоне, по одному запросу на форму
     const r2 = await q.evaluate(async () => { document.getElementById('ctxMore').click();   // нажатие внутри страницы: без гонки с перерисовкой
@@ -1245,20 +1280,21 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q = await openPage(browser);
     await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json:CTX_TATO }));
     const r = await q.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
-      const pool = wordPool('hotel'); pool.items.push({ tr:'lobi', ru:'лобби', seen:0 }); pool.items.forEach(x => x.seen = x.tr === 'lobi' ? 0 : 1); next();
+      const pool = wordPool('hotel'); pool.items.push({ tr:'lobi', ru:'лобби', seen:0 }); pool.items.forEach(x => x.seen = x.tr === 'lobi' ? 0 : 1); lastKey = ''; next();
       for(let t = 0; t < 40 && !(ctx && ctx.loaded); t++) await new Promise(z => setTimeout(z, 50));
       return [item.target, ctx.list.length, document.querySelector('#partner .ctx-ru').textContent]; });
     const q2 = await openPage(browser);
     const r2 = await q2.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
-      const pool = wordPool('hotel'); pool.items.push({ tr:'lobi', ru:'лобби', seen:0 }); pool.items.forEach(x => x.seen = x.tr === 'lobi' ? 0 : 1); next();
+      const pool = wordPool('hotel'); pool.items.push({ tr:'lobi', ru:'лобби', seen:0 }); pool.items.forEach(x => x.seen = x.tr === 'lobi' ? 0 : 1); lastKey = ''; next();
       for(let t = 0; t < 60 && !(ctx && ctx.loaded); t++) await new Promise(z => setTimeout(z, 50));
       return [ctx.loaded, ctx.list.length, !!document.querySelector('#partner .ctx'), /перевод/.test(document.getElementById('partner').textContent)]; });
     const errs = [...q.errors, ...q2.errors]; await q.context().close(); await q2.context().close();
     eq(r, ['lobi', 3, 'Чего ты хочешь?']);   // первым — пример с записью носителя eq(r2, [true, 0, false, true]); eq(errs, []);
   });
   await test('слово не из словаря и без статьи в Викисловаре: машинный перевод помечен как приблизительный', async () => {
-    const r = await p.evaluate(async () => { const t0 = translateTr; translateTr = async () => 'кошка'; ruMeanCache.delete('zzkedi'); const m = await ruMeaning('zzkedi'); translateTr = t0; return m; });
-    eq(r, '≈ кошка (машинный перевод, без контекста может быть неточным)');
+    const r = await p.evaluate(async () => { const t0 = translateTr, g0 = enGloss; enGloss = async () => ''; translateTr = async () => 'кошка'; ruMeanCache.clear();
+      const m = [await ruMeaning('zzkedi'), await ruMeaning('Zz kedi var.')]; translateTr = t0; enGloss = g0; ruMeanCache.clear(); return m; });
+    eq(r, ['≈ кошка (машинный перевод, без контекста может быть неточным)', '≈ кошка (машинный перевод)']);   // целая фраза — тоже с пометкой
   });
   await test('прежние словоформы с машинным переводом убираются: из набора слов и из «Памяти»; перевод словарных слов исправляется', async () => {
     const q = await openPage(browser, { storage:{
@@ -1266,12 +1302,22 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       'soyle-srs': JSON.stringify([{ tr:'odada', ru:'в комнате', side:'rec', state:1, step:0, s:null, d:null, due:0, last:null, reps:0, seen:false },
         { tr:'sizi', ru:'ваш', side:'rec', state:2, step:null, s:3, d:5, due:0, last:0, reps:2, seen:true },
         { tr:'Hesap lütfen.', ru:'Счёт, пожалуйста.', side:'rec', state:2, step:null, s:3, d:5, due:0, last:0, reps:2, seen:true },
-        { tr:'lobi', ru:'лобби', side:'rec', state:1, step:0, s:null, d:null, due:0, last:null, reps:0, seen:false }]) } });
+        { tr:'lobi', ru:'лобби', side:'rec', state:1, step:0, s:null, d:null, due:0, last:null, reps:0, seen:false },
+        { tr:'sarma', ru:'заворачивание', side:'rec', state:2, step:null, s:4, d:5, due:0, last:0, reps:3, seen:true },
+        { tr:'ilaç', ru:'препараты', side:'rec', state:2, step:null, s:4, d:5, due:0, last:0, reps:3, seen:true },
+        { tr:'Sakinleş!', ru:'Успокойся.', side:'rec', state:1, step:0, s:null, d:null, due:0, last:null, reps:0, seen:false },
+        { tr:'kedi', ru:'', side:'rec', state:1, step:0, s:null, d:null, due:0, last:null, reps:0, seen:false },
+        { tr:'Bu Türkçe ne demek?', ru:'Как это по-турецки?', side:'rec', state:2, step:null, s:4, d:5, due:0, last:0, reps:3, seen:true },
+        { tr:'Çok affedersiniz.', ru:'Очень извиняюсь.', side:'rec', state:2, step:null, s:4, d:5, due:0, last:0, reps:3, seen:true }]),
+      'soyle-mine': JSON.stringify([{ tr:'kedi' }]) } });
     const r = await q.evaluate(() => { const pool = wordPool('hotel').items; const cards = loadCards();
       return [pool.some(w => w.tr === 'odada'), pool.some(w => w.tr === 'misiniz'), pool.find(w => w.tr === 'oda').ru, pool.some(w => w.tr === 'lobi'),
-        cards.map(c => c.tr), cards.find(c => c.tr === 'sizi').ru, cards.find(c => c.tr === 'sizi').s]; });
+        cards.map(c => c.tr), cards.find(c => c.tr === 'sizi').ru, cards.find(c => c.tr === 'sizi').s, cards.filter(c => ['sarma', 'ilaç', 'Çok affedersiniz.'].includes(c.tr)).map(c => c.ru)]; });
     const errs = q.errors; await q.context().close();
-    eq(r, [false, false, 'номер', true, ['sizi', 'Hesap lütfen.', 'lobi'], 'вас (кого?)', 3]); eq(errs, []);
+    // «lobi» (из Викисловаря, ни разу не повторяли) убрано; «sarma» уже учили — оставлено с пометкой; «ilaç» и фраза — перевод из выверенных списков;
+    // своё слово «kedi» и живая фраза «Sakinleş!» не тронуты; фраза, которой «так не говорят», исправлена
+    eq(r, [false, false, 'комната, номер', false, ['sizi', 'Hesap lütfen.', 'sarma', 'ilaç', 'Sakinleş!', 'kedi', 'Bunun Türkçesi ne?', 'Çok affedersiniz.'], 'вас (кого?)', 3,
+      ['≈ заворачивание (перевод не проверен)', 'лекарство', 'Простите, пожалуйста.']]); eq(errs, []);
   });
   await test('русское значение слова — из статьи ru-Викисловаря («Значение»), без разметки', async () => {
     const q = await openWords();
