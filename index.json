@@ -1,0 +1,2265 @@
+{
+ "source": "Mozilla Common Voice 17 (tr), CC0 — зеркало huggingface.co/datasets/ysdede/commonvoice_17_tr_fixed",
+ "phrases": {
+  "Yağmur mu yağıyor?": [
+   {
+    "file": "001.mp3",
+    "votes": 4
+   },
+   {
+    "file": "002.mp3",
+    "votes": 2
+   }
+  ],
+  "Beni duyan var mı?": [
+   {
+    "file": "003.mp3",
+    "votes": 2
+   },
+   {
+    "file": "004.mp3",
+    "votes": 2
+   }
+  ],
+  "Henüz bilmiyorum.": [
+   {
+    "file": "005.mp3",
+    "votes": 2
+   }
+  ],
+  "Bir saniye lütfen.": [
+   {
+    "file": "006.mp3",
+    "votes": 4
+   },
+   {
+    "file": "007.mp3",
+    "votes": 2
+   }
+  ],
+  "İyi akşamlar!": [
+   {
+    "file": "008.mp3",
+    "votes": 4
+   },
+   {
+    "file": "009.mp3",
+    "votes": 2
+   }
+  ],
+  "İyi günler efendim.": [
+   {
+    "file": "010.mp3",
+    "votes": 4
+   },
+   {
+    "file": "011.mp3",
+    "votes": 2
+   }
+  ],
+  "Afiyet olsun.": [
+   {
+    "file": "012.mp3",
+    "votes": 2
+   },
+   {
+    "file": "013.mp3",
+    "votes": 2
+   }
+  ],
+  "Hayır, olmaz.": [
+   {
+    "file": "014.mp3",
+    "votes": 2
+   },
+   {
+    "file": "015.mp3",
+    "votes": 2
+   }
+  ],
+  "Kapıyı açar mısınız?": [
+   {
+    "file": "016.mp3",
+    "votes": 4
+   },
+   {
+    "file": "017.mp3",
+    "votes": 2
+   }
+  ],
+  "Şu an neredesin?": [
+   {
+    "file": "018.mp3",
+    "votes": 2
+   },
+   {
+    "file": "019.mp3",
+    "votes": 2
+   }
+  ],
+  "İyi hafta sonları.": [
+   {
+    "file": "020.mp3",
+    "votes": 2
+   },
+   {
+    "file": "021.mp3",
+    "votes": 2
+   }
+  ],
+  "İnmek istiyorum.": [
+   {
+    "file": "022.mp3",
+    "votes": 2
+   },
+   {
+    "file": "023.mp3",
+    "votes": 2
+   }
+  ],
+  "Herkese iyi geceler.": [
+   {
+    "file": "024.mp3",
+    "votes": 2
+   },
+   {
+    "file": "025.mp3",
+    "votes": 2
+   }
+  ],
+  "Oraya nasıl gidebilirim?": [
+   {
+    "file": "026.mp3",
+    "votes": 4
+   },
+   {
+    "file": "027.mp3",
+    "votes": 1
+   }
+  ],
+  "Günaydın dostum.": [
+   {
+    "file": "028.mp3",
+    "votes": 4
+   },
+   {
+    "file": "029.mp3",
+    "votes": 2
+   }
+  ],
+  "Sana bir taksi çağırayım.": [
+   {
+    "file": "030.mp3",
+    "votes": 4
+   },
+   {
+    "file": "031.mp3",
+    "votes": 1
+   }
+  ],
+  "Biri doktor çağırsın!": [
+   {
+    "file": "032.mp3",
+    "votes": 2
+   },
+   {
+    "file": "033.mp3",
+    "votes": 2
+   }
+  ],
+  "Adres nedir?": [
+   {
+    "file": "034.mp3",
+    "votes": 4
+   }
+  ],
+  "Kahvaltı hazır!": [
+   {
+    "file": "035.mp3",
+    "votes": 4
+   }
+  ],
+  "Polis çağırayım mı?": [
+   {
+    "file": "036.mp3",
+    "votes": 4
+   },
+   {
+    "file": "037.mp3",
+    "votes": 2
+   }
+  ],
+  "Sana kolay gelsin.": [
+   {
+    "file": "038.mp3",
+    "votes": 2
+   },
+   {
+    "file": "039.mp3",
+    "votes": 2
+   }
+  ],
+  "Bu nereye gidiyor?": [
+   {
+    "file": "040.mp3",
+    "votes": 2
+   }
+  ],
+  "Yardımcı olabilir miyim?": [
+   {
+    "file": "041.mp3",
+    "votes": 2
+   },
+   {
+    "file": "042.mp3",
+    "votes": 2
+   }
+  ],
+  "Yemek yiyelim mi?": [
+   {
+    "file": "043.mp3",
+    "votes": 2
+   },
+   {
+    "file": "044.mp3",
+    "votes": 2
+   }
+  ],
+  "Sadece bir tane mi?": [
+   {
+    "file": "045.mp3",
+    "votes": 2
+   },
+   {
+    "file": "046.mp3",
+    "votes": 2
+   }
+  ],
+  "Ateşi çok yüksek.": [
+   {
+    "file": "047.mp3",
+    "votes": 4
+   },
+   {
+    "file": "048.mp3",
+    "votes": 2
+   }
+  ],
+  "Kaç paran var?": [
+   {
+    "file": "049.mp3",
+    "votes": 4
+   }
+  ],
+  "Çok pahalıdır.": [
+   {
+    "file": "050.mp3",
+    "votes": 4
+   },
+   {
+    "file": "051.mp3",
+    "votes": 1
+   }
+  ],
+  "Ama evde internet yok": [
+   {
+    "file": "052.mp3",
+    "votes": 2
+   }
+  ],
+  "Daha uygun fiyat istiyorum": [
+   {
+    "file": "053.mp3",
+    "votes": 2
+   }
+  ],
+  "Bugün biraz iyiyim!": [
+   {
+    "file": "054.mp3",
+    "votes": 4
+   },
+   {
+    "file": "055.mp3",
+    "votes": 2
+   }
+  ],
+  "Evet, soğuk aldım galiba!": [
+   {
+    "file": "056.mp3",
+    "votes": 2
+   },
+   {
+    "file": "057.mp3",
+    "votes": 2
+   }
+  ],
+  "Hayır teşekkürler.": [
+   {
+    "file": "058.mp3",
+    "votes": 4
+   },
+   {
+    "file": "059.mp3",
+    "votes": 2
+   }
+  ],
+  "Birazdan görüşürüz.": [
+   {
+    "file": "060.mp3",
+    "votes": 4
+   },
+   {
+    "file": "061.mp3",
+    "votes": 2
+   }
+  ],
+  "Ambulans çağırın!": [
+   {
+    "file": "062.mp3",
+    "votes": 2
+   },
+   {
+    "file": "063.mp3",
+    "votes": 2
+   }
+  ],
+  "Tamam, sorun değil.": [
+   {
+    "file": "064.mp3",
+    "votes": 4
+   },
+   {
+    "file": "065.mp3",
+    "votes": 2
+   }
+  ],
+  "Tamam, teşekkürler.": [
+   {
+    "file": "066.mp3",
+    "votes": 4
+   },
+   {
+    "file": "067.mp3",
+    "votes": 2
+   }
+  ],
+  "Evet, anladım.": [
+   {
+    "file": "068.mp3",
+    "votes": 4
+   },
+   {
+    "file": "069.mp3",
+    "votes": 2
+   }
+  ],
+  "Biri bana yardım etsin!": [
+   {
+    "file": "070.mp3",
+    "votes": 4
+   },
+   {
+    "file": "071.mp3",
+    "votes": 2
+   }
+  ],
+  "Bana yardım edin!": [
+   {
+    "file": "072.mp3",
+    "votes": 2
+   }
+  ],
+  "Çok teşekkürler!": [
+   {
+    "file": "073.mp3",
+    "votes": 4
+   },
+   {
+    "file": "074.mp3",
+    "votes": 2
+   }
+  ],
+  "Tamam, anladım.": [
+   {
+    "file": "075.mp3",
+    "votes": 2
+   }
+  ],
+  "Ben de memnun oldum.": [
+   {
+    "file": "076.mp3",
+    "votes": 2
+   }
+  ],
+  "Lütfen yardım edin.": [
+   {
+    "file": "077.mp3",
+    "votes": 4
+   },
+   {
+    "file": "078.mp3",
+    "votes": 2
+   }
+  ],
+  "Şimdi olmaz!": [
+   {
+    "file": "079.mp3",
+    "votes": 1
+   }
+  ],
+  "Tabii ki hayır!": [
+   {
+    "file": "080.mp3",
+    "votes": 2
+   },
+   {
+    "file": "081.mp3",
+    "votes": 2
+   }
+  ],
+  "Çok beğendim.": [
+   {
+    "file": "082.mp3",
+    "votes": 2
+   }
+  ],
+  "Oturun lütfen.": [
+   {
+    "file": "083.mp3",
+    "votes": 2
+   }
+  ],
+  "Bana gösterir misin?": [
+   {
+    "file": "084.mp3",
+    "votes": 2
+   },
+   {
+    "file": "085.mp3",
+    "votes": 2
+   }
+  ],
+  "Burada kalmak istiyorum.": [
+   {
+    "file": "086.mp3",
+    "votes": 2
+   },
+   {
+    "file": "087.mp3",
+    "votes": 2
+   }
+  ],
+  "Geçmiş olsun, rahatsız mısınız?": [
+   {
+    "file": "088.mp3",
+    "votes": 2
+   },
+   {
+    "file": "089.mp3",
+    "votes": 2
+   }
+  ],
+  "Peki nasılsın?": [
+   {
+    "file": "090.mp3",
+    "votes": 4
+   },
+   {
+    "file": "091.mp3",
+    "votes": 2
+   }
+  ],
+  "Ağrın var mı?": [
+   {
+    "file": "092.mp3",
+    "votes": 2
+   }
+  ],
+  "Çok kalabalık.": [
+   {
+    "file": "093.mp3",
+    "votes": 2
+   }
+  ],
+  "Yarın olur mu?": [
+   {
+    "file": "094.mp3",
+    "votes": 2
+   }
+  ],
+  "Çok memnunum.": [
+   {
+    "file": "095.mp3",
+    "votes": 4
+   },
+   {
+    "file": "096.mp3",
+    "votes": 1
+   }
+  ],
+  "Ne kadar lazım?": [
+   {
+    "file": "097.mp3",
+    "votes": 4
+   }
+  ],
+  "Bir şey lazım mı?": [
+   {
+    "file": "098.mp3",
+    "votes": 4
+   },
+   {
+    "file": "099.mp3",
+    "votes": 4
+   }
+  ],
+  "Kapıyı kilitledin mi?": [
+   {
+    "file": "100.mp3",
+    "votes": 4
+   },
+   {
+    "file": "101.mp3",
+    "votes": 2
+   }
+  ],
+  "Randevunuz var mıydı?": [
+   {
+    "file": "102.mp3",
+    "votes": 4
+   },
+   {
+    "file": "103.mp3",
+    "votes": 2
+   }
+  ],
+  "Anahtar nerede?": [
+   {
+    "file": "104.mp3",
+    "votes": 4
+   },
+   {
+    "file": "105.mp3",
+    "votes": 4
+   }
+  ],
+  "Yemek hazır mı?": [
+   {
+    "file": "106.mp3",
+    "votes": 2
+   }
+  ],
+  "İngilizce lütfen.": [
+   {
+    "file": "107.mp3",
+    "votes": 4
+   },
+   {
+    "file": "108.mp3",
+    "votes": 2
+   }
+  ],
+  "Hesabı alabilir miyim?": [
+   {
+    "file": "109.mp3",
+    "votes": 4
+   },
+   {
+    "file": "110.mp3",
+    "votes": 2
+   }
+  ],
+  "Kimlik lütfen.": [
+   {
+    "file": "111.mp3",
+    "votes": 2
+   }
+  ],
+  "Anahtarın var mı?": [
+   {
+    "file": "112.mp3",
+    "votes": 2
+   }
+  ],
+  "Yemek nasıldı?": [
+   {
+    "file": "113.mp3",
+    "votes": 4
+   },
+   {
+    "file": "114.mp3",
+    "votes": 4
+   }
+  ],
+  "Anlamadım, ne?": [
+   {
+    "file": "115.mp3",
+    "votes": 4
+   },
+   {
+    "file": "116.mp3",
+    "votes": 4
+   }
+  ],
+  "Kahvaltı yaptın mı?": [
+   {
+    "file": "117.mp3",
+    "votes": 4
+   },
+   {
+    "file": "118.mp3",
+    "votes": 2
+   }
+  ],
+  "Yangın mı çıktı?": [
+   {
+    "file": "119.mp3",
+    "votes": 4
+   }
+  ],
+  "Biraz alabilir miyim?": [
+   {
+    "file": "120.mp3",
+    "votes": 4
+   }
+  ],
+  "Herkese iyi günler.": [
+   {
+    "file": "121.mp3",
+    "votes": 4
+   }
+  ],
+  "Herkes trene!": [
+   {
+    "file": "122.mp3",
+    "votes": 4
+   }
+  ],
+  "Daha ne kadar sürer?": [
+   {
+    "file": "123.mp3",
+    "votes": 4
+   }
+  ],
+  "Hangi tarafta?": [
+   {
+    "file": "124.mp3",
+    "votes": 2
+   }
+  ],
+  "Tam olarak nerede?": [
+   {
+    "file": "125.mp3",
+    "votes": 4
+   }
+  ],
+  "Çok affedersiniz.": [
+   {
+    "file": "126.mp3",
+    "votes": 4
+   }
+  ],
+  "Orada görüşürüz.": [
+   {
+    "file": "127.mp3",
+    "votes": 6
+   },
+   {
+    "file": "128.mp3",
+    "votes": 4
+   }
+  ],
+  "Ben burada çalışıyorum.": [
+   {
+    "file": "129.mp3",
+    "votes": 2
+   }
+  ],
+  "Ne zamana kadar?": [
+   {
+    "file": "130.mp3",
+    "votes": 4
+   }
+  ],
+  "Biraz su alabilir miyim?": [
+   {
+    "file": "131.mp3",
+    "votes": 4
+   }
+  ],
+  "Ben burada yaşıyorum.": [
+   {
+    "file": "132.mp3",
+    "votes": 4
+   }
+  ],
+  "Bir tane alabilir miyim?": [
+   {
+    "file": "133.mp3",
+    "votes": 2
+   }
+  ],
+  "Sen kaç yaşındasın?": [
+   {
+    "file": "134.mp3",
+    "votes": 4
+   }
+  ],
+  "Çok lezzetli görünüyor.": [
+   {
+    "file": "135.mp3",
+    "votes": 4
+   }
+  ],
+  "Bana biraz zaman ver.": [
+   {
+    "file": "136.mp3",
+    "votes": 4
+   }
+  ],
+  "Neresi acıyor?": [
+   {
+    "file": "137.mp3",
+    "votes": 2
+   }
+  ],
+  "Ne kadar istersin?": [
+   {
+    "file": "138.mp3",
+    "votes": 4
+   }
+  ],
+  "Çay için teşekkürler.": [
+   {
+    "file": "139.mp3",
+    "votes": 4
+   },
+   {
+    "file": "140.mp3",
+    "votes": 2
+   }
+  ],
+  "Tamam, bu kadar yeter.": [
+   {
+    "file": "141.mp3",
+    "votes": 2
+   },
+   {
+    "file": "142.mp3",
+    "votes": 2
+   }
+  ],
+  "Telefonunuz var mı?": [
+   {
+    "file": "143.mp3",
+    "votes": 4
+   }
+  ],
+  "Yarın görüşürüz.": [
+   {
+    "file": "144.mp3",
+    "votes": 2
+   }
+  ],
+  "Doktora gittin mi?": [
+   {
+    "file": "145.mp3",
+    "votes": 2
+   }
+  ],
+  "Soruyu anlamadım.": [
+   {
+    "file": "146.mp3",
+    "votes": 4
+   }
+  ],
+  "Aspirinin var mı?": [
+   {
+    "file": "147.mp3",
+    "votes": 2
+   },
+   {
+    "file": "148.mp3",
+    "votes": 2
+   }
+  ],
+  "Sipariş hazır!": [
+   {
+    "file": "149.mp3",
+    "votes": 4
+   },
+   {
+    "file": "150.mp3",
+    "votes": 2
+   }
+  ],
+  "Biraz daha ister misiniz?": [
+   {
+    "file": "151.mp3",
+    "votes": 4
+   },
+   {
+    "file": "152.mp3",
+    "votes": 2
+   }
+  ],
+  "Tamam, görüşürüz.": [
+   {
+    "file": "153.mp3",
+    "votes": 2
+   }
+  ],
+  "Burası çok güzel.": [
+   {
+    "file": "154.mp3",
+    "votes": 2
+   }
+  ],
+  "Ateşin var mı?": [
+   {
+    "file": "155.mp3",
+    "votes": 2
+   }
+  ],
+  "Bu taraftan lütfen.": [
+   {
+    "file": "156.mp3",
+    "votes": 4
+   },
+   {
+    "file": "157.mp3",
+    "votes": 2
+   }
+  ],
+  "Biri ambulans çağırsın!": [
+   {
+    "file": "158.mp3",
+    "votes": 4
+   },
+   {
+    "file": "159.mp3",
+    "votes": 4
+   }
+  ],
+  "Bu mümkün mü?": [
+   {
+    "file": "160.mp3",
+    "votes": 2
+   }
+  ],
+  "Nereden geliyorsunuz?": [
+   {
+    "file": "161.mp3",
+    "votes": 4
+   },
+   {
+    "file": "162.mp3",
+    "votes": 2
+   }
+  ],
+  "Lütfen bekleyin.": [
+   {
+    "file": "163.mp3",
+    "votes": 2
+   }
+  ],
+  "Bira ister misiniz?": [
+   {
+    "file": "164.mp3",
+    "votes": 4
+   },
+   {
+    "file": "165.mp3",
+    "votes": 1
+   }
+  ],
+  "Ambulans nerede?": [
+   {
+    "file": "166.mp3",
+    "votes": 4
+   },
+   {
+    "file": "167.mp3",
+    "votes": 2
+   }
+  ],
+  "Lavabo nerede?": [
+   {
+    "file": "168.mp3",
+    "votes": 2
+   },
+   {
+    "file": "169.mp3",
+    "votes": 1
+   }
+  ],
+  "Nereye gidiyorsunuz?": [
+   {
+    "file": "170.mp3",
+    "votes": 2
+   },
+   {
+    "file": "171.mp3",
+    "votes": 2
+   }
+  ],
+  "Treni durdurun!": [
+   {
+    "file": "172.mp3",
+    "votes": 4
+   },
+   {
+    "file": "173.mp3",
+    "votes": 2
+   }
+  ],
+  "İçecek bir şey ister misiniz?": [
+   {
+    "file": "174.mp3",
+    "votes": 4
+   },
+   {
+    "file": "175.mp3",
+    "votes": 2
+   }
+  ],
+  "Tadına bakabilir miyim?": [
+   {
+    "file": "176.mp3",
+    "votes": 4
+   },
+   {
+    "file": "177.mp3",
+    "votes": 4
+   }
+  ],
+  "Eşyalarım nerede?": [
+   {
+    "file": "178.mp3",
+    "votes": 4
+   },
+   {
+    "file": "179.mp3",
+    "votes": 4
+   }
+  ],
+  "Yemek için teşekkürler.": [
+   {
+    "file": "180.mp3",
+    "votes": 4
+   },
+   {
+    "file": "181.mp3",
+    "votes": 4
+   }
+  ],
+  "Orası nerede?": [
+   {
+    "file": "182.mp3",
+    "votes": 4
+   },
+   {
+    "file": "183.mp3",
+    "votes": 4
+   }
+  ],
+  "Bana yardım edebilir misiniz?": [
+   {
+    "file": "184.mp3",
+    "votes": 4
+   },
+   {
+    "file": "185.mp3",
+    "votes": 4
+   }
+  ],
+  "Başın ağrıyor mu?": [
+   {
+    "file": "186.mp3",
+    "votes": 4
+   },
+   {
+    "file": "187.mp3",
+    "votes": 4
+   }
+  ],
+  "Bir lira yeter değil mi?": [
+   {
+    "file": "188.mp3",
+    "votes": 4
+   }
+  ],
+  "Ben özür dilerim.": [
+   {
+    "file": "189.mp3",
+    "votes": 4
+   },
+   {
+    "file": "190.mp3",
+    "votes": 2
+   }
+  ],
+  "Teşekkürler, iyi günler.": [
+   {
+    "file": "191.mp3",
+    "votes": 4
+   },
+   {
+    "file": "192.mp3",
+    "votes": 4
+   }
+  ],
+  "Şimdi neredeyiz?": [
+   {
+    "file": "193.mp3",
+    "votes": 4
+   },
+   {
+    "file": "194.mp3",
+    "votes": 4
+   }
+  ],
+  "Sizin adınız ne?": [
+   {
+    "file": "195.mp3",
+    "votes": 4
+   },
+   {
+    "file": "196.mp3",
+    "votes": 4
+   }
+  ],
+  "Ne zaman geliyor?": [
+   {
+    "file": "197.mp3",
+    "votes": 4
+   },
+   {
+    "file": "198.mp3",
+    "votes": 4
+   }
+  ],
+  "Biraz daha istiyorum.": [
+   {
+    "file": "199.mp3",
+    "votes": 4
+   },
+   {
+    "file": "200.mp3",
+    "votes": 2
+   }
+  ],
+  "Onu nerede bulurum?": [
+   {
+    "file": "201.mp3",
+    "votes": 4
+   },
+   {
+    "file": "202.mp3",
+    "votes": 2
+   }
+  ],
+  "Üşümüyor musun?": [
+   {
+    "file": "203.mp3",
+    "votes": 4
+   },
+   {
+    "file": "204.mp3",
+    "votes": 1
+   }
+  ],
+  "Kahvaltı yapmak ister misin?": [
+   {
+    "file": "205.mp3",
+    "votes": 6
+   },
+   {
+    "file": "206.mp3",
+    "votes": 2
+   }
+  ],
+  "Sipariş verelim mi?": [
+   {
+    "file": "207.mp3",
+    "votes": 4
+   }
+  ],
+  "Merhaba arkadaşlar.": [
+   {
+    "file": "208.mp3",
+    "votes": 4
+   },
+   {
+    "file": "209.mp3",
+    "votes": 2
+   }
+  ],
+  "Otobüsü durdurun!": [
+   {
+    "file": "210.mp3",
+    "votes": 4
+   },
+   {
+    "file": "211.mp3",
+    "votes": 2
+   }
+  ],
+  "Banyoyu kullanabilir miyim?": [
+   {
+    "file": "212.mp3",
+    "votes": 4
+   },
+   {
+    "file": "213.mp3",
+    "votes": 2
+   }
+  ],
+  "Başka bir şey ister misiniz?": [
+   {
+    "file": "214.mp3",
+    "votes": 4
+   },
+   {
+    "file": "215.mp3",
+    "votes": 2
+   }
+  ],
+  "Bu gürültü de ne?": [
+   {
+    "file": "216.mp3",
+    "votes": 2
+   }
+  ],
+  "Ben pek emin değilim.": [
+   {
+    "file": "217.mp3",
+    "votes": 2
+   }
+  ],
+  "Doktor çağırayım mı?": [
+   {
+    "file": "218.mp3",
+    "votes": 2
+   },
+   {
+    "file": "219.mp3",
+    "votes": 2
+   }
+  ],
+  "Bugün nasılsınız?": [
+   {
+    "file": "220.mp3",
+    "votes": 1
+   }
+  ],
+  "Yardım istiyorum.": [
+   {
+    "file": "221.mp3",
+    "votes": 2
+   }
+  ],
+  "Size de iyi günler.": [
+   {
+    "file": "222.mp3",
+    "votes": 3
+   }
+  ],
+  "Bugün nasıl hissediyorsun?": [
+   {
+    "file": "223.mp3",
+    "votes": 2
+   }
+  ],
+  "Sırada biz varız.": [
+   {
+    "file": "224.mp3",
+    "votes": 2
+   }
+  ],
+  "Başka bir şey lazım mı?": [
+   {
+    "file": "225.mp3",
+    "votes": 2
+   }
+  ],
+  "Teşekkür ederim doktor.": [
+   {
+    "file": "226.mp3",
+    "votes": 2
+   }
+  ],
+  "Nerede oturuyorsunuz?": [
+   {
+    "file": "227.mp3",
+    "votes": 2
+   }
+  ],
+  "Ben de deneyebilir miyim?": [
+   {
+    "file": "228.mp3",
+    "votes": 2
+   }
+  ],
+  "Evet, tebrikler.": [
+   {
+    "file": "229.mp3",
+    "votes": 2
+   }
+  ],
+  "Çok lezzetliymiş.": [
+   {
+    "file": "230.mp3",
+    "votes": 3
+   }
+  ],
+  "Hesabı ben öderim.": [
+   {
+    "file": "231.mp3",
+    "votes": 2
+   }
+  ],
+  "Biletleri aldın mı?": [
+   {
+    "file": "232.mp3",
+    "votes": 2
+   }
+  ],
+  "Buyurun, hoş geldiniz!": [
+   {
+    "file": "233.mp3",
+    "votes": 2
+   },
+   {
+    "file": "234.mp3",
+    "votes": 2
+   }
+  ],
+  "Ne kadar istiyor?": [
+   {
+    "file": "235.mp3",
+    "votes": 4
+   },
+   {
+    "file": "236.mp3",
+    "votes": 2
+   }
+  ],
+  "Bir şey yemek ister misin?": [
+   {
+    "file": "237.mp3",
+    "votes": 4
+   },
+   {
+    "file": "238.mp3",
+    "votes": 2
+   }
+  ],
+  "Ne kadar uzaklıkta?": [
+   {
+    "file": "239.mp3",
+    "votes": 3
+   },
+   {
+    "file": "240.mp3",
+    "votes": 2
+   }
+  ],
+  "Siz doktor musunuz?": [
+   {
+    "file": "241.mp3",
+    "votes": 4
+   },
+   {
+    "file": "242.mp3",
+    "votes": 2
+   }
+  ],
+  "Nereden geldiniz?": [
+   {
+    "file": "243.mp3",
+    "votes": 4
+   },
+   {
+    "file": "244.mp3",
+    "votes": 2
+   }
+  ],
+  "Acil durumunuz nedir?": [
+   {
+    "file": "245.mp3",
+    "votes": 4
+   },
+   {
+    "file": "246.mp3",
+    "votes": 2
+   }
+  ],
+  "Kahve alabilir miyim?": [
+   {
+    "file": "247.mp3",
+    "votes": 4
+   },
+   {
+    "file": "248.mp3",
+    "votes": 2
+   }
+  ],
+  "Faturamı ödemek istiyorum": [
+   {
+    "file": "249.mp3",
+    "votes": 8
+   },
+   {
+    "file": "250.mp3",
+    "votes": 4
+   }
+  ],
+  "Alerjim var.": [
+   {
+    "file": "251.mp3",
+    "votes": 8
+   },
+   {
+    "file": "252.mp3",
+    "votes": 4
+   }
+  ],
+  "Ben de çalışıyorum.": [
+   {
+    "file": "253.mp3",
+    "votes": 4
+   },
+   {
+    "file": "254.mp3",
+    "votes": 2
+   }
+  ],
+  "Özüre gerek yok.": [
+   {
+    "file": "255.mp3",
+    "votes": 4
+   },
+   {
+    "file": "256.mp3",
+    "votes": 2
+   }
+  ],
+  "Tamam, önemli değil.": [
+   {
+    "file": "257.mp3",
+    "votes": 4
+   },
+   {
+    "file": "258.mp3",
+    "votes": 2
+   }
+  ],
+  "Sadece bakmak istiyorum.": [
+   {
+    "file": "259.mp3",
+    "votes": 4
+   },
+   {
+    "file": "260.mp3",
+    "votes": 2
+   }
+  ],
+  "Ne kadar bekleyeceğiz?": [
+   {
+    "file": "261.mp3",
+    "votes": 4
+   },
+   {
+    "file": "262.mp3",
+    "votes": 2
+   }
+  ],
+  "Beni orada bekle.": [
+   {
+    "file": "263.mp3",
+    "votes": 4
+   },
+   {
+    "file": "264.mp3",
+    "votes": 2
+   }
+  ],
+  "Gerek yok, sağ ol.": [
+   {
+    "file": "265.mp3",
+    "votes": 4
+   },
+   {
+    "file": "266.mp3",
+    "votes": 2
+   }
+  ],
+  "Ben odama gidiyorum.": [
+   {
+    "file": "267.mp3",
+    "votes": 4
+   },
+   {
+    "file": "268.mp3",
+    "votes": 2
+   }
+  ],
+  "Yaralanan var mı?": [
+   {
+    "file": "269.mp3",
+    "votes": 4
+   },
+   {
+    "file": "270.mp3",
+    "votes": 2
+   }
+  ],
+  "Nasılsın bugün?": [
+   {
+    "file": "271.mp3",
+    "votes": 4
+   },
+   {
+    "file": "272.mp3",
+    "votes": 2
+   }
+  ],
+  "Telefon nerede?": [
+   {
+    "file": "273.mp3",
+    "votes": 6
+   },
+   {
+    "file": "274.mp3",
+    "votes": 2
+   }
+  ],
+  "Hayır, bugün olmaz.": [
+   {
+    "file": "275.mp3",
+    "votes": 4
+   },
+   {
+    "file": "276.mp3",
+    "votes": 2
+   }
+  ],
+  "Cüzdanım nerede?": [
+   {
+    "file": "277.mp3",
+    "votes": 4
+   },
+   {
+    "file": "278.mp3",
+    "votes": 4
+   }
+  ],
+  "Bana biraz para ver.": [
+   {
+    "file": "279.mp3",
+    "votes": 4
+   },
+   {
+    "file": "280.mp3",
+    "votes": 4
+   }
+  ],
+  "Pardon, anlamadım?": [
+   {
+    "file": "281.mp3",
+    "votes": 4
+   },
+   {
+    "file": "282.mp3",
+    "votes": 4
+   }
+  ],
+  "Kalacak yerin var mı?": [
+   {
+    "file": "283.mp3",
+    "votes": 4
+   },
+   {
+    "file": "284.mp3",
+    "votes": 4
+   }
+  ],
+  "Bir oda istiyorum.": [
+   {
+    "file": "285.mp3",
+    "votes": 4
+   },
+   {
+    "file": "286.mp3",
+    "votes": 4
+   }
+  ],
+  "Tuvaletiniz var mı?": [
+   {
+    "file": "287.mp3",
+    "votes": 4
+   },
+   {
+    "file": "288.mp3",
+    "votes": 4
+   }
+  ],
+  "Doktor, lütfen.": [
+   {
+    "file": "289.mp3",
+    "votes": 4
+   },
+   {
+    "file": "290.mp3",
+    "votes": 4
+   }
+  ],
+  "Hey, taksi!": [
+   {
+    "file": "291.mp3",
+    "votes": 4
+   },
+   {
+    "file": "292.mp3",
+    "votes": 4
+   }
+  ],
+  "Tamam, güle güle.": [
+   {
+    "file": "293.mp3",
+    "votes": 4
+   }
+  ],
+  "Ne zaman geldiniz?": [
+   {
+    "file": "294.mp3",
+    "votes": 4
+   },
+   {
+    "file": "295.mp3",
+    "votes": 2
+   }
+  ],
+  "Bir tane daha istiyorum.": [
+   {
+    "file": "296.mp3",
+    "votes": 4
+   },
+   {
+    "file": "297.mp3",
+    "votes": 4
+   }
+  ],
+  "Tadı çok güzel.": [
+   {
+    "file": "298.mp3",
+    "votes": 4
+   },
+   {
+    "file": "299.mp3",
+    "votes": 4
+   }
+  ],
+  "Nasılsınız bakalım?": [
+   {
+    "file": "300.mp3",
+    "votes": 4
+   },
+   {
+    "file": "301.mp3",
+    "votes": 2
+   }
+  ],
+  "Ne kadar paranız var?": [
+   {
+    "file": "302.mp3",
+    "votes": 4
+   },
+   {
+    "file": "303.mp3",
+    "votes": 2
+   }
+  ],
+  "Müsait misiniz?": [
+   {
+    "file": "304.mp3",
+    "votes": 4
+   },
+   {
+    "file": "305.mp3",
+    "votes": 4
+   }
+  ],
+  "Hiç anlamadım.": [
+   {
+    "file": "306.mp3",
+    "votes": 4
+   },
+   {
+    "file": "307.mp3",
+    "votes": 4
+   }
+  ],
+  "Tedavisi var mı?": [
+   {
+    "file": "308.mp3",
+    "votes": 4
+   },
+   {
+    "file": "309.mp3",
+    "votes": 4
+   }
+  ],
+  "İngilizce biliyor musunuz?": [
+   {
+    "file": "310.mp3",
+    "votes": 4
+   },
+   {
+    "file": "311.mp3",
+    "votes": 4
+   }
+  ],
+  "Şuna bakabilir miyim?": [
+   {
+    "file": "312.mp3",
+    "votes": 4
+   },
+   {
+    "file": "313.mp3",
+    "votes": 4
+   }
+  ],
+  "Bozuk paran var mı?": [
+   {
+    "file": "314.mp3",
+    "votes": 4
+   },
+   {
+    "file": "315.mp3",
+    "votes": 4
+   }
+  ],
+  "Evet, hemen geliyorum.": [
+   {
+    "file": "316.mp3",
+    "votes": 4
+   },
+   {
+    "file": "317.mp3",
+    "votes": 4
+   }
+  ],
+  "Doktor ne dedi?": [
+   {
+    "file": "318.mp3",
+    "votes": 4
+   }
+  ],
+  "İmdat, imdat!": [
+   {
+    "file": "319.mp3",
+    "votes": 4
+   },
+   {
+    "file": "320.mp3",
+    "votes": 4
+   }
+  ],
+  "Vapur kaçta kalkıyor?": [
+   {
+    "file": "321.mp3",
+    "votes": 4
+   },
+   {
+    "file": "322.mp3",
+    "votes": 2
+   }
+  ],
+  "Kahve içer misin?": [
+   {
+    "file": "323.mp3",
+    "votes": 4
+   },
+   {
+    "file": "324.mp3",
+    "votes": 4
+   }
+  ],
+  "Asansörü tutun!": [
+   {
+    "file": "325.mp3",
+    "votes": 4
+   },
+   {
+    "file": "326.mp3",
+    "votes": 4
+   }
+  ],
+  "Kimle konuşuyorsun?": [
+   {
+    "file": "327.mp3",
+    "votes": 4
+   },
+   {
+    "file": "328.mp3",
+    "votes": 4
+   }
+  ],
+  "Hava çok soğuk.": [
+   {
+    "file": "329.mp3",
+    "votes": 4
+   },
+   {
+    "file": "330.mp3",
+    "votes": 2
+   }
+  ],
+  "Değiştirmek istiyorum": [
+   {
+    "file": "331.mp3",
+    "votes": 1
+   }
+  ],
+  "Dondurma var mı?": [
+   {
+    "file": "332.mp3",
+    "votes": 2
+   }
+  ],
+  "Kalkalım artık, hesap lütfen!": [
+   {
+    "file": "333.mp3",
+    "votes": 4
+   }
+  ],
+  "Evet, lütfen.": [
+   {
+    "file": "334.mp3",
+    "votes": 2
+   }
+  ],
+  "Yirmi beş lira değil mi?": [
+   {
+    "file": "335.mp3",
+    "votes": 2
+   },
+   {
+    "file": "336.mp3",
+    "votes": 2
+   }
+  ],
+  "Kimse yok mu?": [
+   {
+    "file": "337.mp3",
+    "votes": 2
+   }
+  ],
+  "Hasta mısın sen?": [
+   {
+    "file": "338.mp3",
+    "votes": 4
+   }
+  ],
+  "Çok acıyor mu?": [
+   {
+    "file": "339.mp3",
+    "votes": 4
+   }
+  ],
+  "Sizi anlamıyorum.": [
+   {
+    "file": "340.mp3",
+    "votes": 4
+   }
+  ],
+  "Arabayı durdurun!": [
+   {
+    "file": "341.mp3",
+    "votes": 4
+   }
+  ],
+  "Burası çok sıcak.": [
+   {
+    "file": "342.mp3",
+    "votes": 4
+   },
+   {
+    "file": "343.mp3",
+    "votes": 2
+   }
+  ],
+  "Ne kadar uzak?": [
+   {
+    "file": "344.mp3",
+    "votes": 4
+   }
+  ],
+  "Anahtarları bana ver.": [
+   {
+    "file": "345.mp3",
+    "votes": 4
+   },
+   {
+    "file": "346.mp3",
+    "votes": 2
+   }
+  ],
+  "Tuvalet nerede?": [
+   {
+    "file": "347.mp3",
+    "votes": 4
+   }
+  ],
+  "Nerede kalacaksın?": [
+   {
+    "file": "348.mp3",
+    "votes": 4
+   },
+   {
+    "file": "349.mp3",
+    "votes": 2
+   }
+  ],
+  "Sıradaki kim?": [
+   {
+    "file": "350.mp3",
+    "votes": 4
+   }
+  ],
+  "Sana da iyi geceler.": [
+   {
+    "file": "351.mp3",
+    "votes": 4
+   },
+   {
+    "file": "352.mp3",
+    "votes": 2
+   }
+  ],
+  "Ne iş yapıyorsun?": [
+   {
+    "file": "353.mp3",
+    "votes": 4
+   }
+  ],
+  "Sonra görüşürüz.": [
+   {
+    "file": "354.mp3",
+    "votes": 4
+   }
+  ],
+  "Hoş geldiniz.": [
+   {
+    "file": "355.mp3",
+    "votes": 4
+   },
+   {
+    "file": "356.mp3",
+    "votes": 4
+   }
+  ],
+  "Evde kimse var mı?": [
+   {
+    "file": "357.mp3",
+    "votes": 4
+   }
+  ],
+  "Ne kadar sürer bu?": [
+   {
+    "file": "358.mp3",
+    "votes": 4
+   },
+   {
+    "file": "359.mp3",
+    "votes": 2
+   }
+  ],
+  "Meyve suyu ister misin?": [
+   {
+    "file": "360.mp3",
+    "votes": 4
+   },
+   {
+    "file": "361.mp3",
+    "votes": 2
+   }
+  ],
+  "Nerede kalıyorsun?": [
+   {
+    "file": "362.mp3",
+    "votes": 4
+   },
+   {
+    "file": "363.mp3",
+    "votes": 2
+   }
+  ],
+  "Merhaba efendim.": [
+   {
+    "file": "364.mp3",
+    "votes": 4
+   }
+  ],
+  "Çay ister misiniz?": [
+   {
+    "file": "365.mp3",
+    "votes": 2
+   },
+   {
+    "file": "366.mp3",
+    "votes": 2
+   }
+  ],
+  "Tekrar deneyelim mi?": [
+   {
+    "file": "367.mp3",
+    "votes": 4
+   },
+   {
+    "file": "368.mp3",
+    "votes": 2
+   }
+  ],
+  "Çok tehlikeli.": [
+   {
+    "file": "369.mp3",
+    "votes": 4
+   }
+  ],
+  "Hayır, sağ olun.": [
+   {
+    "file": "370.mp3",
+    "votes": 4
+   }
+  ],
+  "Nereye gitmek istersiniz?": [
+   {
+    "file": "371.mp3",
+    "votes": 2
+   },
+   {
+    "file": "372.mp3",
+    "votes": 2
+   }
+  ],
+  "Tamam, hoşça kal.": [
+   {
+    "file": "373.mp3",
+    "votes": 2
+   },
+   {
+    "file": "374.mp3",
+    "votes": 2
+   }
+  ],
+  "Polis çağırın!": [
+   {
+    "file": "375.mp3",
+    "votes": 4
+   }
+  ],
+  "Ben kayboldum.": [
+   {
+    "file": "376.mp3",
+    "votes": 4
+   }
+  ],
+  "Biletler lütfen.": [
+   {
+    "file": "377.mp3",
+    "votes": 4
+   }
+  ],
+  "Yemekte ne var?": [
+   {
+    "file": "378.mp3",
+    "votes": 4
+   }
+  ],
+  "Ben kahve içmem.": [
+   {
+    "file": "379.mp3",
+    "votes": 6
+   },
+   {
+    "file": "380.mp3",
+    "votes": 2
+   }
+  ],
+  "Bir bardak çay ister misin?": [
+   {
+    "file": "381.mp3",
+    "votes": 4
+   },
+   {
+    "file": "382.mp3",
+    "votes": 4
+   }
+  ],
+  "Hangi hastane?": [
+   {
+    "file": "383.mp3",
+    "votes": 4
+   }
+  ],
+  "Tamam, sağ olun.": [
+   {
+    "file": "384.mp3",
+    "votes": 6
+   },
+   {
+    "file": "385.mp3",
+    "votes": 2
+   }
+  ],
+  "Hesap lütfen.": [
+   {
+    "file": "386.mp3",
+    "votes": 4
+   }
+  ],
+  "Çok gürültülüydü.": [
+   {
+    "file": "387.mp3",
+    "votes": 4
+   }
+  ],
+  "Bu çok küçük.": [
+   {
+    "file": "388.mp3",
+    "votes": 4
+   }
+  ],
+  "Hangi odada?": [
+   {
+    "file": "389.mp3",
+    "votes": 4
+   }
+  ],
+  "Hâlâ acıyor mu?": [
+   {
+    "file": "390.mp3",
+    "votes": 4
+   }
+  ],
+  "Kimliğiniz var mı?": [
+   {
+    "file": "391.mp3",
+    "votes": 4
+   },
+   {
+    "file": "392.mp3",
+    "votes": 4
+   }
+  ],
+  "Size odanızı göstereyim.": [
+   {
+    "file": "393.mp3",
+    "votes": 4
+   },
+   {
+    "file": "394.mp3",
+    "votes": 4
+   }
+  ],
+  "Hava çok güzel.": [
+   {
+    "file": "395.mp3",
+    "votes": 4
+   }
+  ],
+  "Ben bir duş alacağım.": [
+   {
+    "file": "396.mp3",
+    "votes": 4
+   }
+  ],
+  "Çok geç kaldık!": [
+   {
+    "file": "397.mp3",
+    "votes": 4
+   }
+  ],
+  "Ben acıktım.": [
+   {
+    "file": "398.mp3",
+    "votes": 4
+   }
+  ],
+  "Nerede çalışıyorsunuz?": [
+   {
+    "file": "399.mp3",
+    "votes": 2
+   },
+   {
+    "file": "400.mp3",
+    "votes": 2
+   }
+  ],
+  "Tamam, bir dakika.": [
+   {
+    "file": "401.mp3",
+    "votes": 2
+   },
+   {
+    "file": "402.mp3",
+    "votes": 1
+   }
+  ],
+  "Biletinizi görebilir miyim?": [
+   {
+    "file": "403.mp3",
+    "votes": 2
+   },
+   {
+    "file": "404.mp3",
+    "votes": 2
+   }
+  ],
+  "Hangisi daha iyi?": [
+   {
+    "file": "405.mp3",
+    "votes": 4
+   }
+  ],
+  "Bakar mısınız?": [
+   {
+    "file": "406.mp3",
+    "votes": 4
+   }
+  ],
+  "Çantam nerede?": [
+   {
+    "file": "407.mp3",
+    "votes": 4
+   }
+  ],
+  "Ben de bilmiyorum.": [
+   {
+    "file": "408.mp3",
+    "votes": 4
+   }
+  ],
+  "İsminiz ne?": [
+   {
+    "file": "409.mp3",
+    "votes": 4
+   }
+  ],
+  "Su getirin!": [
+   {
+    "file": "410.mp3",
+    "votes": 4
+   }
+  ],
+  "Şifre ne?": [
+   {
+    "file": "411.mp3",
+    "votes": 2
+   }
+  ],
+  "Bir dakika lütfen.": [
+   {
+    "file": "412.mp3",
+    "votes": 4
+   }
+  ],
+  "Hayır, gerek yok.": [
+   {
+    "file": "413.mp3",
+    "votes": 4
+   },
+   {
+    "file": "414.mp3",
+    "votes": 2
+   }
+  ],
+  "Biraz bekleyin lütfen.": [
+   {
+    "file": "415.mp3",
+    "votes": 4
+   },
+   {
+    "file": "416.mp3",
+    "votes": 2
+   }
+  ],
+  "Adınız lütfen?": [
+   {
+    "file": "417.mp3",
+    "votes": 4
+   }
+  ],
+  "Sen nerelisin?": [
+   {
+    "file": "418.mp3",
+    "votes": 2
+   }
+  ],
+  "Hayır, istemiyorum.": [
+   {
+    "file": "419.mp3",
+    "votes": 2
+   },
+   {
+    "file": "420.mp3",
+    "votes": 2
+   }
+  ],
+  "Nasılsınız?": [
+   {
+    "file": "421.mp3",
+    "votes": 2
+   },
+   {
+    "file": "422.mp3",
+    "votes": 2
+   }
+  ],
+  "Çok memnun oldum.": [
+   {
+    "file": "423.mp3",
+    "votes": 1
+   }
+  ],
+  "Saat kaç?": [
+   {
+    "file": "424.mp3",
+    "votes": 2
+   }
+  ],
+  "Çok yorgunum.": [
+   {
+    "file": "425.mp3",
+    "votes": 2
+   }
+  ],
+  "Tamam, olur.": [
+   {
+    "file": "426.mp3",
+    "votes": 2
+   }
+  ],
+  "Hangi otel?": [
+   {
+    "file": "427.mp3",
+    "votes": 2
+   }
+  ],
+  "Ben anlamıyorum.": [
+   {
+    "file": "428.mp3",
+    "votes": 3
+   }
+  ],
+  "Tamir edemez misin usta?": [
+   {
+    "file": "429.mp3",
+    "votes": 2
+   }
+  ]
+ }
+}
