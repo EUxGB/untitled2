@@ -15,9 +15,14 @@ function cityGraphCheck(sc){
   ids.forEach(id => { const n = nodes[id];
     edges(id).forEach(g => { if(!nodes[g]) errs.push(`${id}: go → «${g}» не существует`); });
     if(n.end){ if(!['ok','near','bad'].includes(n.end.kind)) errs.push(`${id}: end.kind «${n.end.kind}»`); if(typeof n.end.text !== 'string' || !n.end.text) errs.push(`${id}: end без текста`); return; }
-    if(typeof n.npc !== 'string' || !n.npc) errs.push(`${id}: нет npc`); if(typeof n.ru !== 'string' || !n.ru) errs.push(`${id}: нет ru`);
+    // реплика — строка или список строк-вариантов (в каждой сцене один из них, pickLine); список не пустой и без пустых строк
+    const line = v => typeof v === 'string' ? !!v : Array.isArray(v) && v.length > 0 && v.every(s => typeof s === 'string' && s);
+    if(!line(n.npc)) errs.push(`${id}: нет npc`); if(!line(n.ru)) errs.push(`${id}: нет ru`);
+    if(Array.isArray(n.npc) && n.npc.length > 1 && new Set(n.npc).size !== n.npc.length) errs.push(`${id}: варианты npc повторяются`);
+    if(Array.isArray(n.ru) && (!Array.isArray(n.npc) || n.ru.length !== n.npc.length)) errs.push(`${id}: ru — список другой длины, чем npc`);
+    if(Array.isArray(n.againRu) && (!Array.isArray(n.again) || n.againRu.length !== n.again.length)) errs.push(`${id}: againRu — список другой длины, чем again`);
     if(n.pay){ if(!n.pay.short || !n.pay.shortRu) errs.push(`${id}: pay без short/shortRu`); }
-    else if(!n.again || !n.againRu) errs.push(`${id}: нет again/againRu`);
+    else if(!line(n.again) || !n.againRu) errs.push(`${id}: нет again/againRu`);
     const visible = (n.moves || []).filter(m => !m.hide).length;
     if(!visible && !n.pay && !n.code && !n.haggle && !n.shop) errs.push(`${id}: нет видимых ходов`);
     if(n.code && (!Array.isArray(n.code.options) || new Set(n.code.options).size !== 4 || !n.code.options.includes(n.code.value))) errs.push(`${id}: code.options — 4 разных, среди них value`);

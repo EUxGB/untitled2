@@ -656,9 +656,11 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-task i{flex:none; width:8px; height:8px; border-radius:50%; background:var(--accent); transform:translateY(-1px)} .ct-task.closed i{background:var(--muted)}
 .ct-task.done{color:var(--muted)} .ct-task.done.ok i{background:var(--ok)} .ct-task.done.near i{background:var(--near)} .ct-task.done.bad i{background:var(--bad)}
 .ct-dice{display:flex; align-items:center; gap:10px; margin-top:auto}
-.ct-roll{min-height:44px; padding:0 18px; flex:none}
-.ct-rolled{min-width:44px; height:44px; display:inline-flex; align-items:center} .ct-rolled .die{width:40px; height:40px; fill:none; stroke:var(--accent); stroke-width:1.6} .ct-rolled .die circle{fill:var(--accent); stroke:none}
-.ct-rolled.rolling .die{animation:dieShake .14s ease-in-out infinite alternate} @keyframes dieShake{from{transform:rotate(-14deg) translateY(-2px)} to{transform:rotate(12deg) translateY(2px)}}
+.ct-roll{flex:none; width:56px; height:56px; padding:0; border:0; border-radius:14px; background:none; cursor:pointer; display:grid; place-items:center}
+.ct-roll .die{width:52px; height:52px; fill:var(--surface); stroke:var(--accent); stroke-width:1.5; filter:drop-shadow(0 2px 2px rgba(0,0,0,.12)); transition:transform .15s} .ct-roll .die circle{fill:var(--accent); stroke:none}
+.ct-roll:not(:disabled):hover .die{transform:translateY(-1px)} .ct-roll:disabled{cursor:default} .ct-roll:disabled .die{stroke:var(--muted); filter:none} .ct-roll:disabled .die circle{fill:var(--ink)}
+.ct-roll.rolling .die{animation:dieShake .14s ease-in-out infinite alternate} @keyframes dieShake{from{transform:rotate(-14deg) translateY(-2px)} to{transform:rotate(12deg) translateY(2px)}}
+.ct-dice-hint{font-size:12px; color:var(--muted); line-height:1.25}
 .ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px}
 #ctDayEnd{width:100%; min-height:44px}
 .ct-intro{text-align:left; margin:0; font-size:11.5px; line-height:1.3; color:var(--muted)}
@@ -835,7 +837,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
             <div class="ct-chars" id="ctChars" hidden></div>
             <div class="ct-skills" id="ctSkills" hidden></div>
             <div class="ct-dice" id="ctDice">
-              <button class="btn primary ct-roll" id="ctRoll">Zar at</button><b class="ct-rolled" id="ctRolled" aria-live="polite"></b>
+              <button class="ct-roll" id="ctRoll" aria-label="Бросить кубик"></button><span class="ct-dice-hint" id="ctDiceHint" aria-live="polite"></span>
             </div>
             <div class="ct-homebtns"><button class="linkbtn" id="ctTaxi">Taksi çağır</button><button class="linkbtn" id="ctHomeBtn">Eve dön</button></div>
             <p class="hint ct-intro" id="ctIntro"></p>
@@ -1405,6 +1407,26 @@ const PHRASE_DICT = {
   "pasaport":["паспорт", "pasaport pasaportum"],
   "ikamet":["вид на жительство (ikamet izni), проживание", "ikamet ikametim"],
   "maaş":["зарплата", "maaş maaşta"],
+  "sade":["простой, без добавок (чай без сахара, симит без кунжута)", "sade"],
+  "kişi":["человек (при счёте: bir kişi — один человек)", "kişi"],
+  "yer":["место", "yer yerde"],
+  "inmek":["выходить (из транспорта), спускаться", "inmek inebilir ineceğim"],
+  "durak":["остановка", "durak durakta"],
+  "yüklemek":["загружать; пополнять (карту)", "yükler"],
+  "taze":["свежий", "taze"],
+  "poğaça":["поача (булочка с начинкой)", "poğaça"],
+  "şeker":["сахар", "şeker şekerli"],
+  "el":["рука", "el elinize ellerinize eline"],
+  "mercimek":["чечевица", "mercimek"],
+  "çorba":["суп", "çorba çorbası"],
+  "kuru":["сухой (kuru fasulye — фасоль в томатном соусе)", "kuru"],
+  "fasulye":["фасоль", "fasulye"],
+  "pilav":["плов, рис", "pilav"],
+  "ağrı":["боль", "ağrı ağrısı"],
+  "reçete":["рецепт", "reçete reçetem"],
+  "damacana":["бутыль для воды (19 литров)", "damacana"],
+  "sokak":["улица", "sokak"],
+  "hikâye":["история, рассказ", "hikâye"],
   "anahtar":["ключ", "anahtar anahtarları anahtarın"],
   "otel":["отель", "otel"],
   "banyo":["ванная", "banyoyu"],
@@ -3310,6 +3332,38 @@ function cityDraw(){
   const id = TESTMODE && pool.includes(window.__card) ? window.__card : TESTMODE ? pool[0] : pool[Math.floor(Math.random() * pool.length)];
   city.deckUsed.push(id); citySave(); cityStart(id); return id;
 }
+// Светская реплика в начале разговора (просьба пользователя 22:26: «50 разных вариантов разговора»): персонаж с характером может начать
+// с одной из этих фраз; ответ — поддержать («Evet, öyle.», +1 отношение) или кивнуть. В игре — с вероятностью 0,5, в тестах — по window.__smalltalk.
+const SMALLTALK = [
+  { tr:"Hava bugün çok güzel, değil mi?", ru:"Погода сегодня очень хорошая, правда?" }, { tr:"Bu sıcak insanı bitiriyor.", ru:"Эта жара добивает." }, { tr:"Yağmur yağacak galiba.", ru:"Кажется, будет дождь." },
+  { tr:"Rüzgâr çok sert bugün.", ru:"Ветер сегодня очень резкий." }, { tr:"Sabah sabah ne soğuk!", ru:"С утра пораньше — и такой холод!" }, { tr:"Trafik yine felaket.", ru:"Пробки опять ужас." },
+  { tr:"Her şey zamlandı ya.", ru:"Всё подорожало же." }, { tr:"Ekmek yine zam gördü.", ru:"Хлеб опять подорожал." }, { tr:"Maç izledin mi dün?", ru:"Матч смотрел вчера?" },
+  { tr:"Fener yine kaybetti.", ru:"Фенер опять проиграл." }, { tr:"Galatasaray şampiyon olacak bu sene.", ru:"Галатасарай в этом году станет чемпионом." }, { tr:"Çay içtin mi bugün?", ru:"Ты сегодня чай пил?" },
+  { tr:"Komşu, nasılsın bakalım?", ru:"Сосед, ну как ты?" }, { tr:"Çoluk çocuk nasıl?", ru:"Как семья, дети?" }, { tr:"Annen baban iyi mi?", ru:"Родители здоровы?" },
+  { tr:"İş nasıl gidiyor?", ru:"Как работа?" }, { tr:"Hafta sonu ne yaptın?", ru:"Что делал на выходных?" }, { tr:"Bayram yaklaşıyor.", ru:"Байрам приближается." },
+  { tr:"Ramazan bu sene yazın.", ru:"Рамазан в этом году летом." }, { tr:"Kediler yine çöpleri karıştırmış.", ru:"Кошки опять раскидали мусор." }, { tr:"Sokak köpekleri çoğaldı.", ru:"Уличных собак стало больше." },
+  { tr:"Elektrikler dün gece kesildi.", ru:"Вчера ночью отключали электричество." }, { tr:"Sular akmıyor sabahtan beri.", ru:"Воды нет с утра." }, { tr:"Asansör yine bozuk.", ru:"Лифт опять сломан." },
+  { tr:"Aidat yine arttı.", ru:"Айдат опять вырос." }, { tr:"Yeni komşular taşındı üst kata.", ru:"На верхний этаж въехали новые соседи." }, { tr:"Düğün vardı dün, duydun mu?", ru:"Вчера была свадьба, слышал?" },
+  { tr:"Pazar bugün çok kalabalık.", ru:"Рынок сегодня очень людный." }, { tr:"Domates çok pahalı oldu.", ru:"Помидоры стали очень дорогими." }, { tr:"Balık mevsimi geldi.", ru:"Пришёл сезон рыбы." },
+  { tr:"Boğaz bugün çok güzel görünüyor.", ru:"Босфор сегодня очень красивый." }, { tr:"Vapur gecikti yine.", ru:"Паром опять опоздал." }, { tr:"Metro çok kalabalıktı sabah.", ru:"В метро утром было очень много народу." },
+  { tr:"Türkçen gittikçe iyileşiyor.", ru:"Твой турецкий всё лучше." }, { tr:"Nerelisin demiştin?", ru:"Ты говорил, откуда ты?" }, { tr:"İstanbul'u sevdin mi?", ru:"Тебе понравился Стамбул?" },
+  { tr:"Kaç yıldır buradasın?", ru:"Сколько лет ты здесь?" }, { tr:"Bizim mahalle sakindir.", ru:"Наш квартал спокойный." }, { tr:"Eskiden burası bahçeydi.", ru:"Раньше здесь был сад." },
+  { tr:"Simitçi bugün gelmedi.", ru:"Симитчи сегодня не пришёл." }, { tr:"Kahve içelim bir ara.", ru:"Давай как-нибудь выпьем кофе." }, { tr:"Dizi izliyor musun?", ru:"Сериалы смотришь?" },
+  { tr:"Telefonlar çok pahalı artık.", ru:"Телефоны теперь очень дорогие." }, { tr:"Dolar yine yükseldi.", ru:"Доллар опять вырос." }, { tr:"Emekli maaşı yetmiyor.", ru:"Пенсии не хватает." },
+  { tr:"Yaz tatili nereye?", ru:"Летом в отпуск куда?" }, { tr:"Deprem oldu dün gece, hissettin mi?", ru:"Вчера ночью было землетрясение, почувствовал?" }, { tr:"Çocuklar okula başladı.", ru:"Дети пошли в школу." },
+  { tr:"Kahvaltı ettin mi?", ru:"Ты завтракал?" }, { tr:"Geçmiş olsun, hasta mıydın?", ru:"Поправляйся — ты болел?" },
+];
+const SMALLTALK_MOVES = [
+  { key:["evet", "öyle", "doğru", "haklısınız", "aynen"], say:["Evet, öyle."], ru:"Да, так и есть. (поддержать разговор)", like:true, xp:false },
+  { key:["hı", "hıhı", "hmm", "evet evet"], say:["Hı hı."], ru:"Угу. (кивнуть)", xp:false },
+];
+function ctSmalltalk(scene){
+  if(scene.event || scene.phone || (!scene.char && !scene.pool)) return null;
+  const idx = TESTMODE ? (typeof window.__smalltalk === "number" ? window.__smalltalk : -1) : (Math.random() < 0.5 ? Math.floor(Math.random() * SMALLTALK.length) : -1);
+  if(idx < 0 || !SMALLTALK[idx]) return null;
+  const t = SMALLTALK[idx];
+  return { npc:t.tr, ru:t.ru, again:t.tr, againRu:t.ru, moves:SMALLTALK_MOVES.map(m => Object.assign({}, m, { go:scene.start })) };
+}
 // Способности игрока (спек §8а): растут от подсчитанных успехов; каждый уровень меняет игру в сторону реальности и даёт больше опыта
 const SKILL_LVLS = [3, 8, 15, 25, 40];
 const SKILLS = {
@@ -3423,7 +3477,7 @@ const SCENES = {
     start:"greet",
     fail:{ text:"Хасан развёл руками: «Anlamadım, kusura bakma». Вы ушли без покупок; хлеб придётся искать в супермаркете — дальше и дороже.", fx:{ min:30, money:-160 } },
     nodes:{
-      greet:{ npc:"Hoş geldin komşu! Buyur.", ru:"Добро пожаловать, сосед! Слушаю.", again:"Buyur, ne lazım?", againRu:"Слушаю, что нужно?", greetAlt:"Hoş geldin komşu, nasılsın? Buyur.", greetAltRu:"Добро пожаловать, сосед, как ты? Слушаю.",
+      greet:{ npc:["Hoş geldin komşu! Buyur.", "Hoş geldin! Ne lazım bugün?", "Buyur komşu, hoş geldin.", "Hoş geldin, gel bakalım."], ru:["Добро пожаловать, сосед! Слушаю.", "Добро пожаловать! Что нужно сегодня?", "Слушаю, сосед, добро пожаловать.", "Добро пожаловать, ну заходи."], again:"Buyur, ne lazım?", againRu:"Слушаю, что нужно?", greetAlt:"Hoş geldin komşu, nasılsın? Buyur.", greetAltRu:"Добро пожаловать, сосед, как ты? Слушаю.",
         moves:[
           { key:["hoş bulduk", "hoşbulduk"], say:["Hoş bulduk!"], ru:"Рад быть здесь! (ответ на «hoş geldin»)", go:"list" },
           { key:["merhaba", "iyi günler", "selam", "günaydın", "kolay gelsin"], say:["Merhaba!"], ru:"Здравствуйте!", go:"list" },
@@ -3462,7 +3516,7 @@ const SCENES = {
     start:"greet",
     fail:{ text:"Мехмет так и не понял, в чём дело, и ушёл выносить мусор. Вечером вы мылись холодной водой.", fx:{ min:10, flag:"coldShower" } },
     nodes:{
-      greet:{ npc:"Buyurun?", ru:"Слушаю?", again:"Anlamadım. Bir sorun mu var?", againRu:"Не понял. Что-то случилось?", greetAlt:"Merhaba komşu, buyurun?", greetAltRu:"Здравствуйте, сосед, слушаю?",
+      greet:{ npc:["Buyurun?", "Hayırdır komşu?", "Efendim, bir şey mi oldu?"], ru:["Слушаю?", "Что случилось, сосед?", "Да? Что-то произошло?"], again:"Anlamadım. Bir sorun mu var?", againRu:"Не понял. Что-то случилось?", greetAlt:"Merhaba komşu, buyurun?", greetAltRu:"Здравствуйте, сосед, слушаю?",
         moves:[
           { key:["sıcak su", "su yok", "kombi", "çalışmıyor", "akmıyor", "sorun var"], say:["Sıcak su yok.", "Kombi çalışmıyor."], ru:"Нет горячей воды. / Котёл не работает.", go:"flat" },
           { key:["merhaba", "iyi günler", "kolay gelsin", "selam"], say:["Merhaba, kolay gelsin."], ru:"Здравствуйте, лёгкой работы.", go:"greet2", fx:{ rel:1 } },
@@ -3489,13 +3543,394 @@ const SCENES = {
       fixed:{ end:{ kind:"ok", text:"Через час Мехмет перезапустил котёл. Вечером — горячий душ. Вы настояли на своём по-турецки.", fx:{ min:5 } } },
       tomorrow:{ end:{ kind:"near", text:"Вы согласились на завтра. Вежливо, но сегодня придётся мыться холодной водой. Можно было сказать «çok acil».", fx:{ min:5, flag:"coldShower" } } },
     } },
+  // ---- неделя 1: быт у дома (спек §5) ----
+  simit:{ title:"Симитчи у метро", who:"Симитчи", initial:"S", place:"Тележка у метро",
+    goal:"Купить симит. Понять цену на слух.",
+    start:"greet",
+    fail:{ text:"Симитчи решил, что вы турист, и переключился на следующего. Остались без завтрака.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:["Buyurun abi, taze simit!", "Sıcak simit, buyurun!", "Abi simit? Yeni çıktı."], ru:["Пожалуйста, брат, свежий симит!", "Горячий симит, пожалуйста!", "Брат, симит? Только вышел."], again:"Simit? Taze!", againRu:"Симит? Свежий!",
+        moves:[
+          { key:["simit", "bir simit", "bir tane"], say:["Bir simit lütfen."], ru:"Один симит, пожалуйста.", go:"kind" },
+          { key:["kalsın", "teşekkür", "istemiyorum", "sadece bakıyorum"], say:["Kalsın, teşekkürler."], ru:"Не надо, спасибо.", go:"skip" },
+        ] },
+      kind:{ npc:"Susamlı mı, sade mi?", ru:"С кунжутом или простой?", again:"Susamlı mı?", againRu:"С кунжутом?",
+        moves:[
+          { key:["susamlı", "susam"], say:["Susamlı lütfen."], ru:"С кунжутом, пожалуйста.", go:"price" },
+          { key:["sade", "fark etmez"], say:["Sade olsun."], ru:"Пусть простой.", go:"price" },
+        ] },
+      price:{ npc:"On beş lira.", ru:"Пятнадцать лир.", pay:{ price:15, notes:[20, 50, 100], short:"On beş lira abi.", shortRu:"Пятнадцать лир, брат.", go:"bye" } },
+      bye:{ npc:"Afiyet olsun!", ru:"Приятного аппетита!", again:"Afiyet olsun abi!", againRu:"Приятного, брат!",
+        moves:[
+          { key:["teşekkür", "sağ ol", "kolay gelsin"], say:["Sağ ol, kolay gelsin."], ru:"Спасибо, лёгкой работы.", go:"done" },
+          { key:["elinize", "eline sağlık"], say:["Eline sağlık!"], ru:"Здоровья рукам! (хвалят того, кто сделал еду)", go:"done2" },
+        ] },
+      done:{ end:{ kind:"ok", text:"Тёплый симит в руке — стамбульское утро началось правильно.", fx:{} } },
+      done2:{ end:{ kind:"ok", text:"«Eline sağlık» симитчи слышит редко — заулыбался и сунул второй симит бесплатно.", fx:{} } },
+      skip:{ end:{ kind:"near", text:"Ушли без симита. Вежливо, но голодно.", fx:{} } },
+    } },
+  dolmus:{ title:"Долмуш до Кадыкёя", who:"Водитель долмуша", initial:"D", place:"Остановка долмуша",
+    goal:"Сказать, куда, передать деньги и выйти где нужно.",
+    start:"greet",
+    fail:{ text:"Водитель не понял, где вам выходить, и провёз до конечной. Обратно пешком — полчаса.", fx:{ min:30 } },
+    nodes:{
+      greet:{ npc:"Nereye? Kadıköy, Üsküdar?", ru:"Куда? Кадыкёй, Ускюдар?", again:"Nereye gidiyorsun?", againRu:"Куда едешь?",
+        moves:[
+          { key:["kadıköy"], say:["Kadıköy'e, bir kişi."], ru:"В Кадыкёй, один человек.", go:"pay1" },
+          { key:["üsküdar"], say:["Üsküdar'a, bir kişi."], ru:"В Ускюдар, один человек.", go:"pay2" },
+        ] },
+      pay1:{ npc:"Yirmi beş lira. Parayı öne uzat.", ru:"Двадцать пять лир. Передай деньги вперёд.", pay:{ price:25, notes:[20, 50, 100], short:"Yirmi beş lira.", shortRu:"Двадцать пять лир.", go:"ride" } },
+      pay2:{ npc:"Otuz lira. Parayı öne uzat.", ru:"Тридцать лир. Передай деньги вперёд.", pay:{ price:30, notes:[20, 50, 100], short:"Otuz lira.", shortRu:"Тридцать лир.", go:"ride" } },
+      ride:{ npc:"Nerede ineceksin?", ru:"Где будешь выходить?", again:"İnecek var mı?", againRu:"Кто-нибудь выходит?",
+        moves:[
+          { key:["müsait", "müsait bir yerde", "inebilir"], say:["Müsait bir yerde inebilir miyim?"], ru:"Можно выйти в удобном месте?", go:"out", fx:{ min:20 } },
+          { key:["durak", "durakta", "son durak"], say:["Son durakta ineceğim."], ru:"Выйду на конечной.", go:"last", fx:{ min:35 } },
+        ] },
+      out:{ end:{ kind:"ok", text:"Долмуш притормозил у обочины — вышли там, где удобно. Фраза «Müsait bir yerde» — главная в долмуше.", fx:{} } },
+      last:{ end:{ kind:"near", text:"Доехали до конечной: лишние пятнадцать минут и обратно пешком. Проще было попросить «müsait bir yerde».", fx:{ min:10 } } },
+    } },
+  istanbulkart:{ title:"Пополнить İstanbulkart", who:"Киоскёр", initial:"B", place:"Киоск у метро",
+    goal:"Положить на карту сто лир.",
+    start:"greet",
+    fail:{ text:"Киоскёр так и не понял, что вам нужно. Карта пуста — в метро не пройти.", fx:{ min:10 } },
+    nodes:{
+      greet:{ npc:"Buyurun?", ru:"Слушаю?", again:"Ne lazım? Kart mı?", againRu:"Что нужно? Карту?",
+        moves:[
+          { key:["yüz", "yükler misiniz", "yüz lira"], say:["Yüz lira yükler misiniz?"], ru:"Положите сто лир, пожалуйста?", go:"tap100" },
+          { key:["elli"], say:["Elli lira yükler misiniz?"], ru:"Положите пятьдесят лир, пожалуйста?", go:"tap50" },
+        ] },
+      tap100:{ npc:"Kartı okutun. Yüz lira.", ru:"Приложите карту. Сто лир.", pay:{ price:100, notes:[50, 100, 200], short:"Yüz lira.", shortRu:"Сто лир.", go:"ok100" } },
+      tap50:{ npc:"Kartı okutun. Elli lira.", ru:"Приложите карту. Пятьдесят лир.", pay:{ price:50, notes:[50, 100, 200], short:"Elli lira.", shortRu:"Пятьдесят лир.", go:"ok50" } },
+      ok100:{ end:{ kind:"ok", text:"На карте сто лир — хватит на неделю поездок.", fx:{} } },
+      ok50:{ end:{ kind:"near", text:"Пятьдесят лир — на пару дней. Скоро снова в киоск.", fx:{} } },
+    } },
+  firin:{ title:"Пекарня", who:"Пекарь", initial:"F", place:"Пекарня за углом",
+    goal:"Купить хлеб и поачу. Спросить, свежие ли.",
+    start:"greet",
+    fail:{ text:"Пекарь развёл руками и отвернулся к печи. Остались без хлеба.", fx:{ min:10 } },
+    nodes:{
+      greet:{ npc:["Hoş geldiniz! Ne vereyim?", "Buyurun, ekmek sıcak.", "Hoş geldiniz, poğaça yeni çıktı."], ru:["Добро пожаловать! Что вам дать?", "Пожалуйста, хлеб горячий.", "Добро пожаловать, поача только из печи."], again:"Ne vereyim?", againRu:"Что дать?",
+        moves:[
+          { key:["taze", "taze mi"], say:["Ekmek taze mi?"], ru:"Хлеб свежий?", go:"fresh" },
+          { key:["ekmek", "poğaça", "bir ekmek"], say:["Bir ekmek, bir poğaça lütfen."], ru:"Один хлеб и одну поачу, пожалуйста.", go:"price" },
+        ] },
+      fresh:{ npc:"Yeni çıktı, sıcak!", ru:"Только вышел, горячий!", again:"Sıcak, taze.", againRu:"Горячий, свежий.",
+        moves:[
+          { key:["ekmek", "poğaça", "o zaman", "bir ekmek"], say:["O zaman bir ekmek, bir poğaça."], ru:"Тогда один хлеб и одну поачу.", go:"price" },
+          { key:["sadece", "sadece ekmek", "bir ekmek lütfen"], say:["Sadece ekmek lütfen."], ru:"Только хлеб, пожалуйста.", go:"price2" },
+        ] },
+      price:{ npc:"Kırk beş lira.", ru:"Сорок пять лир.", pay:{ price:45, notes:[50, 100, 200], short:"Kırk beş lira.", shortRu:"Сорок пять лир.", go:"bye" } },
+      price2:{ npc:"On beş lira.", ru:"Пятнадцать лир.", pay:{ price:15, notes:[20, 50, 100], short:"On beş lira.", shortRu:"Пятнадцать лир.", go:"bye2" } },
+      bye:{ npc:"Afiyet olsun, iyi günler!", ru:"Приятного аппетита, хорошего дня!", again:"İyi günler!", againRu:"Хорошего дня!",
+        moves:[
+          { key:["kolay gelsin", "hayırlı işler"], say:["Kolay gelsin!"], ru:"Лёгкой работы!", go:"done" },
+          { key:["teşekkür", "sağ ol", "iyi günler"], say:["Teşekkürler!"], ru:"Спасибо!", go:"done" },
+        ] },
+      bye2:{ end:{ kind:"near", text:"Хлеб есть, но поача пахла так, что вы пожалели. Завтра.", fx:{} } },
+      done:{ end:{ kind:"ok", text:"Горячий хлеб и поача с сыром. Соседи по очереди кивнули: вы спросили «taze mi?» как местный.", fx:{} } },
+    } },
+  market:{ title:"Касса супермаркета", who:"Кассир", initial:"K", place:"Супермаркет",
+    goal:"Расплатиться на кассе: пакет, карта или наличные.",
+    start:"greet",
+    fail:{ text:"Очередь зашумела, кассир вызвала старшего. Вы оставили корзину и ушли.", fx:{ min:15 } },
+    nodes:{
+      greet:{ npc:"Poşet ister misiniz?", ru:"Пакет хотите?", again:"Poşet?", againRu:"Пакет?",
+        moves:[
+          { key:["evet", "bir poşet", "poşet lütfen"], say:["Evet, bir poşet lütfen."], ru:"Да, один пакет, пожалуйста.", go:"how", fx:{ money:-5 } },
+          { key:["hayır", "yok", "gerek yok", "çantam var"], say:["Hayır, çantam var."], ru:"Нет, у меня своя сумка.", go:"how" },
+        ] },
+      how:{ npc:"Kart mı, nakit mi?", ru:"Картой или наличными?", again:"Kartla mı ödeyeceksiniz?", againRu:"Картой будете платить?",
+        moves:[
+          { key:["kart", "kartla", "temassız"], say:["Kartla lütfen."], ru:"Картой, пожалуйста.", go:"card" },
+          { key:["nakit"], say:["Nakit."], ru:"Наличными.", go:"cash" },
+        ] },
+      card:{ npc:"Temassız okutun lütfen.", ru:"Приложите бесконтактно, пожалуйста.", again:"Okutun.", againRu:"Приложите.",
+        moves:[
+          { key:["tamam", "oldu", "okuttum", "buyurun"], say:["Tamam, oldu."], ru:"Готово, прошло.", go:"paid", fx:{ money:-85 } },
+        ] },
+      cash:{ npc:"Seksen beş lira.", ru:"Восемьдесят пять лир.", pay:{ price:85, notes:[50, 100, 200], short:"Seksen beş lira.", shortRu:"Восемьдесят пять лир.", go:"paid" } },
+      paid:{ npc:"Fişinizi ister misiniz?", ru:"Чек хотите?", again:"Fiş?", againRu:"Чек?",
+        moves:[
+          { key:["evet", "lütfen", "isterim"], say:["Evet, lütfen."], ru:"Да, пожалуйста.", go:"done" },
+          { key:["hayır", "kalsın", "gerek yok"], say:["Kalsın, teşekkürler."], ru:"Не надо, спасибо.", go:"done2" },
+        ] },
+      done:{ end:{ kind:"ok", text:"Чек в кармане, покупки в сумке. Касса за полминуты — вы здесь не впервые.", fx:{} } },
+      done2:{ end:{ kind:"near", text:"Без чека. Дома выяснилось, что пробили лишний йогурт — доказать нечем.", fx:{ money:-10 } } },
+    } },
+  cay:{ title:"Чайная у пристани", who:"Уста Кемаль", initial:"K", place:"Çay bahçesi", char:"usta",
+    goal:"Выпить чай и расплатиться как местный.",
+    start:"greet",
+    fail:{ text:"Уста пожал плечами и ушёл к самовару. Чай вы так и не получили.", fx:{ min:10 } },
+    nodes:{
+      greet:{ npc:["Hoş geldiniz. Ne içersiniz?", "Buyurun, çay mı?", "Hoş geldin komşu, ne içersin?"], ru:["Добро пожаловать. Что будете пить?", "Пожалуйста, чай?", "Добро пожаловать, сосед, что будешь пить?"], again:"Çay mı, kahve mi?", againRu:"Чай или кофе?",
+        moves:[
+          { key:["çay", "bir çay"], say:["Bir çay lütfen."], ru:"Один чай, пожалуйста.", go:"sugar" },
+          { key:["kahve", "türk kahvesi"], say:["Bir Türk kahvesi lütfen."], ru:"Один турецкий кофе, пожалуйста.", go:"nocoffee" },
+        ] },
+      nocoffee:{ npc:"Kahve yok, sadece çay var.", ru:"Кофе нет, только чай.", again:"Çay olur mu?", againRu:"Чай подойдёт?",
+        moves:[
+          { key:["olur", "çay", "tamam"], say:["Olur, çay olsun."], ru:"Хорошо, пусть чай.", go:"sugar" },
+          { key:["kalsın", "hayır", "teşekkür"], say:["O zaman kalsın."], ru:"Тогда не надо.", go:"left" },
+        ] },
+      sugar:{ npc:"Şekerli mi, sade mi?", ru:"С сахаром или без?", again:"Şeker?", againRu:"Сахар?",
+        moves:[
+          { key:["sade", "şekersiz"], say:["Sade lütfen."], ru:"Без сахара, пожалуйста.", go:"chat" },
+          { key:["şekerli", "şeker", "iki şeker"], say:["Şekerli, iki şeker."], ru:"С сахаром, два кусочка.", go:"chat" },
+        ] },
+      chat:{ onlyChar:"usta", elseGo:"bill", npc:"Hava güzel bugün, değil mi?", ru:"Погода хорошая сегодня, правда?", again:"Güzel hava.", againRu:"Хорошая погода.",
+        moves:[
+          { key:["güzel", "evet", "çok güzel", "harika"], say:["Evet, çok güzel."], ru:"Да, очень хорошая. (поддержать)", go:"bill", like:true },
+          { key:["hı", "hıhı", "evet evet"], say:["Hı hı."], ru:"Угу.", go:"bill" },
+        ] },
+      bill:{ npc:"Çay on beş lira.", ru:"Чай — пятнадцать лир.", pay:{ price:15, notes:[20, 50, 100], short:"On beş lira.", shortRu:"Пятнадцать лир.", go:"bye" },
+        variants:[ { if:{ rel:{ min:3 } }, npc:"Çay ikram, komşu. Para yok.", ru:"Чай — угощение, сосед. Денег не надо.", again:"İkram!", againRu:"Угощаю!", pay:null, moves:[
+          { key:["teşekkür", "sağ ol", "eline sağlık", "elinize sağlık"], say:["Çok sağ olun, elinize sağlık."], ru:"Большое спасибо, здоровья вашим рукам.", go:"bye" } ] } ] },
+      bye:{ npc:"Afiyet olsun. Yine bekleriz.", ru:"На здоровье. Ждём снова.", again:"Yine bekleriz!", againRu:"Ждём снова!",
+        moves:[
+          { key:["elinize", "eline sağlık", "ellerinize"], say:["Elinize sağlık, çok güzeldi."], ru:"Здоровья вашим рукам, было очень вкусно.", go:"done" },
+          { key:["teşekkür", "sağ ol", "görüşürüz"], say:["Teşekkürler, görüşürüz."], ru:"Спасибо, увидимся.", go:"done" },
+        ] },
+      done:{ end:{ kind:"ok", text:"Чай в тонком стакане, вид на пролив. «Elinize sağlık» — так благодарят того, кто приготовил.", fx:{} } },
+      left:{ end:{ kind:"near", text:"Ушли без чая. В чайной у пристани кофе не варят — только çay.", fx:{} } },
+    } },
+  lokanta:{ title:"Обед в локанте", who:"Уста Кемаль", initial:"K", place:"Эснаф-локанта", char:"usta",
+    goal:"Понять, что есть, выбрать и расплатиться.",
+    start:"greet",
+    fail:{ text:"Уста махнул рукой: «Sonra gel». Обед не состоялся.", fx:{ min:10 } },
+    nodes:{
+      greet:{ npc:["Buyurun, ne yersiniz?", "Hoş geldiniz, bugün fasulye güzel.", "Gel komşu, yemek hazır."], ru:["Пожалуйста, что будете есть?", "Добро пожаловать, сегодня фасоль хороша.", "Заходи, сосед, еда готова."], again:"Ne yersiniz?", againRu:"Что будете есть?",
+        moves:[
+          { key:["ne var", "bugün ne var"], say:["Bugün ne var?"], ru:"Что сегодня есть?", go:"menu" },
+          { key:["çorba", "mercimek"], say:["Mercimek çorbası lütfen."], ru:"Чечевичный суп, пожалуйста.", go:"soup" },
+        ] },
+      menu:{ npc:"Kuru fasulye, pilav, mercimek çorbası. Fasulye pilav yüz yirmi lira.", ru:"Фасоль, плов, чечевичный суп. Фасоль с пловом — сто двадцать лир.", again:"Fasulye pilav yüz yirmi.", againRu:"Фасоль с пловом — сто двадцать.",
+        code:{ value:120, options:[120, 100, 150, 220], go:"choose" } },
+      choose:{ npc:"Ne olsun?", ru:"Что будете?", again:"Fasulye mi, çorba mı?", againRu:"Фасоль или суп?",
+        moves:[
+          { key:["fasulye", "pilav", "kuru fasulye"], say:["Kuru fasulye pilav lütfen."], ru:"Фасоль с пловом, пожалуйста.", go:"eat" },
+          { key:["çorba", "mercimek"], say:["Sadece çorba lütfen."], ru:"Только суп, пожалуйста.", go:"soup" },
+        ] },
+      eat:{ npc:"Afiyet olsun. Hesap yüz yirmi lira.", ru:"Приятного аппетита. Счёт — сто двадцать лир.", pay:{ price:120, notes:[100, 200, 500], short:"Yüz yirmi lira.", shortRu:"Сто двадцать лир.", go:"bye" },
+        variants:[ { if:{ rel:{ min:6 } }, npc:"Afiyet olsun. Sana yüz lira, komşu.", ru:"Приятного аппетита. Тебе — сто лир, сосед.", pay:{ price:100, notes:[100, 200, 500], short:"Yüz lira.", shortRu:"Сто лир.", go:"bye" } } ] },
+      soup:{ npc:"Çorba altmış lira.", ru:"Суп — шестьдесят лир.", pay:{ price:60, notes:[50, 100, 200], short:"Altmış lira.", shortRu:"Шестьдесят лир.", go:"bye2" } },
+      bye:{ npc:"Yine bekleriz!", ru:"Ждём снова!", again:"Görüşürüz!", againRu:"Увидимся!",
+        moves:[
+          { key:["elinize", "eline sağlık", "ellerinize"], say:["Elinize sağlık, çok lezzetliydi."], ru:"Здоровья вашим рукам, было очень вкусно.", go:"done" },
+          { key:["teşekkür", "sağ ol", "görüşürüz"], say:["Teşekkürler, görüşürüz."], ru:"Спасибо, увидимся.", go:"done2" },
+        ] },
+      bye2:{ end:{ kind:"near", text:"Суп и хлеб — дёшево, но к вечеру снова голодно.", fx:{} } },
+      done:{ end:{ kind:"ok", text:"Фасоль с пловом за сто двадцать — обед работяги. Уста кивнул на «elinize sağlık».", fx:{} } },
+      done2:{ end:{ kind:"ok", text:"Сытно и недорого. В следующий раз попробуйте «elinize sağlık» — усте будет приятно.", fx:{} } },
+    } },
+  eczane:{ title:"Аптека", who:"Эджзаджи Зейнеп", initial:"Z", place:"Аптека на углу", char:"eczaci",
+    goal:"Купить что-нибудь от головной боли и понять дозировку.",
+    start:"greet",
+    fail:{ text:"Зейнеп строго сказала «Doktora gidin» и повернулась к следующему. Голова болит дальше.", fx:{ min:10 } },
+    nodes:{
+      greet:{ npc:"Buyurun.", ru:"Слушаю.", again:"Ne lazım?", againRu:"Что нужно?",
+        variants:[ { if:{ late:19 * 60 }, npc:"Nöbetçi eczane, buyurun. Biraz bekleyin.", ru:"Дежурная аптека, слушаю. Немного подождите.", again:"Buyurun?", againRu:"Слушаю?" } ],
+        moves:[
+          { key:["baş ağrısı", "başım ağrıyor", "ağrı"], say:["Baş ağrısı için bir şey var mı?"], ru:"Есть что-нибудь от головной боли?", go:"recete" },
+          { key:["doktor", "doktora"], say:["Doktora gitmem gerekir mi?"], ru:"Мне нужно идти к врачу?", go:"doctor" },
+        ] },
+      recete:{ npc:"Reçete var mı?", ru:"Рецепт есть?", again:"Reçeteniz var mı?", againRu:"У вас есть рецепт?",
+        variants:[ { if:{ rel:{ min:6 } }, npc:"Parol vereyim, reçeteye gerek yok. Günde iki kez, tok karna.", ru:"Дам парол, рецепт не нужен. Два раза в день, после еды.", again:"Günde iki kez.", againRu:"Два раза в день.", code:{ value:2, options:[2, 1, 3, 4], go:"pay" }, moves:[] } ],
+        moves:[
+          { key:["yok", "reçetem yok"], say:["Yok, reçetem yok."], ru:"Нет, рецепта нет.", go:"dose" },
+          { key:["var", "evet"], say:["Evet, var."], ru:"Да, есть.", go:"dose" },
+        ] },
+      dose:{ npc:"Parol vereyim. Günde iki kez, tok karna.", ru:"Дам парол. Два раза в день, после еды.", again:"Günde iki kez.", againRu:"Два раза в день.",
+        code:{ value:2, options:[2, 1, 3, 4], go:"pay" },
+        variants:[ { if:{ rel:{ min:3 } }, code:{ value:2, options:[2, 3], go:"pay" } } ] },
+      pay:{ npc:"Altmış lira.", ru:"Шестьдесят лир.", pay:{ price:60, notes:[50, 100, 200], short:"Altmış lira.", shortRu:"Шестьдесят лир.", go:"bye" } },
+      bye:{ npc:"Geçmiş olsun.", ru:"Выздоравливайте.", again:"Geçmiş olsun!", againRu:"Выздоравливайте!",
+        moves:[
+          { key:["teşekkür ederim", "teşekkür", "sağ olun"], say:["Teşekkür ederim."], ru:"Спасибо.", go:"done" },
+        ] },
+      doctor:{ npc:"Ateşiniz var mı?", ru:"У вас есть температура?", again:"Ateş var mı?", againRu:"Температура есть?",
+        moves:[
+          { key:["yok", "hayır"], say:["Yok, sadece başım ağrıyor."], ru:"Нет, только голова болит.", go:"recete" },
+          { key:["var", "evet"], say:["Evet, var."], ru:"Да, есть.", go:"sendoff" },
+        ] },
+      sendoff:{ end:{ kind:"near", text:"«O zaman doktora.» Зейнеп дала направление к семейному врачу — туда завтра.", fx:{ min:5 } } },
+      done:{ end:{ kind:"ok", text:"Таблетки в сумке. Главное вы поняли на слух: сколько раз в день.", fx:{} } },
+    } },
+  komsu:{ title:"Айше-тейзе зовёт на чай", who:"Айше-тейзе", initial:"A", place:"Лестничная площадка", char:"komsu",
+    goal:"Ответить соседке: согласиться на чай или вежливо отказаться.",
+    start:"greet",
+    fail:{ text:"Айше-тейзе обиделась: «Hiç konuşmuyor» — и пошла рассказывать об этом подъезду.", fx:{ rel:-1 } },
+    nodes:{
+      greet:{ npc:["Hoş geldin komşu! Buyur çaya.", "Aaa, komşu! Gel bir çay iç.", "Nereye böyle? Çay demledim, gel."], ru:["Добро пожаловать, сосед! Заходи на чай.", "А-а, сосед! Заходи, выпей чаю.", "Куда это ты? Я заварила чай, заходи."], again:"Çay içelim mi?", againRu:"Попьём чаю?",
+        moves:[
+          { key:["gelirim", "olur", "teşekkür", "memnuniyetle"], say:["Çok teşekkür ederim, gelirim."], ru:"Большое спасибо, зайду.", go:"tea", fx:{ min:30 } },
+          { key:["şimdi olmaz", "işim var", "başka zaman", "sonra"], say:["Şimdi olmaz, işim var. Başka zaman."], ru:"Сейчас не могу, дела. В другой раз.", go:"later" },
+        ] },
+      tea:{ npc:"Börek de var, ye ye!", ru:"Ещё и бёрек есть, ешь-ешь!", again:"Ye biraz!", againRu:"Поешь немного!",
+        moves:[
+          { key:["ellerinize", "elinize sağlık", "çok güzel"], say:["Ellerinize sağlık, çok güzel."], ru:"Здоровья вашим рукам, очень вкусно.", go:"ask" },
+          { key:["tokum", "teşekkür", "yeter"], say:["Tokum, teşekkürler."], ru:"Я сыт, спасибо.", go:"ask" },
+        ] },
+      ask:{ npc:"Evli misin? Nerelisin?", ru:"Женат? Откуда ты?", again:"Nerelisin?", againRu:"Откуда ты?",
+        moves:[
+          { key:["rusya", "rusyalıyım", "moskova", "ukrayna", "kazakistan"], say:["Rusya'lıyım, yeni taşındım."], ru:"Я из России, недавно переехал.", go:"done" },
+          { key:["sonra", "uzun hikaye", "anlatırım"], say:["Uzun hikâye, sonra anlatırım."], ru:"Долгая история, потом расскажу.", go:"done2" },
+        ] },
+      done:{ end:{ kind:"ok", text:"Полчаса чая и расспросов. Теперь Айше-тейзе знает о вас всё, а вы — где в квартале что.", fx:{ rel:1 } } },
+      done2:{ end:{ kind:"ok", text:"Отшутились — тётушка засмеялась и положила ещё бёрек. Чай с секретом — тоже чай.", fx:{} } },
+      later:{ end:{ kind:"near", text:"Вежливо отказались. Айше-тейзе кивнула: «Peki, peki» — но запомнила.", fx:{} } },
+    } },
+  su:{ title:"Заказать воду по телефону", who:"Su Dünyası", initial:"S", place:"Телефон", phone:true,
+    goal:"Заказать бутыль воды домой и понять, когда привезут.",
+    start:"greet",
+    fail:{ text:"На том конце не поняли и повесили трубку. Воду придётся тащить из market.", fx:{ min:20, money:-60 } },
+    nodes:{
+      greet:{ npc:"Alo, Su Dünyası, buyurun.", ru:"Алло, «Су Дюньясы», слушаю.", again:"Buyurun, dinliyorum.", againRu:"Слушаю вас.",
+        moves:[
+          { key:["damacana", "bir damacana", "su"], say:["Bir damacana su lütfen."], ru:"Одну бутыль воды, пожалуйста.", go:"addr" },
+          { key:["iki damacana", "iki"], say:["İki damacana lütfen."], ru:"Две бутыли, пожалуйста.", go:"addr2" },
+        ] },
+      addr:{ npc:"Adres?", ru:"Адрес?", again:"Hangi sokak, kaç numara?", againRu:"Какая улица, какой номер?",
+        moves:[
+          { key:["#num"], say:["Gül Sokak, beş numara, üçüncü kat."], ru:"Улица Гюль, дом пять, третий этаж.", go:"when" },
+        ] },
+      addr2:{ npc:"Adres?", ru:"Адрес?", again:"Hangi sokak, kaç numara?", againRu:"Какая улица, какой номер?",
+        moves:[
+          { key:["#num"], say:["Gül Sokak, beş numara, üçüncü kat."], ru:"Улица Гюль, дом пять, третий этаж.", go:"when2" },
+        ] },
+      when:{ npc:"Yarım saate gelir. Seksen lira.", ru:"Через полчаса привезут. Восемьдесят лир.", again:"Yarım saat. Seksen lira.", againRu:"Полчаса. Восемьдесят лир.",
+        moves:[
+          { key:["tamam", "teşekkür", "bekliyorum", "olur"], say:["Tamam, bekliyorum. Teşekkürler."], ru:"Хорошо, жду. Спасибо.", go:"door" },
+          { key:["daha hızlı", "acil", "çabuk"], say:["Daha hızlı olmaz mı?"], ru:"А побыстрее нельзя?", go:"fast" },
+        ] },
+      when2:{ npc:"Bir saate gelir. Yüz altmış lira.", ru:"Через час привезут. Сто шестьдесят лир.", again:"Bir saat. Yüz altmış.", againRu:"Час. Сто шестьдесят.",
+        moves:[
+          { key:["tamam", "teşekkür", "bekliyorum", "olur"], say:["Tamam, bekliyorum. Teşekkürler."], ru:"Хорошо, жду. Спасибо.", go:"door2" },
+        ] },
+      fast:{ npc:"Kusura bakmayın, yarım saat.", ru:"Извините, полчаса.", again:"Yarım saat.", againRu:"Полчаса.",
+        moves:[
+          { key:["tamam", "peki", "olur"], say:["Peki, tamam."], ru:"Ладно, хорошо.", go:"door" },
+        ] },
+      door:{ npc:"Suyunuz geldi! Seksen lira.", ru:"Ваша вода приехала! Восемьдесят лир.", pay:{ price:80, notes:[50, 100, 200], short:"Seksen lira.", shortRu:"Восемьдесят лир.", go:"done" } },
+      door2:{ npc:"Sularınız geldi! Yüz altmış lira.", ru:"Ваша вода приехала! Сто шестьдесят лир.", pay:{ price:160, notes:[100, 200, 500], short:"Yüz altmış lira.", shortRu:"Сто шестьдесят лир.", go:"done2" } },
+      done:{ end:{ kind:"ok", text:"Бутыль у двери через полчаса. Заказать воду по телефону — первый настоящий экзамен на слух.", fx:{ min:30 } } },
+      done2:{ end:{ kind:"near", text:"Две бутыли, но ждали час и заплатили вдвое. Хватит на две недели — если найдёте, куда поставить.", fx:{ min:60 } } },
+    } },
+  // ---- короткие визиты: на каждой клетке есть что сделать, даже без дела дня (просьба пользователя 22:26) ----
+  visit_hastane:{ title:"Больница: спросить дорогу", who:"Охранник", initial:"G", place:"Вход в больницу",
+    goal:"Узнать, где приёмный покой.", start:"a",
+    fail:{ text:"Охранник махнул куда-то вглубь. Поплутали десять минут.", fx:{ min:10 } },
+    nodes:{
+      a:{ npc:"Buyurun, nereye?", ru:"Слушаю, куда вам?", again:"Kimi arıyorsunuz?", againRu:"Кого ищете?",
+        moves:[
+          { key:["acil", "acil servis", "nerede"], say:["Acil servis nerede?"], ru:"Где приёмный покой (скорая)?", go:"b" },
+          { key:["eczane", "eczane var mı"], say:["İçeride eczane var mı?"], ru:"Внутри есть аптека?", go:"c" },
+        ] },
+      b:{ end:{ kind:"ok", text:"«Sağdan, zemin kat.» Теперь вы знаете, где acil — пригодится, надеюсь, не вам.", fx:{ min:3 } } },
+      c:{ end:{ kind:"near", text:"«Yok, karşıda.» Аптеки внутри нет — она через дорогу.", fx:{ min:3 } } },
+    } },
+  visit_park:{ title:"Парк: скамейка", who:"Дедушка на скамейке", initial:"D", place:"Парк",
+    goal:"Перекинуться парой слов с дедушкой.", start:"a",
+    fail:{ text:"Дедушка покачал головой: «Yabancı» — и вернулся к газете.", fx:{ min:5 } },
+    nodes:{
+      a:{ npc:"Otur evladım, otur. Nerelisin?", ru:"Садись, дитя, садись. Откуда ты?", again:"Nerelisin?", againRu:"Откуда ты?",
+        moves:[
+          { key:["rusya", "rusyalıyım", "ukrayna", "kazakistan"], say:["Rusya'lıyım, burada yaşıyorum."], ru:"Я из России, живу здесь.", go:"b", fx:{ min:10 } },
+          { key:["acelem", "gitmem", "kolay gelsin"], say:["Acelem var, kolay gelsin."], ru:"Я спешу, лёгкого вам дня.", go:"c" },
+        ] },
+      b:{ end:{ kind:"ok", text:"Десять минут про Москву, зиму и цены. Дедушка угостил семечками.", fx:{} } },
+      c:{ end:{ kind:"near", text:"Дедушка кивнул. В парке никто не спешит — кроме вас.", fx:{} } },
+    } },
+  visit_kahvehane:{ title:"Кофейня: чай и окей", who:"Завсегдатай", initial:"R", place:"Kahvehane",
+    goal:"Выпить чай среди мужчин за окей.", start:"a",
+    fail:{ text:"Все смотрели на вас, пока вы молчали. Чай остыл.", fx:{ min:10 } },
+    nodes:{
+      a:{ npc:"Çay? Okey biliyor musun?", ru:"Чай? В окей играть умеешь?", again:"Okey oynar mısın?", againRu:"В окей играешь?",
+        moves:[
+          { key:["bilmiyorum", "öğret", "öğretir misiniz"], say:["Bilmiyorum, öğretir misiniz?"], ru:"Не умею, научите?", go:"b", fx:{ min:30 } },
+          { key:["sadece çay", "çay", "oynamam"], say:["Sadece çay, teşekkürler."], ru:"Только чай, спасибо.", go:"c", fx:{ min:10, money:-15 } },
+        ] },
+      b:{ end:{ kind:"ok", text:"Полчаса учили окей: «taş», «per», «okey!». Проиграли, но вас запомнили.", fx:{} } },
+      c:{ end:{ kind:"near", text:"Чай за пятнадцать лир и десять минут тишины. В кофейне разговаривают — иначе зачем приходить.", fx:{} } },
+    } },
+  visit_metro:{ title:"Метро: спросить направление", who:"Охранник метро", initial:"M", place:"Вход в метро",
+    goal:"Узнать, в какую сторону поезд.", start:"a",
+    fail:{ text:"Сели не в ту сторону. Две станции туда и обратно.", fx:{ min:20 } },
+    nodes:{
+      a:{ npc:"Buyurun.", ru:"Слушаю.", again:"Efendim?", againRu:"Простите?",
+        moves:[
+          { key:["yenikapı", "gider mi", "bu tren"], say:["Bu tren Yenikapı'ya gider mi?"], ru:"Этот поезд идёт до Еникапы?", go:"b" },
+          { key:["aktarma", "nerede", "hangi hat"], say:["Aktarma nerede?"], ru:"Где пересадка?", go:"c" },
+        ] },
+      b:{ end:{ kind:"ok", text:"«Evet, sol taraf.» Поезд налево — поняли с первого раза.", fx:{ min:2 } } },
+      c:{ end:{ kind:"near", text:"«İki durak sonra.» Пересадка через две станции — запомните «aktarma».", fx:{ min:2 } } },
+    } },
+  visit_meydan:{ title:"Площадь: спросить дорогу", who:"Прохожий", initial:"Y", place:"Площадь",
+    goal:"Спросить, где мухтар.", start:"a",
+    fail:{ text:"Прохожий не понял и ушёл. Покружили по площади.", fx:{ min:10 } },
+    nodes:{
+      a:{ npc:"Buyurun, yardımcı olayım.", ru:"Слушаю, помогу.", again:"Ne arıyorsunuz?", againRu:"Что ищете?",
+        moves:[
+          { key:["muhtar", "muhtarlık", "nerede"], say:["Muhtarlık nerede?"], ru:"Где офис мухтара?", go:"b" },
+          { key:["tuvalet", "wc"], say:["Tuvalet nerede acaba?"], ru:"Где туалет, не подскажете?", go:"c" },
+        ] },
+      b:{ end:{ kind:"ok", text:"«Caminin yanında, yeşil kapı.» Рядом с мечетью, зелёная дверь.", fx:{ min:2 } } },
+      c:{ end:{ kind:"near", text:"«Camide var.» В мечети. Прохожий посмотрел с сочувствием.", fx:{ min:2 } } },
+    } },
+  visit_ptt:{ title:"PTT: спросить очередь", who:"Охранник PTT", initial:"P", place:"PTT",
+    goal:"Узнать, нужно ли брать талон.", start:"a",
+    fail:{ text:"Простояли не в ту очередь двадцать минут.", fx:{ min:20 } },
+    nodes:{
+      a:{ npc:"Buyurun, sıra numarası aldınız mı?", ru:"Слушаю, талон очереди взяли?", again:"Numara aldınız mı?", againRu:"Номер взяли?",
+        moves:[
+          { key:["nereden", "numara", "almadım"], say:["Almadım, nereden alınıyor?"], ru:"Не взял, где берут?", go:"b" },
+          { key:["pul", "kargo", "sadece"], say:["Sadece pul alacağım."], ru:"Я только марку куплю.", go:"c" },
+        ] },
+      b:{ end:{ kind:"ok", text:"«Şuradan, kırmızı makine.» Красный аппарат у входа — теперь вы знаете.", fx:{ min:2 } } },
+      c:{ end:{ kind:"near", text:"«O da sırayla.» Марки — тоже по очереди. Талон всё равно нужен.", fx:{ min:5 } } },
+    } },
+  visit_berber:{ title:"Берберь: спросить цену", who:"Берберь Эрдем", initial:"E", place:"Берберь", char:"berber",
+    goal:"Узнать цену стрижки и записаться.", start:"a",
+    fail:{ text:"Эрдем пожал плечами и вернулся к клиенту.", fx:{ min:5 } },
+    nodes:{
+      a:{ npc:"Buyur abi, saç mı sakal mı?", ru:"Давай, брат, стрижка или борода?", again:"Saç mı?", againRu:"Стрижка?",
+        moves:[
+          { key:["ne kadar", "saç ne kadar", "kaç para"], say:["Saç ne kadar?"], ru:"Сколько стоит стрижка?", go:"b" },
+          { key:["sonra", "yarın", "randevu"], say:["Yarın gelsem olur mu?"], ru:"Можно я завтра приду?", go:"c" },
+        ] },
+      b:{ end:{ kind:"ok", text:"«İki yüz, komşuya yüz seksen.» Соседу — скидка. Запомните: вы сосед.", fx:{ min:2 } } },
+      c:{ end:{ kind:"near", text:"«Olur, sabah gel.» Утром без очереди. Если не забудете.", fx:{ min:2 } } },
+    } },
+  visit_iskele:{ title:"Пристань: расписание парома", who:"Кассир пристани", initial:"V", place:"Пристань",
+    goal:"Узнать, когда следующий паром.", start:"a",
+    fail:{ text:"Кассир показал на табло — а там всё по-турецки. Ушли ни с чем.", fx:{ min:5 } },
+    nodes:{
+      a:{ npc:"Buyurun.", ru:"Слушаю.", again:"Nereye?", againRu:"Куда?",
+        moves:[
+          { key:["kaçta", "vapur", "kadıköy vapuru"], say:["Kadıköy vapuru kaçta?"], ru:"Во сколько паром в Кадыкёй?", go:"b" },
+          { key:["son vapur", "son"], say:["Son vapur kaçta?"], ru:"Во сколько последний паром?", go:"c" },
+        ] },
+      b:{ end:{ kind:"ok", text:"«Yirmi dakika sonra, iki numaralı iskele.» Через двадцать минут, второй причал.", fx:{ min:2 } } },
+      c:{ end:{ kind:"near", text:"«Dokuzda.» В девять. Запомните — иначе ночевать на том берегу.", fx:{ min:2 } } },
+    } },
+  visit_pazar:{ title:"Рынок: присмотреться", who:"Пазарджи Юсуф", initial:"Y", place:"Площадь рынка", char:"pazarci",
+    goal:"Спросить цену помидоров — пока без торга.", start:"a",
+    fail:{ text:"Юсуф уже кричал следующему. Цену так и не узнали.", fx:{ min:5 } },
+    nodes:{
+      a:{ npc:"Gel abla, gel abi! Domates taze!", ru:"Подходи, сестра, подходи, брат! Помидоры свежие!", again:"Domates? Buyur!", againRu:"Помидоры? Пожалуйста!",
+        moves:[
+          { key:["kaça", "kilosu", "ne kadar"], say:["Domates kaça?"], ru:"Почём помидоры?", go:"b" },
+          { key:["bakıyorum", "sadece bakıyorum"], say:["Sadece bakıyorum."], ru:"Я просто смотрю.", go:"c" },
+        ] },
+      b:{ end:{ kind:"ok", text:"«Kilosu altmış, sana elli!» Уже уступил, хотя вы не торговались. На рынке цена — начало разговора.", fx:{ min:3 } } },
+      c:{ end:{ kind:"near", text:"«Bak bak, bakmak bedava!» — смотри, смотреть бесплатно. Юсуф уже забыл о вас.", fx:{ min:2 } } },
+    } },
   // ---- утреннее дело после кота: корм у бакала (появляется в плане, пока кот живёт у вас) ----
   mama:{ title:"Корм для кота", who:"Бакал Хасан", initial:"H", place:"Лавка на углу", pool:["bakkal", "bakkal_emre"],
     goal:"Купить коту корм. Кот ждёт.",
     start:"greet",
     fail:{ text:"Хасан не понял, что вам нужно. Кот вечером смотрел с укором и орал под дверью.", fx:{ min:15 } },
     nodes:{
-      greet:{ npc:"Komşu, hoş geldin! Ne lazım?", ru:"Сосед, добро пожаловать! Что нужно?", again:"Ne lazım?", againRu:"Что нужно?",
+      greet:{ npc:["Komşu, hoş geldin! Ne lazım?", "Hoş geldin. Kedi nasıl?", "Yine mi mama bitti?", "Gel bakalım, kedinin karnı aç mı?", "Hoş geldin komşu, kedi iyi mi?"], ru:["Сосед, добро пожаловать! Что нужно?", "Добро пожаловать. Как кот?", "Опять корм кончился?", "Ну заходи, кот голодный?", "Добро пожаловать, сосед, кот в порядке?"], again:"Ne lazım?", againRu:"Что нужно?",
         moves:[
           { key:["mama", "kedi"], say:["Kedi maması var mı?"], ru:"Корм для кота есть?", go:"list" },
           { key:["kedimiz", "kedim", "oldu"], say:["Bir kedimiz oldu!"], ru:"У нас появился кот!", go:"glad" },
@@ -3667,6 +4102,7 @@ function cityNormalize(){
   if(!Array.isArray(city.visited)) city.visited = []; if(!Array.isArray(city.deckUsed)) city.deckUsed = []; if(!Array.isArray(city.prevPlan)) city.prevPlan = [];
   if(!Array.isArray(city.plan)) city.plan = cityPlanFor(city.day);
   if(typeof city.pos !== "number" || !BOARD[city.pos]) city.pos = 0; if(typeof city.roll !== "number") city.roll = null;
+  if(!(city.face >= 1 && city.face <= 6)) city.face = TESTMODE ? 1 : 1 + Math.floor(Math.random() * 6);   // грань кубика до первого броска — случайная
   if(city.ver !== 2){
     const rel = {}; Object.entries(city.rel).forEach(([k, v]) => { const c = REL_V1[k] || k; rel[c] = (rel[c] || 0) + v; }); city.rel = rel;
     city.money = Math.max(city.money, 1500); city.ver = 2;
@@ -3682,8 +4118,11 @@ const pickChar = scene => {                        // персонаж сцен�
   for(let i = 0; i < pool.length; i++){ r -= w[i]; if(r < 0) return pool[i]; } return pool[0];
 };
 const ctWho = () => (ct && CHARS[ct.char] ? CHARS[ct.char].name : ct ? ct.scene.who : "");
-const ctNpc = n => (n.npcBy && ct && n.npcBy[ct.char]) || n.npc;
-const ctAgain = n => (n.againBy && ct && n.againBy[ct.char]) || n.again;
+const pickLine = v => Array.isArray(v) ? v[(ct ? ct.seed : 0) % v.length] : v;      // реплика может быть списком вариантов — в каждой сцене свой (в тестах — первый)
+const ctNpc = n => pickLine((n.npcBy && ct && n.npcBy[ct.char]) || n.npc);
+const ctAgain = n => pickLine((n.againBy && ct && n.againBy[ct.char]) || n.again);
+const ctRu = n => pickLine(n.ru);                                                          // перевод — тоже список, параллельный npc (тот же номер варианта)
+const ctAgainRu = n => pickLine(n.againRu) || ctRu(n);
 function citySave(){ try { localStorage.setItem("soyle-city", JSON.stringify(city)); } catch(e){} }
 const fmtClock = m => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const fmtMoney = n => `${n < 0 ? "−" : ""}${Math.abs(n)} ₺`;
@@ -3725,11 +4164,12 @@ function cityBoard(){
   ctEl("ctDice").hidden = allDone; ctEl("ctHomeBtn").hidden = allDone; ctEl("ctTaxi").hidden = allDone || !!city.roll;
   let de = ctEl("ctDayEnd"); if(allDone && !de){ de = document.createElement("button"); de.className = "btn primary big"; de.id = "ctDayEnd"; de.textContent = "Итоги дня"; de.onclick = cityDayEnd; ctEl("ctInner").insertBefore(de, ctEl("ctHomeBtn").parentElement); }
   else if(!allDone && de) de.remove();
-  ctEl("ctRoll").disabled = !!city.roll || rolling || city.min >= DAY_END; ctEl("ctRolled").innerHTML = city.roll ? dieSvg(city.roll) : ""; ctEl("ctRolled").dataset.n = city.roll ? String(city.roll) : "";
-  ctEl("ctRolled").setAttribute("aria-label", city.roll ? `Выпало ${city.roll}` : "");
-  ctEl("ctIntro").textContent = city.roll ? `Выпало ${city.roll}: нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`
+  { const b = ctEl("ctRoll"); b.disabled = !!city.roll || rolling || city.min >= DAY_END; b.innerHTML = dieSvg(city.face); b.dataset.n = String(city.face);
+    b.setAttribute("aria-label", city.roll ? `Выпало ${city.roll} — выберите клетку` : city.min >= DAY_END ? "День окончен" : `Бросить кубик (на кубике ${city.face})`);
+    ctEl("ctDiceHint").textContent = city.roll ? `Выпало ${city.roll}` : city.min >= DAY_END ? "21:00 — пора домой" : "Нажмите кубик"; }
+  ctEl("ctIntro").textContent = city.roll ? `Нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`
     : city.days || city.visited.length ? `Отношения: ${Object.entries(city.rel).filter(([, v]) => v).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} ${v > 0 ? "+" : ""}${v}`).join(", ") || "пока ни с кем"}`
-    : "Вы переехали в стамбульский квартал. Бросайте кубик, ходите по клеткам, говорите с людьми голосом — они отвечают и реагируют. Ошибки стоят денег и времени.";
+    : "Вы переехали в стамбульский квартал. Нажмите кубик, ходите по клеткам, говорите с людьми голосом — они отвечают и реагируют. Ошибки стоят денег и времени.";
 }
 // Вкладки внутри кольца: дела дня · люди (персонажи с уровнем отношений) · умения (способности)
 let cityTab = (() => { try { return ["tasks", "people", "skills"].includes(localStorage.getItem("soyle-city-tab")) ? localStorage.getItem("soyle-city-tab") : "tasks"; } catch(e){ return "tasks"; } })();
@@ -3775,10 +4215,10 @@ function diceSound(){
 function cityRoll(){
   if(ct || city.roll || rolling || city.min >= DAY_END) return;
   const n = TESTMODE ? Math.max(1, Math.min(6, +window.__dice || 1)) : 1 + Math.floor(Math.random() * 6);
-  const done = () => { rolling = false; city.roll = n; citySave(); cityRender(); };
+  const done = () => { rolling = false; city.roll = n; city.face = n; citySave(); cityRender(); };     // грань остаётся до следующего броска
   if(TESTMODE) return done();
-  rolling = true; ctEl("ctRoll").disabled = true; diceSound();
-  const el = ctEl("ctRolled"), still = matchMedia("(prefers-reduced-motion: reduce)").matches; el.classList.toggle("rolling", !still);
+  rolling = true; const el = ctEl("ctRoll"); el.disabled = true; diceSound();
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches; el.classList.toggle("rolling", !still);
   let k = 0; const tick = () => { if(k++ < (still ? 1 : 9)){ const f = 1 + Math.floor(Math.random() * 6); el.innerHTML = dieSvg(f); el.dataset.n = ""; setTimeout(tick, 70); } else { el.classList.remove("rolling"); done(); } };
   tick();
 }
@@ -3798,9 +4238,11 @@ function cityArrive(i){
   if(c.kind === "home"){ const plan = cityPlanIds().filter(id => SCENES[id]); if(plan.length && plan.every(cityDoneId)) return cityDayEnd(); }
 }
 function cityVisit(i){
-  const c = BOARD[i], vid = "visit_" + c.id, v = !!SCENES[vid];
-  showModal({ ic:"Buyurun?", title:`${c.title} — зайти?`, text: v ? "Дел здесь нет, но можно поздороваться: отношения растут, если вы вежливы." : "Дел здесь сегодня нет. Заглянуть на минуту — 5 минут.",
-    primary:{ label:"Зайти", fn:() => { if(v) return cityStart(vid); city.min += 5; citySave(); cityRender(); toast("Заглянули на минуту."); } },
+  const c = BOARD[i], vid = "visit_" + c.id, free = (c.scenes || []).find(id => SCENES[id] && !SCENES[id].event), sid = SCENES[vid] ? vid : free;   // своя короткая сцена или место «просто так»
+  if(sid === "taxi") return cityTaxiAsk();                                                                                                   // стоянка такси: разговор с шофёром — это поездка до дела, а не «зайти»
+  const what = sid ? SCENES[sid].goal : "";
+  showModal({ ic:"Buyurun?", title:`${c.title} — зайти?`, text: sid ? `Дела дня здесь нет, но поговорить можно: ${what.charAt(0).toLowerCase() + what.slice(1)}` : "Здесь сегодня тихо. Заглянуть на минуту — 5 минут.",
+    primary:{ label:"Зайти", fn:() => { if(sid) return cityStart(sid); city.min += 5; citySave(); cityRender(); toast("Заглянули на минуту."); } },
     secondary:{ label:"Дальше", fn:cityRender } });
 }
 function cityGoHome(){
@@ -3822,11 +4264,12 @@ function cityStart(id, opts){
   const scene = SCENES[id]; if(!scene) return;
   const char = pickChar(scene), pat = (scene.patience || (CHARS[char] ? CHARS[char].patience : 3)) + (skillLvl("nezaket") >= 3 ? 1 : 0), dest = opts && typeof opts.dest === "number" ? opts.dest : null;
   if(char) (city.met || (city.met = {}))[char] = city.day;
-  ct = { id, scene, char, dest, taxiFrom:city.pos, rel0:(city.rel[char] || 0), node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
+  ct = { id, scene, char, dest, taxiFrom:city.pos, rel0:(city.rel[char] || 0), seed:TESTMODE ? (+window.__seed || 0) : Math.floor(Math.random() * 1000), node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
   const goal = dest !== null ? `Доехать до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}. Не переплатить.` : scene.goal;
   ctEl("ctGoal").textContent = "Цель: " + goal; ctEl("ctGoal").title = goal; ctEl("ctWho").textContent = ctWho();
   cityRender();
-  cityNode(scene.start);
+  const small = ctSmalltalk(scene);
+  if(small){ scene.nodes._chat = small; cityNode("_chat"); } else cityNode(scene.start);
 }
 function ctResult(kind, html){ const r = ctEl("ctResult"); r.className = "result " + kind; r.innerHTML = html; scheduleFit(); }
 function ctButtons(){
@@ -3863,8 +4306,8 @@ function ctTaxiNode(id, n){
 // Варианты узла по отношениям (спек §8): nodes[id].variants = [{ if:{ rel:{ char?, min } }, …поля узла }] — первый подходящий сливается поверх узла
 function ctNodeFor(id){
   const n = ct.scene.nodes[id]; if(!n || !n.variants) return n;
-  const v = n.variants.find(v => { const c = v.if && v.if.rel; if(!c) return true; const who = c.char || ct.char; return (who === ct.char ? ct.rel0 : city.rel[who] || 0) >= c.min; });   // отношения — на начало сцены: заслуженное сегодня действует с завтра
-  if(!v) return n; const out = Object.assign({}, n, v); delete out.variants; delete out.if; return out;
+  const v = n.variants.find(v => { const f = v.if || {}; if(f.late !== undefined && city.min < f.late) return false; const c = f.rel; if(!c) return true; const who = c.char || ct.char; return (who === ct.char ? ct.rel0 : city.rel[who] || 0) >= c.min; });   // отношения — на начало сцены: заслуженное сегодня действует с завтра; late — после часа
+  if(!v) return n; const out = Object.assign({}, n, v); delete out.variants; delete out.if; if(out.pay === null) delete out.pay; return out;
 }
 const relDiscount = price => Math.floor(price * 0.9 / 5) * 5;
 function cityNode(id, replyHtml){
@@ -3873,10 +4316,10 @@ function cityNode(id, replyHtml){
   const n = ctTaxiNode(id, n0);
   ct.node = n; ct.nodeId = id; ct.tries = 0; ct.revealed = false; ct.sawRu = false; ct.resolved = false; ct.pendingGo = null; ct.polite = false; ct.pick = null; ct.peeked = false;
   if(n.end) return cityEnd(n.end);
-  ct.firstTime = !(city.seen || (city.seen = {}))[n.npc]; city.seen[n.npc] = 1;      // первую встречу с репликой переводим бесплатно
+  const seenKey = ctNpc(n); ct.firstTime = !(city.seen || (city.seen = {}))[seenKey]; city.seen[seenKey] = 1;      // первую встречу с репликой переводим бесплатно
   const tr = ctEl("ctTr"), ru = ctEl("ctRu");
   const greet = skillLvl("nezaket") >= 2 && n.greetAlt;                                   // вас уже знают — здороваются первыми
-  tr.textContent = greet ? n.greetAlt : ctNpc(n); tr.classList.add("veil"); ru.hidden = true; ru.textContent = greet && n.greetAltRu ? n.greetAltRu : n.ru;
+  tr.textContent = greet ? n.greetAlt : ctNpc(n); tr.classList.add("veil"); ru.hidden = true; ru.textContent = greet && n.greetAltRu ? n.greetAltRu : ctRu(n);
   ctEl("ctInitial").textContent = CHARS[ct.char] ? CHARS[ct.char].initial : ct.scene.initial;
   ctEl("ctLive").textContent = "";
   if(n.pay){
@@ -4067,7 +4510,7 @@ function cityMiss(why, ps){
   const n = ct.node; ct.tries++; ct.n++; ct.misses = (ct.misses || 0) + 1; city.said++; count("city", 0);
   ct.patience = Math.max(0, ct.patience - 1); city.min += ct.scene.missMin || 2; cityRes();
   if(ct.patience <= 0){ const first = ct.pick || ctMoves(n)[0]; ct.lines.push({ tr:first ? first.say[0] : "", ru:first ? first.ru : "", ok:false }); return cityEnd(Object.assign({ kind:"bad" }, ct.scene.fail), true); }
-  const again = ctAgain(n) || "Efendim?", againRu = n.againRu || "Простите?";
+  const again = ctAgain(n) || "Efendim?", againRu = ctAgainRu(n) || "Простите?";
   ctEl("ctTr").textContent = again; ctEl("ctTr").classList.remove("veil"); ctEl("ctRu").textContent = againRu; npcSay(again);
   const detail = ps ? `${errsHtml(ps.words)}<div class="alts">Послушайте реплику в карточке (значок звука) и скажите ещё раз.</div>` : `<div class="alts">${ct.pick ? "Скажите выбранную реплику ещё раз." : "Выберите ответ в карточках и скажите его."} Терпения осталось: ${ct.patience}. Без речи — «Показать».</div>`;
   ctResult("bad", `${ps ? `<div class="res-head">${scoreHtml(ps.score, "Произношение")}<div class="res-body">` : ""}<span class="verdict">${why ? esc(why) : `${esc(ctWho())} не понял.`}</span>${detail}${ps ? "</div></div>" : ""}`);
@@ -4099,7 +4542,7 @@ function cityCode(v){
   }
   ct.tries++; ct.misses = (ct.misses || 0) + 1; ct.patience = Math.max(0, ct.patience - 1); city.min += 1; cityRes(); count("city", 0);
   if(ct.patience <= 0){ ct.lines.push({ tr:"", ru:"", ok:false }); return cityEnd(Object.assign({ kind:"bad" }, ct.scene.fail), true); }
-  const again = ctAgain(n) || n.npc; ctEl("ctTr").textContent = again; ctEl("ctTr").classList.remove("veil"); ctEl("ctRu").textContent = n.againRu || n.ru; npcSay(again);
+  const again = ctAgain(n) || ctNpc(n); ctEl("ctTr").textContent = again; ctEl("ctTr").classList.remove("veil"); ctEl("ctRu").textContent = ctAgainRu(n); npcSay(again);
   ctResult("bad", `<span class="verdict">Не то число.</span><div class="alts">Послушайте ещё раз (значок звука) и выберите.</div>`);
 }
 function cityPay(v){
@@ -4179,6 +4622,10 @@ ctEl("ctTaxi").onclick = cityTaxiAsk;
 // Перевод формы — вручную (FORM_GLOSS: как слово значит именно в этой форме), служебные слова и частицы — FUNC_GLOSS,
 // словарная форма и значение — PHRASE_DICT. Машинного перевода здесь нет: нет глоссы — честно «отдельного перевода нет».
 const FORM_GLOSS = {
+  susamlı:"с кунжутом", yerde:"в месте (müsait bir yerde — в удобном месте)", inebilir:"может выйти (inebilir miyim — можно мне выйти?)", ineceğim:"я выйду", durakta:"на остановке (son durakta — на конечной)",
+  yükler:"пополнит (yükler misiniz — пополните?)", kahvesi:"кофе (Türk kahvesi — турецкий кофе)", şekerli:"с сахаром", elinize:"вашим рукам (elinize sağlık — спасибо за еду, работу)", ellerinize:"вашим рукам (ellerinize sağlık — спасибо за угощение)", eline:"твоим рукам (eline sağlık)",
+  çorbası:"суп (mercimek çorbası — чечевичный суп)", ağrısı:"боль (baş ağrısı — головная боль)", gitmem:"мне идти (gitmem gerekir mi — нужно ли мне идти?)", gerekir:"нужно, требуется", reçetem:"мой рецепт", gelirim:"приду, зайду (я)", işim:"моё дело (işim var — у меня дела)",
+  taşındım:"я переехал", anlatırım:"расскажу (я)", bekliyorum:"жду (я)",
   maaşta:"с зарплаты (maaşta öderim — отдам, когда получу зарплату)",
   maması:"корм (kedi maması — кошачий корм)", kedimiz:"наш кот (bir kedimiz oldu — у нас появился кот)", oldu:"стал, появился (oldu — случилось, вышло)", olanı:"тот, который (büyük olanı — тот, что большой)",
   iyisini:"хороший (из них) — кого? что?", verin:"дайте (вы)", çantama:"к моей сумке (çantama dokunma — не трогай мою сумку)", dokunma:"не трогай", geçebilir:"может пройти (geçebilir miyim — можно пройти?)",
@@ -4208,9 +4655,14 @@ const FORM_GLOSS = {
   kapıyı:"дверь (кого? что?)", eşyalarım:"мои вещи", yerin:"твоё место (kalacak yerin — где остановиться)", tadı:"его вкус", tadına:"на вкус (tadına bakmak — попробовать)", arabayı:"машину (кого? что?)",
   tarafta:"на стороне (hangi tarafta — с какой стороны?)", taraftan:"со стороны", faturamı:"мой счёт (кого? что?)", randevunuz:"ваша запись на приём", aspirinin:"твой аспирин (есть ли у тебя)", tedavisi:"его лечение (tedavisi var mı — это лечится?)",
   yorgunum:"я устал", soruyu:"вопрос (кого? что?)", kimliğiniz:"ваше удостоверение", durumunuz:"ваша ситуация", beğendim:"мне понравилось", görebilir:"может увидеть (görebilir miyim — можно посмотреть?)",
+  // сцены «просто зайти» (visit_*): больница, парк, кофейня, метро, площадь, PTT, берберь, пристань, рынок
+  içeride:"внутри", acelem:"моя спешка (acelem var — я спешу)", öğretir:"научит (öğretir misiniz — научите?)", aktarma:"пересадка (в метро, на автобус)",
+  muhtarlık:"мухтарлык — контора старосты квартала (справки о месте жительства)", almadım:"я не брал, не купил", alınıyor:"берётся, покупается (nereden alınıyor — где берут, где купить?)",
+  gelsem:"если я приду (yarın gelsem olur mu — можно я приду завтра?)", vapuru:"паром (Kadıköy vapuru — паром на Кадыкёй)", kaça:"почём, за сколько (domates kaça — почём помидоры?)",
   üşümüyor:"не мёрзнет (üşümüyor musun — тебе не холодно?)", kilitledin:"ты запер", açar:"открывает (açar mısınız — откройте, пожалуйста)",
 };
 const FUNC_GLOSS = {
+  yüz:"сто", elli:"пятьдесят", üsküdar:"Ускюдар — район на азиатском берегу", türk:"турецкий (Türk kahvesi — турецкий кофе)", rusya:"Россия (Rusya'lıyım — я из России)", yeni:"новый; только что (yeni taşındım — только переехал)", uzun:"длинный, долгий", gül:"роза (Gül Sokak — название улицы)", üçüncü:"третий",
   tekrar:"снова, ещё раз (tekrar eder misiniz — повторите?)", eder:"делает (tekrar eder misiniz — не повторите ли?)",
   yoğun:"плотный, напряжённый (trafik çok yoğun — движение очень плотное)", hı:"угу, ага (hı hı — поддакивание)",
   gel:"иди сюда, подойди", git:"уходи, иди", pisi:"кис (pisi pisi — кис-кис)", böyle:"так, таким образом (böyle giderim — так и пойду)",
@@ -4256,6 +4708,8 @@ const FUNC_GLOSS = {
   eczane:"аптека", başım:"моя голова (başım ağrıyor — у меня болит голова)", midem:"мой желудок (midem bulanıyor — меня тошнит)", bulanıyor:"мутит, тошнит", ateşim:"моя температура (ateşim var — у меня температура)",
   ihtiyacım:"моя нужда (ihtiyacım var — мне нужно)", kesici:"режущий (ağrı kesici — обезболивающее)", günde:"в день", kere:"раз (kaç kere — сколько раз)", biliyorum:"я знаю, умею (Türkçe biliyorum — говорю по-турецки)",
   eder:"делает (tekrar eder misiniz — повторите, пожалуйста)", yavaş:"медленно", telefonum:"мой телефон", en:"самый (en yakın — ближайший)", yakın:"близкий, близко",
+  öyle:"так; так и есть (evet, öyle — да, так и есть)",
+  yenikapı:"Еникапы — станция метро и пристань на европейском берегу", acaba:"интересно; …ли (tuvalet nerede acaba — не подскажете, где туалет?)", pul:"почтовая марка", saç:"волосы; стрижка (saç ne kadar — сколько стоит стрижка?)",
   geç:"поздно (geç kaldık — опоздали)", bu:"это, этот", ne:"что", var:"есть", yok:"нет", bir:"один; какой-нибудь", çok:"очень, много", iyi:"хороший, хорошо", lütfen:"пожалуйста (просьба)", evet:"да", hayır:"нет", tamam:"хорошо, ладно",
 };
 function wordGloss(raw){
