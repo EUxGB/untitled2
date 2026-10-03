@@ -1586,6 +1586,23 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.four, 4); eq(r.first, 16); eq(r.phone, [true, true, 'Повторите, пожалуйста?', 3]);
     eq([rep1.pat, rep1.npc], [3, 'Alo, Su Dünyası, buyurun.']); eq(rep2.pat, 2); ok(/телефон/i.test(ph[0]) && !ph[1], ph[0]); ok(ok1.next, ok1.res); eq(errs, []);
   });
+  await test('Отношения открывают варианты узлов: шофёр ≥3 не спрашивает адрес, ≥6 скидка; bakkal ≥3 «для тебя найдётся», ≥6 — в долг (и при нехватке денег); kapıcı ≥3 приходит сегодня без «çok acil»', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'sofor'; });
+    const r = await q.evaluate(() => { const out = {};
+      city.rel = { sofor:3 }; cityStart('taxi'); out.greet = [ctNodeFor('greet').npc, ctMoves(ct.node)[0].say[0], ctMoves(ct.node)[0].go]; cityLeave(); ct = null;
+      city.rel = { sofor:6 }; cityStart('taxi'); cityNode('arrive'); out.arrive = [ct.node.pay.price, document.getElementById('ctTr').textContent]; cityLeave(); ct = null;
+      city.rel = { sofor:6 }; cityTaxiTo(11); cityNode('arrive'); out.taxiTo = ct.node.pay.price; cityLeave(); ct = null;          // 170 → 150 (10% вниз до 5)
+      city.rel = { bakkal:3 }; window.__char = 'bakkal'; cityStart('bakkal'); out.none = ctNodeFor('list').none.npc; cityLeave(); ct = null;
+      city.rel = { bakkal:6 }; city.money = 50; cityStart('bakkal'); cityNode('price'); out.credit = [ct.resolved, city.debt, city.money, document.getElementById('ctTr').textContent, document.getElementById('modal').hidden]; cityLeave(); ct = null;
+      city.rel = { bakkal:6 }; city.money = 500; city.debt = 0; cityStart('bakkal'); out.veresiye = ctNodeFor('veresiye').npc; cityLeave(); ct = null;
+      city.rel = { kapici:3 }; cityStart('kapici'); out.when = [ctNodeFor('when').npc, ctNodeFor('when').moves.map(m => m.go)]; cityLeave(); ct = null;
+      city.rel = {}; cityStart('kapici'); out.when0 = ctNodeFor('when').npc; cityLeave(); ct = null;
+      return out; });
+    const errs = q.errors; await q.context().close();
+    eq(r.greet, ['Her zamanki yere mi?', "Evet, Taksim'e.", 'traffic']); eq(r.arrive, [160, 'Sana yüz altmış olsun.']); eq(r.taxiTo, 150);
+    eq(r.none, 'Senin için her zaman var, komşu. Başka?'); eq(r.credit, [true, 60, 0, 'Sonra ödersin, komşu.', true]); eq(r.veresiye, 'Tabii komşu, yazıyorum. Sonra ödersin.');
+    eq(r.when, ['Tamam komşu, bir saat sonra bakarım.', ['fixed']]); eq(r.when0, 'Bugün bakamam. Yarın sabah gelirim, olur mu?'); eq(errs, []);
+  });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
