@@ -69,7 +69,7 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
   console.log('Сцены «Города»: бот проходит каждую сцену');
   // policy: happy — первый видимый ход сказан верно; fail — тишина до конца терпения; phone — «Показать» в каждом узле
   async function playScene(q, id, policy){
-    await q.evaluate(id => { cityLeave(); ct = null; closeModal && document.getElementById('modal').hidden === false && closeModal(); city = Object.assign({}, CITY_START, { money:3000 }); window.__silent = false; cityStart(id); }, id);
+    await q.evaluate(id => { cityLeave(); ct = null; if(!document.getElementById('modal').hidden) closeModal(); city = Object.assign({}, CITY_START, { money:3000 }); cityNormalize(); window.__silent = false; cityStart(id); }, id);
     const t0 = await q.evaluate(() => [city.money, city.min]);
     for(let i = 0; i < 60; i++){
       const st = await q.evaluate(() => ({ ended: !ct, modal: !document.getElementById('modal').hidden, resolved: !!(ct && ct.resolved), pay: !!(ct && ct.node && ct.node.pay), code: !!(ct && ct.node && ct.node.code),
@@ -89,13 +89,15 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
   }
   await test('бот проходит каждую сцену тремя путями (верно / тишина / телефон): сцена завершается, нет ошибок JS, деньги и время в пределах', async () => {
     const q = await open(); const bad = [];
-    const ids = await q.evaluate(() => Object.keys(SCENES).filter(id => !SCENES[id].event));
+    const ids = await q.evaluate(() => Object.keys(SCENES));
     for(const id of ids) for(const policy of ['happy', 'fail', 'phone']){
-      if(policy === 'phone' && await q.evaluate(id => !!SCENES[id].phone, id)) continue;
+      const sc = await q.evaluate(id => ({ phone: !!SCENES[id].phone, event: !!SCENES[id].event }), id);
+      if(policy === 'phone' && sc.phone) continue;
       const r = await playScene(q, id, policy);
       if(!r.ended) bad.push(`${id}/${policy}: не завершилась`);
       if(r.errors.length) bad.push(`${id}/${policy}: ${r.errors.join(' ; ')}`);
       if(r.money > 600 || r.min > 180 || r.min < 0) bad.push(`${id}/${policy}: деньги −${r.money}, время +${r.min}`);
+      if(sc.event) continue;                                                             // событие — не дело дня: в city.done не пишется
       if(policy === 'fail' && r.done[0] !== 'bad') bad.push(`${id}/fail: итог ${r.done[0]}`);
       if(policy === 'happy' && !r.done.length) bad.push(`${id}/happy: нет записи в city.done`);
     }
@@ -108,7 +110,7 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
     for(const [w, h] of SIZES){
       const q = await open(w, h);
       const r = await q.evaluate(() => { const out = [];
-        Object.entries(SCENES).forEach(([id, sc]) => { ct = null; city = Object.assign({}, CITY_START, { money:3000 }); cityStart(id);
+        Object.entries(SCENES).forEach(([id, sc]) => { ct = null; city = Object.assign({}, CITY_START, { money:3000 }); cityNormalize(); cityStart(id);
           Object.keys(sc.nodes).forEach(nid => { if(sc.nodes[nid].end) return; cityNode(nid); const first = document.querySelector('#ctOpts .ct-opt-main'); if(first) first.click(); autofit();
             const card = document.getElementById('cityCard');
             const cut = [...card.querySelectorAll('.result, .ct-tr, .ct-opt-main, .ct-say, .ct-goal')].filter(e => e.offsetParent && e.scrollHeight > e.clientHeight + 1).map(e => e.className);

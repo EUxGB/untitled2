@@ -1429,10 +1429,10 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq([r.n, r.events, r.home], [24, 6, ['home', 0]]); eq(r.dist, [1, 8, 2, 7]); eq(r.reach, [1, 2, 3, 21, 22, 23]); eq([r.rollBtn, r.lit, r.savedRoll, r.rolled, r.secondRoll], [true, 6, 3, '3', 3]);
     eq(r.afterMove, [2, 540 + 20 + 1, null, 'bakkal', 0]);   // +1 мин — реплика собеседника eq(r2, { modal:'Bakkal — зайти?', pos:2, hidden:false }); eq(r3, { pos:0, min: 20 * 60 + 80, modal:'День 1 прожит' }); eq(errs, []);
   });
-  await test('Поле: клетка-событие без колоды — просто идём дальше; дом при всех сделанных делах — итоги дня; 21:00 — день заканчивается сам; такси довозит до клетки (цена по расстоянию, числом на слух)', async () => {
+  await test('Поле: клетка «?» тянет карту; дом при всех сделанных делах — итоги дня; 21:00 — день заканчивается сам; такси довозит до клетки (цена по расстоянию, числом на слух)', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; });
     const r = await q.evaluate(() => { const out = {};
-      city.pos = 0; window.__dice = 3; cityRoll(); cityMoveTo(3); out.event = [city.pos, !!ct, document.getElementById('modal').hidden];
+      city.pos = 0; window.__dice = 3; cityRoll(); cityMoveTo(3); out.event = [city.pos, !!ct, !!(ct && SCENES[ct.id].event)]; cityLeave(); ct = null;   // клетка «?» — карта из колоды
       city.done = city.plan.map(id => ({ id, kind:'ok', short:'', ok:1, n:1, took:5, spent:0 })); city.pos = 1; cityRender(); window.__dice = 1; cityRoll(); cityMoveTo(0);
       out.homeDone = document.getElementById('modalTitle').textContent; document.getElementById('modalSecondary').click();
       city.done = []; city.pos = 5; city.min = 20 * 60 + 55; cityRender(); window.__dice = 1; cityRoll(); cityMoveTo(6);
@@ -1445,9 +1445,51 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.click('.ct-note[data-v="200"]'); await q.waitForTimeout(40); await ctNext(q); await ctPick(q, 1); await ctSay(q, 'teşekkürler iyi günler'); await ctNext(q); await q.waitForTimeout(80);
     const end = await q.evaluate(() => { const t = document.getElementById('modalTitle').textContent; document.getElementById('modalPrimary').click(); return [t, city.pos, document.getElementById('modalTitle').textContent]; });
     const errs = q.errors; await q.context().close();
-    eq(r.event, [3, false, true]); eq(r.homeDone, 'День 1 прожит'); eq(r.late, [true, 0, 'День 1 прожит']);
+    eq(r.event, [3, true, true]); eq(r.homeDone, 'День 1 прожит'); eq(r.late, [true, 0, 'День 1 прожит']);
     eq(r.taxi, ['taxi', 11, 'До аптеки, пожалуйста.']); ok(a.next, a.res); eq(node, 'traffic'); eq(pay, ['arrive', 170, 'Geldik. Yüz yetmiş lira.']);
     eq(end, ['Такси до аптеки — получилось', 11, 'Аптека — зайти?']); eq(errs, []);
+  });
+  await test('Колода: клетка «?» тянет карту (без повтора в день, опасная не первая в день 1, с условием when); кот → флаг и утреннее дело «mama»; собака → минимальная оценка, обход +20, укус; карманник — 5 секунд; дождь — зонт или wet → утром аптека; не тот долмуш — унесло на 6 клеток', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; });
+    const r = await q.evaluate(() => { const out = {};
+      out.deck = [DECK.length, DECK.every(id => SCENES[id] && SCENES[id].event && ['funny', 'danger', 'neutral'].includes(SCENES[id].mood)), DECK.filter(id => SCENES[id].mood === 'danger').length];
+      // день 1, первая карта — не опасная; карты не повторяются; условие when (зонт уже есть → дождь не выпадает)
+      city.day = 1; city.deckUsed = []; window.__card = 'kopek'; out.first = cityDraw(); out.firstMood = out.first && SCENES[out.first].mood; cityLeave(); ct = null;
+      city.deckUsed = []; city.flags = { semsiye:1 }; window.__card = 'yagmur'; out.rain = cityDraw(); cityLeave(); ct = null; city.flags = {};
+      city.deckUsed = ['kedi']; window.__card = 'kedi'; out.repeat = cityDraw(); cityLeave(); ct = null;
+      city.deckUsed = DECK.slice(); window.__card = null; out.empty = cityDraw(); ct = null; city.deckUsed = [];
+      // кот: «Gel pisi pisi» → флаг, утром дело «mama» первым
+      window.__card = 'kedi'; city.pos = 2; window.__dice = 1; cityRoll(); cityMoveTo(3); out.cardStarted = [ct && ct.id, document.getElementById('ctPlace').textContent];
+      return out; });
+    await ctPick(q, 0); const cat = await ctSay(q, 'gel pisi pisi'); await ctNext(q); await q.waitForTimeout(60);
+    const r2 = await q.evaluate(() => { const out = { flag: city.flags.kedi, done: city.done.length, title: document.getElementById('modalTitle').textContent }; document.getElementById('modalPrimary').click();
+      city.done = []; cityNewDay(); out.plan = city.plan.slice(0, 1); out.mamaCell = cellOfScene('mama');
+      // собака: оценка ниже 70 — не ушла (+20 мин), терпение 2 → второй промах — укус
+      cityLeave(); ct = null; city.deckUsed = []; window.__card = 'kopek'; cityDraw(); out.dogPat = ct.patience; out.minScore = ctMoves(ct.node)[0].minScore; return out; });
+    const m0 = await q.evaluate(() => city.min); await ctPick(q, 0);
+    const d1 = await ctSay(q, 'kit');                                                      // похоже, но слабо: ключ не спасает — нужна оценка
+    const d1s = await q.evaluate(m0 => [ct && ct.patience, city.min - m0], m0);
+    const d2 = await ctSay(q, 'bla'); await q.waitForTimeout(60);
+    const bite = await q.evaluate(() => [document.getElementById('modalTitle').textContent, city.flags.yarali, city.money, document.getElementById('modalText').textContent]);
+    const r3 = await q.evaluate(async () => { document.getElementById('modalPrimary').click(); city.money = 1000; city.min = 600;
+      // карманник: окно 5 секунд; __slow — не успели (промах приходит после реплики собеседника)
+      cityLeave(); ct = null; city.deckUsed = []; window.__slow = true; window.__card = 'yankesici'; cityDraw(); await new Promise(z => setTimeout(z, 200)); const t = document.getElementById('modalTitle').textContent; const money = city.money; window.__slow = false;
+      document.getElementById('modalPrimary').click();
+      // дождь без зонта → wet; утром с __sick — дело «eczane» в плане
+      cityLeave(); ct = null; city.deckUsed = []; window.__card = 'yagmur'; cityDraw(); return { t, money, rainNode: ct.nodeId }; });
+    await ctPick(q, 1); await ctSay(q, 'yok böyle giderim'); await ctNext(q); await q.waitForTimeout(60);
+    const r4 = await q.evaluate(() => { const wet = city.flags.wet; document.getElementById('modalPrimary').click(); city.done = []; window.__sick = true; cityNewDay(); window.__sick = false;
+      const out = { wet, sick: city.plan.includes('eczane'), wetAfter: city.flags.wet };
+      // не тот долмуш: сели и поехали → +6 клеток, +30 мин
+      cityLeave(); ct = null; city.deckUsed = []; city.pos = 4; city.min = 600; window.__card = 'dolmusyanlis'; cityDraw(); return out; });
+    await ctPick(q, 1); await ctSay(q, 'tamam binelim'); await ctNext(q); await ctPick(q, 1); await ctSay(q, 'buyurun bozuk'); await ctNext(q); await q.waitForTimeout(60);
+    const r5 = await q.evaluate(() => [document.getElementById('modalTitle').textContent, city.pos, city.min]);
+    const errs = q.errors; await q.context().close();
+    eq(r.deck, [10, true, 5]); ok(r.first && r.first !== 'kopek' && r.firstMood !== 'danger', 'первая карта дня 1: ' + r.first); eq(r.rain !== 'yagmur', true); eq(r.repeat !== 'kedi', true); eq(r.empty, null);
+    eq(r.cardStarted, ['kedi', 'Событие']); ok(cat.next, cat.res); eq([r2.flag, r2.done, r2.title], [1, 0, 'Кот увязался — получилось']); eq([r2.plan, r2.mamaCell], [['mama'], 2]);
+    eq([r2.dogPat, r2.minScore], [2, 70]); ok(!d1.next, d1.res); eq(d1s, [1, 20]); ok(/Укусила|укусил/i.test(bite[3]) || /не вышло/.test(bite[0]), bite[0] + bite[3]); eq([bite[1] > 0, bite[2]], [true, 1000 - 300]);   // флаг хранит номер дня; после «нового дня» +500 ₺
+    eq([r3.t, r3.money], ['Карманник — не вышло', 1000 - 200]); eq(r3.rainNode, 'start');
+    eq([r4.wet > 0, r4.sick, r4.wetAfter], [true, true, undefined]); eq(r5[0], 'Не тот долмуш — не вышло'); eq([r5[1], r5[2] - 600 >= 30], [10, true]); eq(errs, []);
   });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];
