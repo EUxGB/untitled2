@@ -105,6 +105,15 @@ const URL = process.argv[2], OUT = process.argv[3];
         live.ctxCard = await p.evaluate(() => ({ word:item.target, text:document.getElementById('partner').textContent, n:ctx && ctx.list.length, loaded:!!(ctx && ctx.loaded) }));
         live.ctxCard.loadMs = loadMs;
         await p.screenshot({ path:`${OUT}/${name}-word-context.png` });
+        // жалоба: «göstermek переносится нечитаемо» — на живом сайте длинные слова в одну строку
+        live.longWords = await p.evaluate(() => { const out = {};
+          for(const tr of ['göstermek', 'affedersiniz', 'teşekkürler', 'kahvaltı']){ const topic = (PHRASE_SETS.find(g => wordPool(g.id).items.some(x => x.tr === tr)) || {}).id; if(!topic){ out[tr] = 'нет в наборах'; continue; }
+            setId = topic; wordPool(topic).items.forEach(x => x.seen = x.tr === tr ? 0 : 1); lastKey = ''; next(); autofit();
+            const t = document.getElementById('target'), rg = document.createRange(); rg.selectNodeContents(t);
+            out[tr] = { lines: new Set([...rg.getClientRects()].map(x => Math.round(x.top))).size, px: Math.round(parseFloat(getComputedStyle(t).fontSize)), fits: rg.getBoundingClientRect().right <= t.getBoundingClientRect().right + 1 }; }
+          return out; });
+        await p.evaluate(() => { const topic = PHRASE_SETS.find(g => wordPool(g.id).items.some(x => x.tr === 'göstermek')).id; setId = topic; wordPool(topic).items.forEach(x => x.seen = x.tr === 'göstermek' ? 0 : 1); lastKey = ''; next(); });
+        await p.waitForTimeout(500); await p.screenshot({ path:`${OUT}/${name}-long-word.png` });
         await p.evaluate(() => setKind(false));
       } catch(e){ live.ctxError = String(e); }
       // что слышит пользователь на «Носителе» для фраз (жалоба: «нет носителя с такой фразой и других фраз»)

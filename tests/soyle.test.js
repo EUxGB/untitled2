@@ -937,6 +937,26 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(out.find(o => o.k === '360x560 pairs').fit < 1 && out.find(o => o.k === '412x915 phrases').fit > 1, JSON.stringify(out.map(o => o.k + ':' + o.fit)));
   });
 
+  await test('одно слово не переносится: все слова тем и самое длинное (14 букв) — в одну строку и не шире карточки на 360×640, 390×844, 412×915', async () => {
+    const q = await openPage(browser); const bad = [];
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h });
+      const r = await q.evaluate(() => { setMode('phrases'); setKind(true); const out = [];
+        const words = [...new Set(PHRASE_SETS.flatMap(g => wordPool(g.id).items.map(x => JSON.stringify([g.id, x.tr]))))].map(JSON.parse);
+        wordPool('hotel').items.push({ tr:'misafirperverl', ru:'гостеприимный', seen:0 }); words.push(['hotel', 'misafirperverl']);
+        for(const [topic, tr] of words){ if(/\s/.test(tr)) continue;
+          setId = topic; wordPool(topic).items.forEach(x => x.seen = x.tr === tr ? 0 : 1); lastKey = ''; next(); autofit();
+          const t = document.getElementById('target'), rg = document.createRange(); rg.selectNodeContents(t);
+          const lines = new Set([...rg.getClientRects()].map(x => Math.round(x.top))).size, bw = rg.getBoundingClientRect(), cw = t.getBoundingClientRect();
+          if(item.target !== tr || lines > 1 || bw.left < cw.left - 1 || bw.right > cw.right + 1 || parseFloat(getComputedStyle(t).fontSize) < 22) out.push(`${tr}: строк ${lines}, ${Math.round(parseFloat(getComputedStyle(t).fontSize))}px`); }
+        setKind(false); setMode('pairs'); next(); autofit(); const t = document.getElementById('target');
+        return { n:words.length, out, pairOne: t.classList.contains('oneword') }; });
+      if(r.n < 200) bad.push(`${w}x${h}: слов всего ${r.n}`);
+      bad.push(...r.out.map(x => `${w}x${h} ${x}`)); if(!r.pairOne) bad.push(`${w}x${h}: слово в «Звуках» не помечено`);
+    }
+    const errs = q.errors; await q.context().close(); eq(bad, []); eq(errs, []);
+  });
+
   await test('пояснение помещается в форму целиком: длинный текст и разбор ошибок на 360×640 и 390×844', async () => {
     const q = await openPage(browser); const bad = [];
     const LONG = 'Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше распознавание работает само, а себя можно записать кнопкой «Записать себя». Скажите ещё раз.';

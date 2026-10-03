@@ -480,7 +480,8 @@ h1 span{color:inherit}
 .lesson{padding-bottom:calc(8px * var(--fit))}
 .screen{padding-bottom:calc(10px * var(--fit))}
 .screen > .card{gap:calc(8px * var(--fit))}
-#card .target{font-size:max(30px, calc(var(--fit) * clamp(56px, 15vh, 132px)))}
+#card .target{font-size:max(22px, calc(var(--fit) * var(--wfit, 1) * clamp(56px, 15vh, 132px)))}
+#card .target.oneword{white-space:nowrap; word-break:normal; overflow-wrap:normal}
 #card .target.phrase{font-size:max(18px, calc(var(--fit) * clamp(24px, 4.2vh, 40px)))}
 #card .meaning{font-size:calc(18px * max(.8, min(1.1, var(--fit))))}
 #card .partner{font-size:calc(15px * max(.85, min(1.1, var(--fit))))}
@@ -3142,7 +3143,23 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 const MODES = ["memory","pairs","phrases","listen","free","progress"];
 // ---------- автоподгонка: всё на одном экране без прокрутки, на высоком экране — крупнее ----------
 // Подбираем --fit (0.6…1.15) двоичным поиском: наибольший, при котором карточка и страница не переполнены.
+// Одно слово никогда не переносится: если не помещается по ширине — уменьшается (жалоба: «göstermek переносится
+// нечитаемо»; на высоких экранах размер слова рос по высоте экрана и не смотрел на ширину — на 390×844 так ломались 89 слов из 289)
+function fitWord(){
+  const t = $("target"); if(!t) return;
+  const one = !!t.offsetParent && !t.classList.contains("phrase") && !/\s/.test(t.textContent.trim());
+  t.classList.toggle("oneword", one); t.style.setProperty("--wfit", 1);
+  if(!one) return;
+  const r = document.createRange(); r.selectNodeContents(t);
+  const need = r.getBoundingClientRect().width, have = t.clientWidth;
+  if(need > have && have > 0) t.style.setProperty("--wfit", Math.max(.2, have / need * .97).toFixed(3));
+}
 function autofit(){
+  const t = $("target");                                   // сначала слово в одну строку в полном размере — подгонка по высоте считает его таким
+  if(t){ t.classList.toggle("oneword", !!t.offsetParent && !t.classList.contains("phrase") && !/\s/.test(t.textContent.trim())); t.style.setProperty("--wfit", 1); }
+  autofitHeight(); fitWord();
+}
+function autofitHeight(){
   const app = document.querySelector(".app"); if(!app) return;
   const card = [...document.querySelectorAll(".screen > .card")].find(c => !c.hidden && c.offsetParent);
   const set = v => app.style.setProperty("--fit", v.toFixed(3));
