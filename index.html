@@ -3677,7 +3677,9 @@ function wordGloss(raw){
   if(FUNC_GLOSS[k]) return { ctx:FUNC_GLOSS[k] };
   return null;
 }
-function wordsHtml(text){ return text.split(/(\s+)/).map(tok => /\S/.test(tok) ? `<span class="wd" data-w="${esc(tok)}">${esc(tok)}</span>` : tok).join(""); }
+// Слова — внутри одного строчного контейнера .wds: #target — flex-контейнер, а flex выбрасывает пробелы между соседними
+// элементами-словами (на экране было «Odatemizlenmedi»); один дочерний элемент — пробелы и переносы как у обычного текста.
+function wordsHtml(text){ return `<span class="wds">${text.split(/(\s+)/).map(tok => /\S/.test(tok) ? `<span class="wd" data-w="${esc(tok)}">${esc(tok)}</span>` : tok).join("")}</span>`; }
 let wdTok = 0;
 async function wordTap(raw){
   const word = raw.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, ""), key = nphr(word); if(!key) return;

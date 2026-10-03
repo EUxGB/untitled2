@@ -1308,6 +1308,9 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       const show = (list, tr) => { const x = list.find(i => i.tr === tr); const pp = pickPhrase; pickPhrase = () => ({ target:x.tr, translit:x.tl, meaning:x.ru, tip:x.focus, gid:'ph-x' }); next(); pickPhrase = pp; };
       show(PHRASE_SETS.find(g => g.id === 'hotel').items, 'Size odanızı göstereyim.');
       const out = { spans:[...document.querySelectorAll('#target .wd')].map(s => s.textContent), partner0: document.getElementById('partner').textContent, info: document.getElementById('result').textContent };
+      // слова на экране разделены пробелами (жалоба: «Odatemizlenmedi» — flex-контейнер выбрасывал пробелы между span)
+      out.rendered = document.getElementById('target').innerText;
+      { const rs = [...document.querySelectorAll('#target .wd')].map(e => e.getBoundingClientRect()); out.gap = Math.min(...rs.slice(1).map((r, i) => Math.abs(r.top - rs[i].top) < 2 ? r.left - rs[i].right : 99)); }
       nativeCache.set('size', [{ url:'https://x/size.wav', who:'Z' }]);
       const tap = async i => { document.querySelectorAll('#target .wd')[i].click(); await new Promise(z => setTimeout(z, 1700)); return document.getElementById('partner').textContent; };
       out.form = await tap(1); out.spokenForm = window.__spoken.slice();                              // форма: перевод формы + словарная форма; записи нет — синтез с пометкой
@@ -1324,7 +1327,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       setKind(true); out.wordMode = document.querySelectorAll('#target .wd').length; setKind(false); setMode('pairs'); out.pairMode = document.querySelectorAll('#target .wd').length;
       return out; });
     const errs = q.errors; await q.context().close();
-    eq(r.spans, ['Size', 'odanızı', 'göstereyim.']); eq(r.partner0, '[сизе оданызы гёстерейим]'); ok(/Нажатие на слово/.test(r.info), r.info);
+    eq(r.spans, ['Size', 'odanızı', 'göstereyim.']); eq(r.rendered, 'Size odanızı göstereyim.'); ok(r.gap >= 4, 'зазор между словами на экране: ' + r.gap + 'px'); eq(r.partner0, '[сизе оданызы гёстерейим]'); ok(/Нажатие на слово/.test(r.info), r.info);
     eq(r.form, '«odanızı» — ваш номер (кого? что?) · oda: комната, номер синтез'); eq(r.spokenForm, ['odanızı']);
     eq(r.rec, '«Size» — вам носитель'); eq(r.played, ['https://x/size.wav']); eq(r.spokenAfterRec, 1); eq(r.on, 'Size');
     eq(r.verb, '«göstereyim» — давайте покажу · göstermek: показывать синтез'); eq(r.over <= 1, true);
