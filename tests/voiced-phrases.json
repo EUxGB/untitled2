@@ -1,33 +1,8 @@
 {
  "greet": [
   {
-   "tr": "Hoş geldiniz.",
-   "ru": "Добро пожаловать.",
-   "cv": true
-  },
-  {
-   "tr": "İyi akşamlar!",
-   "ru": "Добрый вечер!",
-   "cv": true
-  },
-  {
-   "tr": "Çok memnunum.",
-   "ru": "Очень рад.",
-   "cv": true
-  },
-  {
-   "tr": "Peki nasılsın?",
-   "ru": "Ну, как ты?",
-   "cv": true
-  },
-  {
-   "tr": "Nasılsın bugün?",
-   "ru": "Как ты сегодня?",
-   "cv": true
-  },
-  {
-   "tr": "Nasılsınız bakalım?",
-   "ru": "Ну, как вы?",
+   "tr": "Merhaba efendim.",
+   "ru": "Здравствуйте (вежливо).",
    "cv": true
   },
   {
@@ -36,13 +11,43 @@
    "cv": true
   },
   {
-   "tr": "Merhaba efendim.",
-   "ru": "Здравствуйте (вежливо).",
+   "tr": "İyi akşamlar!",
+   "ru": "Добрый вечер!",
    "cv": true
   },
   {
-   "tr": "Merhaba arkadaşlar.",
-   "ru": "Привет, друзья.",
+   "tr": "Hoş geldiniz.",
+   "ru": "Добро пожаловать.",
+   "cv": true
+  },
+  {
+   "tr": "Buyurun, hoş geldiniz!",
+   "ru": "Проходите, добро пожаловать!",
+   "cv": true
+  },
+  {
+   "tr": "Nasılsın bugün?",
+   "ru": "Как ты сегодня?",
+   "cv": true
+  },
+  {
+   "tr": "Bugün nasılsınız?",
+   "ru": "Как вы сегодня?",
+   "cv": true
+  },
+  {
+   "tr": "Peki nasılsın?",
+   "ru": "А ты как?",
+   "cv": true
+  },
+  {
+   "tr": "Çok memnun oldum.",
+   "ru": "Очень приятно (при знакомстве).",
+   "cv": true
+  },
+  {
+   "tr": "Ben de memnun oldum.",
+   "ru": "Мне тоже очень приятно.",
    "cv": true
   },
   {
@@ -61,13 +66,18 @@
    "cv": true
   },
   {
+   "tr": "Tamam, sağ olun.",
+   "ru": "Хорошо, спасибо.",
+   "cv": true
+  },
+  {
    "tr": "Hayır, sağ olun.",
    "ru": "Нет, спасибо (вежливо).",
    "cv": true
   },
   {
-   "tr": "Tamam, sağ olun.",
-   "ru": "Хорошо, спасибо.",
+   "tr": "Teşekkürler, iyi günler.",
+   "ru": "Спасибо, хорошего дня.",
    "cv": true
   },
   {
@@ -76,8 +86,43 @@
    "cv": true
   },
   {
+   "tr": "İyi günler efendim.",
+   "ru": "Добрый день / хорошего дня (вежливо).",
+   "cv": true
+  },
+  {
    "tr": "Herkese iyi günler.",
    "ru": "Всем хорошего дня.",
+   "cv": true
+  },
+  {
+   "tr": "Sana kolay gelsin.",
+   "ru": "Лёгкой тебе работы (говорят тому, кто работает).",
+   "cv": true
+  },
+  {
+   "tr": "Çok affedersiniz.",
+   "ru": "Простите, пожалуйста.",
+   "cv": true
+  },
+  {
+   "tr": "Ben özür dilerim.",
+   "ru": "Я прошу прощения.",
+   "cv": true
+  },
+  {
+   "tr": "Tamam, sorun değil.",
+   "ru": "Хорошо, ничего страшного.",
+   "cv": true
+  },
+  {
+   "tr": "Tamam, önemli değil.",
+   "ru": "Ладно, неважно.",
+   "cv": true
+  },
+  {
+   "tr": "Özüre gerek yok.",
+   "ru": "Не нужно извиняться.",
    "cv": true
   },
   {
@@ -91,14 +136,60 @@
    "cv": true
   },
   {
-   "tr": "Çok affedersiniz.",
-   "ru": "Очень извиняюсь.",
+   "tr": "Yarın görüşürüz.",
+   "ru": "До завтра.",
    "cv": true
   },
   {
-   "tr": "Ben özür dilerim.",
-   "ru": "Прошу прощения.",
+   "tr": "Tamam, görüşürüz.",
+   "ru": "Ладно, увидимся.",
    "cv": true
+  },
+  {
+   "tr": "Tamam, hoşça kal.",
+   "ru": "Ладно, пока (говорит тот, кто уходит).",
+   "cv": true
+  },
+  {
+   "tr": "Tamam, güle güle.",
+   "ru": "Ладно, пока (говорит тот, кто остаётся).",
+   "cv": true
+  },
+  {
+   "tr": "İyi hafta sonları.",
+   "ru": "Хороших выходных.",
+   "cv": true
+  },
+  {
+   "tr": "Herkese iyi geceler.",
+   "ru": "Всем спокойной ночи.",
+   "cv": true
+  },
+  {
+   "tr": "Sana da iyi geceler.",
+   "ru": "И тебе спокойной ночи.",
+   "cv": true
+  },
+  {
+   "tr": "Evet, tebrikler.",
+   "ru": "Да, поздравляю.",
+   "cv": true
+  },
+  {
+   "tr": "Merhaba arkadaşlar.",
+   "ru": "Привет, друзья.",
+   "cv": true
+  },
+  {
+   "tr": "Nasılsınız bakalım?",
+   "ru": "Ну, как вы?",
+   "cv": true
+  },
+  {
+   "tr": "Çok memnunum.",
+   "ru": "Я очень доволен.",
+   "cv": true,
+   "rare": true
   }
  ],
  "hotel": [
@@ -113,38 +204,53 @@
    "cv": true
   },
   {
-   "tr": "Hangi otel?",
-   "ru": "Какой отель?",
-   "cv": true
-  },
-  {
    "tr": "Anahtar nerede?",
    "ru": "Где ключ?",
    "cv": true
   },
   {
-   "tr": "Anahtarın var mı?",
-   "ru": "У тебя есть ключ?",
+   "tr": "Tuvalet nerede?",
+   "ru": "Где туалет?",
    "cv": true
   },
   {
-   "tr": "Anahtarları bana ver.",
-   "ru": "Дай мне ключи.",
+   "tr": "Lavabo nerede?",
+   "ru": "Где туалет? (вежливо; lavabo — буквально «умывальник»)",
    "cv": true
   },
   {
-   "tr": "Size odanızı göstereyim.",
-   "ru": "Позвольте показать вам номер.",
-   "cv": true
-  },
-  {
-   "tr": "Ben odama gidiyorum.",
-   "ru": "Я иду в свой номер.",
+   "tr": "Şifre ne?",
+   "ru": "Какой пароль? (например, от Wi-Fi)",
    "cv": true
   },
   {
    "tr": "Banyoyu kullanabilir miyim?",
    "ru": "Можно воспользоваться ванной?",
+   "cv": true
+  },
+  {
+   "tr": "Kahvaltı hazır!",
+   "ru": "Завтрак готов!",
+   "cv": true
+  },
+  {
+   "tr": "Kahvaltı yapmak ister misin?",
+   "ru": "Хочешь позавтракать?",
+   "cv": true
+  },
+  {
+   "tr": "Kahvaltı yaptın mı?",
+   "ru": "Ты позавтракал?",
+   "cv": true
+  },
+  {
+   "tr": "Size odanızı göstereyim.",
+   "ru": "Давайте я покажу вам ваш номер.",
+   "cv": true
+  },
+  {
+   "tr": "Ben odama gidiyorum.",
+   "ru": "Я иду в свой номер.",
    "cv": true
   },
   {
@@ -158,23 +264,53 @@
    "cv": true
   },
   {
-   "tr": "Kahvaltı hazır!",
-   "ru": "Завтрак готов!",
+   "tr": "Kapıyı açar mısınız?",
+   "ru": "Откройте дверь, пожалуйста.",
    "cv": true
   },
   {
-   "tr": "Kahvaltı yaptın mı?",
-   "ru": "Ты позавтракал?",
+   "tr": "Kapıyı kilitledin mi?",
+   "ru": "Ты запер дверь?",
    "cv": true
   },
   {
-   "tr": "Kahvaltı yapmak ister misin?",
-   "ru": "Хочешь позавтракать?",
+   "tr": "Burada kalmak istiyorum.",
+   "ru": "Я хочу остановиться здесь.",
    "cv": true
   },
   {
-   "tr": "Tuvalet nerede?",
-   "ru": "Где туалет?",
+   "tr": "Nerede kalacaksın?",
+   "ru": "Где ты остановишься?",
+   "cv": true
+  },
+  {
+   "tr": "Kalacak yerin var mı?",
+   "ru": "Тебе есть где остановиться?",
+   "cv": true
+  },
+  {
+   "tr": "Çok gürültülüydü.",
+   "ru": "Было очень шумно.",
+   "cv": true
+  },
+  {
+   "tr": "Bu gürültü de ne?",
+   "ru": "Что это за шум?",
+   "cv": true
+  },
+  {
+   "tr": "Eşyalarım nerede?",
+   "ru": "Где мои вещи?",
+   "cv": true
+  },
+  {
+   "tr": "Evde kimse var mı?",
+   "ru": "Дома кто-нибудь есть?",
+   "cv": true
+  },
+  {
+   "tr": "Ama evde internet yok",
+   "ru": "Но дома нет интернета.",
    "cv": true
   },
   {
@@ -184,10 +320,42 @@
    "author": "languagelerner"
   },
   {
+   "tr": "Tamir edemez misin usta?",
+   "ru": "Мастер, не можешь починить?",
+   "cv": true
+  },
+  {
+   "tr": "Burası çok güzel.",
+   "ru": "Здесь очень красиво.",
+   "cv": true
+  },
+  {
+   "tr": "Burası çok sıcak.",
+   "ru": "Здесь очень жарко.",
+   "cv": true
+  },
+  {
+   "tr": "Anahtarın var mı?",
+   "ru": "У тебя есть ключ?",
+   "cv": true
+  },
+  {
+   "tr": "Hangi otel?",
+   "ru": "Какой отель?",
+   "cv": true
+  },
+  {
    "tr": "Şikayetimiz yoktur.",
    "ru": "У нас нет жалоб.",
    "tat": 1162699,
-   "author": "languagelerner"
+   "author": "languagelerner",
+   "rare": true
+  },
+  {
+   "tr": "Anahtarları bana ver.",
+   "ru": "Дай мне ключи.",
+   "cv": true,
+   "rare": true
   }
  ],
  "food": [
@@ -197,18 +365,13 @@
    "cv": true
   },
   {
-   "tr": "Kalkalım artık, hesap lütfen!",
-   "ru": "Пойдём уже — счёт, пожалуйста!",
+   "tr": "Hesabı alabilir miyim?",
+   "ru": "Можно счёт?",
    "cv": true
   },
   {
    "tr": "Afiyet olsun.",
    "ru": "Приятного аппетита.",
-   "cv": true
-  },
-  {
-   "tr": "Su getirin!",
-   "ru": "Принесите воды!",
    "cv": true
   },
   {
@@ -222,23 +385,19 @@
    "cv": true
   },
   {
-   "tr": "Kahve içer misin?",
-   "ru": "Будешь кофе?",
+   "tr": "Bir salata istiyorum.",
+   "ru": "Я хотел бы салат.",
+   "tat": 1162912,
+   "author": "languagelerner"
+  },
+  {
+   "tr": "Bir tane daha istiyorum.",
+   "ru": "Я хочу ещё одну (ещё одно).",
    "cv": true
   },
   {
-   "tr": "Bir bardak çay ister misin?",
-   "ru": "Хочешь стакан чая?",
-   "cv": true
-  },
-  {
-   "tr": "İçecek bir şey ister misiniz?",
-   "ru": "Хотите что-нибудь выпить?",
-   "cv": true
-  },
-  {
-   "tr": "Bira ister misiniz?",
-   "ru": "Хотите пива?",
+   "tr": "Biraz daha istiyorum.",
+   "ru": "Хочу ещё немного.",
    "cv": true
   },
   {
@@ -247,30 +406,68 @@
    "cv": true
   },
   {
-   "tr": "Ben acıktım.",
-   "ru": "Я проголодался.",
+   "tr": "Tuvaletiniz var mı?",
+   "ru": "У вас есть туалет?",
    "cv": true
   },
   {
-   "tr": "Karnım çok aç.",
-   "ru": "Я ужасно голодный.",
-   "tat": 1162656,
-   "author": "languagelerner"
+   "tr": "Tadına bakabilir miyim?",
+   "ru": "Можно попробовать (на вкус)?",
+   "cv": true
   },
   {
-   "tr": "Bir salata istiyorum.",
-   "ru": "Я хотел бы салат.",
-   "tat": 1162912,
-   "author": "languagelerner"
+   "tr": "Dondurma var mı?",
+   "ru": "Мороженое есть?",
+   "cv": true
   },
   {
-   "tr": "Biraz daha istiyorum.",
-   "ru": "Хочу ещё немного.",
+   "tr": "İçecek bir şey ister misiniz?",
+   "ru": "Хотите что-нибудь выпить?",
+   "cv": true
+  },
+  {
+   "tr": "Başka bir şey ister misiniz?",
+   "ru": "Желаете что-нибудь ещё? (спросит официант)",
+   "cv": true
+  },
+  {
+   "tr": "Çay ister misiniz?",
+   "ru": "Хотите чаю?",
+   "cv": true
+  },
+  {
+   "tr": "Bir bardak çay ister misin?",
+   "ru": "Хочешь стакан чая?",
+   "cv": true
+  },
+  {
+   "tr": "Kahve içer misin?",
+   "ru": "Будешь кофе?",
+   "cv": true
+  },
+  {
+   "tr": "Bira ister misiniz?",
+   "ru": "Хотите пива?",
+   "cv": true
+  },
+  {
+   "tr": "Meyve suyu ister misin?",
+   "ru": "Хочешь сок?",
    "cv": true
   },
   {
    "tr": "Yemekte ne var?",
-   "ru": "Что на обед?",
+   "ru": "Что на обед (ужин)?",
+   "cv": true
+  },
+  {
+   "tr": "Yemek hazır mı?",
+   "ru": "Еда готова?",
+   "cv": true
+  },
+  {
+   "tr": "Sipariş hazır!",
+   "ru": "Заказ готов!",
    "cv": true
   },
   {
@@ -280,7 +477,7 @@
   },
   {
    "tr": "Çok lezzetliymiş.",
-   "ru": "Очень вкусно.",
+   "ru": "Очень вкусно! (попробовав)",
    "cv": true
   },
   {
@@ -289,13 +486,39 @@
    "cv": true
   },
   {
-   "tr": "Çay için teşekkürler.",
-   "ru": "Спасибо за чай.",
+   "tr": "Tadı çok güzel.",
+   "ru": "Очень вкусно (вкус отличный).",
    "cv": true
   },
   {
    "tr": "Yemek için teşekkürler.",
    "ru": "Спасибо за еду.",
+   "cv": true
+  },
+  {
+   "tr": "Çay için teşekkürler.",
+   "ru": "Спасибо за чай.",
+   "cv": true
+  },
+  {
+   "tr": "Ben acıktım.",
+   "ru": "Я проголодался.",
+   "cv": true
+  },
+  {
+   "tr": "Karnım çok aç.",
+   "ru": "Я очень голоден.",
+   "tat": 1162656,
+   "author": "languagelerner"
+  },
+  {
+   "tr": "Yemek yiyelim mi?",
+   "ru": "Поедим?",
+   "cv": true
+  },
+  {
+   "tr": "Bir şey yemek ister misin?",
+   "ru": "Хочешь что-нибудь поесть?",
    "cv": true
   },
   {
@@ -316,16 +539,33 @@
    "author": "languagelerner"
   },
   {
-   "tr": "Barmen nerede?",
-   "ru": "Где бармен?",
-   "tat": 1162862,
-   "author": "languagelerner"
+   "tr": "Hesabı ben öderim.",
+   "ru": "Счёт оплачу я.",
+   "cv": true
   },
   {
    "tr": "Daha sonra ödemek istiyorum.",
    "ru": "Я хотел бы заплатить позже.",
    "tat": 1163014,
    "author": "languagelerner"
+  },
+  {
+   "tr": "Kalkalım artık, hesap lütfen!",
+   "ru": "Пойдём уже — счёт, пожалуйста!",
+   "cv": true
+  },
+  {
+   "tr": "Su getirin!",
+   "ru": "Принесите воды!",
+   "cv": true,
+   "rare": true
+  },
+  {
+   "tr": "Barmen nerede?",
+   "ru": "Где бармен?",
+   "tat": 1162862,
+   "author": "languagelerner",
+   "rare": true
   }
  ],
  "transport": [
@@ -335,15 +575,19 @@
    "cv": true
   },
   {
-   "tr": "Biletler lütfen.",
-   "ru": "Билеты, пожалуйста.",
+   "tr": "Nereye gidiyorsunuz?",
+   "ru": "Куда вы едете? (спросит таксист)",
    "cv": true
   },
   {
-   "tr": "Metroyla gidiyorum.",
-   "ru": "Я поеду на метро.",
-   "tat": 1162665,
-   "author": "languagelerner"
+   "tr": "Nereye gitmek istersiniz?",
+   "ru": "Куда хотите поехать?",
+   "cv": true
+  },
+  {
+   "tr": "Adres nedir?",
+   "ru": "Какой адрес?",
+   "cv": true
   },
   {
    "tr": "Sağa dönün!",
@@ -352,19 +596,45 @@
    "author": "languagelerner"
   },
   {
-   "tr": "Otobüsü durdurun!",
-   "ru": "Остановите автобус!",
+   "tr": "İnmek istiyorum.",
+   "ru": "Я хочу выйти (из транспорта).",
    "cv": true
   },
   {
-   "tr": "Treni durdurun!",
-   "ru": "Остановите поезд!",
+   "tr": "Oraya nasıl gidebilirim?",
+   "ru": "Как мне туда добраться?",
    "cv": true
   },
   {
-   "tr": "Herkes trene!",
-   "ru": "Все в поезд!",
+   "tr": "Bu nereye gidiyor?",
+   "ru": "Куда он идёт? (об автобусе, трамвае)",
    "cv": true
+  },
+  {
+   "tr": "Vapur kaçta kalkıyor?",
+   "ru": "Во сколько отходит паром?",
+   "cv": true
+  },
+  {
+   "tr": "Biletler lütfen.",
+   "ru": "Билеты, пожалуйста.",
+   "cv": true
+  },
+  {
+   "tr": "Biletinizi görebilir miyim?",
+   "ru": "Можно ваш билет?",
+   "cv": true
+  },
+  {
+   "tr": "Biletleri aldın mı?",
+   "ru": "Ты купил билеты?",
+   "cv": true
+  },
+  {
+   "tr": "Metroyla gidiyorum.",
+   "ru": "Я еду на метро.",
+   "tat": 1162665,
+   "author": "languagelerner"
   },
   {
    "tr": "Ne kadar uzak?",
@@ -383,12 +653,17 @@
   },
   {
    "tr": "Daha ne kadar sürer?",
-   "ru": "Сколько ещё ехать?",
+   "ru": "Сколько ещё (ждать, ехать)?",
    "cv": true
   },
   {
    "tr": "Ne kadar bekleyeceğiz?",
    "ru": "Сколько нам ждать?",
+   "cv": true
+  },
+  {
+   "tr": "Ne zaman geliyor?",
+   "ru": "Когда он придёт (приедет)?",
    "cv": true
   },
   {
@@ -402,8 +677,53 @@
    "cv": true
   },
   {
+   "tr": "Tam olarak nerede?",
+   "ru": "Где именно?",
+   "cv": true
+  },
+  {
+   "tr": "Hangi tarafta?",
+   "ru": "С какой стороны?",
+   "cv": true
+  },
+  {
    "tr": "Onu nerede bulurum?",
    "ru": "Где мне его найти?",
+   "cv": true
+  },
+  {
+   "tr": "Şu an neredesin?",
+   "ru": "Где ты сейчас?",
+   "cv": true
+  },
+  {
+   "tr": "Orada görüşürüz.",
+   "ru": "Увидимся там.",
+   "cv": true
+  },
+  {
+   "tr": "Beni orada bekle.",
+   "ru": "Жди меня там.",
+   "cv": true
+  },
+  {
+   "tr": "Evet, hemen geliyorum.",
+   "ru": "Да, уже иду.",
+   "cv": true
+  },
+  {
+   "tr": "Çok geç kaldık!",
+   "ru": "Мы очень опоздали!",
+   "cv": true
+  },
+  {
+   "tr": "Sana bir taksi çağırayım.",
+   "ru": "Давай вызову тебе такси.",
+   "cv": true
+  },
+  {
+   "tr": "Arabayı durdurun!",
+   "ru": "Остановите машину!",
    "cv": true
   },
   {
@@ -415,6 +735,24 @@
    "tr": "Nereden geldiniz?",
    "ru": "Откуда вы приехали?",
    "cv": true
+  },
+  {
+   "tr": "Otobüsü durdurun!",
+   "ru": "Остановите автобус!",
+   "cv": true,
+   "rare": true
+  },
+  {
+   "tr": "Treni durdurun!",
+   "ru": "Остановите поезд!",
+   "cv": true,
+   "rare": true
+  },
+  {
+   "tr": "Herkes trene!",
+   "ru": "Все в поезд!",
+   "cv": true,
+   "rare": true
   }
  ],
  "shop": [
@@ -424,33 +762,38 @@
    "cv": true
   },
   {
-   "tr": "Ne kadar lazım?",
-   "ru": "Сколько нужно?",
+   "tr": "Daha uygun fiyat istiyorum",
+   "ru": "Я хочу цену получше.",
    "cv": true
   },
   {
-   "tr": "Ne kadar istiyor?",
-   "ru": "Сколько он просит?",
+   "tr": "Şuna bakabilir miyim?",
+   "ru": "Можно посмотреть вот это?",
    "cv": true
   },
   {
-   "tr": "Ne kadar istersin?",
-   "ru": "Сколько ты хочешь?",
+   "tr": "Sadece bakmak istiyorum.",
+   "ru": "Я хочу только посмотреть.",
    "cv": true
   },
   {
-   "tr": "Kaç paran var?",
-   "ru": "Сколько у тебя денег?",
+   "tr": "Bir tane alabilir miyim?",
+   "ru": "Можно одну штуку?",
    "cv": true
   },
   {
-   "tr": "Ne kadar paranız var?",
-   "ru": "Сколько у вас денег?",
+   "tr": "Biraz alabilir miyim?",
+   "ru": "Можно немного?",
    "cv": true
   },
   {
-   "tr": "Bir lira yeter değil mi?",
-   "ru": "Одной лиры хватит, да?",
+   "tr": "Ben de deneyebilir miyim?",
+   "ru": "Можно мне тоже попробовать?",
+   "cv": true
+  },
+  {
+   "tr": "Bu çok küçük.",
+   "ru": "Это очень маленькое (мало по размеру).",
    "cv": true
   },
   {
@@ -460,8 +803,43 @@
    "author": "languagelerner"
   },
   {
-   "tr": "Biraz alabilir miyim?",
-   "ru": "Можно немного?",
+   "tr": "Hangisi daha iyi?",
+   "ru": "Какой лучше?",
+   "cv": true
+  },
+  {
+   "tr": "Çok beğendim.",
+   "ru": "Мне очень понравилось.",
+   "cv": true
+  },
+  {
+   "tr": "Hayır, istemiyorum.",
+   "ru": "Нет, не хочу.",
+   "cv": true
+  },
+  {
+   "tr": "Tamam, bu kadar yeter.",
+   "ru": "Всё, этого достаточно.",
+   "cv": true
+  },
+  {
+   "tr": "Sadece bir tane mi?",
+   "ru": "Только одна штука?",
+   "cv": true
+  },
+  {
+   "tr": "Ne kadar lazım?",
+   "ru": "Сколько нужно?",
+   "cv": true
+  },
+  {
+   "tr": "Ne kadar istersin?",
+   "ru": "Сколько ты хочешь?",
+   "cv": true
+  },
+  {
+   "tr": "Ne kadar istiyor?",
+   "ru": "Сколько он просит?",
    "cv": true
   },
   {
@@ -470,15 +848,84 @@
    "cv": true
   },
   {
+   "tr": "Yardımcı olabilir miyim?",
+   "ru": "Вам помочь? (спросит продавец)",
+   "cv": true
+  },
+  {
+   "tr": "Başka bir şey lazım mı?",
+   "ru": "Нужно что-нибудь ещё?",
+   "cv": true
+  },
+  {
+   "tr": "Yirmi beş lira değil mi?",
+   "ru": "Двадцать пять лир, верно?",
+   "cv": true
+  },
+  {
+   "tr": "Bir lira yeter değil mi?",
+   "ru": "Одной лиры хватит, да?",
+   "cv": true
+  },
+  {
+   "tr": "Bozuk paran var mı?",
+   "ru": "У тебя есть мелочь?",
+   "cv": true
+  },
+  {
+   "tr": "Sıradaki kim?",
+   "ru": "Кто следующий?",
+   "cv": true
+  },
+  {
+   "tr": "Sırada biz varız.",
+   "ru": "Сейчас наша очередь.",
+   "cv": true
+  },
+  {
+   "tr": "Değiştirmek istiyorum",
+   "ru": "Я хочу поменять (обменять).",
+   "cv": true
+  },
+  {
+   "tr": "Faturamı ödemek istiyorum",
+   "ru": "Я хочу оплатить счёт (за свет, связь, интернет).",
+   "cv": true
+  },
+  {
+   "tr": "Ne zamana kadar?",
+   "ru": "До какого времени?",
+   "cv": true
+  },
+  {
+   "tr": "Çok kalabalık.",
+   "ru": "Очень много народу.",
+   "cv": true
+  },
+  {
+   "tr": "Kaç paran var?",
+   "ru": "Сколько у тебя денег?",
+   "cv": true,
+   "rare": true
+  },
+  {
+   "tr": "Ne kadar paranız var?",
+   "ru": "Сколько у вас денег?",
+   "cv": true,
+   "rare": true
+  },
+  {
    "tr": "Bana biraz para ver.",
    "ru": "Дай мне немного денег.",
-   "cv": true
+   "cv": true,
+   "rare": true
   },
   {
    "tr": "Beş doların var mı?",
    "ru": "Есть пять долларов?",
    "tat": 1162659,
-   "author": "languagelerner"
+   "author": "languagelerner",
+   "rare": true
   }
  ],
  "health": [
@@ -488,33 +935,34 @@
    "cv": true
   },
   {
-   "tr": "Siz doktor musunuz?",
-   "ru": "Вы врач?",
+   "tr": "Alerjim var.",
+   "ru": "У меня аллергия.",
    "cv": true
   },
   {
-   "tr": "Doktor ne dedi?",
-   "ru": "Что сказал врач?",
+   "tr": "Kendimi hasta hissediyorum.",
+   "ru": "Я чувствую себя больным.",
+   "tat": 1162693,
+   "author": "languagelerner"
+  },
+  {
+   "tr": "Evet, soğuk aldım galiba!",
+   "ru": "Да, кажется, я простудился!",
    "cv": true
   },
   {
-   "tr": "Doktora gittin mi?",
-   "ru": "Ты ходил к врачу?",
+   "tr": "Neresi acıyor?",
+   "ru": "Где болит? (спросит врач)",
    "cv": true
   },
   {
-   "tr": "Doktor çağırayım mı?",
-   "ru": "Вызвать врача?",
+   "tr": "Çok acıyor mu?",
+   "ru": "Сильно болит?",
    "cv": true
   },
   {
-   "tr": "Biri doktor çağırsın!",
-   "ru": "Кто-нибудь, вызовите врача!",
-   "cv": true
-  },
-  {
-   "tr": "Hangi hastane?",
-   "ru": "Какая больница?",
+   "tr": "Hâlâ acıyor mu?",
+   "ru": "Всё ещё болит?",
    "cv": true
   },
   {
@@ -538,26 +986,75 @@
    "cv": true
   },
   {
-   "tr": "Hasta mısın sen?",
-   "ru": "Ты болен?",
-   "cv": true
-  },
-  {
-   "tr": "Alerjim var.",
-   "ru": "У меня аллергия.",
-   "cv": true
-  },
-  {
-   "tr": "Kendimi hasta hissediyorum.",
-   "ru": "Я чувствую себя больным.",
-   "tat": 1162693,
-   "author": "languagelerner"
-  },
-  {
    "tr": "Kendinizi nasıl hissediyorsunuz?",
    "ru": "Как вы себя чувствуете?",
    "tat": 1162692,
    "author": "languagelerner"
+  },
+  {
+   "tr": "Bugün nasıl hissediyorsun?",
+   "ru": "Как ты себя сегодня чувствуешь?",
+   "cv": true
+  },
+  {
+   "tr": "Bugün biraz iyiyim!",
+   "ru": "Сегодня мне получше!",
+   "cv": true
+  },
+  {
+   "tr": "Randevunuz var mıydı?",
+   "ru": "У вас была запись (на приём)?",
+   "cv": true
+  },
+  {
+   "tr": "Geçmiş olsun, rahatsız mısınız?",
+   "ru": "Выздоравливайте! Вам нездоровится? (Geçmiş olsun — пожелание тому, кто болеет)",
+   "cv": true
+  },
+  {
+   "tr": "Aspirinin var mı?",
+   "ru": "У тебя есть аспирин?",
+   "cv": true
+  },
+  {
+   "tr": "Tedavisi var mı?",
+   "ru": "Это лечится?",
+   "cv": true
+  },
+  {
+   "tr": "Doktor çağırayım mı?",
+   "ru": "Вызвать врача?",
+   "cv": true
+  },
+  {
+   "tr": "Biri doktor çağırsın!",
+   "ru": "Кто-нибудь, вызовите врача!",
+   "cv": true
+  },
+  {
+   "tr": "Siz doktor musunuz?",
+   "ru": "Вы врач?",
+   "cv": true
+  },
+  {
+   "tr": "Doktor ne dedi?",
+   "ru": "Что сказал врач?",
+   "cv": true
+  },
+  {
+   "tr": "Doktora gittin mi?",
+   "ru": "Ты ходил к врачу?",
+   "cv": true
+  },
+  {
+   "tr": "Hangi hastane?",
+   "ru": "Какая больница?",
+   "cv": true
+  },
+  {
+   "tr": "Hasta mısın sen?",
+   "ru": "Ты болен?",
+   "cv": true
   },
   {
    "tr": "Sağlığım yerinde.",
@@ -570,62 +1067,38 @@
    "ru": "Я принимаю витамины.",
    "tat": 1163034,
    "author": "languagelerner"
+  },
+  {
+   "tr": "Teşekkür ederim doktor.",
+   "ru": "Спасибо, доктор.",
+   "cv": true
+  },
+  {
+   "tr": "Çok yorgunum.",
+   "ru": "Я очень устал.",
+   "cv": true
+  },
+  {
+   "tr": "Üşümüyor musun?",
+   "ru": "Тебе не холодно?",
+   "cv": true
   }
  ],
  "talk": [
   {
-   "tr": "İsminiz ne?",
-   "ru": "Как вас зовут?",
+   "tr": "Bakar mısınız?",
+   "ru": "Извините, можно вас? (так подзывают официанта, продавца)",
    "cv": true
   },
   {
-   "tr": "Adınız lütfen?",
-   "ru": "Ваше имя, пожалуйста?",
+   "tr": "Bir dakika lütfen.",
+   "ru": "Одну минуту, пожалуйста.",
    "cv": true
   },
   {
-   "tr": "Sen nerede yaşıyorsun?",
-   "ru": "Где ты живёшь?",
-   "tat": 1162685,
-   "author": "languagelerner"
-  },
-  {
-   "tr": "Ne iş yapıyorsun?",
-   "ru": "Кем ты работаешь?",
+   "tr": "Bir saniye lütfen.",
+   "ru": "Секунду, пожалуйста.",
    "cv": true
-  },
-  {
-   "tr": "Sen kaç yaşındasın?",
-   "ru": "Сколько тебе лет?",
-   "cv": true
-  },
-  {
-   "tr": "Ben de çalışıyorum.",
-   "ru": "Я тоже работаю.",
-   "cv": true
-  },
-  {
-   "tr": "İngilizce biliyor musunuz?",
-   "ru": "Вы говорите по-английски?",
-   "cv": true
-  },
-  {
-   "tr": "Fransızca konuşur musunuz?",
-   "ru": "Вы говорите по-французски?",
-   "tat": 1162981,
-   "author": "languagelerner"
-  },
-  {
-   "tr": "Japonca konuşmuyorum.",
-   "ru": "Я не говорю по-японски.",
-   "tat": 1162984,
-   "author": "languagelerner"
-  },
-  {
-   "tr": "Onlar hızlı konuşuyorlar.",
-   "ru": "Они говорят быстро.",
-   "tat": 1162928,
-   "author": "languagelerner"
   },
   {
    "tr": "Ben anlamıyorum.",
@@ -641,6 +1114,178 @@
    "tr": "Pardon, anlamadım?",
    "ru": "Простите, не понял?",
    "cv": true
+  },
+  {
+   "tr": "Hiç anlamadım.",
+   "ru": "Я совсем не понял.",
+   "cv": true
+  },
+  {
+   "tr": "Soruyu anlamadım.",
+   "ru": "Я не понял вопрос.",
+   "cv": true
+  },
+  {
+   "tr": "Tamam, anladım.",
+   "ru": "Хорошо, понял.",
+   "cv": true
+  },
+  {
+   "tr": "İngilizce biliyor musunuz?",
+   "ru": "Вы говорите по-английски?",
+   "cv": true
+  },
+  {
+   "tr": "İngilizce lütfen.",
+   "ru": "По-английски, пожалуйста.",
+   "cv": true
+  },
+  {
+   "tr": "İsminiz ne?",
+   "ru": "Как вас зовут?",
+   "cv": true
+  },
+  {
+   "tr": "Sizin adınız ne?",
+   "ru": "А вас как зовут?",
+   "cv": true
+  },
+  {
+   "tr": "Adınız lütfen?",
+   "ru": "Ваше имя, пожалуйста?",
+   "cv": true
+  },
+  {
+   "tr": "Sen nerelisin?",
+   "ru": "Откуда ты (родом)?",
+   "cv": true
+  },
+  {
+   "tr": "Nereden geliyorsunuz?",
+   "ru": "Откуда вы?",
+   "cv": true
+  },
+  {
+   "tr": "Ben burada yaşıyorum.",
+   "ru": "Я здесь живу.",
+   "cv": true
+  },
+  {
+   "tr": "Ben burada çalışıyorum.",
+   "ru": "Я здесь работаю.",
+   "cv": true
+  },
+  {
+   "tr": "Sen nerede yaşıyorsun?",
+   "ru": "Где ты живёшь?",
+   "tat": 1162685,
+   "author": "languagelerner"
+  },
+  {
+   "tr": "Nerede oturuyorsunuz?",
+   "ru": "Где вы живёте (в каком районе)?",
+   "cv": true
+  },
+  {
+   "tr": "Nerede çalışıyorsunuz?",
+   "ru": "Где вы работаете?",
+   "cv": true
+  },
+  {
+   "tr": "Ne iş yapıyorsun?",
+   "ru": "Кем ты работаешь?",
+   "cv": true
+  },
+  {
+   "tr": "Ben de çalışıyorum.",
+   "ru": "Я тоже работаю.",
+   "cv": true
+  },
+  {
+   "tr": "Sen kaç yaşındasın?",
+   "ru": "Сколько тебе лет?",
+   "cv": true
+  },
+  {
+   "tr": "Ne zaman geldiniz?",
+   "ru": "Когда вы приехали?",
+   "cv": true
+  },
+  {
+   "tr": "Saat kaç?",
+   "ru": "Который час?",
+   "cv": true
+  },
+  {
+   "tr": "Yarın olur mu?",
+   "ru": "Завтра подойдёт?",
+   "cv": true
+  },
+  {
+   "tr": "Hayır, bugün olmaz.",
+   "ru": "Нет, сегодня не получится.",
+   "cv": true
+  },
+  {
+   "tr": "Müsait misiniz?",
+   "ru": "Вы свободны? (вам сейчас удобно?)",
+   "cv": true
+  },
+  {
+   "tr": "Bana gösterir misin?",
+   "ru": "Покажешь мне?",
+   "cv": true
+  },
+  {
+   "tr": "Henüz bilmiyorum.",
+   "ru": "Пока не знаю.",
+   "cv": true
+  },
+  {
+   "tr": "Ben pek emin değilim.",
+   "ru": "Я не очень уверен.",
+   "cv": true
+  },
+  {
+   "tr": "Lütfen bekleyin.",
+   "ru": "Пожалуйста, подождите.",
+   "cv": true
+  },
+  {
+   "tr": "Oturun lütfen.",
+   "ru": "Садитесь, пожалуйста.",
+   "cv": true
+  },
+  {
+   "tr": "Bu taraftan lütfen.",
+   "ru": "Сюда, пожалуйста.",
+   "cv": true
+  },
+  {
+   "tr": "Kimlik lütfen.",
+   "ru": "Удостоверение личности, пожалуйста.",
+   "cv": true
+  },
+  {
+   "tr": "Hava çok güzel.",
+   "ru": "Погода очень хорошая.",
+   "cv": true
+  },
+  {
+   "tr": "Hava çok soğuk.",
+   "ru": "Очень холодно (о погоде).",
+   "cv": true
+  },
+  {
+   "tr": "Yağmur mu yağıyor?",
+   "ru": "Дождь идёт?",
+   "cv": true
+  },
+  {
+   "tr": "Onlar hızlı konuşuyorlar.",
+   "ru": "Они говорят быстро.",
+   "tat": 1162928,
+   "author": "languagelerner"
   },
   {
    "tr": "Anlamadım, ne?",
@@ -674,6 +1319,20 @@
    "ru": "Ты любишь спорт?",
    "tat": 1162647,
    "author": "languagelerner"
+  },
+  {
+   "tr": "Fransızca konuşur musunuz?",
+   "ru": "Вы говорите по-французски?",
+   "tat": 1162981,
+   "author": "languagelerner",
+   "rare": true
+  },
+  {
+   "tr": "Japonca konuşmuyorum.",
+   "ru": "Я не говорю по-японски.",
+   "tat": 1162984,
+   "author": "languagelerner",
+   "rare": true
   }
  ],
  "sos": [
@@ -708,6 +1367,16 @@
    "cv": true
   },
   {
+   "tr": "Kimse yok mu?",
+   "ru": "Есть тут кто-нибудь? (зов на помощь)",
+   "cv": true
+  },
+  {
+   "tr": "Beni duyan var mı?",
+   "ru": "Меня кто-нибудь слышит?",
+   "cv": true
+  },
+  {
    "tr": "Ben kayboldum.",
    "ru": "Я потерялся.",
    "cv": true
@@ -738,8 +1407,18 @@
    "cv": true
   },
   {
+   "tr": "Acil durumunuz nedir?",
+   "ru": "Что у вас случилось? (спросит оператор 112)",
+   "cv": true
+  },
+  {
+   "tr": "Yaralanan var mı?",
+   "ru": "Есть пострадавшие?",
+   "cv": true
+  },
+  {
    "tr": "Yangın mı çıktı?",
-   "ru": "Пожар?",
+   "ru": "Пожар начался?",
    "cv": true
   },
   {
@@ -761,6 +1440,16 @@
    "tr": "Telefon nerede?",
    "ru": "Где телефон?",
    "cv": true
+  },
+  {
+   "tr": "Telefonunuz var mı?",
+   "ru": "У вас есть телефон?",
+   "cv": true
+  },
+  {
+   "tr": "Kimliğiniz var mı?",
+   "ru": "У вас есть удостоверение личности?",
+   "cv": true
   }
  ],
  "basic": [
@@ -769,6 +1458,66 @@
    "ru": "Конечно.",
    "tat": 1162645,
    "author": "languagelerner"
+  },
+  {
+   "tr": "Evet, lütfen.",
+   "ru": "Да, пожалуйста.",
+   "cv": true
+  },
+  {
+   "tr": "Tamam, olur.",
+   "ru": "Хорошо, идёт.",
+   "cv": true
+  },
+  {
+   "tr": "Hayır, olmaz.",
+   "ru": "Нет, так не получится (нельзя).",
+   "cv": true
+  },
+  {
+   "tr": "Şimdi olmaz!",
+   "ru": "Не сейчас!",
+   "cv": true
+  },
+  {
+   "tr": "Hayır, gerek yok.",
+   "ru": "Нет, не нужно.",
+   "cv": true
+  },
+  {
+   "tr": "Gerek yok, sağ ol.",
+   "ru": "Не нужно, спасибо.",
+   "cv": true
+  },
+  {
+   "tr": "Bir şey lazım mı?",
+   "ru": "Что-нибудь нужно?",
+   "cv": true
+  },
+  {
+   "tr": "Bu mümkün mü?",
+   "ru": "Это возможно?",
+   "cv": true
+  },
+  {
+   "tr": "Evet, anladım.",
+   "ru": "Да, понял.",
+   "cv": true
+  },
+  {
+   "tr": "Tamam, bir dakika.",
+   "ru": "Хорошо, минуту.",
+   "cv": true
+  },
+  {
+   "tr": "Ben de bilmiyorum.",
+   "ru": "Я тоже не знаю.",
+   "cv": true
+  },
+  {
+   "tr": "Tabii ki hayır!",
+   "ru": "Конечно, нет!",
+   "cv": true
   },
   {
    "tr": "Daha iyi.",
@@ -790,7 +1539,7 @@
   },
   {
    "tr": "Sessiz olun.",
-   "ru": "Тише, пожалуйста.",
+   "ru": "Потише, пожалуйста.",
    "tat": 1162644,
    "author": "languagelerner"
   },

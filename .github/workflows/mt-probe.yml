@@ -1,0 +1,23 @@
+name: Проверка машинного перевода
+on:
+  workflow_dispatch:
+  push:
+    branches: [content-prep]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node tests/mt-probe.js mtout
+      - name: Положить в ветку mt-probe
+        shell: bash
+        run: |
+          cd mtout && git init -q && git checkout -q -b mt-probe
+          git config user.name "github-actions" && git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -qm "Машинный перевод против выверенного"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" mt-probe
