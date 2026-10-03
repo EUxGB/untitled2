@@ -1870,7 +1870,7 @@ function award(score, gid){
     game.combo++; game.todayOk++; game.total++;
     game.bestCombo = Math.max(game.bestCombo, game.combo);
     gain = Math.round(10 * (1 + Math.min(game.combo-1, 5) * 0.2));  // комбо до ×2
-    gain = Math.max(2, Math.round(gain * (XP_WEIGHT[gid] ?? 1)));    // произнести труднее, чем выбрать из двух
+    gain = Math.max(2, Math.round(gain * (XP_WEIGHT[gid] ?? 1) * (gid === "city" && typeof cityXpMult === "function" ? cityXpMult() : 1)));    // произнести труднее, чем выбрать из двух; «Город» — множитель способностей
     if(game.combo >= 3 && game.combo % 3 === 0) toast(`Комбо ×${game.combo}! +${gain} XP`);
     if(game.todayOk === GOAL){
       game.goals++; confetti();
@@ -3280,6 +3280,28 @@ function cityDraw(){
   const id = TESTMODE && pool.includes(window.__card) ? window.__card : TESTMODE ? pool[0] : pool[Math.floor(Math.random() * pool.length)];
   city.deckUsed.push(id); citySave(); cityStart(id); return id;
 }
+// Способности игрока (спек §8а): растут от подсчитанных успехов; каждый уровень меняет игру в сторону реальности и даёт больше опыта
+const SKILL_LVLS = [3, 8, 15, 25, 40];
+const SKILLS = {
+  kulak:    { name:"Kulak",    ru:"слух",       lv:["", "первые успехи", "собеседники говорят естественнее", "в числах на слух — четыре варианта", "говорят ещё быстрее", "опыт за «Город» ×1,25"] },
+  dil:      { name:"Dil",      ru:"речь",       lv:["", "первые успехи", "собеседник ждёт чище: порог 75", "подсказка выцветает быстрее при 90+", "порог 80", "опыт за «Город» ×1,25"] },
+  pazarlik: { name:"Pazarlık", ru:"торг",       lv:["", "первые успехи", "продавцы уступают быстрее", "торг открыт у портного, парикмахера, на парковке", "встречная цена принимается ниже", "у пазарджи всегда «ikram»"] },
+  nezaket:  { name:"Nezaket",  ru:"вежливость", lv:["", "первые успехи", "с вами здороваются первыми", "терпение +1 во всех сценах", "перевод реплики не стоит терпения", "отношения растут вдвое быстрее"] },
+};
+const skillLvl = id => (city.skill[id] || {}).lvl || 0;
+function skillBump(id){
+  const sk = city.skill[id] || (city.skill[id] = { n:0, lvl:0 }); sk.n++;
+  const lvl = SKILL_LVLS.filter(t => sk.n >= t).length;
+  if(lvl > sk.lvl){ sk.lvl = lvl; if(ct) (ct.levelUps = ct.levelUps || []).push(id); else citySkillModal(id); }
+  citySave();
+}
+function citySkillModal(id){
+  const sk = SKILLS[id], lvl = skillLvl(id);
+  milestone({ ic:"Seviye!", title:`${sk.name} ${lvl}`, text:`Способность «${sk.ru}» выросла: ${sk.lv[lvl] || "первые успехи"}.`, primary:{ label:"Devam" } }, `${sk.name} ${lvl}: ${sk.lv[lvl] || ""}`);
+}
+const cityXpMult = () => (skillLvl("kulak") >= 5 ? 1.25 : 1) * (skillLvl("dil") >= 5 ? 1.25 : 1);
+const ctAcceptScore = () => skillLvl("dil") >= 4 ? 80 : skillLvl("dil") >= 2 ? 75 : 70;
+const npcRate = () => skillLvl("kulak") >= 4 ? 1.1 : skillLvl("kulak") >= 2 ? 1.0 : 0.9;
 // Утро: последствия вчерашнего (кот просит корм, промокли — могли простудиться)
 function cityMorning(){
   const plan = city.plan;
@@ -3324,7 +3346,7 @@ const SCENES = {
     start:"greet",
     fail:{ text:"Шофёр не понял, куда вам, и уехал с другим пассажиром. Вы доехали на метро: дольше и с пересадкой.", fx:{ min:45, money:-30 } },
     nodes:{
-      greet:{ npc:"Buyurun, nereye?", ru:"Пожалуйста, куда?", again:"Efendim? Nereye gideceğiz?", againRu:"Простите? Куда поедем?",
+      greet:{ npc:"Buyurun, nereye?", ru:"Пожалуйста, куда?", again:"Efendim? Nereye gideceğiz?", againRu:"Простите? Куда поедем?", greetAlt:"Merhaba komşu! Buyurun, nereye?", greetAltRu:"Здравствуйте, сосед! Пожалуйста, куда?",
         npcBy:{ sofor_hasan:"Nereye.", sofor_emre:"Abi nereye? Kısa yoldan mı gidelim?" }, againBy:{ sofor_hasan:"Hı?", sofor_emre:"Nereye abi?" },
         moves:[
           { key:["taksim"], say:["Taksim'e lütfen.", "Taksim Meydanı'na lütfen."], ru:"На Таксим, пожалуйста.", go:"where" },
@@ -3367,7 +3389,7 @@ const SCENES = {
     start:"greet",
     fail:{ text:"Хасан развёл руками: «Anlamadım, kusura bakma». Вы ушли без покупок; хлеб придётся искать в супермаркете — дальше и дороже.", fx:{ min:30, money:-160 } },
     nodes:{
-      greet:{ npc:"Hoş geldin komşu! Buyur.", ru:"Добро пожаловать, сосед! Слушаю.", again:"Buyur, ne lazım?", againRu:"Слушаю, что нужно?",
+      greet:{ npc:"Hoş geldin komşu! Buyur.", ru:"Добро пожаловать, сосед! Слушаю.", again:"Buyur, ne lazım?", againRu:"Слушаю, что нужно?", greetAlt:"Hoş geldin komşu, nasılsın? Buyur.", greetAltRu:"Добро пожаловать, сосед, как ты? Слушаю.",
         moves:[
           { key:["hoş bulduk", "hoşbulduk"], say:["Hoş bulduk!"], ru:"Рад быть здесь! (ответ на «hoş geldin»)", go:"list" },
           { key:["merhaba", "iyi günler", "selam", "günaydın", "kolay gelsin"], say:["Merhaba!"], ru:"Здравствуйте!", go:"list" },
@@ -3402,7 +3424,7 @@ const SCENES = {
     start:"greet",
     fail:{ text:"Мехмет так и не понял, в чём дело, и ушёл выносить мусор. Вечером вы мылись холодной водой.", fx:{ min:10, flag:"coldShower" } },
     nodes:{
-      greet:{ npc:"Buyurun?", ru:"Слушаю?", again:"Anlamadım. Bir sorun mu var?", againRu:"Не понял. Что-то случилось?",
+      greet:{ npc:"Buyurun?", ru:"Слушаю?", again:"Anlamadım. Bir sorun mu var?", againRu:"Не понял. Что-то случилось?", greetAlt:"Merhaba komşu, buyurun?", greetAltRu:"Здравствуйте, сосед, слушаю?",
         moves:[
           { key:["sıcak su", "su yok", "kombi", "çalışmıyor", "akmıyor", "sorun var"], say:["Sıcak su yok.", "Kombi çalışmıyor."], ru:"Нет горячей воды. / Котёл не работает.", go:"flat" },
           { key:["merhaba", "iyi günler", "kolay gelsin", "selam"], say:["Merhaba, kolay gelsin."], ru:"Здравствуйте, лёгкой работы.", go:"greet2", fx:{ rel:1 } },
@@ -3628,7 +3650,7 @@ const fmtMoney = n => `${n < 0 ? "−" : ""}${Math.abs(n)} ₺`;
 let ct = null;   // активная сцена: { id, scene, node, tries, patience, lines:[], ok, n, bought:Set, spent, startMin, change, revealed, resolved, pendingGo, phoned }
 const ctEl = id => $(id);
 function cityRes(){
-  const pat = ct ? ct.patience : 3, max = ct ? Math.max(pat, ct.scene.patience || (CHARS[ct.char] ? CHARS[ct.char].patience : 3)) : 3;
+  const pat = ct ? ct.patience : 3, max = ct ? Math.max(pat, (ct.scene.patience || (CHARS[ct.char] ? CHARS[ct.char].patience : 3)) + (skillLvl("nezaket") >= 3 ? 1 : 0)) : 3;
   ctEl("ctRes").innerHTML = `<span class="ct-money">${fmtMoney(city.money)}</span><span class="ct-time"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg>${fmtClock(city.min)}</span>`
     + (ct ? `<span class="ct-pat" aria-label="Терпение собеседника: ${pat} из ${max}" title="Терпение собеседника">${Array.from({ length:max }, (_, i) => `<i${i < pat ? ' class="on"' : ""}></i>`).join("")}</span>` : "");
 }
@@ -3709,7 +3731,7 @@ function cityTaxiAsk(){                                            // кнопк
 }
 function cityStart(id, opts){
   const scene = SCENES[id]; if(!scene) return;
-  const char = pickChar(scene), pat = scene.patience || (CHARS[char] ? CHARS[char].patience : 3), dest = opts && typeof opts.dest === "number" ? opts.dest : null;
+  const char = pickChar(scene), pat = (scene.patience || (CHARS[char] ? CHARS[char].patience : 3)) + (skillLvl("nezaket") >= 3 ? 1 : 0), dest = opts && typeof opts.dest === "number" ? opts.dest : null;
   ct = { id, scene, char, dest, taxiFrom:city.pos, node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
   const goal = dest !== null ? `Доехать до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}. Не переплатить.` : scene.goal;
   ctEl("ctGoal").textContent = "Цель: " + goal; ctEl("ctGoal").title = goal; ctEl("ctWho").textContent = ctWho();
@@ -3734,7 +3756,7 @@ function npcSay(text, onDone){
   let done = false; const once = () => { if(done) return; done = true; finish(); };
   setTimeout(() => {
     if(tok !== npcTok) return;
-    const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = .9;
+    const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = Math.max(ct && ct.scene.phone ? 1.0 : 0, npcRate());
     u.onend = once; u.onerror = once; speechSynthesis.speak(u);
     setTimeout(once, 1200 + Array.from(text).length * 150);     // телефон может не прислать onend
   }, busy ? 150 : 30);
@@ -3751,11 +3773,12 @@ function cityNode(id, replyHtml){
   const n0 = ct.scene.nodes[id]; if(!n0) return;
   if(n0.onlyChar && n0.onlyChar !== ct.char && n0.elseGo) return cityNode(n0.elseGo, replyHtml);      // узел только для этого персонажа (болтливый шофёр)
   const n = ctTaxiNode(id, n0);
-  ct.node = n; ct.nodeId = id; ct.tries = 0; ct.revealed = false; ct.resolved = false; ct.pendingGo = null; ct.polite = false; ct.pick = null; ct.peeked = false;
+  ct.node = n; ct.nodeId = id; ct.tries = 0; ct.revealed = false; ct.sawRu = false; ct.resolved = false; ct.pendingGo = null; ct.polite = false; ct.pick = null; ct.peeked = false;
   if(n.end) return cityEnd(n.end);
   ct.firstTime = !(city.seen || (city.seen = {}))[n.npc]; city.seen[n.npc] = 1;      // первую встречу с репликой переводим бесплатно
   const tr = ctEl("ctTr"), ru = ctEl("ctRu");
-  tr.textContent = ctNpc(n); tr.classList.add("veil"); ru.hidden = true; ru.textContent = n.ru;
+  const greet = skillLvl("nezaket") >= 2 && n.greetAlt;                                   // вас уже знают — здороваются первыми
+  tr.textContent = greet ? n.greetAlt : ctNpc(n); tr.classList.add("veil"); ru.hidden = true; ru.textContent = greet && n.greetAltRu ? n.greetAltRu : n.ru;
   ctEl("ctInitial").textContent = CHARS[ct.char] ? CHARS[ct.char].initial : ct.scene.initial;
   ctEl("ctLive").textContent = "";
   if(n.pay){
@@ -3769,7 +3792,7 @@ function cityNode(id, replyHtml){
   ctButtons(); ctEl("ctSpeak").disabled = true; ctEl("ctShow").disabled = true;
   city.min += 1; cityRes();
   clearTimeout(ct.timer); ct.timedOut = false;
-  npcSay(ctNpc(n), () => { if(ct && ct.node === n){ tr.classList.remove("veil"); ctButtons(); scheduleFit(); if(n.timed) ctTimed(n); } });
+  npcSay(tr.textContent, () => { if(ct && ct.node === n){ tr.classList.remove("veil"); ctButtons(); scheduleFit(); if(n.timed) ctTimed(n); } });
   scheduleFit();
 }
 // Узел на время («карманник»): микрофон открывается сам, за n.timed.sec секунд нужно сказать — иначе промах
@@ -3819,11 +3842,11 @@ function ctPeek(m, ear){          // открыть подсказку на ре
   if(mastery(m.say[0]) >= 2 && !ct.peeked){ ct.peeked = true; }
   if(!ear || ct.peeked) cityOptions();
 }
-function ctBump(line, allowed){ if(!allowed) return; (city.mastery || (city.mastery = {}))[line] = mastery(line) + 1; }
+function ctBump(line, allowed, big){ if(!allowed) return; (city.mastery || (city.mastery = {}))[line] = mastery(line) + (big ? 2 : 1); }
 function cityReveal(){   // перевод реплики: первая встреча — бесплатно, потом стоит одного терпения (один раз на реплику); без озвучки в браузере — бесплатно
   if(!ct || !ct.node || ct.node.end) return;
   ctEl("ctTr").classList.remove("veil");
-  if(ctEl("ctRu").hidden){ ctEl("ctRu").hidden = false; if(!ct.revealed && !ct.firstTime && (trVoices.length || trVoice)){ ct.revealed = true; ct.patience = Math.max(0, ct.patience - 1); cityRes(); } }
+  if(ctEl("ctRu").hidden){ ctEl("ctRu").hidden = false; ct.sawRu = true; if(!ct.revealed && !ct.firstTime && (trVoices.length || trVoice) && skillLvl("nezaket") < 4){ ct.revealed = true; ct.patience = Math.max(0, ct.patience - 1); cityRes(); } }
   scheduleFit();
 }
 function cityReplay(){ if(!ct || !ct.node || ct.node.end) return; ctEl("ctTr").classList.add("veil"); npcSay(ctNpc(ct.node), () => { if(ct) { ctEl("ctTr").classList.remove("veil"); ctButtons(); } }); }
@@ -3875,7 +3898,7 @@ function cityAnswer(alts){
     const line = pick.say[0], ps = pronScore(line.replace(/['’]/g, ""), alts), keyHit = pick.key.some(k => ctHas(heardN, k));   // Taksim'e → taksime: так пишет распознаватель
     if(pick.minScore){ const need = pick.minScore - (typeof skillLvl === "function" && skillLvl("dil") >= 3 ? 10 : 0);              // нужна уверенность: только оценка, ключевого слова мало
       return ps.score >= need ? cityAccept(pick, alts, polite, ps.score) : cityMiss(`Слабо: нужно не ниже ${need} из 100.`, ps); }
-    if(ps.score >= 70 || keyHit) return cityAccept(pick, alts, polite, ps.score);     // ключевые слова на месте — собеседник понял; оценка покажет, насколько чисто
+    if(ps.score >= ctAcceptScore() || keyHit) return cityAccept(pick, alts, polite, ps.score);     // ключевые слова на месте — собеседник понял; порог по оценке растёт с Dil
     return cityMiss(null, ps);
   }
   if(n.shop){                                                                          // сказали своё в лавке: можно назвать несколько товаров разом
@@ -3905,7 +3928,8 @@ function cityAccept(m, alts, polite, score, names){
   ct.n++; ct.ok++; city.said++; city.ok++;
   if(polite && !ct.polite && !(m.fx && m.fx.rel)){ ct.polite = true; cityFx({ rel:1 }); }
   const liked = cityLikes(m, alts); if(liked) cityFx({ rel:liked });
-  ctBump(line, score >= 70 && !(ct.peeked && mastery(line) >= 2));          // реплика растёт в освоении, только если сказана чисто и без подглядывания
+  if(m.xp !== false){ if(score >= 90) skillBump("dil"); if(!ct.sawRu) skillBump("kulak"); if(polite || liked) skillBump("nezaket"); }   // способности растут от успехов
+  ctBump(line, score >= 70 && !(ct.peeked && mastery(line) >= 2), skillLvl("dil") >= 3 && score >= 90);   // реплика растёт в освоении, только если сказана чисто и без подглядывания
   if(m.xp !== false) count("city", 1);
   const lvl = mastery(line), grown = lvl >= 3 ? " Реплика освоена: дальше — по памяти." : lvl === 2 ? " В следующий раз — только первые буквы." : "";
   const head = `<div class="res-head">${scoreHtml(score, "Произношение")}<div class="res-body">`, tail = `</div></div>`;
@@ -3960,7 +3984,7 @@ function cityFx(fx){
   if(!fx) return;
   if(fx.money){ city.money += fx.money; if(fx.money < 0 && ct) ct.spent -= fx.money; }
   if(fx.min) city.min += fx.min;
-  if(fx.rel && ct && ct.char){ city.rel[ct.char] = (city.rel[ct.char] || 0) + fx.rel; }
+  if(fx.rel && ct && ct.char){ city.rel[ct.char] = (city.rel[ct.char] || 0) + fx.rel * (fx.rel > 0 && skillLvl("nezaket") >= 5 ? 2 : 1); }
   if(fx.flag){ (city.flags = city.flags || {})[fx.flag] = city.day; }
   if(fx.unflag && city.flags){ delete city.flags[fx.unflag]; }
   if(fx.move){ city.pos = (city.pos + fx.move) % BOARD.length; city.visited.push(city.pos); }
@@ -3983,13 +4007,14 @@ function cityEnd(end, failed){
   const learned = ct.lines.filter(l => l.ok && l.tr), missed = ct.lines.filter(l => !l.ok && l.tr);
   learned.forEach(l => memEnroll(l.tr, l.ru));                                   // сказанное в разговоре — в «Память», повторится по расписанию
   citySave();
-  const id = ct.id, ct0 = ct.char, dest = ct.dest, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title;
+  const id = ct.id, ct0 = ct.char, dest = ct.dest, levelUps = ct.levelUps, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title;
   if(dest !== null && kind !== "bad"){ city.pos = dest; city.roll = null; city.visited.push(dest); citySave(); }     // доехали — фишка на месте
   ct = null; cityRender();
   const stats = [["время", `${took} мин`], ["потрачено", `${spent} ₺`], ["реплик верно", `${learned.length}`]];
   showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: title + " — " + short, text: end.text + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
     stats, primary:{ label:"К делам", fn:() => { cityRender(); if(dest !== null && kind !== "bad") cityArrive(dest); } } });
   if(quiet) $("modalText").textContent += ` ${CHARS[ct0].name} оценил: ни одного переспроса.`;
+  (levelUps || []).forEach(citySkillModal);                                   // окна уровней — после итога сцены (очередь showModal)
 }
 function cityDayEnd(){
   const okN = city.done.filter(d => d.kind === "ok").length, spent = city.done.reduce((a, d) => a + d.spent, 0);

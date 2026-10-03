@@ -1534,6 +1534,33 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq([chat.node, chat.npc, chat.opts.length, chat.rel], ['chat', 'Bu trafik hiç bitmiyor ya.', 2, 2]); ok(/приятно/.test(r.res), r.res); eq(rel, 3);   // 2 — два «lütfen» (вежливость считается в каждой реплике), +1 за поддержанный разговор
     eq(r2, 'sofor_hasan'); eq(hasan[0], 'arrive'); eq(quiet, [4, true]);   // 3 вежливых реплики + 1 за тишину eq(first, 'eczaci'); ok(f1.next, f1.res); eq(relZ, 1); eq(errs, []);
   });
+  await test('Способности: счётчики (Dil ≥ 90, Kulak без перевода, Nezaket вежливость) и уровни по порогам 3/8/15/25/40; Dil 2 — порог 75, Dil 4 — 80; Nezaket 3 — терпение +1; Kulak 2 — rate 1.0; опыт ×1,25 на 5-м; окно уровня внутри сцены — после итога', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = [{ name:'A', lang:'tr-TR' }]; trVoice = trVoices[0]; MILESTONE_MODALS = true; game.xp = 200; });   // xp 200: уровень игры за сцену не вырастет — окна только у способностей
+    const r = await q.evaluate(async () => { const out = {};
+      out.lvls = SKILL_LVLS; out.ids = Object.keys(SKILLS);
+      city.skill = { dil:{ n:7, lvl:1 } }; skillBump('dil'); out.lvl = skillLvl('dil'); await new Promise(z => setTimeout(z, 50));
+      out.modal = [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent]; document.getElementById('modalPrimary').click();   // вне сцены — окно сразу
+      out.thr = [ctAcceptScore()]; city.skill.dil.lvl = 4; out.thr.push(ctAcceptScore()); city.skill.dil.lvl = 2;
+      city.skill.nezaket = { n:15, lvl:3 }; cityStart('kapici'); out.pat = ct.patience; cityLeave(); ct = null;
+      city.skill.kulak = { n:8, lvl:2 }; out.rate = npcRate();
+      city.skill.kulak.lvl = 5; city.skill.dil.lvl = 5; out.mult = cityXpMult();
+      city.skill = {}; window.__char = 'sofor'; cityStart('taxi'); return out; });
+    await ctPick(q, 0); const a = await ctSay(q, 'taksime lütfen');
+    const c1 = await q.evaluate(() => ({ dil: city.skill.dil && city.skill.dil.n, kulak: city.skill.kulak && city.skill.kulak.n, nez: city.skill.nezaket && city.skill.nezaket.n }));
+    await ctNext(q); await q.evaluate(() => { cityReveal(); });                               // посмотрели перевод — Kulak за эту реплику не растёт
+    await ctPick(q, 0); await ctSay(q, 'meydana lütfen');
+    const c2 = await q.evaluate(() => ({ kulak: city.skill.kulak.n, nez: city.skill.nezaket.n }));
+    // уровень во время сцены: окно — после итога сцены
+    await q.evaluate(() => { city.skill.dil = { n:2, lvl:0 }; }); await ctNext(q); await ctPick(q, 0); await ctSay(q, 'olur sorun değil');
+    const during = await q.evaluate(() => [document.getElementById('modal').hidden, city.skill.dil.lvl, ct.levelUps]);
+    await ctNext(q); await ctPick(q, 1); await ctSay(q, 'hı hı'); await ctNext(q); await q.click('.ct-note[data-v="200"]'); await q.waitForTimeout(40); await ctNext(q);
+    await ctPick(q, 1); await ctSay(q, 'teşekkürler iyi günler'); await ctNext(q); await q.waitForTimeout(80);
+    const after = await q.evaluate(async () => { const t1 = document.getElementById('modalTitle').textContent; document.getElementById('modalPrimary').click(); await new Promise(z => setTimeout(z, 250)); return [t1, document.getElementById('modalTitle').textContent]; });
+    const errs = q.errors; await q.context().close();
+    eq(r.lvls, [3, 8, 15, 25, 40]); eq(r.ids, ['kulak', 'dil', 'pazarlik', 'nezaket']); eq(r.lvl, 2); eq(r.modal, [false, 'Dil 2']); eq(r.thr, [75, 80]); eq(r.pat, 4); eq(r.rate, 1.0); eq(r.mult, 1.5625);
+    ok(a.next, a.res); eq(c1, { dil:1, kulak:1, nez:1 }); eq(c2, { kulak:1, nez:2 });
+    eq(during, [true, 1, ['dil']]); ok(/Такси до Таксима/.test(after[0]), after[0]); eq(after[1], 'Dil 1'); eq(errs, []);
+  });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
