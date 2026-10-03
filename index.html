@@ -619,7 +619,6 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-home{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0; width:100%}
 /* Поле-настолка: кольцо 7×7 из кнопок-клеток (зона нажатия ≥ 44px на 360px), внутри кольца — дела дня и кубик; срезки — пунктирные улицы под ним */
 .bd{position:relative; display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); grid-template-rows:repeat(9, minmax(44px, 1fr)); gap:3px; width:100%; flex:1 1 auto; min-height:calc(9 * 44px + 8 * 3px); max-width:440px; margin:0 auto}
-.bd-streets{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; fill:none; stroke:var(--line); stroke-width:.06; stroke-dasharray:.18 .14}
 .bd-cell{position:relative; min-width:0; min-height:0; padding:0 1px 3px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:0; cursor:default; overflow:hidden; white-space:nowrap}
 .bd-ic{position:absolute; left:50%; top:4px; width:62%; height:52%; transform:translateX(-50%); fill:none; stroke:var(--accent); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; opacity:.3; pointer-events:none}
 .bd-cell.event .bd-ic{stroke:var(--near)} .bd-cell.home .bd-ic{stroke:var(--bg); opacity:.45}
@@ -640,6 +639,16 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .bd-cell .bd-token{position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:var(--tulip); box-shadow:0 0 0 2px var(--surface)}
 .bd-cell.home .bd-token, .bd-cell.home .bd-pin{box-shadow:0 0 0 2px var(--ink)}
 .bd-inner{grid-area:2 / 2 / 9 / 7; display:flex; flex-direction:column; gap:calc(6px * var(--fit)); min-height:0; min-width:0; padding:calc(6px * var(--fit)) 4px; text-align:left; background:color-mix(in srgb, var(--bg) 88%, transparent); border-radius:12px}
+.ct-itabs{display:flex; gap:4px} .ct-itab{min-height:30px; padding:0 9px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); font:600 11.5px var(--body)}
+.ct-itab[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+.ct-chars{display:flex; flex-direction:column; gap:3px; min-height:0; overflow:auto}
+.ct-char{display:flex; align-items:center; gap:7px; min-height:34px; padding:2px 4px; border:0; background:none; color:var(--ink); text-align:left; border-radius:8px; font-size:max(11px, calc(12px * var(--fit)))}
+.ct-char:hover{background:var(--surface)} .ct-char i{flex:none; width:24px; height:24px; border-radius:50%; background:var(--accent); color:var(--on-accent); display:grid; place-items:center; font:700 12px var(--display); font-style:normal}
+.ct-char.lv0 i{background:var(--line); color:var(--ink)} .ct-char.lv2 i{background:var(--ink)}
+.ct-char b{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0} .ct-char-lvl{margin-left:auto; color:var(--muted); font-size:.9em; flex:none}
+.ct-skills{display:flex; flex-direction:column; gap:4px} .ct-skill{display:grid; grid-template-columns:minmax(0, 1.1fr) minmax(40px, 1fr) auto; align-items:center; gap:6px; font-size:max(11px, calc(12px * var(--fit)))} .ct-skill > span:first-child{color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ct-skill .bar{height:5px; border-radius:3px; background:var(--line); overflow:hidden} .ct-skill .bar i{display:block; height:100%; background:var(--accent)} .ct-skill b{min-width:1.2em; text-align:right}
+.pv-tile-btn{cursor:pointer; text-align:left; font:inherit; color:inherit} .pv-tile-btn:hover{border-color:var(--accent)}
 .ct-day{margin:0; font:700 max(13px, calc(15px * var(--fit)))/1.2 var(--display); text-align:left}
 .ct-tasks{display:flex; flex-direction:column; gap:3px; margin:0; padding:0; list-style:none; min-height:0; overflow:hidden}
 .ct-task{display:flex; align-items:baseline; gap:6px; text-align:left; font-size:max(11px, calc(12px * var(--fit))); line-height:1.25; color:var(--ink); min-width:0}
@@ -648,7 +657,8 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-task.done{color:var(--muted)} .ct-task.done.ok i{background:var(--ok)} .ct-task.done.near i{background:var(--near)} .ct-task.done.bad i{background:var(--bad)}
 .ct-dice{display:flex; align-items:center; gap:10px; margin-top:auto}
 .ct-roll{min-height:44px; padding:0 18px; flex:none}
-.ct-rolled{font:700 max(20px, calc(26px * var(--fit)))/1 var(--display); color:var(--accent); min-width:1.2em}
+.ct-rolled{min-width:44px; height:44px; display:inline-flex; align-items:center} .ct-rolled .die{width:40px; height:40px; fill:none; stroke:var(--accent); stroke-width:1.6} .ct-rolled .die circle{fill:var(--accent); stroke:none}
+.ct-rolled.rolling .die{animation:dieShake .14s ease-in-out infinite alternate} @keyframes dieShake{from{transform:rotate(-14deg) translateY(-2px)} to{transform:rotate(12deg) translateY(2px)}}
 .ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px}
 #ctDayEnd{width:100%; min-height:44px}
 .ct-intro{text-align:left; margin:0; font-size:11.5px; line-height:1.3; color:var(--muted)}
@@ -816,10 +826,14 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       <div class="ct-head"><span class="ct-place" id="ctPlace"></span><span class="ct-res" id="ctRes"></span></div>
       <div class="ct-home" id="ctHome">
         <div class="bd" id="ctBoard" role="group" aria-label="Квартал: клетки поля">
-          <svg class="bd-streets" viewBox="0 0 7 9" aria-hidden="true" preserveAspectRatio="none"><path d="M3.5 .5V8.5M.5 4.5H6.5"/></svg>
           <div class="bd-inner" id="ctInner">
+            <div class="ct-itabs" id="ctInnerTabs" role="group" aria-label="Внутри квартала">
+              <button class="ct-itab" id="ctTabTasks" aria-pressed="true">Дела</button><button class="ct-itab" id="ctTabPeople" aria-pressed="false">Люди</button><button class="ct-itab" id="ctTabSkills" aria-pressed="false">Умения</button>
+            </div>
             <p class="ct-day" id="ctDay"></p>
             <ul class="ct-tasks" id="ctTasks"></ul>
+            <div class="ct-chars" id="ctChars" hidden></div>
+            <div class="ct-skills" id="ctSkills" hidden></div>
             <div class="ct-dice" id="ctDice">
               <button class="btn primary ct-roll" id="ctRoll">Zar at</button><b class="ct-rolled" id="ctRolled" aria-live="polite"></b>
             </div>
@@ -905,6 +919,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       <div class="pv-tiles">
         <div class="pv-tile"><span>Цель дня</span><b id="gbGoalTxt">0 / 20</b><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
         <div class="pv-tile"><span>Память</span><b id="gbMem">0</b><span id="gbMemSub">фраз прочно</span></div>
+        <button class="pv-tile pv-tile-btn" id="gbCityTile" type="button"><span>Город</span><b id="gbCity">день 1</b><span id="gbCitySub"></span></button>
         <div class="pv-tile"><span>Рекорд блица</span><b id="gbBlitz">0</b><span id="gbBlitzSub">фраз за минуту</span></div>
       </div>
       <div class="pv-quest" id="gbQuest"><span class="pv-sub">Задание дня · +50 XP</span><b id="gbQuestTxt"></b></div>
@@ -1915,6 +1930,8 @@ function renderGame(){
   const part = Math.min(1, Math.max(0, (game.xp - prev) / (next - prev)));
   $("gbLevelRing").style.strokeDashoffset = 263.9 * (1 - part); $("gbLevel2").textContent = L;
   $("gbBlitz").textContent = game.blitzBestPh || 0;
+  if(typeof city !== "undefined" && city){ const okN = Object.values(city.played || {}).reduce((a, p) => a + (p.ok || 0), 0), n = Object.values(city.played || {}).reduce((a, p) => a + (p.n || 0), 0);
+    $("gbCity").textContent = `день ${city.day} · неделя ${Math.ceil(city.day / 7)}`; $("gbCitySub").textContent = `дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}`; }
   { const m = memStats(); $("gbMem").textContent = m.strong; $("gbMemSub").textContent = `прочно (3+ нед.) · всего ${m.total} · сегодня ${m.today}`; }
   $("gbBlitzSub").textContent = "фраз за минуту";
   $("gbFreeze").textContent = game.freezes;
@@ -2069,6 +2086,8 @@ const BADGES = [
   { id:"strong",  ic:"21д",   tier:3, t:"Прочная память", d:"20 фраз держатся в памяти 3+ недели",  v:() => memStats().strong, n:20 },
   { id:"level5",  ic:"6",     tier:3, t:"Стамбулец",      d:"Достичь 6-го уровня",                  v:g => levelOf(g.xp), n:6 },
   { id:"lesson10",ic:"×10",   tier:3, t:"Прилежный",      d:"Пройти 10 уроков",                     v:g => g.lessons, n:10 },
+  { id:"hafta",   ic:"7g",    tier:2, t:"Hafta",          d:"Прожить неделю в квартале",            v:() => typeof city !== "undefined" ? city.days : 0, n:7 },
+  { id:"komsu",   ic:"6+",    tier:2, t:"Komşu",          d:"Стать своим для кого-то в квартале (отношения 6)", v:() => typeof city !== "undefined" ? Math.max(0, ...Object.values(city.rel || {})) : 0, n:6 },
 ];
 BADGES.forEach(b => b.ok = (g, s) => (b.v(g, s) || 0) >= b.n);
 const TIER_NAME = ["", "обычное", "редкое", "легендарное"];
@@ -3224,7 +3243,7 @@ const BOARD = [
   { id:"meydan",    kind:"place", title:"Площадь",           short:"Meydan",  ru:"площадь",    ic:"b-meydan",    dat:"Meydana",        gen:"площади", scenes:["muhtar", "noter", "doktor", "emlakci"] },
   { id:"q27",       kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
 ];
-const SHORTCUTS = [[3, 17, 3], [10, 24, 2]];   // улицы через квартал: [откуда, куда, шагов] — вертикальная (ряд 3) и горизонтальная (строка 4)
+const SHORTCUTS = [];                        // срезок нет (пользователь 21:53: с улицами через квартал подсветка «захватывала противоположную сторону»); ходим по кольцу в обе стороны
 const STEP_MIN = 10;                         // минут на клетку
 const DAY_END = 21 * 60;
 const BOARD_COLS = 7, BOARD_ROWS = 9;        // кольцо 28 клеток по периметру 7×9: сверху 7, справа 8, снизу 6, слева 7
@@ -3643,7 +3662,7 @@ function cityNormalize(){
   const fresh = !city || !Object.keys(city).length, ver = fresh ? 2 : city.ver;   // версия смотрится ДО слияния с CITY_START (там уже ver:2); новая игра — сразу v2
   city = Object.assign({}, CITY_START, city || {}); city.ver = ver;
   const obj = k => { if(!city[k] || typeof city[k] !== "object" || Array.isArray(city[k])) city[k] = {}; }, arr = k => { if(!Array.isArray(city[k])) city[k] = []; };
-  ["rel", "mastery", "seen", "flags", "played", "skill"].forEach(obj); ["done", "carry", "todaySaid"].forEach(arr);
+  ["rel", "mastery", "seen", "flags", "played", "skill", "met"].forEach(obj); ["done", "carry", "todaySaid"].forEach(arr);
   if(typeof city.debt !== "number") city.debt = 0; if(typeof city.haggleWins !== "number") city.haggleWins = 0;
   if(!Array.isArray(city.visited)) city.visited = []; if(!Array.isArray(city.deckUsed)) city.deckUsed = []; if(!Array.isArray(city.prevPlan)) city.prevPlan = [];
   if(!Array.isArray(city.plan)) city.plan = cityPlanFor(city.day);
@@ -3701,18 +3720,67 @@ function cityBoard(){
   ctEl("ctTasks").innerHTML = plan.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id), i = cellOfScene(id), op = cityOpenNow(id), dist = i < 0 ? 0 : boardDist(city.pos, i);
     const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? "вы здесь" : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
     return `<li class="ct-task${d ? " done " + d.kind : !op.open ? " closed" : ""}" data-scene="${id}"><i aria-hidden="true"></i><b>${esc(s.title)}</b><span>${where}</span></li>`; }).join("");
+  cityInnerTab(cityTab); ctEl("ctChars").innerHTML = cityCharsHtml(); ctEl("ctSkills").innerHTML = citySkillsHtml();
+  ctEl("ctChars").querySelectorAll(".ct-char").forEach(b => b.onclick = () => openChar(b.dataset.char));
   ctEl("ctDice").hidden = allDone; ctEl("ctHomeBtn").hidden = allDone; ctEl("ctTaxi").hidden = allDone || !!city.roll;
   let de = ctEl("ctDayEnd"); if(allDone && !de){ de = document.createElement("button"); de.className = "btn primary big"; de.id = "ctDayEnd"; de.textContent = "Итоги дня"; de.onclick = cityDayEnd; ctEl("ctInner").insertBefore(de, ctEl("ctHomeBtn").parentElement); }
   else if(!allDone && de) de.remove();
-  ctEl("ctRoll").disabled = !!city.roll || city.min >= DAY_END; ctEl("ctRolled").textContent = city.roll ? String(city.roll) : "";
+  ctEl("ctRoll").disabled = !!city.roll || rolling || city.min >= DAY_END; ctEl("ctRolled").innerHTML = city.roll ? dieSvg(city.roll) : ""; ctEl("ctRolled").dataset.n = city.roll ? String(city.roll) : "";
+  ctEl("ctRolled").setAttribute("aria-label", city.roll ? `Выпало ${city.roll}` : "");
   ctEl("ctIntro").textContent = city.roll ? `Выпало ${city.roll}: нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`
     : city.days || city.visited.length ? `Отношения: ${Object.entries(city.rel).filter(([, v]) => v).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} ${v > 0 ? "+" : ""}${v}`).join(", ") || "пока ни с кем"}`
     : "Вы переехали в стамбульский квартал. Бросайте кубик, ходите по клеткам, говорите с людьми голосом — они отвечают и реагируют. Ошибки стоят денег и времени.";
 }
+// Вкладки внутри кольца: дела дня · люди (персонажи с уровнем отношений) · умения (способности)
+let cityTab = (() => { try { return ["tasks", "people", "skills"].includes(localStorage.getItem("soyle-city-tab")) ? localStorage.getItem("soyle-city-tab") : "tasks"; } catch(e){ return "tasks"; } })();
+function cityInnerTab(t){
+  cityTab = t; try { localStorage.setItem("soyle-city-tab", t); } catch(e){}
+  ctEl("ctTabTasks").setAttribute("aria-pressed", t === "tasks"); ctEl("ctTabPeople").setAttribute("aria-pressed", t === "people"); ctEl("ctTabSkills").setAttribute("aria-pressed", t === "skills");
+  ctEl("ctDay").hidden = t !== "tasks"; ctEl("ctTasks").hidden = t !== "tasks"; ctEl("ctChars").hidden = t !== "people"; ctEl("ctSkills").hidden = t !== "skills"; ctEl("ctIntro").hidden = t !== "tasks";
+}
+const relLevel = v => v >= 6 ? 2 : v >= 3 ? 1 : 0, REL_NAME = ["", "знакомый", "свой"];
+const metChars = () => Object.keys(CHARS).filter(c => city.rel[c] !== undefined || (city.met || {})[c]).sort((a, b) => (city.rel[b] || 0) - (city.rel[a] || 0));
+function cityCharsHtml(){
+  const list = metChars(); if(!list.length) return `<p class="hint" style="margin:0">Пока никого не встретили. Поговорите с кем-нибудь в квартале.</p>`;
+  return list.map(c => { const v = city.rel[c] || 0, lv = relLevel(v); return `<button class="ct-char lv${lv}" data-char="${c}"><i aria-hidden="true">${esc(CHARS[c].initial)}</i><b>${esc(CHARS[c].name)}</b><span class="ct-char-lvl">${REL_NAME[lv] || (v ? `+${v}` : "")}</span></button>`; }).join("");
+}
+function citySkillsHtml(){
+  return Object.entries(SKILLS).map(([id, sk]) => { const n = (city.skill[id] || {}).n || 0, lvl = skillLvl(id), next = SKILL_LVLS[lvl] || SKILL_LVLS[SKILL_LVLS.length - 1], pct = lvl >= 5 ? 100 : Math.round(n / next * 100);
+    return `<div class="ct-skill" data-skill="${id}"><span>${esc(sk.name)} · ${esc(sk.ru)}</span><span class="bar" aria-label="${n} из ${next}"><i style="width:${pct}%"></i></span><b>${lvl}</b></div>`; }).join("");
+}
+function openChar(id){
+  const ch = CHARS[id]; if(!ch) return; const v = city.rel[id] || 0, lv = relLevel(v);
+  const where = Object.keys(city.played).filter(sid => SCENES[sid] && (SCENES[sid].char === id || (SCENES[sid].pool || []).includes(id))).map(sid => SCENES[sid].title);   // где бывает этот человек
+  const next = lv === 2 ? "Вы для него свой." : `До «${REL_NAME[lv + 1]}» ещё ${(lv === 0 ? 3 : 6) - v}.`;
+  showModal({ ic:ch.initial, title:ch.name, text:`${ch.trait} ${where.length ? "Встречали: " + where.join(", ") + "." : "Пока не встречали."} Отношения: ${v > 0 ? "+" + v : v}${lv ? " — " + REL_NAME[lv] : ""}. ${next}`, primary:{ label:"Закрыть", fn:cityRender } });
+}
+function openCityStats(){
+  const total = Object.keys(SCENES).filter(id => !SCENES[id].event).length, played = Object.keys(city.played).filter(id => SCENES[id] && !SCENES[id].event).length;
+  const met = metChars(), own = met.filter(c => relLevel(city.rel[c] || 0) === 2).length;
+  showModal({ ic:"Mahalle", title:`Город: день ${city.day}, неделя ${cityWeek()}`, text:`Сцен пройдено: ${played} из ${total}. Знакомых: ${met.length}, из них свои: ${own}. Долг: ${city.debt} ₺.`,
+    stats:[["₺", city.money], ["дней прожито", city.days], ["фраз сказано", city.said]], primary:{ label:"Закрыть" } });
+}
+// Кубик: грань с точками; при броске — короткая «тряска» случайных граней и звук катящегося кубика (WebAudio, без файлов)
+const DIE_PIPS = { 1:[[12, 12]], 2:[[7, 7], [17, 17]], 3:[[7, 7], [12, 12], [17, 17]], 4:[[7, 7], [17, 7], [7, 17], [17, 17]], 5:[[7, 7], [17, 7], [12, 12], [7, 17], [17, 17]], 6:[[7, 6], [17, 6], [7, 12], [17, 12], [7, 18], [17, 18]] };
+const dieSvg = n => `<svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/>${(DIE_PIPS[n] || []).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.1"/>`).join("")}</svg>`;
+let rolling = false;
+function diceSound(){
+  try { const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; const ac = diceSound.ac || (diceSound.ac = new AC()); if(ac.state === "suspended") ac.resume();
+    const t0 = ac.currentTime; let t = t0;
+    for(let i = 0; i < 7; i++){ const len = 0.03, buf = ac.createBuffer(1, Math.ceil(ac.sampleRate * len), ac.sampleRate), d = buf.getChannelData(0);
+      for(let k = 0; k < d.length; k++) d[k] = (Math.random() * 2 - 1) * (1 - k / d.length);
+      const src = ac.createBufferSource(), g = ac.createGain(), f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1800 + Math.random() * 1200; g.gain.value = 0.35 - i * 0.03;
+      src.buffer = buf; src.connect(f); f.connect(g); g.connect(ac.destination); src.start(t); t += 0.06 + i * 0.025; } } catch(e){}
+}
 function cityRoll(){
-  if(ct || city.roll || city.min >= DAY_END) return;
-  city.roll = TESTMODE ? Math.max(1, Math.min(6, +window.__dice || 1)) : 1 + Math.floor(Math.random() * 6);
-  citySave(); cityRender();
+  if(ct || city.roll || rolling || city.min >= DAY_END) return;
+  const n = TESTMODE ? Math.max(1, Math.min(6, +window.__dice || 1)) : 1 + Math.floor(Math.random() * 6);
+  const done = () => { rolling = false; city.roll = n; citySave(); cityRender(); };
+  if(TESTMODE) return done();
+  rolling = true; ctEl("ctRoll").disabled = true; diceSound();
+  const el = ctEl("ctRolled"), still = matchMedia("(prefers-reduced-motion: reduce)").matches; el.classList.toggle("rolling", !still);
+  let k = 0; const tick = () => { if(k++ < (still ? 1 : 9)){ const f = 1 + Math.floor(Math.random() * 6); el.innerHTML = dieSvg(f); el.dataset.n = ""; setTimeout(tick, 70); } else { el.classList.remove("rolling"); done(); } };
+  tick();
 }
 function cityMoveTo(i){
   if(ct || !city.roll || !boardReach(city.pos, city.roll).includes(i)) return;
@@ -3753,6 +3821,7 @@ function cityTaxiAsk(){                                            // кнопк
 function cityStart(id, opts){
   const scene = SCENES[id]; if(!scene) return;
   const char = pickChar(scene), pat = (scene.patience || (CHARS[char] ? CHARS[char].patience : 3)) + (skillLvl("nezaket") >= 3 ? 1 : 0), dest = opts && typeof opts.dest === "number" ? opts.dest : null;
+  if(char) (city.met || (city.met = {}))[char] = city.day;
   ct = { id, scene, char, dest, taxiFrom:city.pos, rel0:(city.rel[char] || 0), node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
   const goal = dest !== null ? `Доехать до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}. Не переплатить.` : scene.goal;
   ctEl("ctGoal").textContent = "Цель: " + goal; ctEl("ctGoal").title = goal; ctEl("ctWho").textContent = ctWho();
@@ -3869,7 +3938,7 @@ function cityOptions(){
   const n = ct.node, box = ctEl("ctOpts"); if(!n || n.end || n.pay){ box.hidden = true; box.innerHTML = ""; return; }
   const list = ctMoves(n); ct.opts = list;
   const card = (m, i, on) => `<div class="ct-opt${on ? " on" : ""}" role="group"><button class="ct-opt-main" data-i="${i}" aria-pressed="${on}"><span class="ct-opt-ru">${esc(m.ru)}</span>${on ? ctLineHtml(m) : ""}</button>${on ? `<button class="ct-ear" data-ear="${i}" aria-label="Послушать, как это звучит (синтез)"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg></button>` : ""}</div>`;
-  const pi = list.indexOf(ct.pick);
+  const pi = ct.pick ? list.findIndex(m => m === ct.pick || (m.say[0] === ct.pick.say[0] && m.ru === ct.pick.ru)) : -1; if(pi >= 0) ct.pick = list[pi];   // ходы лавки создаются заново при каждом показе — ищем по тексту (было: карточка не раскрывалась, турецкий не показывался)
   box.innerHTML = pi >= 0 ? card(list[pi], pi, true) + (list.length > 1 ? `<button class="linkbtn ct-other" id="ctOther">другой ответ (${list.length - 1})</button>` : "") : list.map((m, i) => card(m, i, false)).join("");
   box.hidden = !list.length;
   box.querySelectorAll(".ct-opt-main").forEach(b => b.onclick = () => { const m = list[+b.dataset.i];
@@ -4068,6 +4137,7 @@ function cityEnd(end, failed){
   const kind = end.kind || "ok", short = kind === "ok" ? "получилось" : kind === "near" ? "так себе" : "не вышло";
   const took = city.min - ct.startMin, spent = ct.spent;
   if(!ct.scene.event) city.done = city.done.filter(d => d.id !== ct.id).concat([{ id:ct.id, kind, short, ok:ct.ok, n:ct.n, took, spent }]);   // событие — не дело дня
+  { const pl = city.played[ct.id] || (city.played[ct.id] = { n:0, ok:0, last:0 }); pl.n++; if(kind === "ok") pl.ok++; pl.last = city.day; }
   const learned = ct.lines.filter(l => l.ok && l.tr), missed = ct.lines.filter(l => !l.ok && l.tr);
   learned.forEach(l => memEnroll(l.tr, l.ru));                                   // сказанное в разговоре — в «Память», повторится по расписанию
   citySave();
@@ -4100,6 +4170,8 @@ ctEl("ctReplay").onclick = cityReplay;
 ctEl("ctTr").onclick = cityReveal;
 ctEl("ctBack").onclick = () => { if(!ct) return; cityLeave(); ct = null; cityRender(); };
 ctEl("ctRoll").onclick = cityRoll;
+ctEl("ctTabTasks").onclick = () => { cityInnerTab("tasks"); scheduleFit(); }; ctEl("ctTabPeople").onclick = () => { cityInnerTab("people"); scheduleFit(); }; ctEl("ctTabSkills").onclick = () => { cityInnerTab("skills"); scheduleFit(); };
+$("gbCityTile").onclick = openCityStats;
 ctEl("ctHomeBtn").onclick = cityGoHome;
 ctEl("ctTaxi").onclick = cityTaxiAsk;
 // ---------- слово во фразе: нажатие — произношение и перевод этого слова в контексте фразы ----------

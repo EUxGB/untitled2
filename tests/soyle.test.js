@@ -681,7 +681,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('кольцо уровня и достижения-жетоны без эмодзи', async () => {
     const r = await p.evaluate(() => { game.xp = 125; renderGame(); renderBadges(); const off = parseFloat(document.getElementById('gbLevelRing').style.strokeDashoffset);
       return [document.getElementById('gbLevel2').textContent, off > 100 && off < 200, document.querySelectorAll('#badgeGrid .badge').length, BADGES.every(b => !/\p{Extended_Pictographic}/u.test(b.ic))]; });
-    eq(r, ['2', true, 20, true]);
+    eq(r, ['2', true, 22, true]);
   });
 
   console.log('«Память»: вспоминание (эффект тестирования) + FSRS-6');
@@ -1329,6 +1329,17 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(await q.evaluate(() => [document.getElementById('modalTitle').textContent, city.money, city.rel.bakkal, city.flags && city.flags.bakkalFriend]), ['Bakkal — лавка у дома — получилось', 190, 4, 1]);   // +1 «hoş bulduk», +1 «lütfen», +2 «kolay gelsin»
     const errs = q.errors; await q.context().close(); eq(errs, []);
   });
+  await test('Город: карточка товара в лавке раскрывается — турецкий с чтением виден и значок звука озвучивает (жалоба: «Большой, пожалуйста» не показывал турецкий и не озвучивал)', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = [{ name:'A', lang:'tr-TR' }]; trVoice = trVoices[0]; window.__spoken = []; city.flags = { kedi:1 }; cityStart('mama'); });
+    await q.waitForTimeout(150); await ctPick(q, 0); await ctSay(q, 'kedi maması var mı'); await ctNext(q); await q.waitForTimeout(150);
+    const before = await q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent));
+    await ctPick(q, 0);
+    const r = await q.evaluate(() => { const on = document.querySelector('#ctOpts .ct-opt.on'); return { on: !!on, tr: on && on.querySelector('.ct-say') && on.querySelector('.ct-say').textContent, read: on && on.querySelector('.ct-read') && on.querySelector('.ct-read').textContent, ear: !!document.querySelector('#ctOpts [data-ear]') }; });
+    await q.click('#ctOpts [data-ear]'); await q.waitForTimeout(80);
+    const spoken = await q.evaluate(() => window.__spoken.slice(-1)[0]);
+    const errs = q.errors; await q.context().close();
+    eq(before[0], 'Большой, пожалуйста.'); eq([r.on, r.tr, r.ear], [true, 'Büyük olanı lütfen.', true]); ok(/бюйюк/.test(r.read || ''), r.read); eq(spoken, 'Büyük olanı lütfen.'); eq(errs, []);
+  });
   await test('Город: bakkal — «в долг» незнакомому не дают: развилка по смыслу → «тогда не надо» = концовка «так себе» (−60 ₺ супермаркет, +20 мин); дополнительный ход в лавке не ломает список покупок', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; });
     await q.evaluate(() => cityStart('bakkal')); await q.waitForTimeout(80);
@@ -1412,13 +1423,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.pool, ['sofor_hasan', 'Хасан-амджа', 'Nereye.', 2, 'H']); eq(r.def, ['sofor', 'Buyurun, nereye?']); eq(errs, []);
   });
   console.log('«Город»: поле-настолка (кубик, клетки, визит, домой, такси)');
-  await test('Поле: 28 клеток кольцом 7×9, две улицы-срезки, расстояния в обе стороны; бросок подсвечивает клетки ≤ N, остановка раньше, шаг 10 мин; место с делом — сцена, без дела — «Зайти?»; бросок сохраняется; «Eve dön»', async () => {
+  await test('Поле: 28 клеток кольцом 7×9, расстояния в обе стороны (без срезок), кубик с точками; бросок подсвечивает клетки ≤ N, остановка раньше, шаг 10 мин; место с делом — сцена, без дела — «Зайти?»; бросок сохраняется; «Eve dön»', async () => {
     const q = await openCity();
     const r = await q.evaluate(() => { const out = {};
       out.n = BOARD.length; out.events = BOARD.filter(b => b.kind === 'event').length; out.home = [BOARD[0].kind, city.pos];
-      out.dist = [boardDist(0, 27), boardDist(0, 14), boardDist(3, 17), boardDist(10, 24), boardDist(2, 11)];
+      out.dist = [boardDist(0, 27), boardDist(0, 14), boardDist(3, 17), boardDist(10, 24), boardDist(2, 11)];   // без срезок: кольцо в обе стороны
       window.__dice = 3; cityRoll(); out.reach = boardReach(0, 3).sort((a, b) => a - b); out.rollBtn = document.getElementById('ctRoll').disabled;
-      out.lit = document.querySelectorAll('.bd-cell.reach').length; out.savedRoll = JSON.parse(localStorage.getItem('soyle-city')).roll; out.rolled = document.getElementById('ctRolled').textContent;
+      out.lit = document.querySelectorAll('.bd-cell.reach').length; out.savedRoll = JSON.parse(localStorage.getItem('soyle-city')).roll; out.rolled = document.getElementById('ctRolled').dataset.n; out.pips = document.querySelectorAll('#ctRolled .die circle').length;
       window.__dice = 6; cityRoll(); out.secondRoll = city.roll;                                   // второй бросок без хода невозможен
       cityMoveTo(2); out.afterMove = [city.pos, city.min, city.roll, !!ct && ct.id, document.querySelectorAll('.bd-cell.reach').length];   // bakkal — дело дня → сцена
       return out; });
@@ -1426,8 +1437,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return { modal: document.getElementById('modalTitle').textContent, pos: city.pos, hidden: document.getElementById('modal').hidden }; });   // bakkal без дела → «Зайти?»
     const r3 = await q.evaluate(() => { document.getElementById('modalSecondary').click(); city.pos = 14; city.min = 20 * 60; cityGoHome(); return { pos: city.pos, min: city.min, modal: document.getElementById('modalTitle').textContent }; });
     const errs = q.errors; await q.context().close();
-    eq([r.n, r.events, r.home], [28, 7, ['home', 0]]); eq(r.dist, [1, 9, 3, 2, 9]); eq(r.reach, [1, 2, 3, 25, 26, 27]); eq([r.rollBtn, r.lit, r.savedRoll, r.rolled, r.secondRoll], [true, 6, 3, '3', 3]);
-    eq(r.afterMove, [2, 540 + 20 + 1, null, 'bakkal', 0]);   // +1 мин — реплика собеседника eq(r2, { modal:'Bakkal — зайти?', pos:2, hidden:false }); eq(r3, { pos:0, min: 20 * 60 + 90, modal:'День 1 прожит' });   // 14 → 0: кольцом вперёд 14, через улицу 10→24 — 10, кольцом назад — 9 шагов eq(errs, []);
+    eq([r.n, r.events, r.home], [28, 7, ['home', 0]]); eq(r.dist, [1, 14, 14, 14, 9]); eq(r.reach, [1, 2, 3, 25, 26, 27]); eq([r.rollBtn, r.lit, r.savedRoll, r.rolled, r.pips, r.secondRoll], [true, 6, 3, '3', 3, 3]);
+    eq(r.afterMove, [2, 540 + 20 + 1, null, 'bakkal', 0]);   // +1 мин — реплика собеседника eq(r2, { modal:'Bakkal — зайти?', pos:2, hidden:false }); eq(r3, { pos:0, min: 20 * 60 + 140, modal:'День 1 прожит' });   // 14 → 0: 14 шагов по кольцу eq(errs, []);
   });
   await test('Поле: клетка «?» тянет карту; дом при всех сделанных делах — итоги дня; 21:00 — день заканчивается сам; такси довозит до клетки (цена по расстоянию, числом на слух)', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; });
@@ -1443,11 +1454,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const node = await q.evaluate(() => ct.nodeId); await ctPick(q, 0); await ctSay(q, 'olur sorun değil'); await ctNext(q);
     await ctPick(q, 1); await ctSay(q, 'hı hı'); await ctNext(q);                                                     // болтливый Али: разговор о пробках
     const pay = await q.evaluate(() => [ct.nodeId, ct.node.pay.price, document.getElementById('ctTr').textContent]);
-    await q.click('.ct-note[data-v="200"]'); await q.waitForTimeout(40); await ctNext(q); await ctPick(q, 1); await ctSay(q, 'teşekkürler iyi günler'); await ctNext(q); await q.waitForTimeout(80);
+    await q.click('.ct-note[data-v="500"]'); await q.waitForTimeout(40); await ctNext(q); await ctPick(q, 1); await ctSay(q, 'teşekkürler iyi günler'); await ctNext(q); await q.waitForTimeout(80);
     const end = await q.evaluate(() => { const t = document.getElementById('modalTitle').textContent; document.getElementById('modalPrimary').click(); return [t, city.pos, document.getElementById('modalTitle').textContent]; });
     const errs = q.errors; await q.context().close();
     eq(r.event, [3, true, true]); eq(r.homeDone, 'День 1 прожит'); eq(r.late, [true, 0, 'День 1 прожит']);
-    eq(r.taxi, ['taxi', 11, 'До аптеки, пожалуйста.']); ok(a.next, a.res); eq(node, 'traffic'); eq(pay, ['arrive', 170, 'Geldik. Yüz yetmiş lira.']);
+    eq(r.taxi, ['taxi', 11, 'До аптеки, пожалуйста.']); ok(a.next, a.res); eq(node, 'traffic'); eq(pay, ['arrive', 210, 'Geldik. İki yüz on lira.']);   // 0 → 11: 11 шагов, 100 + 10×11
     eq(end, ['Такси до аптеки — получилось', 11, 'Аптека — зайти?']); eq(errs, []);
   });
   await test('Колода: клетка «?» тянет карту (без повтора в день, опасная не первая в день 1, с условием when); кот → флаг и утреннее дело «mama»; собака → минимальная оценка, обход +20, укус; карманник — 5 секунд; дождь — зонт или wet → утром аптека; не тот долмуш — унесло на 6 клеток', async () => {
@@ -1591,7 +1602,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await q.evaluate(() => { const out = {};
       city.rel = { sofor:3 }; cityStart('taxi'); out.greet = [ctNodeFor('greet').npc, ctMoves(ct.node)[0].say[0], ctMoves(ct.node)[0].go]; cityLeave(); ct = null;
       city.rel = { sofor:6 }; cityStart('taxi'); cityNode('arrive'); out.arrive = [ct.node.pay.price, document.getElementById('ctTr').textContent]; cityLeave(); ct = null;
-      city.rel = { sofor:6 }; cityTaxiTo(11); cityNode('arrive'); out.taxiTo = ct.node.pay.price; cityLeave(); ct = null;          // 170 → 150 (10% вниз до 5)
+      city.rel = { sofor:6 }; cityTaxiTo(11); cityNode('arrive'); out.taxiTo = ct.node.pay.price; cityLeave(); ct = null;          // 210 → 185 (10% вниз, кратно 5)
       city.rel = { bakkal:3 }; window.__char = 'bakkal'; cityStart('bakkal'); out.none = ctNodeFor('list').none.npc; cityLeave(); ct = null;
       city.rel = { bakkal:6 }; city.money = 50; cityStart('bakkal'); cityNode('price'); out.credit = [ct.resolved, city.debt, city.money, document.getElementById('ctTr').textContent, document.getElementById('modal').hidden]; cityLeave(); ct = null;
       city.rel = { bakkal:6 }; city.money = 500; city.debt = 0; cityStart('bakkal'); out.veresiye = ctNodeFor('veresiye').npc; cityLeave(); ct = null;
@@ -1599,7 +1610,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       city.rel = {}; cityStart('kapici'); out.when0 = ctNodeFor('when').npc; cityLeave(); ct = null;
       return out; });
     const errs = q.errors; await q.context().close();
-    eq(r.greet, ['Her zamanki yere mi?', "Evet, Taksim'e.", 'traffic']); eq(r.arrive, [160, 'Sana yüz altmış olsun.']); eq(r.taxiTo, 150);
+    eq(r.greet, ['Her zamanki yere mi?', "Evet, Taksim'e.", 'traffic']); eq(r.arrive, [160, 'Sana yüz altmış olsun.']); eq(r.taxiTo, 185);
     eq(r.none, 'Senin için her zaman var, komşu. Başka?'); eq(r.credit, [true, 60, 0, 'Sonra ödersin, komşu.', true]); eq(r.veresiye, 'Tabii komşu, yazıyorum. Sonra ödersin.');
     eq(r.when, ['Tamam komşu, bir saat sonra bakarım.', ['fixed']]); eq(r.when0, 'Bugün bakamam. Yarın sabah gelirim, olur mu?'); eq(errs, []);
   });
@@ -1627,17 +1638,40 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(m1[0], 'memory'); ok(said.includes(m1[1]), 'первая карточка: ' + m1[1]); eq([...seen].sort(), said.slice().sort());
     eq(end, ['city', null, 2]); eq(empty, 'Новый день'); eq(errs, []);
   });
+  await test('Дом: вкладки внутри кольца «Дела · Люди · Умения» — люди с уровнем отношений и карточкой персонажа, четыре полосы способностей; «Прогресс» — плитка «Город»; медали Hafta и Komşu', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => { const out = {};
+      city.rel = { bakkal:3, sofor:6 }; city.played = { taxi:{ n:2, ok:2, last:1 } }; city.skill = { dil:{ n:4, lvl:1 } }; cityRender();
+      out.tabs = [...document.querySelectorAll('#ctInnerTabs button')].map(b => b.textContent);
+      document.getElementById('ctTabPeople').click(); out.people = [...document.querySelectorAll('#ctChars .ct-char')].map(b => [b.dataset.char, b.querySelector('.ct-char-lvl').textContent]);
+      out.visible = [document.getElementById('ctTasks').hidden, document.getElementById('ctChars').hidden];
+      document.querySelector('#ctChars .ct-char[data-char="sofor"]').click(); out.card = [document.getElementById('modalTitle').textContent, document.getElementById('modalText').textContent]; document.getElementById('modalPrimary').click();
+      document.getElementById('ctTabSkills').click(); out.skills = [...document.querySelectorAll('#ctSkills .ct-skill')].map(e => [e.dataset.skill, e.querySelector('b').textContent, e.querySelector('.bar i').style.width]);
+      document.getElementById('ctTabTasks').click(); out.back = [document.getElementById('ctTasks').hidden, localStorage.getItem('soyle-city-tab')];
+      setMode('progress'); out.tile = [document.getElementById('gbCity').textContent, document.getElementById('gbCitySub').textContent];
+      city.days = 7; checkBadges(); out.badges = [game.badges.includes('hafta'), game.badges.includes('komsu'), BADGES.length];
+      return out; });
+    const errs = q.errors; await q.context().close();
+    eq(r.tabs, ['Дела', 'Люди', 'Умения']); eq(r.people, [['sofor', 'свой'], ['bakkal', 'знакомый']]); eq(r.visible, [true, false]);
+    eq(r.card[0], 'Шофёр Али'); ok(/Разговорчивый/.test(r.card[1]) && /Такси до Таксима/.test(r.card[1]) && /свой/.test(r.card[1]), r.card[1]);
+    eq(r.skills, [['kulak', '0', '0%'], ['dil', '1', '50%'], ['pazarlik', '0', '0%'], ['nezaket', '0', '0%']]);   // полоса — доля до следующего порога: dil 4 из 8
+    eq(r.back, [false, 'tasks']); eq(r.tile, ['день 1 · неделя 1', 'дел хорошо 2 из 2 · 3500 ₺ · знакомых 2']);   // played: taxi n 2, ok 2 eq(r.badges, [true, true, 22]); eq(errs, []);
+  });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
       await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { localStorage.removeItem('soyle-city'); city = {}; cityNormalize(); ct = null; setMode('city'); autofit(); }); await q.waitForTimeout(80);
       const r = await q.evaluate(() => { const card = document.getElementById('cityCard'), cells = [...document.querySelectorAll('.bd-cell')];
         const small = cells.filter(b => { const r = b.getBoundingClientRect(); return r.width < 44 || r.height < 44; }).length;
-        const inner = document.getElementById('ctInner'), ir = inner.getBoundingClientRect();
+        const inner = document.getElementById('ctInner');
         const vis = id => { const e = document.getElementById(id); if(!e || !e.offsetParent) return false; const r = e.getBoundingClientRect(); return r.bottom <= innerHeight && r.top >= 0; };
-        return { small, cells: cells.length, page: document.documentElement.scrollHeight <= innerHeight + 1, card: card.scrollHeight - card.clientHeight <= 1, innerCut: inner.scrollHeight > inner.clientHeight + 1,
-          tasks: document.querySelectorAll('#ctTasks .ct-task').length, roll: vis('ctRoll'), home: vis('ctHomeBtn'), taxi: vis('ctTaxi') }; });
-      if(r.small || r.cells !== 28 || !r.page || !r.card || r.innerCut || r.tasks !== 3 || !r.roll || !r.home || !r.taxi) bad.push(`${w}×${h}: ${JSON.stringify(r)}`);
+        const out = { small, cells: cells.length, page: document.documentElement.scrollHeight <= innerHeight + 1, card: card.scrollHeight - card.clientHeight <= 1, innerCut: inner.scrollHeight > inner.clientHeight + 1,
+          tasks: document.querySelectorAll('#ctTasks .ct-task').length, roll: vis('ctRoll'), home: vis('ctHomeBtn'), taxi: vis('ctTaxi'), tabs: {} };
+        city.rel = { bakkal:3, sofor:6, kapici:1, komsu:2, usta:0 }; city.met = { eczaci:1, berber:1 }; city.skill = { dil:{ n:4, lvl:1 } }; cityRender();   // 7 человек и 4 умения — самые длинные вкладки
+        for(const t of ['people', 'skills', 'tasks']){ cityInnerTab(t); autofit(); out.tabs[t] = [inner.scrollHeight > inner.clientHeight + 1, card.scrollHeight - card.clientHeight <= 1, vis('ctRoll'),
+          [...inner.querySelectorAll('.ct-char, .ct-skill')].filter(e => e.offsetParent).every(e => e.getBoundingClientRect().bottom <= inner.getBoundingClientRect().bottom + 1)]; }
+        return out; });
+      if(r.small || r.cells !== 28 || !r.page || !r.card || r.innerCut || r.tasks !== 3 || !r.roll || !r.home || !r.taxi || Object.values(r.tabs).some(t => t[0] || !t[1] || !t[2] || !t[3])) bad.push(`${w}×${h}: ${JSON.stringify(r)}`);
     }
     await q.context().close(); eq(bad, []);
   });
@@ -1710,7 +1744,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       quest: QUESTS.some(x => /Звук/.test(x.t)), help: document.querySelector('details.help').textContent }));
     const errs = q.errors; await q.context().close();
     eq([r.tab, r.lsChip, r.quest], [false, false, false]); eq(r.modes, ['city','memory','phrases','listen','free','progress']); eq(r.train, ['phrases','listen','free']);
-    eq(r.groups, 'undefined'); eq(r.badges.length, 20); ok(!r.badges.some(id => ['ear','blitz10','blitz20','o','u','i','c','sounds'].includes(id)), 'медали звуков: ' + r.badges.join());
+    eq(r.groups, 'undefined'); eq(r.badges.length, 22); ok(!r.badges.some(id => ['ear','blitz10','blitz20','o','u','i','c','sounds'].includes(id)), 'медали звуков: ' + r.badges.join());
     ok(!/Звуки/.test(r.help), 'справка упоминает «Звуки»'); eq(errs, []);
   });
   await test('кнопки не сдвигаются при смене слов и нажатиях', async () => {
