@@ -32,6 +32,7 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
     ok(r[0] && r[1] && r[2] && !r[3] && r[4].length > 3 && r[5], JSON.stringify(r));
   });
   await test('на экране действительно рисуются свои шрифты (как на одобренном скриншоте), а не шрифты телефона', async () => {
+    await p.evaluate(() => setMode('pairs')); await p.waitForTimeout(200);   // стартовый экран — «Город»; шрифты проверяем на карточке слова
     const c = await p.context().newCDPSession(p); await c.send('DOM.enable'); await c.send('CSS.enable');
     const { root } = await c.send('DOM.getDocument'); const out = {};
     for(const sel of ['#target', '#next .lbl', '#meaning']){

@@ -20,8 +20,8 @@ const URL = process.argv[2], OUT = process.argv[3];
     await p.goto(URL, { waitUntil:'load' }); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1500);
     const info = await p.evaluate(() => ({ version: (document.getElementById('appVersion') || {}).textContent,
       fonts: [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.weight) }));
-    for(const tab of ['memory', 'pairs', 'phrases', 'listen', 'free', 'progress']){
-      await p.click('#tab-' + tab); await p.waitForTimeout(1200);
+    for(const tab of ['city', 'memory', 'pairs', 'phrases', 'listen', 'free', 'progress']){
+      await p.evaluate(t => document.getElementById('tab-' + t).click(), tab); await p.waitForTimeout(1200);   // подвкладки тренировки скрыты вне неё
       if(await p.isVisible('#modal')) await p.keyboard.press('Escape');
       await p.screenshot({ path:`${OUT}/${name}-${tab}.png` });
       // обрезанный текст или наложение частей — записываем (пользователь жаловался, что перевод не помещается)
@@ -41,11 +41,11 @@ const URL = process.argv[2], OUT = process.argv[3];
       await p.evaluate(() => { setLsKind('words'); setMode('progress'); document.getElementById('badgeGrid').scrollIntoView(); }); await p.waitForTimeout(400);
       await p.screenshot({ path:`${OUT}/${name}-badges.png` });
     } catch(e){ info.listenPhrasesError = String(e); }
-    // на одном размере — проверить на живом сайте окна «Видео», «Перевод» и набор «живые фразы» (настоящая сеть)
+    // на одном размере — проверить на живом сайте окна «Видео», «Перевод» и запись фразы Tatoeba (настоящая сеть)
     if(w === 390){
       const live = {};
       try {
-        await p.click('#tab-phrases'); await p.waitForTimeout(800);
+        await p.evaluate(() => document.getElementById('tab-phrases').click()); await p.waitForTimeout(800);
         await p.click('#yg'); await p.waitForSelector('#exList li, #exMsg', { timeout:20000 }).catch(() => {});
         await p.waitForFunction(() => !/Ищу/.test((document.getElementById('exMsg') || {}).textContent || ''), null, { timeout:20000 }).catch(() => {});
         live.examples = await p.evaluate(() => ({ word: item && item.target, msg: document.getElementById('exMsg').textContent, n: document.querySelectorAll('#exList li').length, audio: document.querySelectorAll('#exList .ex-play[data-i]').length }));
@@ -60,10 +60,10 @@ const URL = process.argv[2], OUT = process.argv[3];
         live.translate = await p.evaluate(() => document.getElementById('trOut').textContent);
         await p.screenshot({ path:`${OUT}/${name}-translate-sheet.png` });
         await p.click('#sheetClose');
-        await p.click('.chip[data-s="tatoeba"]');
-        await p.waitForFunction(() => typeof tatoebaSet !== 'undefined' && tatoebaSet && tatoebaSet.length, null, { timeout:20000 }).catch(() => {});
+        // фраза темы с записью Tatoeba (id записи известен заранее) — звук с живого сайта
+        await p.evaluate(() => { setId = 'hotel'; const pp = pickPhrase; const x = PHRASE_SETS.find(g => g.id === 'hotel').items.find(i => i.tr === 'Elektriğimiz yok.'); pickPhrase = () => ({ target:x.tr, translit:x.tl, meaning:x.ru, tip:x.focus, gid:'ph-hotel' }); next(); pickPhrase = pp; });
         await p.waitForTimeout(2500);
-        live.phrases = await p.evaluate(async () => { const r = { count: tatoebaSet ? tatoebaSet.length : 0, withRu: tatoebaSet ? tatoebaSet.filter(x => x.ru).length : 0, word: item && item.target, meaning: document.getElementById('meaning').textContent };
+        live.phrases = await p.evaluate(async () => { const r = { word: item && item.target, meaning: document.getElementById('meaning').textContent };
           const recs = item && nativeCache.get(clean(item.target)); r.audio = recs && recs[0] && recs[0].url;
           if(r.audio){ const a = new Audio(r.audio); r.audioOk = await new Promise(z => { a.oncanplaythrough = () => z(true); a.onerror = () => z('error ' + (a.error && a.error.code) + ' ' + (a.error && a.error.message)); setTimeout(() => z('timeout'), 10000); a.load(); });
             try { const f = await fetch(r.audio); const b = await f.blob(); r.fetchAudio = [f.status, f.headers.get('content-type'), b.size, b.size < 400 ? await b.text() : ''];
@@ -90,14 +90,6 @@ const URL = process.argv[2], OUT = process.argv[3];
           return r; });
         await p.screenshot({ path:`${OUT}/${name}-words.png` });
       } catch(e){ live.wordsError = String(e); }
-      // набор «с записями»: карточка слова «mahkûm» — значение по-русски (жалоба: «откуда-то взялся английский»)
-      try {
-        await p.evaluate(() => { setKind(false); window.__ns = nativeSet; nativeSet = [{ tr:'mahkûm', tl:'', ru:'', focus:'Послушайте носителя и повторите.', n:1 }]; setId = 'native'; lastKey = ''; renderChips(); next(); });
-        await p.waitForFunction(() => !/Ищу/.test(document.getElementById('meaning').textContent), null, { timeout:30000 }).catch(() => {});
-        live.nativeCard = await p.evaluate(() => ({ word: item.target, meaning: document.getElementById('meaning').textContent }));
-        await p.screenshot({ path:`${OUT}/${name}-native-meaning.png` });
-        await p.evaluate(() => { nativeSet = window.__ns; setId = 'hotel'; renderChips(); next(); });
-      } catch(e){ live.nativeError = String(e); }
       // слово в контексте: у скольких слов есть примеры с переводом (фраза тренажёра и Tatoeba) — проверка, что функция полезна
       try {
         live.ctx = await p.evaluate(async () => {

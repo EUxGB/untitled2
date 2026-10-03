@@ -13,6 +13,7 @@ async function test(name, fn){
   try { await fn(); passed++; console.log('  ✓', name); }
   catch(e){ failed++; console.log('  ✗', name, '\n     ', e.message); }
 }
+const tap = (q, id) => q.evaluate(id => document.getElementById(id).click(), id);   // подвкладки тренировки скрыты вне неё — нажимаем из страницы
 const eq = (a, b, msg) => { if(JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${msg||''} ожидалось ${JSON.stringify(b)}, получено ${JSON.stringify(a)}`); };
 const ok = (v, msg) => { if(!v) throw new Error(msg || 'условие не выполнено'); };
 
@@ -151,28 +152,17 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(await p.evaluate(() => [window.__spoken.length, window.__played.length]), [0, 0]);
     ok((await p.textContent('#nativeStatus')).includes('нет'));
   });
-  await test('набор «с записями» собирается из Wikimedia и объединяет голоса', async () => {
-    await p.evaluate(() => { setId = 'native'; renderChips(); next(); });
-    await p.waitForTimeout(300);
-    const r = await p.evaluate(() => [nativeSet.map(i => i.tr).sort(), nativeCache.get('merhaba').length]);
-    eq(r[0], ['köy','merhaba']); ok(r[1] >= 2);
-  });
-  await test('набор «с записями»: значение слова — по-русски, английского текста нет (жалоба: «mahkûm — откуда-то взялся английский»)', async () => {
+  await test('значение слова по-русски, английского текста нет (жалоба: «mahkûm — откуда-то взялся английский»): списки → ru-Викисловарь → перевод толкования с пометкой', async () => {
     const q = await openPage(browser); const asked = [];
     await q.route('**/ru.wiktionary.org/**', r => r.fulfill({ json: /sarma/.test(decodeURIComponent(r.request().url()))
       ? { parse:{ wikitext:{ '*':"= {{-az-}} =\n==== Значение ====\n# [[чужое]]\n\n= {{-tr-}} =\n==== Значение ====\n# [[заворачивание]] {{пример|x}}\n# {{кулин.|tr}} [[голубцы]], [[долма]]\n#: пример\n\n=== Этимология ===\n= {{-tt-}} =\n==== Значение ====\n# [[лишнее]]\n" } } } : { error:{ code:'missingtitle' } } }));
     await q.route('**/en.wiktionary.org/**', r => r.fulfill({ json:{ tr:[{ partOfSpeech:'Noun', definitions:[{ definition:'<a>convict</a>' }, { definition:'prisoner' }, { definition:'captive' }] }] } }));
     await q.route('**/api.mymemory.translated.net/**', r => { const u = decodeURIComponent(r.request().url()); asked.push(u.split('?')[1]);
       r.fulfill({ json:{ responseStatus:200, responseData:{ translatedText: u.includes('langpair=en|ru') ? 'осуждённый; заключённый; пленник' : 'заключенный' } } }); });
-    const show = async w => { await q.evaluate(w => { setMode('phrases'); nativeSet = [{ tr:w, tl:'', ru:'', focus:'x', n:1 }]; setId = 'native'; lastKey = ''; next(); }, w);
-      await q.waitForFunction(() => !/Ищу/.test(document.getElementById('meaning').textContent)); return q.evaluate(() => [document.getElementById('meaning').textContent, item.meaning]); };
-    const known = await show('köy'), wikt = await show('sarma'), gloss = await show('mahkûm');
+    const r = await q.evaluate(async () => [await ruMeaning('köy'), await ruMeaning('sarma'), await ruMeaning('mahkûm')]);
     const errs = q.errors; await q.context().close();
-    eq(known, ['деревня', 'деревня']);                                             // слово из выверенного списка — без сети
-    eq(wikt[0], 'заворачивание; голубцы, долма');                                  // ru-Викисловарь: раздел турецкого, до трёх значений, без разметки
-    eq(gloss[0], '≈ осуждённый; заключённый; пленник (машинный перевод толкования из Викисловаря)');
-    eq(gloss[1], gloss[0]);                                                        // и в «Память» слово уйдёт с этим значением, не пустым
-    eq([known, wikt, gloss].some(x => /англ|convict|prisoner/i.test(x[0])), false);
+    eq(r, ['деревня', 'заворачивание; голубцы, долма', '≈ осуждённый; заключённый; пленник (машинный перевод толкования из Викисловаря)']);   // список без сети; ru-Викисловарь: раздел турецкого, до трёх значений; толкование переведено, помечено
+    eq(r.some(x => /англ|convict|prisoner/i.test(x)), false);
     eq(asked, ['q=convict; prisoner; captive&langpair=en|ru']); eq(errs, []);
   });
 
@@ -432,7 +422,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.context().close(); eq(cap, 2);
   });
   await test('новый уровень: окно со званием и сколько до следующего; Escape закрывает; горячие клавиши не срабатывают под окном', async () => {
-    const q = await openPage(browser);
+    const q = await openPage(browser); await q.evaluate(() => setMode('pairs'));   // стартовый экран теперь «Город» — для проверки Enter нужна карточка
     const r = await q.evaluate(() => { MILESTONE_MODALS = true; todayQuest(); game.quest.done = true; game.xp = 45; award(1, 'o'); return [document.getElementById('modalTitle').textContent, document.getElementById('modalText').textContent,
       document.getElementById('modalPrimary').getBoundingClientRect().width / document.querySelector('.modal-box').getBoundingClientRect().width]; });
     ok(r[2] > 0.8, 'одна кнопка должна быть во всю ширину, сейчас ' + Math.round(r[2]*100) + '%');
@@ -492,8 +482,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q = await openPage(browser); const consoleErr = [];
     q.on('console', m => { if(m.type() === 'error' && !/Failed to load resource|ERR_|from origin 'null'.*woff2|woff2.*from origin 'null'/.test(m.text())) consoleErr.push(m.text()); });
     await q.evaluate(() => { window.__say = 'merhaba'; });
-    for(const tab of ['#tab-pairs','#tab-phrases','#tab-listen','#tab-free','#tab-city','#tab-progress']){
-      await q.click(tab); await q.waitForLoadState('networkidle');
+    for(const tab of ['tab-pairs','tab-phrases','tab-listen','tab-free','tab-city','tab-progress']){
+      await tap(q, tab); await q.waitForLoadState('networkidle');
       const ids = await q.evaluate(() => [...document.querySelectorAll('.screen > section:not([hidden]) button, .chips button')].filter(b => b.offsetParent && !b.disabled && !['bkYes','updateApp'].includes(b.id)).map((b, i) => { b.dataset.probe = String(i); return String(i); }));
       for(const id of ids){
         if(await q.isVisible('#modal')) await q.click('#modalSecondary:visible, #modalPrimary');
@@ -528,7 +518,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const log = [], bad = [];
     for(let i = 0; i < steps; i++){
       const said = ['__T__', 'yanlış bir şey', '', '__SILENT__'][Math.floor(rnd() * 4)];
-      await q.evaluate(s => { window.__silent = s === '__SILENT__'; window.__say = s === '__T__' ? (mode === 'city' && ct && ct.node && ct.node.moves ? ct.node.moves[0].say[0] : (item && item.target) || (ls && ls.answer) || 'merhaba') : s; }, said);
+      await q.evaluate(s => { window.__silent = s === '__SILENT__'; window.__say = s === '__T__' ? (mode === 'city' && ct && ct.node && !ct.node.end && !ct.node.pay ? (ct.pick || ctMoves(ct.node)[0] || { say:['merhaba'] }).say[0] : (item && item.target) || (ls && ls.answer) || 'merhaba') : s; }, said);
       let target;
       if(rnd() < 0.08) target = tabs[Math.floor(rnd() * tabs.length)];
       else {
@@ -569,7 +559,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('случайные нажатия во всех разделах (по 120 на раздел): всегда есть путь дальше, нет ошибок JS', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
     await q.evaluate(() => { trVoice = { name:'Test Türkçe', lang:'tr-TR' }; trVoices = [trVoice]; BLITZ_SEC = 8; });
-    const tabs = ['#tab-city','#tab-memory','#tab-pairs','#tab-phrases','#tab-listen','#tab-free','#tab-progress'], bad = [];
+    const tabs = ['#tab-city','#tab-memory','#tab-train','#tab-progress'], bad = [];   // подвкладки тренировки monkey нажимает сам как кнопки в .chips
     const goTab = async tab => {   // перейти в раздел можно всегда: окно/лист закрываются своими кнопками, остальное не должно перекрывать панель
       if(await q.isVisible('#modal')) await q.click('#modal button:visible >> nth=-1');
       if(await q.isVisible('#sheet')) await q.click('#sheetClose');
@@ -594,11 +584,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     }
     const other = {};
     for(const [tab, sel] of [['#tab-phrases', '#next'], ['#tab-pairs', '#next']]){
-      await q.click(tab); const t = new Set();
+      await tap(q, tab.slice(1)); const t = new Set();
       for(let i = 0; i < 8; i++){ await q.click('#speak'); await q.waitForTimeout(80); t.add(await q.evaluate(() => item.target)); await q.click(sel); }
       other[tab] = t.size;
     }
-    await q.click('#tab-listen'); const heard = new Set();
+    await tap(q, 'tab-listen'); const heard = new Set();
     for(let i = 0; i < 6; i++){ await q.waitForTimeout(400); heard.add(await q.evaluate(() => ls.answer)); await q.evaluate(() => { clearTimeout(lsNextTimer); answerListen(ls.right); clearTimeout(lsNextTimer); nextListen(); }); }
     const errs = q.errors; await q.context().close();
     ok(seen.size >= 12, `в «Памяти» пройдено фраз: ${seen.size}; фазы: ${steps.join(',')}`);
@@ -628,7 +618,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r, [['synth'], true]);
   });
   await test('Android: «Эхо» — образец звучит ДО открытия микрофона, затем образец и вы', async () => {
-    const q = await openPage(browser, { android:true, storage:{ 'soyle-rec-conflict':'1' } });
+    const q = await openPage(browser, { android:true, storage:{ 'soyle-rec-conflict':'1' } }); await q.evaluate(() => setMode('pairs'));
     const r = await q.evaluate(async v => { eval(v); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
       item.target = 'on'; nativeCache.set('on', []); window.__log = []; echo(); await new Promise(z => setTimeout(z, 3200)); return [recordOn, window.__log]; }, FAKE_VOICE);
     await q.context().close();
@@ -649,12 +639,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     }
     await q.context().close(); eq(bad, []);
   });
-  await test('нижняя панель: 7 разделов, активный подсвечен, «Свободно» и «Прогресс» открываются', async () => {
-    const r = await p.evaluate(() => { const tabs = [...document.querySelectorAll('.tabbar .tab')].map(t => t.id);
-      document.getElementById('tab-free').click(); const free = !document.getElementById('freeCard').hidden && document.getElementById('tab-free').getAttribute('aria-pressed');
-      document.getElementById('tab-progress').click(); const prog = !document.getElementById('progressView').hidden && document.getElementById('card').hidden;
-      document.getElementById('tab-pairs').click(); return [tabs, free, prog]; });
-    eq(r, [['tab-city','tab-memory','tab-pairs','tab-phrases','tab-listen','tab-free','tab-progress'], 'true', true]);
+  await test('нижняя панель: 4 раздела (Город · Память · Тренировка · Прогресс); подвкладки тренировки видны только в ней и помнят последнюю', async () => {
+    const r = await p.evaluate(() => { const tabs = [...document.querySelectorAll('.tabbar .tab')].map(t => t.id), subs = [...document.querySelectorAll('#subtabs .chip')].map(t => t.id);
+      document.getElementById('tab-free').click(); const free = [!document.getElementById('freeCard').hidden, document.getElementById('tab-free').getAttribute('aria-pressed'), document.getElementById('tab-train').getAttribute('aria-pressed'), document.getElementById('subtabs').hidden];
+      document.getElementById('tab-progress').click(); const prog = [!document.getElementById('progressView').hidden, document.getElementById('card').hidden, document.getElementById('subtabs').hidden, document.getElementById('tab-train').getAttribute('aria-pressed')];
+      document.getElementById('tab-train').click(); const back = [mode, localStorage.getItem('soyle-train')];
+      document.getElementById('tab-pairs').click(); return [tabs, subs, free, prog, back]; });
+    eq(r, [['tab-city','tab-memory','tab-train','tab-progress'], ['tab-pairs','tab-phrases','tab-listen','tab-free'], [true, 'true', 'true', false], [true, true, true, 'false'], ['free', 'free']]);
   });
   await test('игра видна всегда: верхняя панель обновляется после ответа, нажатие открывает «Прогресс»', async () => {
     const r = await p.evaluate(r => { eval(r); renderGame(); const ring0 = document.getElementById('tbRing').style.strokeDashoffset;
@@ -679,7 +670,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const log = [];
     const say = t => u.evaluate(t => { window.__seq = null; window.__say = t; }, t);
     // 1. Звуки: сказать верно → «Верно», очки на верхней панели
-    await u.click('#tab-pairs'); await say(await u.evaluate(() => item.target));
+    await tap(u, 'tab-pairs'); await say(await u.evaluate(() => item.target));
     await u.click('#speak'); await u.waitForTimeout(250);
     ok((await u.textContent('#result')).includes('Верно'), 'Звуки: нет «Верно»');
     ok(!(await u.isDisabled('#compare')), 'Звуки: «Сравнить» не включилась после попытки');
@@ -688,26 +679,26 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await say(await u.evaluate(() => item.partner)); await u.click('#speak'); await u.waitForTimeout(250);
     ok((await u.textContent('#result')).includes('Прозвучало'), 'Звуки: путаница не распознана');
     // 3. Фразы: выбрать «отель», сказать фразу целиком
-    await u.click('#tab-phrases'); await u.click('.chip[data-s="hotel"]');
+    await tap(u, 'tab-phrases'); await u.click('.chip[data-s="hotel"]');
     await say(await u.evaluate(() => item.target)); await u.click('#speak'); await u.waitForTimeout(250);
     ok((await u.textContent('#result')).includes('все слова'), 'Фразы: фраза не засчитана');
     // 4. На слух: нажать правильный вариант
-    await u.click('#tab-listen'); await u.waitForTimeout(100);
+    await tap(u, 'tab-listen'); await u.waitForTimeout(100);
     const right = await u.evaluate(() => ls.right); await u.click(right === 'A' ? '#lsA' : '#lsB');
     ok((await u.textContent('#lsResult')).includes('Верно'), 'На слух: нет «Верно»');
     // 5. Свободно: вписать фразу, сказать, сохранить в «мои»
-    await u.click('#tab-free'); await u.fill('#intent', 'Hesap lütfen'); await say('hesap lütfen');
+    await tap(u, 'tab-free'); await u.fill('#intent', 'Hesap lütfen'); await say('hesap lütfen');
     await u.click('#freeSpeak'); await u.waitForTimeout(250);
     ok((await u.textContent('#freeResult')).includes('поймёт'), 'Свободно: нет вердикта');
     await u.click('#freeSave'); eq(await u.textContent('#freeSave'), 'Сохранено');
     // 6. «мои» в Фразах
-    await u.click('#tab-phrases'); await u.click('.chip[data-s="mine"]'); eq(await u.textContent('#target'), 'Hesap lütfen');
+    await tap(u, 'tab-phrases'); await u.click('.chip[data-s="mine"]'); eq(await u.textContent('#target'), 'Hesap lütfen');
     // 7. Прогресс: через верхнюю панель, видно XP, достижения, задание
     await u.click('#tbProgress');
     const pr = await u.evaluate(() => [!document.getElementById('progressView').hidden, game.xp > 0, game.badges.includes('first'), document.getElementById('gbQuestTxt').textContent.length > 0, document.getElementById('tbStreak').textContent]);
     eq(pr, [true, true, true, true, '1']);
     // 8. Подсказки «?» и возврат
-    await u.click('#hintsBtn'); await u.click('#tab-pairs'); ok(await u.isVisible('#tip'), 'подсказка не видна');
+    await u.click('#hintsBtn'); await tap(u, 'tab-pairs'); ok(await u.isVisible('#tip'), 'подсказка не видна');
     await u.click('#hintsBtn');
     const errs = u.errors; await u.context().close(); eq(errs, []);
   });
@@ -858,7 +849,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   console.log('«На слух» и блиц: фразы; честный блиц; медали достижений');
   await test('«На слух» → «фразы»: две похожие фразы с записью, разный перевод, отличающиеся слова подчёркнуты; выбор запоминается', async () => {
     const q = await openPage(browser);
-    await q.click('#tab-listen'); await q.click('#lsKindChip');
+    await tap(q, 'tab-listen'); await q.click('#lsKindChip');
     const r = await q.evaluate(() => { const voiced = new Set(PHRASE_SETS.flatMap(g => g.items.map(p => p.tr))); const out = [];
       for(let i = 0; i < 30; i++){ nextListen(); const a = document.querySelector('#lsA b').textContent, b = document.querySelector('#lsB b').textContent;
         out.push([voiced.has(a) && voiced.has(b), a !== b, document.querySelector('#lsA small').textContent !== document.querySelector('#lsB small').textContent, phraseSim(a, b) > 0]); }
@@ -942,7 +933,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         out.push(await q.evaluate(([m, w, h]) => { if(m === 'words'){ wordsKind = true; setId = 'food'; m = 'phrases'; } else if(m === 'phrases') wordsKind = false; setMode(m); autofit(); const card = [...document.querySelectorAll('.screen > .card')].find(c => !c.hidden);
           const fit = +getComputedStyle(document.querySelector('.app')).getPropertyValue('--fit');
           const tab = document.querySelector('.tabbar').getBoundingClientRect().bottom;
-          return { k:`${w}x${h} ${m}`, fit, over: card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight > innerHeight || tab > innerHeight + 1
+          return { k:`${w}x${h} ${m}`, fit, over: (h > 600 && card.scrollHeight - card.clientHeight > 1) || document.documentElement.scrollHeight > innerHeight || tab > innerHeight + 1   // совсем низкий экран (≤ 600): карточка может прокручиваться, страница и панель — нет
             || (() => { const k = [...card.children].filter(e => e.offsetParent); for(let i = 0; i + 1 < k.length; i++) if(k[i].getBoundingClientRect().bottom > k[i+1].getBoundingClientRect().top + 1) return 'наложение: ' + k[i].className + ' / ' + k[i+1].className; return false; })()
             || (m === 'listen' && [...document.querySelectorAll('#lsA b, #lsB b')].some(b => { const r = b.getBoundingClientRect(), t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !t || !b.parentElement.contains(t); }) && 'слово варианта закрыто'),
           round: [...document.querySelectorAll('.screen > .card:not([hidden]) .mic, .screen > .card:not([hidden]) .act .ring, .screen > .card:not([hidden]) .round-xl')].every(b => getComputedStyle(b).borderRadius === '50%' || parseFloat(getComputedStyle(b).borderRadius) >= Math.max(b.offsetWidth, b.offsetHeight) / 2 - 1) }; }, [m, w, h]));
@@ -993,7 +984,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   console.log('Видео и перевод — внутри приложения, без перехода');
   // подмена внешних сервисов: виджет YouGlish и перевод MyMemory (настоящие проверяются в CI задачей probe)
   const FAKE_YG = `var YG={Widget:function(id,o){this.fetch=function(q,l){(window.__ygq=window.__ygq||[]).push(q);var f=document.getElementById(id).querySelector('iframe')||document.createElement('iframe');f.title='YouGlish';f.setAttribute('data-q',q+'|'+l);document.getElementById(id).appendChild(f);setTimeout(function(){o.events.onFetchDone({totalResult:(q.indexOf(' ')>0&&q.length>12)?0:7,query:q})},30)}}};setTimeout(function(){window.onYouglishAPIReady&&window.onYouglishAPIReady()},10);`;
-  async function openInApp(opts){ const q = await openPage(browser, opts);
+  async function openInApp(opts){ const q = await openPage(browser, opts); await q.evaluate(() => setMode('pairs'));   // стартовый экран — «Город»; здесь нужна карточка слова
     await q.route('**/youglish.com/public/emb/widget.js', r => r.fulfill({ contentType:'application/javascript', body:FAKE_YG }));
     await q.route('**/api.mymemory.translated.net/**', r => r.fulfill({ json:{ responseStatus:200, quotaFinished:false, responseData:{ translatedText:'Можно мне счёт?' } } }));
     return q; }
@@ -1041,12 +1032,12 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('«Перевод» в «Свободно» и в «Фразах»: перевод в окне приложения, без перехода', async () => {
     const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
-    await q.click('#tab-free'); await q.fill('#intent', ''); await q.evaluate(() => { window.__say = 'hesabı alabilir miyim'; });
+    await tap(q, 'tab-free'); await q.fill('#intent', ''); await q.evaluate(() => { window.__say = 'hesabı alabilir miyim'; });
     await q.click('#freeSpeak'); await q.waitForTimeout(200);
     await q.click('#freeTranslate'); await q.waitForFunction(() => document.getElementById('trOut') && document.getElementById('trOut').textContent !== 'Перевожу…');
     const free = await q.evaluate(() => [document.querySelector('#sheet .sheet-q').textContent, document.getElementById('trOut').textContent]);
     await q.click('#sheetClose');
-    await q.click('#tab-phrases'); await q.click('.chip[data-s="mine"]');
+    await tap(q, 'tab-phrases'); await q.click('.chip[data-s="mine"]');
     await q.evaluate(() => { saveMine('Hesabı alabilir miyim?'); setId = 'mine'; renderChips(); next(); });
     await q.click('#partner [data-tr]'); await q.waitForFunction(() => document.getElementById('trOut') && document.getElementById('trOut').textContent !== 'Перевожу…');
     const ph = await q.evaluate(() => document.getElementById('trOut').textContent);
@@ -1073,30 +1064,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('«Носитель» для фразы без записи — слова по очереди живыми записями, видео само не открывается (лимит YouGlish)', async () => {
     const q = await openInApp();
-    await q.click('#tab-phrases');
+    await tap(q, 'tab-phrases');
     const r = await q.evaluate(async () => { item = { target:'Hesap lütfen biraz', gid:'ph-basic', meaning:'' }; nativeCache.set(clean(item.target), []);
       nativeCache.set(clean('hesap'), [{ url:'https://x/hesap.wav', who:'A' }]); nativeCache.set(clean('lütfen'), [{ url:'https://x/lutfen.wav', who:'B' }]); nativeCache.set(clean('biraz'), []);
       window.__played = []; playNative(); await new Promise(z => setTimeout(z, 900));
       return [window.__played.map(s => s.split('/').pop()), document.getElementById('nativeStatus').textContent, document.getElementById('sheet').hidden]; });
     await q.context().close();
     eq(r[0], ['hesap.wav', 'lutfen.wav']); ok(/по словам: hesap · lütfen · \(biraz — нет\)/.test(r[1]), r[1]); eq(r[2], true);
-  });
-  await test('набор «живые фразы»: только короткие фразы с записью, перевод на русский, «Носитель» играет запись Tatoeba', async () => {
-    const q = await openInApp(); await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json: TATO(decodeURIComponent(r.request().url())) }));
-    await q.click('#tab-phrases'); await q.click('.chip[data-s="tatoeba"]');
-    await q.waitForFunction(() => tatoebaSet && tatoebaSet.length);
-    const r = await q.evaluate(async () => { const list = tatoebaSet.map(x => [x.tr, x.ru]);
-      setId = 'tatoeba'; lastKey = 'Tabii ki.'; next(); await new Promise(z => setTimeout(z, 50));
-      window.__log = []; playNative(); await new Promise(z => setTimeout(z, 50));
-      return [list, item.target, document.getElementById('meaning').textContent, document.getElementById('nativeAudio').src, document.querySelector('.chip[data-s="tatoeba"]').textContent]; });
-    const errs = q.errors; await q.context().close();
-    eq(r[0], [['Balık sever misiniz?', 'Вы любите рыбу?'], ['Tabii ki.', '']]);
-    const one = await (async () => { const q2 = await openInApp(); await q2.route('**/api.tatoeba.org/**', r => r.fulfill({ json: TATO(decodeURIComponent(r.request().url())) }));
-      const x = await q2.evaluate(async () => { await ensureTatoebaSet(); tatoebaSet = [{ tr:'Veganım.', ru:'Я веган.', focus:'', n:1 }]; setMode('phrases'); setId = 'tatoeba'; lastKey = ''; next(); await new Promise(z => setTimeout(z, 100)); autofit();
-        const t = document.getElementById('target'), c = t.closest('.card'); return [t.classList.contains('phrase'), t.scrollWidth <= t.clientWidth + 1, t.getBoundingClientRect().right <= c.getBoundingClientRect().right + 1]; });
-      await q2.context().close(); return x; })();
-    eq(one, [true, true, true]);   // однословная живая фраза — шрифтом фраз, не вылезает за край
-    eq(r[1], 'Balık sever misiniz?'); eq(r[2], 'Вы любите рыбу?'); eq(r[3], 'https://api.tatoeba.org/v1/audios/68301/file'); eq(r[4], 'живые фразы (2)'); eq(errs, []);
   });
   await test('в программе нет ссылок, уводящих из приложения (translate.google, youglish.com/pronounce, target=_blank)', async () => {
     const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8');
@@ -1109,7 +1083,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await q.evaluate(() => ({ sets: PHRASE_SETS.map(g => [g.id, g.items.length, g.items.every(p => p.voiced && p.tl && p.ru && p.focus)]),
       all: PHRASE_SETS.flatMap(g => g.items.map(p => p.tr)), old: OLD_PHRASES.map(p => p.tr), oldVoiced: [...OLD_VOICED],
       tl: ['Doğru değil mi?', 'Güzel', 'Yardım edin!', 'Hesap lütfen.'].map(trToCyr) }));
-    await q.click('#tab-phrases'); await q.click('.chip[data-s="novoice"]');
+    await tap(q, 'tab-phrases'); await q.click('.chip[data-s="novoice"]');
     const nv = await q.evaluate(() => [document.querySelector('.chip[data-s="novoice"]').textContent, OLD_PHRASES.some(p => p.tr === item.target)]);
     await q.context().close();
     r.sets.forEach(([id, n, ok]) => { if(n < 10 || !ok) throw new Error(`набор ${id}: ${n} фраз, все с записью и полями: ${ok}`); });
@@ -1164,7 +1138,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       item = { target:p.tr, translit:p.tl, meaning:p.ru, tip:p.focus, gid:'ph-hotel' };
       const recs = await findRecordings(p.tr);
       const longest = PHRASE_SETS.flatMap(g => g.items).sort((a, b) => b.tr.length + b.ru.length - a.tr.length - a.ru.length)[0];
-      nativeSet = [{ ...longest, n:1 }]; setId = 'native'; lastKey = ''; next(); await new Promise(z => setTimeout(z, 150));
+      setId = 'hotel'; const pp = pickPhrase; pickPhrase = () => ({ target:longest.tr, translit:longest.tl, meaning:longest.ru, tip:longest.focus, gid:'ph-x' }); next(); pickPhrase = pp; await new Promise(z => setTimeout(z, 150));
       const card = document.getElementById('card');
       const cut = ['target', 'meaning'].filter(id => { const e = document.getElementById(id); return e.scrollHeight > e.clientHeight + 1; });
       return [recs, cut, card.scrollHeight - card.clientHeight <= 1]; });
@@ -1178,9 +1152,9 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
       await q.setViewportSize({ width:w, height:h });
       const r = await q.evaluate(async () => {
-        setMode('phrases'); nativeSet = [{ tr:'Şu köşe yaz köşesi, şu köşe kış köşesi', tl:'', ru:'', focus:'x', n:1 }]; setId = 'native'; lastKey = ''; next();
+        setMode('phrases'); setId = 'novoice'; const pp = pickPhrase; pickPhrase = () => ({ target:'Şu köşe yaz köşesi, şu köşe kış köşesi', translit:'', meaning:'', tip:'x', gid:'ph-x' }); next(); pickPhrase = pp;
         await new Promise(z => setTimeout(z, 80));
-        document.getElementById('meaning').textContent = "Значение (англ.): This corner is the summer corner, that corner is the winter corner (a children's game)";
+        document.getElementById('meaning').textContent = "Скороговорка: этот угол летний, этот зимний, посередине бутылка воды (детская игра, длинное пояснение)";
         await new Promise(z => setTimeout(z, 150));                       // значение пришло позже — подгонка сама
         const card = document.getElementById('card');
         const cut = ['target', 'meaning', 'partner'].filter(id => { const e = document.getElementById(id); return e.scrollHeight > e.clientHeight + 1; });
@@ -1206,13 +1180,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('«Фразы» → «слова»: слова выбранной темы с переводом, по счётчику в чипах; переключение обратно на фразы', async () => {
     const q = await openWords();
     await q.evaluate(() => wordPool('food').items.forEach(w => { if(w.fromPhrase) w.seen = 1; }));   // здесь проверяем стартовые слова с переводом (слова из фраз — отдельный тест)
-    await q.click('#tab-phrases'); await q.click('.chip[data-s="food"]'); await q.click('#kindChip');
+    await tap(q, 'tab-phrases'); await q.click('.chip[data-s="food"]'); await q.click('#kindChip');
     const r = await q.evaluate(() => [wordsKind, item.word, item.topic, WORD_SEEDS.food.map(x => x[0]).includes(item.target), document.getElementById('meaning').textContent,
       document.querySelector('.chip[data-s="food"]').textContent, document.getElementById('target').classList.contains('phrase'), localStorage.getItem('soyle-kind'), item.target, document.getElementById('result').textContent]);
     const vis = await q.evaluate(() => { const k = document.getElementById('kindChip').getBoundingClientRect(), c = document.querySelector('.chip[data-s="food"]').getBoundingClientRect(); return c.left >= k.right - 1 && c.right <= innerWidth + 1; });
     ok(vis, 'выбранная тема закрыта переключателем «слова» или за краем');
     await q.click('#kindChip');
-    const back = await q.evaluate(() => [wordsKind, !!item.word, document.querySelector('.chip[data-s="tatoeba"]') !== null]);
+    const back = await q.evaluate(() => [wordsKind, !!item.word, document.querySelector('.chip[data-s="novoice"]') !== null]);
     const errs = q.errors; await q.context().close();
     eq(r.slice(0, 4), [true, true, 'food', true]); eq(r[4], Object.fromEntries(WORDS_FOOD)[r[8]]);   // русский перевод темы, не английское значение из Викисловаря ok(/^ресторан \(\d+\)$/.test(r[5]), r[5]); eq(r[6], false); eq(r[7], 'words'); ok(/произнесите слово/.test(r[9]), r[9]);
     eq(back, [false, false, true]); eq(errs, []);
@@ -1330,122 +1304,139 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   console.log('«Город» (Mahalle): разговоры с последствиями');
   const openCity = async (opts) => { const q = await openPage(browser, opts); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-city'); await q.waitForTimeout(100); return q; };
   const ctSay = async (q, t) => { await q.evaluate(t => { window.__say = t; window.__silent = !t; }, t); await q.click('#ctSpeak'); await q.waitForTimeout(120);
-    return q.evaluate(() => ({ res: document.getElementById('ctResult').textContent, npc: document.getElementById('ctTr').textContent, pat: ct && ct.patience, next: !document.getElementById('ctNext').disabled, chips: !document.getElementById('ctChips').hidden, money: city.money })); };
+    return q.evaluate(() => ({ res: document.getElementById('ctResult').textContent, npc: document.getElementById('ctTr').textContent, pat: ct && ct.patience, next: !document.getElementById('ctNext').disabled, money: city.money,
+      opts: [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent), score: (document.querySelector('#ctResult .score b') || {}).textContent })); };
   const ctNext = async q => { await q.click('#ctNext'); await q.waitForTimeout(60); };
-  await test('Город: такси — что вы сказали, меняет исход; ошибка стоит терпения, после двух — подсказки; цена на слух; «üstü kalsın» — чаевые и отношение; сцена идёт в «Память»', async () => {
+  const ctPick = async (q, i) => { await q.click(`#ctOpts .ct-opt-main[data-i="${i}"]`); await q.waitForTimeout(40); return q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)); };
+  await test('Город: выбор ответа карточками — что сказать, видно сразу по-русски; выбранная раскрывается (турецкий + чтение), говорите её; выбор меняет исход; перевод первой реплики бесплатно', async () => {
     const q = await openCity();
     const home = await q.evaluate(() => [document.querySelectorAll('.ct-task:not([disabled])').length, document.getElementById('ctDay').textContent, city.money, city.min]);
     eq(home, [3, 'Дела на сегодня — 3 из 3', 500, 540]);
     await q.click('.ct-task[data-scene="taxi"]'); await q.waitForTimeout(80);
-    const start = await q.evaluate(() => [document.getElementById('ctTr').textContent, document.getElementById('ctRu').hidden, document.getElementById('ctSpeak').disabled, document.getElementById('ctWho').textContent]);
-    eq(start, ['Buyurun, nereye?', true, false, 'Шофёр']);       // без озвучки в браузере текст открыт сразу
-    const wrong = await ctSay(q, 'kadıköy'); ok(/Кадыкёй/.test(wrong.res) && wrong.next, wrong.res);       // не туда — шофёр «понял» и едет не туда
-    await ctNext(q); const fix = await ctSay(q, 'pardon taksime lütfen'); ok(/на Таксим/.test(fix.res) && /Вежливость/.test(fix.res), fix.res);   // исправились; «lütfen» замечено
-    await ctNext(q); eq((await q.evaluate(() => document.getElementById('ctTr').textContent)), "Taksim'in neresi?");
-    const m1 = await ctSay(q, 'bla bla'); eq([m1.pat, m1.chips, m1.next], [2, false, false]); ok(/не понял/.test(m1.res), m1.res);
-    const m2 = await ctSay(q, ''); eq([m2.pat, m2.chips], [1, true]);                                      // тишина — тоже промах; подсказки после второго
-    const chips = await q.evaluate(() => [...document.querySelectorAll('.ct-chip b')].map(b => b.textContent)); eq(chips, ['Meydana lütfen.', 'Fark etmez.']);
-    await q.evaluate(() => { window.__spoken = []; trVoice = { name:'T', lang:'tr-TR' }; trVoices = [trVoice]; document.querySelector('.ct-chip').click(); });
-    eq(await q.evaluate(() => [window.__spoken[0], document.getElementById('ctResult').textContent.includes('Скажите это сами')]), ['Meydana lütfen.', true]);   // подсказка звучит, но сказать надо самому
-    await q.evaluate(() => { trVoice = null; trVoices = []; });
-    const ok1 = await ctSay(q, 'meydan'); ok(ok1.next && !ok1.chips, ok1.res);
-    await ctNext(q); const tr = await ctSay(q, 'olur'); ok(tr.next, tr.res); const minBefore = await q.evaluate(() => city.min);
-    await ctNext(q);                                                                                        // пробка: +25 мин
-    const pay = await q.evaluate(() => [city.min, document.getElementById('ctTr').textContent, document.getElementById('ctPay').hidden, document.getElementById('ctSpeak').disabled, [...document.querySelectorAll('.ct-note')].map(b => b.dataset.v)]);
-    eq(pay, [minBefore + 1, 'Geldik. Yüz seksen lira.', false, true, ['100', '200', '500']]);
-    await q.click('.ct-note[data-v="200"]'); await q.waitForTimeout(50);
-    eq(await q.evaluate(() => [city.money, ct.change, document.getElementById('ctResult').textContent.includes('сдача 20')]), [320, 20, true]);
-    await ctNext(q); const tip = await ctSay(q, 'üstü kalsın'); ok(/Сдачи не надо/.test(tip.res), tip.res); await ctNext(q); await q.waitForTimeout(80);
-    const end = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.money, city.rel, city.done.map(d => [d.id, d.kind, d.ok]), loadCards().filter(c => /Taksim|kalsın|Meydana|Olur/.test(c.tr)).map(c => c.tr).sort()]);
-    eq(end, [false, 'Такси до Таксима — получилось', 300, { taxi:2 }, [['taxi', 'ok', 6]], ['Meydana lütfen.', 'Olur, sorun değil.', "Pardon, Taksim'e lütfen!", 'Üstü kalsın.']]);   // −180 проезд −20 чаевые; +1 за «lütfen», +1 за чаевые
+    const start = await q.evaluate(() => [document.getElementById('ctTr').textContent, document.getElementById('ctSpeak').disabled, document.getElementById('ctWho').textContent, [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)]);
+    eq(start, ['Buyurun, nereye?', false, 'Шофёр', ['На Таксим, пожалуйста.']]);           // варианты — сразу, по-русски; скрытые ходы (Кадыкёй) не показываются
+    const picked = await ctPick(q, 0);
+    eq(picked, ["На Таксим, пожалуйста.Taksim'e lütfen.[таксиме лютфен]"]);                 // уровень 0: турецкий + чтение кириллицей
+    eq(await q.evaluate(() => !!document.querySelector('#ctOpts [data-ear]')), true);         // можно послушать (синтез)
+    const ok1 = await ctSay(q, 'taksime lütfen'); eq([ok1.score, ok1.next], ['100', true]); ok(/На Таксим/.test(ok1.res) && /Вежливость/.test(ok1.res), ok1.res);   // Taksim'e ≈ taksime: чисто
+    eq(await q.evaluate(() => city.mastery["Taksim'e lütfen."]), 1);
+    await ctNext(q);
+    const two = await q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)); eq(two, ['На площадь, пожалуйста.', 'Без разницы.']);
+    const sel = await ctPick(q, 1); eq(sel, ['Без разницы.Fark etmez.[фарк этмез]']);
+    eq(await q.evaluate(() => document.getElementById('ctOther').textContent), 'другой ответ (1)');   // остальные свёрнуты
+    const m1 = await ctSay(q, 'bla bla'); eq([m1.score, m1.pat, m1.next], ['0', 2, false]); ok(/не понял/.test(m1.res) && /fark/.test(m1.res), m1.res);   // промах: какие слова не прозвучали
+    const ok2 = await ctSay(q, 'fark etmez'); eq([ok2.score, ok2.next], ['100', true]);
+    await ctNext(q);
+    const rev = await q.evaluate(() => { trVoice = { name:'T', lang:'tr-TR' }; trVoices = [trVoice]; document.getElementById('ctTr').click(); const a = [ct.patience, document.getElementById('ctRu').textContent]; document.getElementById('ctTr').click(); a.push(ct.patience); trVoice = null; trVoices = []; return a; });
+    eq(rev, [2, 'На дороге пробка, будет дольше. Нормально?', 2]);                           // первая встреча с репликой — перевод бесплатно
+    await ctPick(q, 1); const metro = await ctSay(q, 'kalsın metroyla giderim'); ok(/на метро/.test(metro.res) && metro.next, metro.res);
+    await ctNext(q); await q.waitForTimeout(80);
+    const end = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.money, city.min, loadCards().filter(c => /Taksim|Fark|metroyla/.test(c.tr)).map(c => c.tr).sort()]);
+    eq(end, [false, 'Такси до Таксима — получилось', 470, 540 + 1 + 1 + 2 + 1 + 40, ['Fark etmez.', 'O zaman kalsın, metroyla giderim.', "Taksim'e lütfen."]]);   // метро: −30 ₺, +40 мин; сказанное — в «Память»
     await q.click('#modalPrimary'); await q.waitForTimeout(60);
-    // недоплата: цену не расслышали — терпение −1, купюры больше денег выключены
+    // освоение: уровень 1 — без чтения; уровень 2 — первые буквы; подсмотрели — уровень не растёт
+    await q.evaluate(() => { city.done = []; cityRender(); }); await q.click('.ct-task[data-scene="taxi"]'); await q.waitForTimeout(80);
+    eq(await ctPick(q, 0), ["На Таксим, пожалуйста.Taksim'e lütfen."]);
+    await q.evaluate(() => { city.mastery["Taksim'e lütfen."] = 2; ct.pick = null; cityOptions(); });
+    eq(await ctPick(q, 0), ['На Таксим, пожалуйста.T··· l···Вспомните сами. Нажмите ещё раз — открыть.']);
+    eq(await ctPick(q, 0), ["На Таксим, пожалуйста.Taksim'e lütfen.[таксиме лютфен]"]);        // подсмотрели
+    await ctSay(q, 'taksime lütfen'); eq(await q.evaluate(() => city.mastery["Taksim'e lütfen."]), 2);   // подсмотрели — уровень не вырос
+    await ctNext(q); await q.evaluate(() => { city.mastery['Meydana lütfen.'] = 2; });
+    eq(await ctPick(q, 0), ['На площадь, пожалуйста.M··· l···Вспомните сами. Нажмите ещё раз — открыть.']);
+    await ctSay(q, 'meydana lütfen'); eq(await q.evaluate(() => city.mastery['Meydana lütfen.']), 3);        // вспомнили сами и сказали чисто — освоено
+    const errs = q.errors; await q.context().close(); eq(errs, []);
+  });
+  await test('Город: bakkal — список покупок карточками, «нет такого» и «это всё», цена на слух (недоплата, купюры больше денег выключены), «kolay gelsin» запоминается', async () => {
+    const q = await openCity();
+    await q.evaluate(() => { city.money = 300; cityRes(); });
     await q.click('.ct-task[data-scene="bakkal"]'); await q.waitForTimeout(80);
-    await ctSay(q, 'hoş bulduk'); await ctNext(q);
-    const shop = await ctSay(q, 'ekmek ve su lütfen'); ok(/Взяли: хлеб, вода/.test(shop.res) && /Осталось: яйца/.test(shop.res) && !shop.next, shop.res);
-    const none = await ctSay(q, 'peynir var mı'); ok(/нет/.test(none.res) && none.pat === 3, none.res);                 // нет такого товара — не промах
-    const last = await ctSay(q, 'yumurta'); ok(/Всё из списка/.test(last.res) && last.next, last.res); await ctNext(q);
-    eq(await q.evaluate(() => [...document.querySelectorAll('.ct-note')].map(b => [b.dataset.v, b.disabled])), [['100', false], ['200', false], ['500', true]]);   // 300 ₺ на руках: 500 дать нельзя
+    eq(await q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)), ['Рад быть здесь! (ответ на «hoş geldin»)', 'Здравствуйте!']);
+    await ctPick(q, 0); const hb = await ctSay(q, 'hoş bulduk'); ok(hb.next, hb.res); await ctNext(q);
+    eq(await q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)), ['Хлеб, пожалуйста.', 'Воду, пожалуйста.', 'Десять яиц, пожалуйста.']);
+    await ctPick(q, 0); const br = await ctSay(q, 'ekmek lütfen'); ok(/Взяли: хлеб/.test(br.res) && /Осталось: вода, яйца/.test(br.res) && !br.next, br.res);
+    eq(br.opts, ['Воду, пожалуйста.', 'Десять яиц, пожалуйста.', 'Это всё.']);
+    const none = await ctSay(q, 'peynir var mı'); ok(/нет/.test(none.res) && none.pat === 3, none.res);                 // своё, без карточки: нет такого товара — не промах
+    const free = await ctSay(q, 'su ve yumurta lütfen'); ok(/Всё из списка/.test(free.res) && free.next, free.res);   // своё: два товара разом
+    await ctNext(q);
+    eq(await q.evaluate(() => [...document.querySelectorAll('.ct-note')].map(b => [b.dataset.v, b.disabled])), [['100', false], ['200', false], ['500', true]]);
     await q.click('.ct-note[data-v="100"]'); await q.waitForTimeout(50);
     eq(await q.evaluate(() => [ct.patience, document.getElementById('ctTr').textContent, city.money]), [2, 'On lira daha.', 300]);
     await q.click('.ct-note[data-v="200"]'); await q.waitForTimeout(50); await ctNext(q);
-    const bye = await ctSay(q, 'kolay gelsin'); ok(bye.next, bye.res); await ctNext(q); await q.waitForTimeout(80);
+    await ctPick(q, 0); const bye = await ctSay(q, 'kolay gelsin'); ok(bye.next, bye.res); await ctNext(q); await q.waitForTimeout(80);
     eq(await q.evaluate(() => [document.getElementById('modalTitle').textContent, city.money, city.rel.bakkal, city.flags && city.flags.bakkalFriend]), ['Bakkal — лавка у дома — получилось', 190, 4, 1]);   // +1 «hoş bulduk», +1 «lütfen», +2 «kolay gelsin»
-    await q.context().close();
+    const errs = q.errors; await q.context().close(); eq(errs, []);
   });
   await test('Город: терпение кончилось — сцена провалена с последствиями; «Показать» на телефоне — путь без речи и без опыта; итог дня и новый день; всё сохраняется', async () => {
     const q = await openCity();
     await q.click('.ct-task[data-scene="kapici"]'); await q.waitForTimeout(80);
     const xp0 = await q.evaluate(() => game.xp);
-    await ctSay(q, 'merhaba kolay gelsin'); await ctNext(q);
+    await ctSay(q, 'merhaba kolay gelsin'); await ctNext(q);                                 // без карточки — по ключевым словам
     const r1 = await ctSay(q, 'sıcak su yok'); ok(r1.next, r1.res); await ctNext(q);
     const r2 = await ctSay(q, '5 numara'); ok(/Номер пять/.test(r2.res), r2.res); await ctNext(q);     // цифра от распознавателя понимается как номер
-    const r3 = await ctSay(q, 'çok acil bugün lütfen'); ok(/срочно/.test(r3.res), r3.res); await ctNext(q);
+    await ctPick(q, 0); const r3 = await ctSay(q, 'çok acil bugün lütfen'); ok(/срочно/.test(r3.res), r3.res); await ctNext(q);
     const xp1 = await q.evaluate(() => game.xp); ok(xp1 > xp0, 'опыт за реплики');
     await ctSay(q, 'xxx'); await ctSay(q, 'yyy'); await q.click('#ctShow'); await q.waitForTimeout(50);
     const ph = await q.evaluate(() => [document.getElementById('ctResult').textContent, game.xp]);
     ok(/показали на телефоне/.test(ph[0]) && /без опыта/.test(ph[0]), ph[0]); eq(ph[1], xp1);          // телефон: без опыта
     await ctNext(q); await q.waitForTimeout(80);
     const end = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.done.map(d => [d.id, d.kind]), city.rel, loadCards().some(c => c.tr === 'Sıcak su yok.')]);
-    eq(end, [false, 'Kapıcı — нет горячей воды — получилось', [['kapici', 'ok']], { kapici:2 }, true]);   // горячая вода сегодня; «kolay gelsin» и «lütfen» — отношение; сказанное — в «Память»
+    eq(end, [false, 'Kapıcı — нет горячей воды — получилось', [['kapici', 'ok']], { kapici:2 }, true]);
     await q.click('#modalPrimary'); await q.waitForTimeout(60);
-    // провал: три промаха подряд у bakkal
     await q.click('.ct-task[data-scene="bakkal"]'); await q.waitForTimeout(80);
     const money0 = await q.evaluate(() => city.money);
-    await ctSay(q, 'merhaba'); await ctNext(q);
+    await ctPick(q, 1); await ctSay(q, 'merhaba'); await ctNext(q);
     await ctSay(q, 'zzz'); await ctSay(q, 'zzz'); await ctSay(q, 'zzz'); await q.waitForTimeout(80);
     const fail = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.money, city.done.find(d => d.id === 'bakkal').kind, document.getElementById('modalText').textContent]);
     eq(fail.slice(0, 4), [false, 'Bakkal — лавка у дома — не вышло', money0 - 160, 'bad']); ok(/Что стоило сказать: «Ekmek lütfen»/.test(fail[4]), fail[4]);
     await q.click('#modalPrimary'); await q.waitForTimeout(60);
     const homeNow = await q.evaluate(() => [document.querySelectorAll('.ct-task.done').length, document.querySelector('.ct-task.done.bad') !== null, !!document.getElementById('ctDayEnd'), JSON.parse(localStorage.getItem('soyle-city')).done.length]);
     eq(homeNow, [2, true, false, 2]);
-    // третья сцена — такси «на телефоне» до конца, потом итоги дня
     await q.click('.ct-task[data-scene="taxi"]'); await q.waitForTimeout(80);
     const trace = [];
-    for(let i = 0; i < 6 && await q.evaluate(() => !!ct); i++){
-      trace.push(await q.evaluate(() => [ct.nodeId, document.getElementById('ctPay').hidden, document.getElementById('ctShow').disabled, document.getElementById('modal').hidden]));
+    for(let i = 0; i < 8 && await q.evaluate(() => !!ct); i++){
+      trace.push(await q.evaluate(() => [ct.nodeId, document.getElementById('ctPay').hidden]));
       if(await q.evaluate(() => !document.getElementById('ctPay').hidden)) await q.click('.ct-note:not([disabled]) >> nth=-1'); else await q.click('#ctShow', { timeout:2000 }).catch(e => trace.push('show: ' + e.message.split('\n')[0]));
       await q.waitForTimeout(40); if(await q.evaluate(() => ct && ct.resolved)) await ctNext(q); await q.waitForTimeout(40);
     }
     eq(await q.evaluate(() => [!!ct, document.getElementById('modal').hidden]), [false, false], JSON.stringify(trace)); await q.click('#modalPrimary'); await q.waitForTimeout(60);
     eq(await q.evaluate(() => !!document.getElementById('ctDayEnd')), true);
     await q.click('#ctDayEnd'); await q.waitForTimeout(60);
-    const day = await q.evaluate(() => [document.getElementById('modalTitle').textContent, document.getElementById('modalStats').textContent.includes('потрачено')]);
-    eq(day, ['День 1 прожит', true]);
+    eq(await q.evaluate(() => [document.getElementById('modalTitle').textContent, document.getElementById('modalStats').textContent.includes('потрачено')]), ['День 1 прожит', true]);
     await q.click('#modalPrimary'); await q.waitForTimeout(60);
-    const day2 = await q.evaluate(() => [city.day, city.done.length, city.min, document.getElementById('ctDay').textContent, JSON.parse(localStorage.getItem('soyle-city')).day]);
-    eq(day2, [2, 0, 540, 'Дела на сегодня — 3 из 3', 2]);
+    eq(await q.evaluate(() => [city.day, city.done.length, city.min, document.getElementById('ctDay').textContent, JSON.parse(localStorage.getItem('soyle-city')).day]), [2, 0, 540, 'Дела на сегодня — 3 из 3', 2]);
     const errs = q.errors; await q.context().close(); eq(errs, []);
   });
-  await test('Город: собеседник говорит голосом персонажа; турецкий текст открывается после звука; перевод по нажатию стоит терпения (один раз)', async () => {
-    const q = await openCity();
+  await test('Город: собеседник говорит голосом персонажа; турецкий текст открывается после звука; перевод знакомой реплики стоит терпения (один раз)', async () => {
+    const q = await openCity({ storage:{ 'soyle-city': JSON.stringify({ seen:{ 'Hoş geldin komşu! Buyur.':1 } }) } });
     await q.evaluate(() => { trVoice = { name:'A', lang:'tr-TR' }; trVoices = [trVoice, { name:'B', lang:'tr-TR' }]; window.__spoken = []; window.__noOnEnd = true; });
     await q.click('.ct-task[data-scene="bakkal"]'); await q.waitForTimeout(30);
     const during = await q.evaluate(() => [window.__spoken, document.getElementById('ctTr').classList.contains('veil'), document.getElementById('ctSpeak').disabled]);
     eq(during, [['Hoş geldin komşu! Buyur.'], true, true]);                                    // пока говорит — текст размыт, микрофон ждёт
     await q.waitForTimeout(1200 + 'Hoş geldin komşu! Buyur.'.length * 150 + 100);           // onend не пришёл — страховка открывает
-    const after = await q.evaluate(() => [document.getElementById('ctTr').classList.contains('veil'), document.getElementById('ctSpeak').disabled]);
-    eq(after, [false, false]);
+    eq(await q.evaluate(() => [document.getElementById('ctTr').classList.contains('veil'), document.getElementById('ctSpeak').disabled]), [false, false]);
     await q.evaluate(() => { window.__noOnEnd = false; });
     const rev = await q.evaluate(() => { document.getElementById('ctTr').click(); const a = [document.getElementById('ctRu').hidden, document.getElementById('ctRu').textContent, ct.patience]; document.getElementById('ctTr').click(); a.push(ct.patience); return a; });
-    eq(rev, [false, 'Добро пожаловать, сосед! Слушаю.', 2, 2]);                               // перевод открыт, терпение −1, повторное нажатие бесплатно
+    eq(rev, [false, 'Добро пожаловать, сосед! Слушаю.', 2, 2]);                               // знакомая реплика: перевод −1 терпения, повторно бесплатно
     await q.evaluate(() => { window.__spoken = []; document.getElementById('ctReplay').click(); }); await q.waitForTimeout(120);
-    const voice = await q.evaluate(() => [window.__spoken[0], document.querySelector('.ct-pat').getAttribute('aria-label')]);
-    eq(voice, ['Hoş geldin komşu! Buyur.', 'Терпение собеседника: 2 из 3']);
+    eq(await q.evaluate(() => [window.__spoken[0], document.querySelector('.ct-pat').getAttribute('aria-label')]), ['Hoş geldin komşu! Buyur.', 'Терпение собеседника: 2 из 3']);
+    await q.evaluate(() => { window.__spoken = []; }); await ctPick(q, 0); await q.click('#ctOpts [data-ear]'); await q.waitForTimeout(80);
+    eq(await q.evaluate(() => window.__spoken), ['Hoş bulduk!']);                             // послушать свою реплику — синтез
     await q.context().close();
   });
-  await test('Город помещается на 360×640, 390×844 и 412×915 без прокрутки страницы: дом, сцена с подсказками, оплата, итог', async () => {
+  await test('Город помещается на 360×640, 390×844 и 412×915 без прокрутки страницы: дом, сцена с карточками, промах с оценкой, оплата', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
       await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { localStorage.removeItem('soyle-city'); city = Object.assign({}, CITY_START); ct = null; setMode('city'); }); await q.waitForTimeout(80);
       const check = async name => { const r = await q.evaluate(() => { autofit(); const card = document.getElementById('cityCard');
-          const cut = [...card.querySelectorAll('.result, .ct-tr, .ct-task, .ct-chip')].filter(e => e.offsetParent && e.scrollHeight > e.clientHeight + 1).length;
+          const cut = [...card.querySelectorAll('.result, .ct-tr, .ct-task, .ct-opt-main')].filter(e => e.offsetParent && e.scrollHeight > e.clientHeight + 1).length;
           return [document.documentElement.scrollHeight <= innerHeight + 1, card.scrollHeight - card.clientHeight <= 1, cut, [...document.querySelectorAll('.tabbar .tab')].every(t => t.scrollWidth <= t.clientWidth + 1)]; });
         if(r.some(x => x !== true && x !== 0)) bad.push(`${w}×${h} ${name}: ${JSON.stringify(r)}`); };
       await check('дом');
       await q.click('.ct-task[data-scene="taxi"]'); await q.waitForTimeout(60); await check('сцена');
-      await ctSay(q, 'a'); await ctSay(q, 'b'); await check('подсказки');
-      await ctSay(q, 'taksim'); await ctNext(q); await ctSay(q, 'meydan'); await ctNext(q); await ctSay(q, 'olur'); await ctNext(q); await check('оплата');
+      await ctPick(q, 0); await check('выбрано');
+      await ctSay(q, 'a'); await check('промах с оценкой');
+      await ctSay(q, 'taksime lütfen'); await ctNext(q); await ctPick(q, 1); await ctSay(q, 'bla'); await check('две карточки, промах');
+      await ctSay(q, 'fark etmez'); await ctNext(q); await ctPick(q, 0); await ctSay(q, 'olur'); await ctNext(q); await check('оплата');
     }
     await q.context().close(); eq(bad, []);
   });
@@ -1505,6 +1496,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(await p.evaluate(() => localStorage.getItem('soyle-hints')), '1'); await p.click('#hintsBtn');
   });
   await test('упражнение видно на первом экране телефона (390×844)', async () => {
+    await p.setViewportSize({ width:390, height:844 });   // предыдущие тесты могли сменить размер общей страницы
     for(const m of ['pairs','phrases','listen','free']){
       await p.evaluate(m => { setMode(m); scrollTo(0,0); }, m);
       const bottom = await p.evaluate(() => [...document.querySelectorAll('.card')].find(c => !c.hidden).querySelector('.mic, .ls-opt').getBoundingClientRect().bottom);

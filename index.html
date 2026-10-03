@@ -607,8 +607,11 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 @media (prefers-reduced-motion: reduce){ .modal-medal .medal{animation:none} .medal svg, #listenCard .ls-opt{transition:none} }
 
 /* «Память»: вспоминание и оценка */
-.tabbar{grid-template-columns:repeat(7, minmax(0,1fr))}
-.tabbar .tab{font-size:clamp(9px, 2.5vw, 11px); letter-spacing:-.02em}
+.tabbar{grid-template-columns:repeat(4, minmax(0,1fr))}
+.subtabs{gap:6px; padding:0 16px 2px}
+.subtabs .chip.seg{min-height:44px; padding:4px 14px; font-size:13px}
+.subtabs + .chips{padding-top:2px}
+.subtabs .chip.seg[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
 /* «Город»: день в квартале — задачи, сцена-разговор, ресурсы */
 .city{gap:calc(8px * var(--fit))}
 .ct-head{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; color:var(--muted)}
@@ -626,7 +629,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-task.done{opacity:.85} .ct-task.done.ok{background:var(--ok-soft)} .ct-task.done.near{background:var(--near-soft)} .ct-task.done.bad{background:var(--bad-soft)}
 .ct-intro{text-align:left; margin-top:auto}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
-.ct-goal{margin:0; font-size:13px; color:var(--muted); text-align:left}
+.ct-goal{margin:0; font-size:13px; color:var(--muted); text-align:left; display:flex; gap:8px; align-items:baseline} .ct-goal > span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
 .ct-npc{display:flex; gap:10px; align-items:flex-start}
 .ct-face{flex:none; width:44px; height:44px; border-radius:50%; border:0; background:var(--accent); color:var(--on-accent); font:700 20px var(--display); display:grid; place-items:center}
 .ct-face:disabled{opacity:.5}
@@ -638,9 +641,19 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 #ctLive:empty{display:none}
 .ct-scene .main-row{margin-top:auto}
 #ctLive{min-height:1.2em; text-align:left; font-size:15px}
-.ct-chips{display:flex; flex-direction:column; gap:6px}
-.ct-chip{display:flex; flex-direction:column; align-items:flex-start; gap:1px; text-align:left; min-height:44px; padding:6px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink)}
-.ct-chip b{font:700 16px var(--display)} .ct-chip span{font-size:12px; color:var(--muted)}
+.ct-opts{display:flex; flex-direction:column; gap:6px}
+.ct-opt{display:flex; align-items:stretch; gap:6px}
+.ct-opt-main{flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; min-height:44px; padding:8px 12px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink)}
+.ct-opt-main:not([aria-pressed="true"]):hover{border-color:var(--accent)}
+.ct-opt-main[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-soft)}
+.ct-opt-ru{font-size:14px; line-height:1.3}
+.ct-say{font:700 max(17px, calc(var(--fit) * clamp(18px, 2.8vh, 22px)))/1.25 var(--display); color:var(--ink)}
+.ct-say.mask{letter-spacing:.04em; color:var(--muted)}
+.ct-read{font-size:12px; color:var(--muted); line-height:1.3}
+.ct-ear{flex:none; width:48px; border-radius:12px; border:1.5px solid var(--accent); background:var(--surface); color:var(--accent); display:grid; place-items:center}
+.ct-ear .ic{width:20px; height:20px}
+.ct-other{align-self:flex-start; font-size:13px; min-height:32px}
+#ctLive{font-size:14px}
 .ct-pay{display:flex; gap:8px; justify-content:center}
 .ct-note{display:inline-flex; align-items:baseline; gap:2px; min-width:72px; min-height:48px; padding:6px 10px; justify-content:center; border:2px solid var(--accent); border-radius:10px; background:var(--surface); color:var(--accent-ink); font:700 20px var(--display)}
 .ct-note small{font-size:12px; font-weight:600}
@@ -670,7 +683,9 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ctx-n{font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums}
 .ctx-play{flex:none; width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--accent); display:grid; place-items:center; cursor:pointer; touch-action:manipulation}
 .ctx-play .ic{width:20px; height:20px}
-@media (max-height: 600px){ #card .result{min-height:58px} .ctx-n{display:none} .ctx-ex{padding:3px 10px} .ctx-tr{font-size:14px} .ctx-ru{font-size:12px} }   /* низкий экран: без строки-подсказки */
+@media (max-height: 600px){ #card .result{min-height:58px} .ctx-tr{font-size:14px} .ctx-ru{font-size:12px} }
+/* низкий экран (360×640 и ниже) при переключателе тренировки над наборами: экономим высоту карточки, чтобы самый длинный пример слова помещался */
+@media (max-height: 700px){ #card .result{min-height:56px} #card .target{font-size:max(22px, calc(var(--fit) * var(--wfit, 1) * clamp(44px, 12vh, 132px)))} .ctx-n{display:none} .ctx-ex{padding:3px 10px} .act .lbl{font-size:11px} }   /* низкий экран: без строки-подсказки */
 </style>
 </head>
 <body>
@@ -720,6 +735,12 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
   </header>
 
   <div id="warn" class="warn" hidden></div>
+  <div class="chips subtabs" id="subtabs" role="group" aria-label="Тренировка">
+    <button class="chip seg" id="tab-pairs" aria-pressed="true">Звуки</button>
+    <button class="chip seg" id="tab-phrases" aria-pressed="false">Фразы</button>
+    <button class="chip seg" id="tab-listen" aria-pressed="false">На слух</button>
+    <button class="chip seg" id="tab-free" aria-pressed="false">Свободно</button>
+  </div>
   <div class="chips" id="chips"></div>
 
   <main class="screen">
@@ -750,7 +771,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
         <p class="hint ct-intro" id="ctIntro"></p>
       </div>
       <div class="ct-scene" id="ctScene" hidden>
-        <p class="ct-goal"><span id="ctGoal"></span> <button class="linkbtn" id="ctBack">к делам</button></p>
+        <p class="ct-goal"><span id="ctGoal" title=""></span><button class="linkbtn" id="ctBack">к делам</button></p>
         <div class="ct-npc">
           <button class="ct-face" id="ctReplay" aria-label="Послушать ещё раз" title="Ещё раз (R)"><span id="ctInitial" aria-hidden="true"></span></button>
           <div class="ct-bubble">
@@ -759,9 +780,9 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
             <div class="ct-ru" id="ctRu" hidden></div>
           </div>
         </div>
+        <div class="ct-opts" id="ctOpts" hidden role="group" aria-label="Что ответить"></div>
         <p class="live" id="ctLive" lang="tr" translate="no"></p>
         <div class="result info" id="ctResult" aria-live="polite"></div>
-        <div class="ct-chips" id="ctChips" hidden></div>
         <div class="ct-pay" id="ctPay" hidden></div>
         <div class="main-row">
           <button class="pill" id="ctShow" disabled title="Показать фразу на экране телефона: поймут, но без разговора"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><span class="lbl">Показать</span></button>
@@ -866,18 +887,19 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       <details class="help">
         <summary>Как пользоваться</summary>
         <ol>
-          <li><b>Звуки</b> — трудные пары (o/ö, u/ü, ı/i, c/ç/ş). Нажмите «Сказать» — тренажёр покажет, не спутали ли вы звук. Трудный звук выделен красным.</li>
-          <li><b>Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «с записями» — всё, что записали носители.</li>
+          <li><b>Город</b> — день в стамбульском квартале: такси, лавка, kapıcı. Собеседник говорит, вы выбираете, что ответить (карточки по-русски), и говорите это по-турецки. Что сказали — меняет исход: лиры, время, терпение собеседника, отношения. Подсказка на реплике выцветает по мере освоения: сначала турецкий с чтением, потом только первые буквы, потом по памяти. «Показать» — показать фразу на экране телефона, если сказать не выходит.</li>
+          <li><b>Память</b> — всё, что сказали в «Городе» и тренировке, возвращается по расписанию FSRS: сначала вспомнить, потом ответ.</li>
+          <li><b>Тренировка → Звуки</b> — трудные пары (o/ö, u/ü, ı/i, c/ç/ş). Нажмите «Сказать» — тренажёр покажет, не спутали ли вы звук. Трудный звук выделен красным.</li>
+          <li><b>Тренировка → Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «слова» — слова темы с примером.</li>
           <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Примеры</b> — фразы носителей с этим словом: перевод и живая запись; там же видео (YouGlish, до 20 поисков в день).</li>
           <li><b>Сравнить</b> — если вы ещё не говорили это слово: образец, вы, оценка, затем образец и ваша запись подряд; если уже сказали — образец и ваша запись.</li>
           <li><b>На слух</b> — звучит одно слово из пары, выберите какое. <b>Блиц</b> — сколько различите за 60 секунд.</li>
           <li><b>Свободно</b> — скажите что угодно и увидите, что услышит носитель. Нужное сохраните в «мои».</li>
-          <li><b>На сегодня</b> — интервальные повторения: фраза возвращается через 1, 3, 7, 16 и 35 дней, ошибка — через 10 минут.</li>
           <li><b>Игра:</b> опыт, уровни со званиями, дни подряд, цель дня, задание дня, достижения, уроки по 10 заданий.</li>
           <li><b>Как приложение:</b> меню браузера, затем «Добавить на главный экран» — откроется без адресной строки.</li>
         </ol>
         <p>Лучше всего работает в Chrome или Edge. Нужен интернет. На iPhone распознавание речи ограничено.</p>
-        <p class="hint hintable"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>N</kbd> — носитель, <kbd>L</kbd> — синтез, «На слух»: <kbd>1</kbd> <kbd>2</kbd></p>
+        <p class="hint hintable"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>N</kbd> — носитель, <kbd>L</kbd> — синтез, «На слух»: <kbd>1</kbd> <kbd>2</kbd>; «Город»: <kbd>1</kbd>–<kbd>3</kbd> — выбрать ответ, <kbd>R</kbd> — ещё раз</p>
       </details>
       <div class="app-ver">
         <span>Версия <b id="appVersion" translate="no">__BUILD__</b></span>
@@ -889,10 +911,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
   <nav class="tabbar" aria-label="Разделы">
     <button class="tab" id="tab-city" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-city"/></svg><span>Город</span></button>
     <button class="tab" id="tab-memory" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-cards"/></svg><span>Память</span><span class="tab-n" id="memDue" hidden aria-hidden="true"></span></button>
-    <button class="tab" id="tab-pairs" aria-pressed="true"><span class="ti glyph" aria-hidden="true">ö</span><span>Звуки</span></button>
-    <button class="tab" id="tab-phrases" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-bubble"/></svg><span>Фразы</span></button>
-    <button class="tab" id="tab-listen" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-ear"/></svg><span>На слух</span></button>
-    <button class="tab" id="tab-free" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-mic"/></svg><span>Свободно</span></button>
+    <button class="tab" id="tab-train" aria-pressed="true"><svg class="ic ti" aria-hidden="true"><use href="#i-wave"/></svg><span>Тренировка</span></button>
     <button class="tab" id="tab-progress" aria-pressed="false"><svg class="ic ti" aria-hidden="true"><use href="#i-steps"/></svg><span>Прогресс</span></button>
   </nav>
 </div>
@@ -1257,11 +1276,8 @@ function renderChips(){
     return;
   }
   if(mode==="phrases"){
-    const nLabel = nativeSet ? `с записями (${nativeSet.length})` : nativeSetLoading ? "загружаю…" : "с записями";
     chips.innerHTML = `<button class="chip set kind" id="kindChip" aria-pressed="false" title="Показать слова по темам">слова</button>`
       + PHRASE_SETS.map(g => `<button class="chip set" data-s="${g.id}" aria-pressed="${g.id===setId}">${g.label}</button>`).join("")
-      + `<button class="chip set" data-s="tatoeba" aria-pressed="${setId==="tatoeba"}">${tatoebaSet ? `живые фразы (${tatoebaSet.length})` : tatoebaLoading ? "загружаю…" : "живые фразы"}</button>`
-      + `<button class="chip set" data-s="native" aria-pressed="${setId==="native"}">${nLabel}</button>`
       + `<button class="chip set" data-s="novoice" aria-pressed="${setId==="novoice"}">без записи (${OLD_PHRASES.length})</button>`
       + `<button class="chip set" data-s="mine" aria-pressed="${setId==="mine"}">мои (${loadList("soyle-mine").length})</button>`;
     chips.querySelectorAll(".chip[data-s]").forEach(b => b.onclick = () => { setId=b.dataset.s; renderChips(); next(); });
@@ -1297,44 +1313,8 @@ function pickPair(){
   lastKey = key; return cand;
 }
 // ---------- набор «с записями»: всё, что есть у носителей на Wikimedia ----------
-let nativeSet = null, nativeSetLoading = null;
-const CATS = ["Category:Lingua Libre pronunciation-tur", "Category:Turkish pronunciation"];
-function wordFromTitle(t){
-  let m = t.match(/^File:LL-Q256 \(tur\)-(.+?)-(.+)\.(wav|ogg|oga|mp3|flac)$/i);
-  if(m) return { word:m[2], who:m[1] };
-  m = t.match(/^File:Tr-(.+)\.(ogg|oga|wav|mp3|flac)$/i);
-  if(m) return { word:m[1].replace(/_/g," "), who:"Wiktionary" };
-  return null;
-}
-async function loadNativeSet(){
-  const byWord = new Map();
-  for(const cat of CATS){
-    let cont = "", pages = 0;
-    do {
-      const url = `${API}&generator=categorymembers&gcmtype=file&gcmlimit=500&gcmtitle=${encodeURIComponent(cat)}${cont}`;
-      const r = await netFetch(url).then(x=>x.json());
-      Object.values(r.query?.pages || {}).forEach(pg => {
-        const w = wordFromTitle(pg.title), u = pg.imageinfo?.[0]?.url;
-        if(!w || !u) return;
-        const key = clean(w.word);
-        if(!key) return;
-        if(!byWord.has(key)) byWord.set(key, { tr:w.word, recs:[] });
-        const e = byWord.get(key);
-        if(!e.recs.some(x=>x.url===u)) e.recs.push({ url:u, who:w.who });
-      });
-      cont = r.continue ? "&" + new URLSearchParams(r.continue).toString() : "";
-    } while(cont && ++pages < 20); // до 10 000 файлов на категорию
-  }
-  const items = [];
-  byWord.forEach((e, key) => {
-    const prev = nativeCache.get(key) || [];
-    const merged = prev.concat(e.recs.filter(r => !prev.some(p=>p.url===r.url)));
-    nativeCache.set(key, merged);
-    items.push({ tr:e.tr, tl:"", ru:"", focus:"Послушайте носителя («Носитель», каждое нажатие — другой голос) и повторите.", n:merged.length });
-  });
-  items.sort((a,b)=>b.n-a.n);
-  return items;
-}
+// Наборы «с записями» (случайные слова из Wikimedia) и «живые фразы» (случайные фразы Tatoeba) убраны: содержимое случайное,
+// не из жизни, перевод ненадёжный; записи носителей слов по-прежнему ищутся в Commons (findRecordings).
 // ---------- слова по темам: только выверенные вручную списки (слова из жизни: жильё, магазин, транспорт, врач…) ----------
 // Было: пополнение из категорий en-Викисловаря (Anatomy, Emotions…) с переводом «первое значение статьи или машинный» —
 // слова случайные, перевод ненадёжный (жалобы: «sizi», «mahkûm — по-английски»). Теперь перевод каждого слова проверен;
@@ -1666,65 +1646,16 @@ async function ruMeaning(text){
   ruMeanCache.set(key, out); return out;
 }
 
-// ---------- набор «живые фразы»: целые фразы, записанные носителями (Tatoeba, свободные лицензии) ----------
-let tatoebaSet = null, tatoebaLoading = null;
 function ruFrom(x){                     // перевод на русский — где бы он ни лежал в ответе
   let out = "";
   (function walk(v){ if(out || !v) return; if(Array.isArray(v)) return v.forEach(walk);
     if(typeof v === "object"){ if(v.lang === "rus" && v.text) out = v.text; else Object.values(v).forEach(walk); } })(x.translations);
   return out;
 }
-async function loadTatoebaSet(){
-  const items = [], seen = new Set();
-  for(let page = 0; page < 6 && items.length < 150; page++){
-    const d = await netFetch(`${TATOEBA}/unstable/sentences?lang=tur&has_audio=yes&trans:lang=rus&showtrans:lang=rus&include=audios&sort=random&limit=100`).then(r => r.json());
-    (d.data || []).forEach(x => {
-      const words = String(x.text).trim().split(/\s+/).length, key = clean(x.text);
-      const lic = (x.audios || []).filter(a => a.license);
-      if(words > 7 || seen.has(key) || !lic.length) return;
-      seen.add(key);
-      const recs = lic.map(a => ({ url: tatoebaAudio(a.id), who: `${a.author || "носитель"} (Tatoeba)` }));
-      nativeCache.set(key, recs);
-      items.push({ tr:x.text, tl:"", ru:ruFrom(x), focus:"Живая запись всей фразы. «Носитель» — послушать, потом «Сказать».", n:recs.length });
-    });
-  }
-  if(!items.length) throw new Error("empty");
-  return items;
-}
-function ensureTatoebaSet(){
-  if(tatoebaSet || tatoebaLoading) return tatoebaLoading;
-  tatoebaLoading = loadTatoebaSet().then(items => { tatoebaSet = items; }).catch(() => { tatoebaSet = null; })
-    .finally(() => { tatoebaLoading = null; if(mode==="phrases") renderChips(); if(mode==="phrases" && setId==="tatoeba") next(); });
-  return tatoebaLoading;
-}
-function ensureNativeSet(){
-  if(nativeSet || nativeSetLoading) return nativeSetLoading;
-  nativeSetLoading = loadNativeSet().then(items => { nativeSet = items; }).catch(() => { nativeSet = null; })
-    .finally(() => { nativeSetLoading = null; if(mode==="phrases") renderChips(); if(mode==="phrases" && setId==="native") next(); });
-  return nativeSetLoading;
-}
-
-// Значение слова из набора «с записями» — по-русски (см. ruMeaning); было: английское толкование из en-Викисловаря
-async function describeNative(word){
-  const it = item, txt = await ruMeaning(word);
-  if(item !== it || !it || it.target !== word) return;
-  if(txt) it.meaning = txt;
-  $("meaning").textContent = txt || "Значение не найдено — нажмите «перевод».";
-}
 
 function pickPhrase(){
   if(wordsKind) return pickWord(setId);
   let p, guard=0;
-  if(setId === "native"){
-    if(!nativeSet || !nativeSet.length) return null;
-    do { p = nativeSet[Math.floor(Math.random()*nativeSet.length)]; } while(p.tr===lastKey && ++guard<10);
-    lastKey = p.tr; return { target:p.tr, translit:"", meaning:"", tip:p.focus, gid:"ph-native", native:true };
-  }
-  if(setId === "tatoeba"){
-    if(!tatoebaSet || !tatoebaSet.length) return null;
-    do { p = tatoebaSet[Math.floor(Math.random()*tatoebaSet.length)]; } while(p.tr===lastKey && ++guard<10);
-    lastKey = p.tr; return { target:p.tr, translit:"", meaning:p.ru, tip:p.focus, gid:"ph-tatoeba", native:true, live:true };
-  }
   if(setId === "mine"){
     const lst = loadList("soyle-mine");
     if(!lst.length) return null;
@@ -1805,18 +1736,7 @@ async function ctxPlay(x){                                           // толь
 let cardLoading = false;       // на карточке «Загружаю…», а item — ещё прошлое слово
 function next(){
   stopListening(); cardLoading = false;
-  if(mode==="phrases" && setId==="native" && !nativeSet){
-    ensureNativeSet();
-    $("target").textContent = nativeSetLoading ? "Загружаю записи носителей…" : "Не удалось загрузить записи";
-    $("target").classList.add("phrase"); $("meaning").textContent = "Источник: Wikimedia Commons (Lingua Libre, Wiktionary)";
-    $("partner").hidden = true; $("tip").textContent = ""; cardLoading = true; return;
-  }
-  if(mode==="phrases" && setId==="tatoeba" && !tatoebaSet){
-    ensureTatoebaSet();
-    $("target").textContent = tatoebaLoading ? "Загружаю фразы носителей…" : "Не удалось загрузить фразы";
-    $("target").classList.add("phrase"); $("meaning").textContent = "Источник: Tatoeba — фразы, записанные носителями";
-    $("partner").hidden = true; $("tip").textContent = ""; cardLoading = true; return;
-  }
+
   item = mode==="pairs" ? pickPair() : pickPhrase();
   if(!item){
     $("target").classList.add("phrase");
@@ -1826,7 +1746,7 @@ function next(){
     $("partner").hidden = true; $("tip").textContent = ""; return;
   }
   const t = $("target");
-  t.classList.toggle("phrase", mode==="phrases" && (!item.native || item.live || /\s/.test(item.target) || item.target.length > 12));   // «живые фразы» — всегда шрифтом фраз (было: «Veganım.» огромным и с переносом)
+  t.classList.toggle("phrase", mode==="phrases" && (!item.native || /\s/.test(item.target) || item.target.length > 12));   // «живые фразы» — всегда шрифтом фраз (было: «Veganım.» огромным и с переносом)
   if(mode==="pairs"){
     t.innerHTML = markDiff(item.target, item.partner);
     $("partner").innerHTML = `не путать с <b>${esc(item.partner)}</b> — ${esc(item.partnerMeaning)}`;
@@ -1846,10 +1766,6 @@ function next(){
   nativeIdx = 0;
   prefetchNative();
   $("meaning").textContent = item.meaning; scheduleFit();
-  if(item.live && !item.meaning){      // живая фраза без готового перевода — машинный перевод прямо в карточке, с пометкой
-    const it = item; $("meaning").textContent = "Перевожу…";
-    ruMeaning(it.target).then(t => { if(t) it.meaning = t; if(item === it) $("meaning").textContent = t; });
-  } else if(item.native && !item.live && !item.word){ $("meaning").textContent = "Ищу значение…"; describeNative(item.target); }   // набор «с записями»: значение по-русски
   $("tip").textContent = item.tip;
   setResult("info", mode==="pairs" || item.word ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
   $("compare").disabled = false; synthSlow = false; echoPending = false;
@@ -1864,7 +1780,7 @@ function setResult(kind, verdict, extra="", score){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"ph-native",label:"с записями"}, {id:"mem-rec",label:"память: понять на слух"}, {id:"mem-prod",label:"память: сказать"}, {id:"ph-srs",label:"память: повторить за носителем"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"listenph",label:"на слух: фразы"}, {id:"free",label:"любая фраза"}, {id:"city",label:"Город: разговоры"}];
+  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"mem-rec",label:"память: понять на слух"}, {id:"mem-prod",label:"память: сказать"}, {id:"ph-srs",label:"память: повторить за носителем"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"listenph",label:"на слух: фразы"}, {id:"free",label:"любая фраза"}, {id:"city",label:"Город: разговоры"}];
   const used = rows.filter(r => (stats[r.id]||{}).t);
   if(!used.length){ $("stats").innerHTML = `<p class="hint" style="text-align:left">Здесь появится ваш прогресс по каждому набору.</p>`; return; }
   $("stats").innerHTML = used.map(r => {
@@ -3157,6 +3073,7 @@ function endBlitz(quiet){
 // «Сравнить» = бывшие «Эхо» и «Сравнить» в одной кнопке:
 // есть ваша запись ЭТОГО слова — образец и сразу вы; нет — полный цикл эхо (образец → вы → оценка → образец и вы)
 function compareVoices(){
+  if(!item) return;                                                  // ушли в «Город» (item = null), пока шла запись
   if(recordOn && myRecFor === item.target){
     const mine = $("myAudio");
     playReference(item.target, () => setTimeout(() => mine.play().catch(()=>{}), 350));
@@ -3421,8 +3338,8 @@ function cityRender(){
 }
 function cityStart(id){
   const scene = SCENES[id]; if(!scene) return;
-  ct = { id, scene, node:null, tries:0, patience:3, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false };
-  ctEl("ctGoal").textContent = "Цель: " + scene.goal; ctEl("ctWho").textContent = scene.who;
+  ct = { id, scene, node:null, tries:0, patience:3, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
+  ctEl("ctGoal").textContent = "Цель: " + scene.goal; ctEl("ctGoal").title = scene.goal; ctEl("ctWho").textContent = scene.who;
   cityRender();
   cityNode(scene.start);
 }
@@ -3451,28 +3368,70 @@ function npcSay(text, onDone){
 }
 function cityNode(id, replyHtml){
   const n = ct.scene.nodes[id]; if(!n) return;
-  ct.node = n; ct.nodeId = id; ct.tries = 0; ct.revealed = false; ct.resolved = false; ct.pendingGo = null; ct.polite = false;
+  ct.node = n; ct.nodeId = id; ct.tries = 0; ct.revealed = false; ct.resolved = false; ct.pendingGo = null; ct.polite = false; ct.pick = null; ct.peeked = false;
   if(n.end) return cityEnd(n.end);
+  ct.firstTime = !(city.seen || (city.seen = {}))[n.npc]; city.seen[n.npc] = 1;      // первую встречу с репликой переводим бесплатно
   const tr = ctEl("ctTr"), ru = ctEl("ctRu");
   tr.textContent = n.npc; tr.classList.add("veil"); ru.hidden = true; ru.textContent = n.ru;
   ctEl("ctInitial").textContent = ct.scene.initial;
-  ctEl("ctLive").textContent = ""; ctEl("ctChips").hidden = true; ctEl("ctChips").innerHTML = "";
+  ctEl("ctLive").textContent = "";
   if(n.pay){
     if(city.money < n.pay.price){ ct.lines.push({ tr:"", ru:"", ok:false });            // денег не хватило — сцена заканчивается плохо
       return cityEnd({ kind:"bad", text:`У вас всего ${fmtMoney(city.money)}, а просили ${n.pay.price} ₺. Пришлось искать банкомат, собеседник ждал и злился.`, fx:{ min:15 } }); }
     ctEl("ctPay").innerHTML = n.pay.notes.map(v => `<button class="ct-note" data-v="${v}" aria-label="Дать ${v} лир"${v > city.money ? " disabled" : ""}><span>${v}</span><small>₺</small></button>`).join("");
     ctEl("ctPay").querySelectorAll(".ct-note").forEach(b => b.onclick = () => cityPay(+b.dataset.v));
   }
-  ctResult("info", replyHtml || `<span class="verdict">${n.pay ? "Сколько дать? Послушайте цену." : "Слушайте. Потом нажмите «Сказать» и ответьте по-турецки."}</span>`);
+  cityOptions();
+  ctResult("info", replyHtml || `<span class="verdict">${n.pay ? "Сколько дать? Послушайте цену." : "Слушайте. Потом выберите, что ответить, и скажите это по-турецки."}</span>`);
   ctButtons(); ctEl("ctSpeak").disabled = true; ctEl("ctShow").disabled = true;
   city.min += 1; cityRes();
   npcSay(n.npc, () => { if(ct && ct.node === n){ tr.classList.remove("veil"); ctButtons(); scheduleFit(); } });
   scheduleFit();
 }
-function cityReveal(){   // перевод реплики — стоит одного терпения (один раз на реплику); без озвучки в браузере открывается бесплатно
+// Варианты ответа — карточки по-русски: игрок выбирает, ЧТО сказать (это и есть выбор в сцене), потом говорит это по-турецки.
+// Подсказка выцветает по мере освоения реплики (city.mastery): 0 — турецкий + чтение кириллицей + перевод; 1 — турецкий + перевод;
+// 2 — первые буквы слов (вспомнить самому, нажатие открывает — тогда уровень не растёт); 3 и выше — только перевод.
+const SHOP_LINES = { ekmek:["Ekmek lütfen.", "Хлеб, пожалуйста."], su:["Bir su lütfen.", "Воду, пожалуйста."], yumurta:["On tane yumurta lütfen.", "Десять яиц, пожалуйста."] };
+function ctMoves(n){
+  if(n.shop){ const out = Object.keys(n.items).filter(it => !ct.bought.has(it)).map(it => ({ key:n.items[it], say:[SHOP_LINES[it][0]], ru:SHOP_LINES[it][1], item:it }));
+    if(ct.bought.size) out.push({ key:n.done.key, say:n.done.say, ru:n.done.ru, doneShop:true }); return out; }
+  return n.moves.filter(m => !m.hide);
+}
+const mastery = tr => (city.mastery || {})[tr] || 0;
+function ctLineHtml(m){
+  const line = m.say[0], lvl = ct.peeked ? 0 : mastery(line);
+  const mask = line.split(" ").map(w => { const core = w.replace(/[^\p{L}']/gu, ""); return core ? w[0] + "···" : w; }).join(" ");
+  if(lvl <= 1) return `<b class="ct-say" lang="tr" translate="no">${esc(line)}</b>${lvl === 0 ? `<small class="ct-read">[${esc(trToCyr(line.replace(/['’]/g, "")))}]</small>` : ""}`;
+  if(lvl === 2) return `<b class="ct-say mask" lang="tr" translate="no">${esc(mask)}</b><small class="ct-read">Вспомните сами. Нажмите ещё раз — открыть.</small>`;
+  return `<small class="ct-read">Скажите по памяти. Нажмите ещё раз — открыть.</small>`;
+}
+// Выбранный ответ раскрывается (турецкий, чтение, кнопка «послушать»), остальные сворачиваются в «другой ответ» — так всё
+// помещается на 360×640 вместе с оценкой произношения.
+function cityOptions(){
+  const n = ct.node, box = ctEl("ctOpts"); if(!n || n.end || n.pay){ box.hidden = true; box.innerHTML = ""; return; }
+  const list = ctMoves(n); ct.opts = list;
+  const card = (m, i, on) => `<div class="ct-opt${on ? " on" : ""}" role="group"><button class="ct-opt-main" data-i="${i}" aria-pressed="${on}"><span class="ct-opt-ru">${esc(m.ru)}</span>${on ? ctLineHtml(m) : ""}</button>${on ? `<button class="ct-ear" data-ear="${i}" aria-label="Послушать, как это звучит (синтез)"><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg></button>` : ""}</div>`;
+  const pi = list.indexOf(ct.pick);
+  box.innerHTML = pi >= 0 ? card(list[pi], pi, true) + (list.length > 1 ? `<button class="linkbtn ct-other" id="ctOther">другой ответ (${list.length - 1})</button>` : "") : list.map((m, i) => card(m, i, false)).join("");
+  box.hidden = !list.length;
+  box.querySelectorAll(".ct-opt-main").forEach(b => b.onclick = () => { const m = list[+b.dataset.i];
+    if(ct.pick === m){ ctPeek(m); return; }                                            // повторное нажатие на выбранное — открыть подсказку
+    ct.pick = m; ct.peeked = false; cityOptions();
+    ctResult("info", `<span class="verdict">Скажите это по-турецки — «Сказать».</span><div class="alts">Передумали — «другой ответ».</div>`); });
+  box.querySelectorAll("[data-ear]").forEach(b => b.onclick = () => { const m = list[+b.dataset.ear]; ctPeek(m, true); sayText(m.say[0]); });
+  const o = ctEl("ctOther"); if(o) o.onclick = () => { ct.pick = null; ct.peeked = false; cityOptions(); };
+  scheduleFit();
+}
+function ctPeek(m, ear){          // открыть подсказку на реплике уровня 2+ (или услышать её): сказать можно, но уровень не вырастет
+  if(ct.pick !== m) { ct.pick = m; }
+  if(mastery(m.say[0]) >= 2 && !ct.peeked){ ct.peeked = true; }
+  if(!ear || ct.peeked) cityOptions();
+}
+function ctBump(line, allowed){ if(!allowed) return; (city.mastery || (city.mastery = {}))[line] = mastery(line) + 1; }
+function cityReveal(){   // перевод реплики: первая встреча — бесплатно, потом стоит одного терпения (один раз на реплику); без озвучки в браузере — бесплатно
   if(!ct || !ct.node || ct.node.end) return;
   ctEl("ctTr").classList.remove("veil");
-  if(ctEl("ctRu").hidden){ ctEl("ctRu").hidden = false; if(!ct.revealed && (trVoices.length || trVoice)){ ct.revealed = true; ct.patience = Math.max(0, ct.patience - 1); cityRes(); } }
+  if(ctEl("ctRu").hidden){ ctEl("ctRu").hidden = false; if(!ct.revealed && !ct.firstTime && (trVoices.length || trVoice)){ ct.revealed = true; ct.patience = Math.max(0, ct.patience - 1); cityRes(); } }
   scheduleFit();
 }
 function cityReplay(){ if(!ct || !ct.node || ct.node.end) return; ctEl("ctTr").classList.add("veil"); npcSay(ct.node.npc, () => { if(ct) { ctEl("ctTr").classList.remove("veil"); ctButtons(); } }); }
@@ -3517,68 +3476,66 @@ function cityAnswer(alts){
   const n = ct.node; if(!n || n.end || n.pay || ct.resolved) return;
   const heardN = alts.map(nphr).join(" | "); ctRaw = alts.join(" | ");
   const polite = POLITE.some(p => ctHas(heardN, p));
-  if(n.shop) return cityShop(alts, heardN, polite);
-  let best = null;
+  const pick = ct.pick;
+  if(pick){                                                                            // выбрали ответ — оцениваем, как сказали именно его
+    const line = pick.say[0], ps = pronScore(line.replace(/['’]/g, ""), alts), keyHit = pick.key.some(k => ctHas(heardN, k));   // Taksim'e → taksime: так пишет распознаватель
+    if(ps.score >= 70 || keyHit) return cityAccept(pick, alts, polite, ps.score);     // ключевые слова на месте — собеседник понял; оценка покажет, насколько чисто
+    return cityMiss(null, ps);
+  }
+  if(n.shop){                                                                          // сказали своё в лавке: можно назвать несколько товаров разом
+    const got = ctMoves(n).filter(m => m.item && m.key.some(k => ctHas(heardN, k)));
+    if(got.length){ got.slice(0, -1).forEach(m => { ct.bought.add(m.item); ct.lines.push({ tr:m.say[0], ru:m.ru, ok:true }); ctBump(m.say[0], true); }); return cityAccept(got[got.length - 1], alts, polite, 100, got.map(m => n.itemRu[m.item]).join(", ")); }
+    if(n.none.key.some(k => ctHas(heardN, k))){ ctEl("ctTr").textContent = n.none.npc; ctEl("ctRu").textContent = n.none.ru; npcSay(n.none.npc);
+      return ctResult("near", `<span class="verdict">Этого у Хасана нет.</span><div class="alts">«${esc(n.none.ru)}»</div>`); }
+    const done = ctMoves(n).find(m => m.doneShop && m.key.some(k => ctHas(heardN, k))); if(done) return cityAccept(done, alts, polite, 100);
+    return cityMiss();
+  }
+  let best = null;                                                                     // сказали своё, без выбора — узнаём по ключевым словам
   for(const m of n.moves){ const hits = m.key.filter(k => ctHas(heardN, k)).length; if(hits && (!best || hits > best.hits)) best = { m, hits }; }
   if(!best) return cityMiss();
-  const m = best.m, said = m.say[0];
+  cityAccept(best.m, alts, polite, 100);
+}
+function cityAccept(m, alts, polite, score, names){
+  const n = ct.node, line = m.say[0];
   ct.n++; ct.ok++; city.said++; city.ok++;
   if(polite && !ct.polite && !(m.fx && m.fx.rel)){ ct.polite = true; cityFx({ rel:1 }); }
-  if(m.fx) cityFx(m.fx);
+  ctBump(line, score >= 70 && !(ct.peeked && mastery(line) >= 2));          // реплика растёт в освоении, только если сказана чисто и без подглядывания
   if(m.xp !== false) count("city", 1);
-  ct.lines.push({ tr:said, ru:m.ru, ok:true });
-  cityResolve(m.go, "ok", `<span class="verdict">${ct.scene.who} понял: «${esc(m.ru)}»</span><div class="alts">Вы сказали: «${esc(alts[0])}».${m.fx && m.fx.rel ? " Собеседнику приятно." : polite ? " Вежливость замечена." : ""}</div>`);
-}
-function cityShop(alts, heardN, polite){
-  const n = ct.node, got = [];
-  Object.entries(n.items).forEach(([it, keys]) => { if(!ct.bought.has(it) && keys.some(k => ctHas(heardN, k))){ ct.bought.add(it); got.push(it); } });
-  const all = Object.keys(n.items).every(it => ct.bought.has(it));
-  if(got.length){
-    ct.n++; ct.ok++; city.said++; city.ok++; count("city", 1);
-    if(polite && !ct.polite){ ct.polite = true; cityFx({ rel:1 }); }
-    const names = got.map(it => n.itemRu[it]).join(", ");
-    if(all){ ct.lines.push({ tr:"Ekmek, su, yumurta lütfen.", ru:"Хлеб, воду, яйца, пожалуйста.", ok:true });
-      return cityResolve(n.go, "ok", `<span class="verdict">Взяли: ${esc(names)}. Всё из списка.</span>`); }
-    const left = Object.keys(n.items).filter(it => !ct.bought.has(it)).map(it => n.itemRu[it]).join(", ");
-    ctEl("ctTr").textContent = `${got.map(it => it[0].toLocaleUpperCase("tr-TR") + it.slice(1)).join(", ")}, tamam. Başka?`; ctEl("ctRu").textContent = `${names}, хорошо. Что ещё?`;
-    npcSay(ctEl("ctTr").textContent);
-    ct.tries = 0;
-    return ctResult("ok", `<span class="verdict">Взяли: ${esc(names)}.</span><div class="alts">Осталось: ${esc(left)}.</div>`);
-  }
-  if(n.none.key.some(k => ctHas(heardN, k))){
-    ctEl("ctTr").textContent = n.none.npc; ctEl("ctRu").textContent = n.none.ru; npcSay(n.none.npc);
-    return ctResult("near", `<span class="verdict">Этого у Хасана нет.</span><div class="alts">«${esc(n.none.ru)}»</div>`);
-  }
-  if(n.done.key.some(k => ctHas(heardN, k)) && ct.bought.size){
+  const lvl = mastery(line), grown = lvl >= 3 ? " Реплика освоена: дальше — по памяти." : lvl === 2 ? " В следующий раз — только первые буквы." : "";
+  const head = `<div class="res-head">${scoreHtml(score, "Произношение")}<div class="res-body">`, tail = `</div></div>`;
+  if(n.shop){
+    if(m.item){ ct.bought.add(m.item); ct.lines.push({ tr:line, ru:m.ru, ok:true });
+      const all = Object.keys(n.items).every(it => ct.bought.has(it)); names = names || n.itemRu[m.item];
+      if(all) return cityResolve(n.go, "ok", `${head}<span class="verdict">Взяли: ${esc(names)}. Всё из списка.</span>${tail}`);
+      const left = Object.keys(n.items).filter(it => !ct.bought.has(it)).map(it => n.itemRu[it]).join(", ");
+      ct.pick = null; ct.peeked = false; cityOptions();
+      ctEl("ctTr").textContent = `${m.item[0].toLocaleUpperCase("tr-TR") + m.item.slice(1)}, tamam. Başka?`; ctEl("ctRu").textContent = `${names}, хорошо. Что ещё?`; npcSay(ctEl("ctTr").textContent);
+      return ctResult("ok", `${head}<span class="verdict">Взяли: ${esc(names)}.</span><div class="alts">Осталось: ${esc(left)}.${grown}</div>${tail}`); }
     const miss = Object.keys(n.items).filter(it => !ct.bought.has(it)).map(it => n.itemRu[it]);
-    ct.n++; ct.ok++; count("city", 1);
-    return cityResolve(n.go, miss.length ? "near" : "ok", `<span class="verdict">Хасан собирает пакет.</span>${miss.length ? `<div class="alts">Вы забыли: ${esc(miss.join(", "))}. Дома заметите.</div>` : ""}`);
+    ct.lines.push({ tr:line, ru:m.ru, ok:true });
+    return cityResolve(n.go, miss.length ? "near" : "ok", `${head}<span class="verdict">Хасан собирает пакет.</span>${miss.length ? `<div class="alts">Вы забыли: ${esc(miss.join(", "))}. Дома заметите.</div>` : ""}${tail}`);
   }
-  cityMiss();
+  if(m.fx) cityFx(m.fx);
+  ct.lines.push({ tr:line, ru:m.ru, ok:true });
+  cityResolve(m.go, "ok", `${head}<span class="verdict">${ct.scene.who} понял: «${esc(m.ru)}»</span><div class="alts">Вы сказали: «${esc(alts[0])}».${m.fx && m.fx.rel ? " Собеседнику приятно." : polite ? " Вежливость замечена." : ""}${grown}</div>${tail}`);
 }
-function cityMiss(why){
+function cityMiss(why, ps){
   const n = ct.node; ct.tries++; ct.n++; city.said++; count("city", 0);
   ct.patience = Math.max(0, ct.patience - 1); city.min += 2; cityRes();
-  if(ct.patience <= 0){ ct.lines.push({ tr:(n.moves && n.moves[0] || {}).say ? n.moves[0].say[0] : "", ru:"", ok:false }); return cityEnd(Object.assign({ kind:"bad" }, ct.scene.fail), true); }
+  if(ct.patience <= 0){ const first = ct.pick || ctMoves(n)[0]; ct.lines.push({ tr:first ? first.say[0] : "", ru:first ? first.ru : "", ok:false }); return cityEnd(Object.assign({ kind:"bad" }, ct.scene.fail), true); }
   const again = n.again || "Efendim?", againRu = n.againRu || "Простите?";
   ctEl("ctTr").textContent = again; ctEl("ctTr").classList.remove("veil"); ctEl("ctRu").textContent = againRu; npcSay(again);
-  const hint = ct.tries >= 2;
-  if(hint) cityChips();
-  ctResult("bad", `<span class="verdict">${why ? esc(why) : `${ct.scene.who} не понял.`}</span><div class="alts">${hint ? "Варианты ответа — ниже. Нажмите, чтобы услышать, и скажите сами." : `Терпения осталось: ${ct.patience}. Ещё попытка — или «Показать» на телефоне.`}</div>`);
-}
-function cityChips(){
-  const n = ct.node, box = ctEl("ctChips");
-  const list = n.shop ? n.moves : n.moves.filter(m => !m.hide);
-  box.innerHTML = list.map((m, i) => `<button class="ct-chip" data-i="${i}" lang="tr" translate="no"><b>${esc(m.say[0])}</b><span lang="ru">${esc(m.ru)}</span></button>`).join("");
-  box.hidden = false;
-  box.querySelectorAll(".ct-chip").forEach(b => b.onclick = () => { const m = list[+b.dataset.i]; sayText(m.say[0]); ctResult("info", `<span class="verdict" lang="tr" translate="no">${esc(m.say[0])}</span><div class="alts">${esc(m.ru)}. Скажите это сами — нажмите «Сказать».</div>`); });
-  scheduleFit();
+  const detail = ps ? `${errsHtml(ps.words)}<div class="alts">Послушайте реплику в карточке (значок звука) и скажите ещё раз.</div>` : `<div class="alts">${ct.pick ? "Скажите выбранную реплику ещё раз." : "Выберите ответ в карточках и скажите его."} Терпения осталось: ${ct.patience}. Без речи — «Показать».</div>`;
+  ctResult("bad", `${ps ? `<div class="res-head">${scoreHtml(ps.score, "Произношение")}<div class="res-body">` : ""}<span class="verdict">${why ? esc(why) : `${ct.scene.who} не понял.`}</span>${detail}${ps ? "</div></div>" : ""}`);
 }
 function cityPhone(){   // показали фразу на экране телефона: поняли, но разговора не вышло — без опыта, дольше
   const n = ct.node; if(!n || n.end || n.pay || ct.resolved) return;
-  const m = n.shop ? null : n.moves.find(x => !x.hide);
+  const m = ct.pick || ctMoves(n)[0]; if(!m) return;
   ct.phoned = true; city.min += 3; ct.n++;
-  if(n.shop){ Object.keys(n.items).forEach(it => ct.bought.add(it)); return cityResolve(n.go, "near", `<span class="verdict">Вы показали список на телефоне. Хасан собрал всё молча.</span><div class="alts">Без разговора — без опыта. В следующий раз скажите сами.</div>`); }
+  if(n.shop){ if(m.item){ ct.bought.add(m.item); } else { Object.keys(n.items).forEach(it => ct.bought.add(it)); }
+    const all = Object.keys(n.items).every(it => ct.bought.has(it));
+    if(!all){ ct.pick = null; cityOptions(); return ctResult("near", `<span class="verdict">Показали на телефоне: «${esc(m.say[0])}».</span><div class="alts">Хасан положил. Без разговора — без опыта. Что ещё?</div>`); }
+    return cityResolve(n.go, "near", `<span class="verdict">Вы показали список на телефоне. Хасан собрал всё молча.</span><div class="alts">Без разговора — без опыта. В следующий раз скажите сами.</div>`); }
   if(m.fx) cityFx(Object.assign({}, m.fx, { rel:0 }));
   ct.lines.push({ tr:m.say[0], ru:m.ru, ok:false });
   cityResolve(m.go, "near", `<span class="verdict">Вы показали на телефоне: «${esc(m.say[0])}»</span><div class="alts">${esc(m.ru.replace(/\.$/, ""))}. Поняли, но разговора не вышло — без опыта.</div>`);
@@ -3603,7 +3560,7 @@ function cityFx(fx){
   cityRes();
 }
 function cityResolve(go, kind, html){
-  ct.resolved = true; ct.pendingGo = go; ctEl("ctChips").hidden = true;
+  ct.resolved = true; ct.pendingGo = go; ctEl("ctOpts").hidden = true;
   ctResult(kind, html + `<div class="alts">Дальше — кнопка справа или Enter.</div>`);
   ctButtons(); setTimeout(() => ctEl("ctNext").focus(), 50);
 }
@@ -3638,6 +3595,8 @@ ctEl("ctReplay").onclick = cityReplay;
 ctEl("ctTr").onclick = cityReveal;
 ctEl("ctBack").onclick = () => { if(!ct) return; cityLeave(); ct = null; cityRender(); };
 const MODES = ["city","memory","pairs","phrases","listen","free","progress"];
+const TRAIN = ["pairs","phrases","listen","free"];           // раздел «Тренировка» объединяет прежние четыре вкладки
+let lastTrain = (() => { try { const v = localStorage.getItem("soyle-train"); return TRAIN.includes(v) ? v : "phrases"; } catch(e){ return "phrases"; } })();
 // ---------- автоподгонка: всё на одном экране без прокрутки, на высоком экране — крупнее ----------
 // Подбираем --fit (0.6…1.15) двоичным поиском: наибольший, при котором карточка и страница не переполнены.
 // Одно слово никогда не переносится: если не помещается по ширине — уменьшается (жалоба: «göstermek переносится
@@ -3856,11 +3815,11 @@ function setMode(m){
   if(mode === "city" && m !== "city" && typeof cityLeave === "function") cityLeave();
   $("tab-city").setAttribute("aria-pressed", m==="city");
   $("tab-memory").setAttribute("aria-pressed", m==="memory");
-  $("tab-pairs").setAttribute("aria-pressed", m==="pairs");
-  $("tab-phrases").setAttribute("aria-pressed", m==="phrases");
-  $("tab-free").setAttribute("aria-pressed", m==="free");
-  $("tab-listen").setAttribute("aria-pressed", m==="listen");
+  $("tab-train").setAttribute("aria-pressed", TRAIN.includes(m));
   $("tab-progress").setAttribute("aria-pressed", m==="progress");
+  $("subtabs").hidden = !TRAIN.includes(m);                      // тренировка: Звуки · Фразы · На слух · Свободно — переключатель над наборами
+  TRAIN.forEach(t => $("tab-" + t).setAttribute("aria-pressed", m===t));
+  if(TRAIN.includes(m)){ lastTrain = m; try { localStorage.setItem("soyle-train", m); } catch(e){} }
   $("card").hidden = m==="free" || m==="listen" || m==="progress" || m==="city"; $("freeCard").hidden = m!=="free"; $("listenCard").hidden = m!=="listen"; $("cityCard").hidden = m!=="city";
   $("progressView").hidden = m!=="progress";
   renderLesson(); scheduleFit();
@@ -3875,6 +3834,7 @@ function setMode(m){
 }
 $("tab-city").onclick = () => setMode("city");
 $("tab-memory").onclick = () => setMode("memory");
+$("tab-train").onclick = () => setMode(lastTrain);
 $("tab-pairs").onclick = () => setMode("pairs");
 $("tab-phrases").onclick = () => setMode("phrases");
 $("tab-free").onclick = () => setMode("free");
@@ -3912,6 +3872,7 @@ document.addEventListener("keydown", e => {
     if(e.code==="Space"){ e.preventDefault(); if(!$("ctSpeak").disabled) cityListen(); }
     else if(e.key==="Enter"){ e.preventDefault(); if(!$("ctNext").disabled) cityNextNode(); }
     else if(e.key.toLowerCase()==="r"){ cityReplay(); }
+    else if("123".includes(e.key) && ct && ct.opts && ct.opts[+e.key - 1] && !ct.resolved){ const b = document.querySelector(`#ctOpts .ct-opt-main[data-i="${+e.key - 1}"]`); if(b) b.click(); else { ct.pick = ct.opts[+e.key - 1]; ct.peeked = false; cityOptions(); } }
     return;
   }
   if(mode==="memory"){
@@ -3927,7 +3888,8 @@ document.addEventListener("keydown", e => {
 });
 
 renderChips(); renderStats(); renderGame(); renderBadges(); renderLesson(); updateMemTab();
-{ const h = location.hash.slice(1); if(MODES.includes(h) && h !== "pairs") setTimeout(() => setMode(h), 0); } setupSelfRecord(); next();
+setupSelfRecord(); next();
+{ const h = location.hash.slice(1), start = MODES.includes(h) ? h : "city"; if(start !== "pairs") setTimeout(() => setMode(start), 0); }   // стартовый экран — «Город» (игра), если в адресе не указан раздел
 </script>
 </body>
 </html>
