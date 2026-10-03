@@ -32,7 +32,7 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
     ok(r[0] && r[1] && r[2] && !r[3] && r[4].length > 3 && r[5], JSON.stringify(r));
   });
   await test('на экране действительно рисуются свои шрифты (как на одобренном скриншоте), а не шрифты телефона', async () => {
-    await p.evaluate(() => setMode('pairs')); await p.waitForTimeout(200);   // стартовый экран — «Город»; шрифты проверяем на карточке слова
+    await p.evaluate(() => setMode('phrases')); await p.waitForTimeout(200);   // стартовый экран — «Город»; шрифты проверяем на карточке слова
     const c = await p.context().newCDPSession(p); await c.send('DOM.enable'); await c.send('CSS.enable');
     const { root } = await c.send('DOM.getDocument'); const out = {};
     for(const sel of ['#target', '#next .lbl', '#meaning']){
@@ -55,7 +55,7 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
   });
   await test('«Сравнить» на телефоне без параллельной записи: образец → настоящая запись → она воспроизводится', async () => {
     const r = await p.evaluate(async () => {
-      recordOn = false; setMode('pairs'); nativeCache.set(clean(item.target), []);            // нет записи носителя и нет синтеза → сразу запись
+      recordOn = false; setMode('phrases'); nativeCache.set(clean(item.target), []);            // нет записи носителя и нет синтеза → сразу запись
       const a = document.getElementById('myAudio'); const before = a.src;
       compareWithFreshRecording();
       for(let t = 0; t < 120 && (a.src === before || a.paused); t++) await new Promise(z => setTimeout(z, 100));
@@ -75,7 +75,7 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
   });
   await test('настоящий распознаватель без сети Google: понятное сообщение, приложение не ломается', async () => {
     const r = await p.evaluate(async () => {
-      setMode('pairs'); recordOn = false;
+      setMode('phrases'); recordOn = false;
       const SRnative = window.SpeechRecognition || window.webkitSpeechRecognition; if(!SRnative) return ['нет API в этом браузере'];
       await startListening(); for(let t = 0; t < 170 && listening; t++) await new Promise(z => setTimeout(z, 100));
       return [document.getElementById('result').textContent.trim().slice(0, 80), listening];

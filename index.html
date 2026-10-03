@@ -304,10 +304,6 @@ label.btn{display:flex; align-items:center; justify-content:center; cursor:point
 .ic{width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none}
 .ic.tulip{color:var(--tulip); width:18px; height:18px}
 /* трудный звук: точки над ö/ü/i и хвостик ç/ş — тюльпан; буквы без знака — целиком */
-.dia{position:relative; display:inline-block}
-.dia::after{content:attr(data-ch); position:absolute; left:0; top:0; color:var(--tulip); clip-path:inset(0 0 65% 0)}
-.dia.low::after{clip-path:inset(74% 0 0 0)}
-.dia.whole{color:var(--tulip)} .dia.whole::after{content:none}
 body{font-family:var(--body)}
 h1{font:700 26px/1 var(--display); letter-spacing:-.01em}
 h1 span{color:inherit}
@@ -739,8 +735,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 
   <div id="warn" class="warn" hidden></div>
   <div class="chips subtabs" id="subtabs" role="group" aria-label="Тренировка">
-    <button class="chip seg" id="tab-pairs" aria-pressed="true">Звуки</button>
-    <button class="chip seg" id="tab-phrases" aria-pressed="false">Фразы</button>
+    <button class="chip seg" id="tab-phrases" aria-pressed="true">Фразы</button>
     <button class="chip seg" id="tab-listen" aria-pressed="false">На слух</button>
     <button class="chip seg" id="tab-free" aria-pressed="false">Свободно</button>
   </div>
@@ -753,14 +748,14 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
     <section class="card" id="listenCard" hidden>
       <div class="ls-top">
         <button class="round-xl" id="lsPlay" aria-label="Послушать ещё раз"><svg class="ic" aria-hidden="true"><use href="#i-speaker"/></svg><span class="sr">Ещё раз</span></button>
-        <p class="meaning ls-q">Какое слово прозвучало?</p>
+        <p class="meaning ls-q">Какая фраза прозвучала?</p>
       </div>
       <div class="ls-options">
         <button class="ls-opt" id="lsA" data-k="1"></button>
         <button class="ls-opt" id="lsB" data-k="2"></button>
       </div>
       <p class="hint hintable" id="lsInfo">Голоса и темп меняются нарочно: ухо учится различать звук, а не голос.</p>
-      <div class="result info" id="lsResult" aria-live="polite"><span class="verdict">Послушайте и выберите слово, которое прозвучало.</span></div>
+      <div class="result info" id="lsResult" aria-live="polite"><span class="verdict">Послушайте и выберите фразу, которая прозвучала.</span></div>
       <div class="pill-row">
         <button class="pill wide" id="lsBlitz" title="Сколько пар различите за 60 секунд"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl">Блиц 60 с</span></button>
       </div>
@@ -850,7 +845,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       <div class="pv-tiles">
         <div class="pv-tile"><span>Цель дня</span><b id="gbGoalTxt">0 / 20</b><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
         <div class="pv-tile"><span>Память</span><b id="gbMem">0</b><span id="gbMemSub">фраз прочно</span></div>
-        <div class="pv-tile"><span>Рекорд блица</span><b id="gbBlitz">0</b><span id="gbBlitzSub">слов за минуту</span></div>
+        <div class="pv-tile"><span>Рекорд блица</span><b id="gbBlitz">0</b><span id="gbBlitzSub">фраз за минуту</span></div>
       </div>
       <div class="pv-quest" id="gbQuest"><span class="pv-sub">Задание дня · +50 XP</span><b id="gbQuestTxt"></b></div>
 
@@ -892,11 +887,11 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
         <ol>
           <li><b>Город</b> — день в стамбульском квартале: такси, лавка, kapıcı. Собеседник говорит, вы выбираете, что ответить (карточки по-русски), и говорите это по-турецки. Что сказали — меняет исход: лиры, время, терпение собеседника, отношения. Подсказка на реплике выцветает по мере освоения: сначала турецкий с чтением, потом только первые буквы, потом по памяти. «Показать» — показать фразу на экране телефона, если сказать не выходит.</li>
           <li><b>Память</b> — всё, что сказали в «Городе» и тренировке, возвращается по расписанию FSRS: сначала вспомнить, потом ответ.</li>
-          <li><b>Тренировка → Звуки</b> — трудные пары (o/ö, u/ü, ı/i, c/ç/ş). Нажмите «Сказать» — тренажёр покажет, не спутали ли вы звук. Трудный звук выделен красным.</li>
+          <li><b>Тренировка</b> — трудный звук (ö, ü, ı, ç, ş) в слове выделен цветом; разбор ошибок после «Сказать» показывает, какой звук спутан. Трудный звук выделен красным.</li>
           <li><b>Тренировка → Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «слова» — слова темы с примером.</li>
           <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Примеры</b> — фразы носителей с этим словом: перевод и живая запись; там же видео (YouGlish, до 20 поисков в день).</li>
           <li><b>Сравнить</b> — если вы ещё не говорили это слово: образец, вы, оценка, затем образец и ваша запись подряд; если уже сказали — образец и ваша запись.</li>
-          <li><b>На слух</b> — звучит одно слово из пары, выберите какое. <b>Блиц</b> — сколько различите за 60 секунд.</li>
+          <li><b>На слух</b> — звучит одна из двух похожих фраз, выберите какая. <b>Блиц</b> — сколько различите за 60 секунд.</li>
           <li><b>Свободно</b> — скажите что угодно и увидите, что услышит носитель. Нужное сохраните в «мои».</li>
           <li><b>Игра:</b> опыт, уровни со званиями, дни подряд, цель дня, задание дня, достижения, уроки по 10 заданий.</li>
           <li><b>Как приложение:</b> меню браузера, затем «Добавить на главный экран» — откроется без адресной строки.</li>
@@ -945,20 +940,6 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 
 <script>
 "use strict";
-const GROUPS = [
-  { id:"o", label:"o · ö",
-    tip:"ö: скажите «э» и округлите губы, как для «о». Язык остаётся впереди, как на «э».",
-    pairs:[["on","десять","ön","перед"],["ol","будь","öl","умри"],["kor","раскалённые угли","kör","слепой"],["koy","бухта; положи","köy","деревня"],["bol","обильный","böl","раздели"]] },
-  { id:"u", label:"u · ü",
-    tip:"ü: скажите «и» и вытяните губы трубочкой, как для «у». Язык назад не отодвигайте.",
-    pairs:[["uç","кончик","üç","три"],["kul","раб","kül","пепел"],["un","мука","ün","слава"],["sus","молчи","süs","украшение"],["duş","душ","düş","сон; падай"]] },
-  { id:"i", label:"ı · i",
-    tip:"ı — это русское «ы». i — чистое «и», согласный перед ним смягчается: kır ≈ «кыр», kir ≈ «кир».",
-    pairs:[["kır","поле; ломай","kir","грязь"],["kıl","волос","kil","глина"],["dış","внешний","diş","зуб"],["ılık","тёплый","ilik","костный мозг"]] },
-  { id:"c", label:"c · ç · ş",
-    tip:"c = «дж», ç = «ч», ş = «ш». Буква c никогда не читается как «ц» или «с».",
-    pairs:[["cam","стекло","çam","сосна"],["kaç","сколько","kaş","бровь"],["koç","баран","koş","беги"],["çark","колесо","şark","восток"]] },
-];
 const PHRASE_SETS = [
   { id:"basic", label:"основные", items:[
     { tr:"Okula gidiyorum.", tl:"окула гидийорум", ru:"Я иду в школу.", focus:"Все «о» полные: о-ку-ла, а не «акула»." },
@@ -1148,7 +1129,7 @@ function netFetch(url, ms = 10000){
 }
 // ---------- state ----------
 const $ = id => document.getElementById(id);
-let mode = "pairs", groupId = "o", setId = "hotel", item = null, lastKey = "";
+let mode = "phrases", setId = "hotel", item = null, lastKey = "";
 let listening = false, recognizer = null;
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
 let recordConflict = false;
@@ -1168,13 +1149,6 @@ function tokens(s){
 // надпись кнопки меняется, иконка остаётся (иконки — SVG внутри кнопки)
 function setLbl(el, t){ const l = el.querySelector(".lbl"); (l || el).textContent = t; if(el.hasAttribute("aria-label")) el.setAttribute("aria-label", t); }
 function setIc(el, name){ const u = el.querySelector(".ring use, :scope > svg use"); if(u) u.setAttribute("href", "#i-" + name); }
-// трудная буква: ö ü i — окрашены только точки, ç ş — только хвостик, o u ı c s — буква целиком
-const DIA = { "ö":"o", "ü":"u", "i":"ı", "İ":"I", "ç":"c", "ş":"s", "Ö":"O", "Ü":"U", "Ç":"C", "Ş":"S" };
-function diaHtml(c){
-  if(!DIA[c]) return `<span class="dia whole">${esc(c)}</span>`;
-  return `<span class="dia${/[çşÇŞ]/.test(c) ? " low" : ""}" data-ch="${c}">${DIA[c]}</span>`;
-}
-function markDiff(w, other, onlyDia){ const a = Array.from(w), b = Array.from(other || ""); return a.map((c, i) => c !== b[i] && (!onlyDia || DIA[c]) ? diaHtml(c) : esc(c)).join(""); }
 function esc(s){ return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 // Levenshtein alignment: ops of what was expected (a) vs heard (b)
@@ -1287,34 +1261,15 @@ function renderChips(){
     $("kindChip").onclick = () => setKind(true);
     return;
   }
-  if(mode==="listen"){                     // «На слух»: слова (пары звуков) или фразы по темам
-    const phr = lsKind === "phrases";
-    const opts = phr ? [{id:"all",label:"все темы"}, ...PHRASE_SETS.map(g => ({id:g.id,label:g.label}))] : [...GROUPS.map(g=>({id:g.id,label:g.label})), {id:"mix",label:"вперемешку"}];
-    const sel = phr ? lsTopic : groupId;
-    chips.innerHTML = `<button class="chip set kind" id="lsKindChip" aria-pressed="${phr}" title="${phr ? "Различать слова" : "Различать фразы"}">фразы</button>`
-      + opts.map(g => `<button class="chip${phr ? " set" : ""}" data-g="${g.id}" aria-pressed="${g.id===sel}">${g.label}</button>`).join("");
-    chips.querySelectorAll(".chip[data-g]").forEach(b => b.onclick = () => { if(phr) lsTopic = b.dataset.g; else groupId = b.dataset.g; renderChips(); nextListen(); });
-    $("lsKindChip").onclick = () => setLsKind(phr ? "words" : "phrases");
+  if(mode==="listen"){                     // «На слух»: фразы по темам (пары слов убраны 2026-10-03 — слова пар не из жизни)
+    const opts = [{id:"all",label:"все темы"}, ...PHRASE_SETS.map(g => ({id:g.id,label:g.label}))];
+    chips.innerHTML = opts.map(g => `<button class="chip set" data-g="${g.id}" aria-pressed="${g.id===lsTopic}">${g.label}</button>`).join("");
+    chips.querySelectorAll(".chip[data-g]").forEach(b => b.onclick = () => { lsTopic = b.dataset.g; renderChips(); nextListen(); });
     return;
   }
-  const all = [...GROUPS.map(g=>({id:g.id,label:g.label})), {id:"mix",label:"вперемешку"}];
-  chips.innerHTML = all.map(g => `<button class="chip" data-g="${g.id}" aria-pressed="${g.id===groupId}">${g.label}</button>`).join("");
-  chips.querySelectorAll(".chip").forEach(b => b.onclick = () => { groupId=b.dataset.g; renderChips(); mode==="listen" ? nextListen() : next(); });
+  chips.innerHTML = "";
 }
 
-function pickPair(){
-  const pool = groupId==="mix" ? GROUPS : GROUPS.filter(g=>g.id===groupId);
-  let cand, key, guard=0;
-  do {
-    const g = pool[Math.floor(Math.random()*pool.length)];
-    const p = g.pairs[Math.floor(Math.random()*g.pairs.length)];
-    const flip = Math.random()<.5;
-    cand = flip ? {target:p[2],meaning:p[3],partner:p[0],partnerMeaning:p[1],gid:g.id,tip:g.tip}
-                : {target:p[0],meaning:p[1],partner:p[2],partnerMeaning:p[3],gid:g.id,tip:g.tip};
-    key = cand.target;
-  } while(key===lastKey && ++guard<10);
-  lastKey = key; return cand;
-}
 // ---------- набор «с записями»: всё, что есть у носителей на Wikimedia ----------
 // Наборы «с записями» (случайные слова из Wikimedia) и «живые фразы» (случайные фразы Tatoeba) убраны: содержимое случайное,
 // не из жизни, перевод ненадёжный; записи носителей слов по-прежнему ищутся в Commons (findRecordings).
@@ -1740,7 +1695,7 @@ let cardLoading = false;       // на карточке «Загружаю…»,
 function next(){
   stopListening(); cardLoading = false;
 
-  item = mode==="pairs" ? pickPair() : pickPhrase();
+  item = pickPhrase();
   if(!item){
     $("target").classList.add("phrase");
     $("target").textContent = setId==="mine" ? "Пока пусто" : "Записей не найдено";
@@ -1750,27 +1705,21 @@ function next(){
   }
   const t = $("target");
   t.classList.toggle("phrase", mode==="phrases" && (!item.native || /\s/.test(item.target) || item.target.length > 12));   // «живые фразы» — всегда шрифтом фраз (было: «Veganım.» огромным и с переносом)
-  if(mode==="pairs"){
-    t.innerHTML = markDiff(item.target, item.partner);
-    $("partner").innerHTML = `не путать с <b>${esc(item.partner)}</b> — ${esc(item.partnerMeaning)}`;
-    $("partner").hidden = false;
-  } else {
-    if(mode === "phrases" && !item.word) t.innerHTML = wordsHtml(item.target); else t.textContent = item.target;   // слова фразы — нажимаются (произношение и перевод в контексте)
-    $("partner").innerHTML = item.native
-      ? `Записей носителей: ${(nativeCache.get(clean(item.target))||[]).length} · <button class="linkbtn" data-tr="1">перевод</button>`
-      : item.own ? `<button class="linkbtn" data-tr="1">перевод</button> · <button class="linkbtn" id="delMine">удалить из моих</button>`
-      : item.translit ? `[${esc(item.translit)}]` : `<button class="linkbtn" data-tr="1">перевод</button>`;
-    const dm = $("delMine"); if(dm) dm.onclick = () => askRemoveMine(dm, item.target);
-    const tb = $("partner").querySelector("[data-tr]"); if(tb) tb.onclick = () => openTranslate(item.target);
-    $("partner").hidden = false;
-    if(item.word) ctxInit(item); else ctx = null;      // слово — сразу с примером в контексте
-  }
+  if(mode === "phrases" && !item.word) t.innerHTML = wordsHtml(item.target); else t.textContent = item.target;   // слова фразы — нажимаются (произношение и перевод в контексте)
+  $("partner").innerHTML = item.native
+    ? `Записей носителей: ${(nativeCache.get(clean(item.target))||[]).length} · <button class="linkbtn" data-tr="1">перевод</button>`
+    : item.own ? `<button class="linkbtn" data-tr="1">перевод</button> · <button class="linkbtn" id="delMine">удалить из моих</button>`
+    : item.translit ? `[${esc(item.translit)}]` : `<button class="linkbtn" data-tr="1">перевод</button>`;
+  const dm = $("delMine"); if(dm) dm.onclick = () => askRemoveMine(dm, item.target);
+  const tb = $("partner").querySelector("[data-tr]"); if(tb) tb.onclick = () => openTranslate(item.target);
+  $("partner").hidden = false;
+  if(item.word) ctxInit(item); else ctx = null;      // слово — сразу с примером в контексте
   const q = encodeURIComponent(item.target.replace(/[.,!?]/g,"").trim());
   nativeIdx = 0;
   prefetchNative();
   $("meaning").textContent = item.meaning; scheduleFit();
   $("tip").textContent = item.tip;
-  setResult("info", mode==="pairs" || item.word ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком. Нажатие на слово — его звучание и перевод.");
+  setResult("info", item.word ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком. Нажатие на слово — его звучание и перевод.");
   $("compare").disabled = false; synthSlow = false; echoPending = false;
 }
 
@@ -1783,7 +1732,7 @@ function setResult(kind, verdict, extra="", score){
 }
 
 function renderStats(){
-  const rows = [...GROUPS.map(g=>({id:g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"mem-rec",label:"память: понять на слух"}, {id:"mem-prod",label:"память: сказать"}, {id:"ph-srs",label:"память: повторить за носителем"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listen",label:"на слух"}, {id:"listenph",label:"на слух: фразы"}, {id:"free",label:"любая фраза"}, {id:"city",label:"Город: разговоры"}];
+  const rows = [...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"mem-rec",label:"память: понять на слух"}, {id:"mem-prod",label:"память: сказать"}, {id:"ph-srs",label:"память: повторить за носителем"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listenph",label:"на слух: фразы"}, {id:"free",label:"любая фраза"}, {id:"city",label:"Город: разговоры"}];
   const used = rows.filter(r => (stats[r.id]||{}).t);
   if(!used.length){ $("stats").innerHTML = `<p class="hint" style="text-align:left">Здесь появится ваш прогресс по каждому набору.</p>`; return; }
   $("stats").innerHTML = used.map(r => {
@@ -1813,7 +1762,7 @@ let MILESTONE_MODALS = !TESTMODE;            // окна-праздники: н�
 let LESSON_SIZE = TESTMODE ? 1e9 : 10;       // заданий в уроке
 let game = (() => { try { return JSON.parse(localStorage.getItem("soyle-game")) || {}; } catch(e){ return {}; } })();
 // недостающие поля (старые сохранения, сбой хранилища) всегда дополняются значениями по умолчанию
-const GAME_DEFAULTS = () => ({ xp:0, streak:0, lastDay:"", today:"", todayOk:0, combo:0, bestCombo:0, total:0, goals:0, blitzBest:0, blitzBestPh:0, badges:[], badgeDates:{}, perfect:0, quest:null, freezes:0, days:[], frozenDays:[], lessons:0 });
+const GAME_DEFAULTS = () => ({ xp:0, streak:0, lastDay:"", today:"", todayOk:0, combo:0, bestCombo:0, total:0, goals:0, blitzBestPh:0, badges:[], badgeDates:{}, perfect:0, quest:null, freezes:0, days:[], frozenDays:[], lessons:0 });
 function normalizeGame(){
   game = Object.assign(GAME_DEFAULTS(), game || {});
   if(!Array.isArray(game.badges)) game.badges = [];
@@ -1886,9 +1835,9 @@ function renderGame(){
   $("gbXp").textContent = `${game.xp} / ${next} XP`;
   const part = Math.min(1, Math.max(0, (game.xp - prev) / (next - prev)));
   $("gbLevelRing").style.strokeDashoffset = 263.9 * (1 - part); $("gbLevel2").textContent = L;
-  $("gbBlitz").textContent = game.blitzBest;
+  $("gbBlitz").textContent = game.blitzBestPh || 0;
   { const m = memStats(); $("gbMem").textContent = m.strong; $("gbMemSub").textContent = `прочно (3+ нед.) · всего ${m.total} · сегодня ${m.today}`; }
-  $("gbBlitzSub").textContent = `слов за минуту · фраз: ${game.blitzBestPh || 0}`;
+  $("gbBlitzSub").textContent = "фраз за минуту";
   $("gbFreeze").textContent = game.freezes;
   const wd = ["вс","пн","вт","ср","чт","пт","сб"];
   $("gbWeek").innerHTML = Array.from({ length:7 }, (_, i) => {
@@ -1954,7 +1903,7 @@ document.addEventListener("keydown", e => { if(e.key === "Escape" && modalOpen) 
 const lessons = {};
 function lessonOf(m){ return lessons[m] || (lessons[m] = { n:0, ok:0, miss:[], res:[], xp0:game.xp }); }
 function renderLesson(){
-  const bar = $("lessonBar"), show = ["pairs","phrases","listen"].includes(mode) && LESSON_SIZE < 1e6;
+  const bar = $("lessonBar"), show = ["phrases","listen"].includes(mode) && LESSON_SIZE < 1e6;
   bar.style.visibility = show ? "visible" : "hidden";
   if(!show) return;
   const l = lessonOf(mode);
@@ -1963,7 +1912,7 @@ function renderLesson(){
   $("lessonTxt").textContent = `урок ${l.n} / ${LESSON_SIZE}`;
 }
 function lessonStep(score){
-  if(!["pairs","phrases","listen"].includes(mode) || (typeof blitz !== "undefined" && blitz)) return;
+  if(!["phrases","listen"].includes(mode) || (typeof blitz !== "undefined" && blitz)) return;
   const l = lessonOf(mode);
   if(l.n === 0) l.xp0 = game.xp;
   l.n++; (l.res || (l.res = [])).push(score >= 1); if(score >= 1) l.ok++; else if(item && !l.miss.includes(item.target)) l.miss.push(item.target);
@@ -1987,9 +1936,8 @@ const rankOf = L => RANKS[Math.min(L - 1, RANKS.length - 1)];
 
 // ---------- задание дня (меняется каждый день, +50 XP) ----------
 const QUESTS = [
-  { t:"5 верных «На слух»", gids:["listen", "listenph"], n:5 },
+  { t:"5 верных «На слух»", gids:["listenph"], n:5 },
   { t:"5 верных фраз «ресторан»", gids:["ph-food"], n:5 },
-  { t:"10 верных в «Звуках»", gids:["o","u","i","c"], n:10 },
   { t:"5 верных фраз «отель»", gids:["ph-hotel"], n:5 },
   { t:"5 фраз в «Памяти»", gids:["ph-srs", "mem-rec", "mem-prod"], n:5 },
   { t:"комбо ×5 без ошибок", combo:5, n:5 },
@@ -2032,16 +1980,8 @@ const BADGES = [
   { id:"goal",    ic:"20",    tier:1, t:"В цель",         d:"Выполнить цель дня",                   v:g => g.goals, n:1 },
   { id:"quest",   ic:"+50",   tier:1, t:"Охотник",        d:"Выполнить задание дня",                v:g => g.quest && g.quest.done ? 1 : 0, n:1 },
   { id:"lesson1", ic:"10",    tier:1, t:"Первый урок",    d:"Пройти урок из 10 заданий",            v:g => g.lessons, n:1 },
-  { id:"ear",     ic:"A·B",   tier:2, t:"Турецкое ухо",   d:"20 верных слов «На слух»",             v:(g,s) => SOK(s,"listen"), n:20 },
   { id:"earph",   ic:"söz",   tier:2, t:"Слышу фразы",    d:"20 верных фраз «На слух»",             v:(g,s) => SOK(s,"listenph"), n:20 },
-  { id:"blitz10", ic:"0:60",  tier:2, t:"Молния",         d:"10 слов за один блиц",                 v:g => g.blitzBest, n:10 },
   { id:"blitzph", ic:"0:60",  tier:2, t:"Скороговорка",   d:"8 фраз за один блиц",                  v:g => g.blitzBestPh, n:8 },
-  { id:"blitz20", ic:"20",    tier:3, t:"Гроза",          d:"20 слов за один блиц",                 v:g => g.blitzBest, n:20 },
-  { id:"o",       ic:"ö",     tier:2, t:"Мастер ö",       d:"15 верных в паре o · ö",               v:(g,s) => SOK(s,"o"), n:15 },
-  { id:"u",       ic:"ü",     tier:2, t:"Мастер ü",       d:"15 верных в паре u · ü",               v:(g,s) => SOK(s,"u"), n:15 },
-  { id:"i",       ic:"ı",     tier:2, t:"Мастер ı",       d:"15 верных в паре ı · i",               v:(g,s) => SOK(s,"i"), n:15 },
-  { id:"c",       ic:"ç",     tier:2, t:"Мастер ç",       d:"15 верных в паре c · ç · ş",           v:(g,s) => SOK(s,"c"), n:15 },
-  { id:"sounds",  ic:"öüıç",  tier:3, t:"Все звуки",      d:"Мастер всех четырёх пар звуков",       v:(g,s) => ["o","u","i","c"].filter(k => SOK(s,k) >= 15).length, n:4 },
   { id:"clean",   ic:"90+",   tier:2, t:"Чистая речь",    d:"10 раз произнести на 90 и выше",       v:g => g.perfect, n:10 },
   { id:"hotel",   ic:"otel",  tier:1, t:"Гость отеля",    d:"10 верных фраз «отель»",               v:(g,s) => SOK(s,"ph-hotel"), n:10 },
   { id:"food",    ic:"afiyet",tier:1, t:"Afiyet olsun",   d:"10 верных фраз «ресторан»",            v:(g,s) => SOK(s,"ph-food"), n:10 },
@@ -2443,34 +2383,6 @@ function askRemoveMine(btn, text){
 }
 
 // ---------- evaluation ----------
-function evalPair(alts){
-  const top = tokens(alts[0] || "");
-  const altsTok = alts.map(tokens);
-  const heardList = `<div class="alts hintable">Распознано: ${alts.map(a=>esc(a.trim())).join(" · ") || "—"}</div>`;
-  const ps = pronScore(item.target, alts);
-  if(top.includes(item.target)){
-    count(item.gid, 1);
-    return setResult("ok", `Верно: <span lang="tr" translate="no">${esc(item.target)}</span>`, heardList, 100);
-  }
-  if(top.includes(item.partner)){
-    count(item.gid, 0);
-    const notes = new Set(); const diff = renderWordDiff(item.target, item.partner, notes);
-    const sc = Math.min(ps.score, 50);
-    return setResult("bad",
-      `Прозвучало <b lang="tr">${esc(item.partner)}</b> (${esc(item.partnerMeaning)}) — другое слово`,
-      `<div class="diff" lang="tr" translate="no">${diff}</div>${errsHtml([{ w:item.target, heard:item.partner, s:0, errs:align(item.target, item.partner).ops.filter(o => o.t !== "eq").map(o => ({ t:o.t, a:o.a || "", b:o.b || "" })) }])}${heardList}`, sc);
-  }
-  if(altsTok.slice(1).some(t=>t.includes(item.target))){
-    count(item.gid, 0.5);
-    return setResult("near", "Почти: слово распознано не с первого варианта. Произнесите звук отчётливее.", heardList, 70);
-  }
-  count(item.gid, 0);
-  const closest = top.reduce((best,w)=>{ const d=align(item.target,w).dist; return !best||d<best.d ? {w,d} : best; }, null);
-  const notes = new Set();
-  const diff = closest ? renderWordDiff(item.target, closest.w, notes) : esc(item.target);
-  return setResult("bad", `${gradeOf(ps.score)[1]}: не распознано как <span lang="tr">«${esc(item.target)}»</span>`,
-    `<div class="diff" lang="tr" translate="no">${diff}</div>${errsHtml(ps.words)}${heardList}`, ps.score);
-}
 
 function compareText(targetText, heardText){
   const want = tokens(targetText), heard = tokens(heardText || "");
@@ -2627,7 +2539,7 @@ async function startListening(){
   recognizer.onresult = e => {
     got = true;
     const alts = Array.from(e.results[0]).map(a => a.transcript);
-    mode==="pairs" ? evalPair(alts) : mode==="memory" ? evalRecall(alts) : evalPhrase(alts);
+    mode==="memory" ? evalRecall(alts) : evalPhrase(alts);
   };
   recognizer.onerror = e => {
     got = true;
@@ -2940,18 +2852,17 @@ function echo(){
 // ---------- на слух: различение звуков ----------
 let ls = null, lsLocked = false;
 function nextListen(){
-  const phr = lsKind === "phrases";
-  const p = phr ? pickPhrasePair() : pickPair();
+  const p = pickPhrasePair();
   const right = Math.random() < .5 ? "A" : "B";
   const words = right === "A" ? [p.target, p.partner] : [p.partner, p.target];
   const means = right === "A" ? [p.meaning, p.partnerMeaning] : [p.partnerMeaning, p.meaning];
-  const cur = ls = { answer:p.target, right, gid:p.gid, phrase:phr };
+  const cur = ls = { answer:p.target, right, gid:p.gid, phrase:true };
   item = { target:p.target, gid:p.gid, meaning:p.meaning };
-  const mark = (a, b) => phr ? diffWords(a, b) : markDiff(a, b, true);
+  const mark = (a, b) => diffWords(a, b);
   $("lsA").innerHTML = `<b lang="tr" translate="no">${mark(words[0], words[1])}</b><small>${esc(means[0])}</small>`;
   $("lsB").innerHTML = `<b lang="tr" translate="no">${mark(words[1], words[0])}</b><small>${esc(means[1])}</small>`;
   $("lsA").className = $("lsB").className = "ls-opt";
-  $("listenCard").classList.toggle("phr", phr);
+  $("listenCard").classList.add("phr");
   // Блиц: выбрать можно, только когда звук пошёл (было: частые нажатия наугад давали ~50% и рекорд без слушания —
   // «доминирующая стратегия», навык game-design). Страховка 2 с — если звук так и не начался.
   lsLocked = !!blitz;
@@ -2959,30 +2870,12 @@ function nextListen(){
   $("listenCard").classList.toggle("wait", lsLocked);
   if(lsLocked) setTimeout(open, 2000);
   scheduleFit();
-  if(phr){   // у фраз тем записи известны заранее (Common Voice / Tatoeba) — ждём их, чтобы звучал носитель, а не синтез
-    Promise.race([findRecordings(ls.answer), new Promise(z => setTimeout(z, 1200))])
-      .then(() => { if(ls === cur) setTimeout(() => playReference(cur.answer, null, true, open), 150); });
-    return;
-  }
-  // подгружаем записи обоих слов, играем после короткой паузы
-  findRecordings(words[0]); findRecordings(words[1]);
-  setTimeout(() => playReference(ls.answer, null, true, open), 300);
+  // у фраз тем записи известны заранее (Common Voice / Tatoeba) — ждём их, чтобы звучал носитель, а не синтез
+  Promise.race([findRecordings(ls.answer), new Promise(z => setTimeout(z, 1200))])
+    .then(() => { if(ls === cur) setTimeout(() => playReference(cur.answer, null, true, open), 150); });
 }
 // ---------- «На слух»: фразы (выбор между двумя похожими фразами с записью носителя) ----------
-let lsKind = (() => { try { return localStorage.getItem("soyle-lskind") === "phrases" ? "phrases" : "words"; } catch(e){ return "words"; } })();
 let lsTopic = "all";
-function setLsKind(k){
-  if(blitz) endBlitz(true);                                       // рекорды слов и фраз раздельные — блиц не смешиваем
-  lsKind = k; try { localStorage.setItem("soyle-lskind", k); } catch(e){}
-  lsLabels(); renderChips(); nextListen();
-}
-function lsLabels(){
-  const phr = lsKind === "phrases";
-  document.querySelector("#listenCard .ls-q").textContent = phr ? "Какая фраза прозвучала?" : "Какое слово прозвучало?";
-  $("lsBlitz").title = phr ? "Сколько фраз различите за 60 секунд" : "Сколько пар различите за 60 секунд";
-  if(!blitz && $("lsResult").classList.contains("info"))
-    $("lsResult").innerHTML = `<span class="verdict">Послушайте и выберите ${phr ? "фразу, которая прозвучала" : "слово, которое прозвучало"}.</span>`;
-}
 const phWords = t => nphr(t).split(" ").filter(Boolean);
 function phraseSim(a, b){                                          // похожесть: общие слова + общие пары букв
   const A = new Set(phWords(a)), B = new Set(phWords(b));
@@ -3019,7 +2912,7 @@ function answerListen(which){
   const r = $("lsResult");
   r.className = "result " + (ok ? "ok" : "bad");
   r.innerHTML = `<span class="verdict">${ok ? "Верно!" : "Нет, прозвучало «" + esc(ls.answer) + "»"}</span>`;
-  count(ls.phrase ? "listenph" : "listen", ok ? 1 : 0);
+  count("listenph", ok ? 1 : 0);
   if(blitz){
     blitz.ok += ok ? 1 : 0; blitz.total++;
     if(!ok){ blitz.left = Math.max(0, blitz.left - BLITZ_PENALTY); r.innerHTML += ` <span class="penalty">−${BLITZ_PENALTY} с</span>`; }  // ошибка стоит времени: угадывание не выгодно
@@ -3031,15 +2924,15 @@ function answerListen(which){
 }
 
 let blitz = null, BLITZ_SEC = 60, BLITZ_PENALTY = 3, lsNextTimer = null;
-const BLITZ_BONUS = { words:2, phrases:3 };   // фразы длиннее — за минуту их меньше; бонус выше, чтобы ни один вид не был выгоднее (оценка: ~2 с на слово, ~3 с на фразу)
+const BLITZ_BONUS = 3;   // фразы длиннее — за минуту их меньше; бонус выше, чтобы ни один вид не был выгоднее (оценка: ~2 с на слово, ~3 с на фразу)
 function setOptionsEnabled(on){ $("lsA").disabled = $("lsB").disabled = !on; }
 function startBlitz(){
   if(blitz) return;
   clearTimeout(lsNextTimer); setOptionsEnabled(true);
-  blitz = { ok:0, total:0, left:BLITZ_SEC, kind:lsKind };
+  blitz = { ok:0, total:0, left:BLITZ_SEC };
   $("lsBlitz").classList.add("running"); updateBlitzBtn();
   $("lsResult").className = "result info";
-  $("lsResult").innerHTML = `<span class="verdict">${BLITZ_SEC} секунд. Выбирайте, когда зазвучит${lsKind === "phrases" ? " фраза" : " слово"}; ошибка отнимает ${BLITZ_PENALTY} с.</span>`;
+  $("lsResult").innerHTML = `<span class="verdict">${BLITZ_SEC} секунд. Выбирайте, когда зазвучит фраза; ошибка отнимает ${BLITZ_PENALTY} с.</span>`;
   blitz.timer = setInterval(() => { blitz.left--; updateBlitzBtn(); if(blitz.left <= 0) endBlitz(); }, 1000);
   nextListen();
 }
@@ -3048,11 +2941,11 @@ function endBlitz(quiet){
   if(!blitz) return;
   normalizeGame();
   clearInterval(blitz.timer); clearTimeout(lsNextTimer);   // больше никаких новых слов после конца
-  const kind = blitz.kind || "words", key = kind === "phrases" ? "blitzBestPh" : "blitzBest";
+  const key = "blitzBestPh";
   const got = blitz.ok, total = blitz.total, prevBest = game[key], record = got > prevBest;
   if(record) game[key] = got;
   const lvlBefore = levelOf(game.xp);
-  const bonus = got * BLITZ_BONUS[kind]; game.xp += bonus;   // бонус за блиц: за каждый верный (слова 2, фразы 3 XP)
+  const bonus = got * BLITZ_BONUS; game.xp += bonus;   // бонус за блиц: за каждый верный (слова 2, фразы 3 XP)
   if(levelOf(game.xp) > lvlBefore){ const L = levelOf(game.xp);
     deferred.push({ ic:"Tebrikler!", title:`Уровень ${L}: ${rankOf(L)}`, text:`Бонус за блиц поднял уровень. До следующего ${50 * L * L - game.xp} XP.`, primary:{ label:"Отлично!" } }); }
   blitz = null;
@@ -3065,7 +2958,7 @@ function endBlitz(quiet){
   const resume = () => { lsLocked = false; setOptionsEnabled(true); nextListen(); };
   if(quiet){ lsLocked = false; setOptionsEnabled(true); return; }
   if(record && got > 0) confetti();
-  showModal({ ic: record && got > 0 ? "Rekor!" : "Süre doldu", title: (record && got > 0 ? "Новый рекорд блица" : "Блиц окончен") + (kind === "phrases" ? ": фразы" : ""),
+  showModal({ ic: record && got > 0 ? "Rekor!" : "Süre doldu", title: record && got > 0 ? "Новый рекорд блица" : "Блиц окончен",
     text: record && got > 0 ? (prevBest ? `Прошлый рекорд: ${prevBest}. Вы улучшили его на ${got - prevBest}.` : "Первый рекорд установлен.") : `До рекорда (${prevBest}) не хватило ${prevBest - got + 1}. Ещё раз?`,
     stats:[["верно", got], ["точность", total ? Math.round(got / total * 100) + "%" : "—"], ["XP", "+" + bonus]],
     primary:{ label:"Ещё раз", fn:startBlitz }, secondary:{ label:"Закрыть", fn:resume } });
@@ -3697,8 +3590,8 @@ async function wordTap(raw){
   else { sayText(word); show(trVoice ? "синтез" : ""); }
 }
 $("target").addEventListener("click", e => { const s = e.target.closest(".wd"); if(s && mode === "phrases" && item && !item.word) wordTap(s.dataset.w); });
-const MODES = ["city","memory","pairs","phrases","listen","free","progress"];
-const TRAIN = ["pairs","phrases","listen","free"];           // раздел «Тренировка» объединяет прежние четыре вкладки
+const MODES = ["city","memory","phrases","listen","free","progress"];
+const TRAIN = ["phrases","listen","free"];           // раздел «Тренировка» объединяет прежние четыре вкладки
 let lastTrain = (() => { try { const v = localStorage.getItem("soyle-train"); return TRAIN.includes(v) ? v : "phrases"; } catch(e){ return "phrases"; } })();
 // ---------- автоподгонка: всё на одном экране без прокрутки, на высоком экране — крупнее ----------
 // Подбираем --fit (0.6…1.15) двоичным поиском: наибольший, при котором карточка и страница не переполнены.
@@ -3920,7 +3813,7 @@ function setMode(m){
   $("tab-memory").setAttribute("aria-pressed", m==="memory");
   $("tab-train").setAttribute("aria-pressed", TRAIN.includes(m));
   $("tab-progress").setAttribute("aria-pressed", m==="progress");
-  $("subtabs").hidden = !TRAIN.includes(m);                      // тренировка: Звуки · Фразы · На слух · Свободно — переключатель над наборами
+  $("subtabs").hidden = !TRAIN.includes(m);                      // тренировка: Фразы · На слух · Свободно — переключатель над наборами
   TRAIN.forEach(t => $("tab-" + t).setAttribute("aria-pressed", m===t));
   if(TRAIN.includes(m)){ lastTrain = m; try { localStorage.setItem("soyle-train", m); } catch(e){} }
   $("card").hidden = m==="free" || m==="listen" || m==="progress" || m==="city"; $("freeCard").hidden = m!=="free"; $("listenCard").hidden = m!=="listen"; $("cityCard").hidden = m!=="city";
@@ -3932,13 +3825,12 @@ function setMode(m){
   if(m==="free" || m==="progress"){ $("chips").hidden = true; if(m==="progress"){ renderGame(); renderBadges(); renderStats(); } return; }
   $("chips").hidden = false;
   renderChips();
-  if(m==="listen"){ lsLabels(); return nextListen(); }
+  if(m==="listen") return nextListen();
   next();
 }
 $("tab-city").onclick = () => setMode("city");
 $("tab-memory").onclick = () => setMode("memory");
 $("tab-train").onclick = () => setMode(lastTrain);
-$("tab-pairs").onclick = () => setMode("pairs");
 $("tab-phrases").onclick = () => setMode("phrases");
 $("tab-free").onclick = () => setMode("free");
 $("tab-listen").onclick = () => setMode("listen");
@@ -3992,7 +3884,7 @@ document.addEventListener("keydown", e => {
 
 renderChips(); renderStats(); renderGame(); renderBadges(); renderLesson(); updateMemTab();
 setupSelfRecord(); next();
-{ const h = location.hash.slice(1), start = MODES.includes(h) ? h : "city"; if(start !== "pairs") setTimeout(() => setMode(start), 0); }   // стартовый экран — «Город» (игра), если в адресе не указан раздел
+{ const h = location.hash.slice(1), start = MODES.includes(h) ? h : "city"; setTimeout(() => setMode(start === "pairs" ? "phrases" : start), 0); }   // стартовый экран — «Город» (игра), если в адресе не указан раздел
 </script>
 </body>
 </html>

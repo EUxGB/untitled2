@@ -20,7 +20,7 @@ const URL = process.argv[2], OUT = process.argv[3];
     await p.goto(URL, { waitUntil:'load' }); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1500);
     const info = await p.evaluate(() => ({ version: (document.getElementById('appVersion') || {}).textContent,
       fonts: [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.weight) }));
-    for(const tab of ['city', 'memory', 'pairs', 'phrases', 'listen', 'free', 'progress']){
+    for(const tab of ['city', 'memory', 'phrases', 'listen', 'free', 'progress']){
       await p.evaluate(t => document.getElementById('tab-' + t).click(), tab); await p.waitForTimeout(1200);   // подвкладки тренировки скрыты вне неё
       if(await p.isVisible('#modal')) await p.keyboard.press('Escape');
       await p.screenshot({ path:`${OUT}/${name}-${tab}.png` });
@@ -32,13 +32,13 @@ const URL = process.argv[2], OUT = process.argv[3];
     }
     // «На слух» → фразы (выбор между похожими фразами) и медали достижений — на каждом размере
     try {
-      await p.evaluate(() => { setMode('listen'); setLsKind('phrases'); }); await p.waitForTimeout(2500);
+      await p.evaluate(() => { setMode('listen'); }); await p.waitForTimeout(2500);
       const lp = await p.evaluate(() => ({ answer: ls.answer, a: document.querySelector('#lsA b').textContent, b: document.querySelector('#lsB b').textContent,
         src: (document.getElementById('nativeAudio').src || '').split('/').slice(-2).join('/'),
         cut: [...document.querySelectorAll('#listenCard .ls-opt')].some(o => o.scrollHeight > o.clientHeight + 1) }));
       (info.listenPhrases = info.listenPhrases || {})[name] = lp;
       await p.screenshot({ path:`${OUT}/${name}-listen-phrases.png` });
-      await p.evaluate(() => { setLsKind('words'); setMode('progress'); document.getElementById('badgeGrid').scrollIntoView(); }); await p.waitForTimeout(400);
+      await p.evaluate(() => { setMode('progress'); document.getElementById('badgeGrid').scrollIntoView(); }); await p.waitForTimeout(400);
       await p.screenshot({ path:`${OUT}/${name}-badges.png` });
     } catch(e){ info.listenPhrasesError = String(e); }
     // на одном размере — проверить на живом сайте окна «Видео», «Перевод» и запись фразы Tatoeba (настоящая сеть)

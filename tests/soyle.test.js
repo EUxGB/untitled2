@@ -73,7 +73,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
 
   console.log('Загрузка и режимы');
   await test('страница открывается без ошибок во всех режимах', async () => {
-    for(const m of ['pairs','phrases','listen','free','city']) await p.evaluate(m => setMode(m), m);
+    for(const m of ['phrases','listen','free','city']) await p.evaluate(m => setMode(m), m);
     eq(p.errors, []);
   });
   await test('все наборы фраз на месте и без пустых полей', async () => {
@@ -83,24 +83,25 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(ids, ['basic','hotel','greet','food','transport','shop','health','talk','sos']);
   });
 
-  console.log('Минимальные пары');
-  await p.evaluate(() => setMode('pairs'));
+  console.log('Слова: оценка одного слова (режим «слова» во «Фразах»; «Звуки» убраны 2026-10-03)');
+  await p.evaluate(() => setMode('phrases'));
+  const setWord = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'w-basic', meaning:'', word:true }, it); }, it);
   await test('верное слово засчитывается', async () => {
-    await setItem(p, { target:'ön', partner:'on', gid:'o' });
-    await p.evaluate(() => evalPair(['Ön'])); ok((await p.textContent('#result')).includes('Верно'));
+    await setWord(p, { target:'ön' });
+    await p.evaluate(() => evalPhrase(['Ön'])); ok((await p.textContent('#result')).includes('Отлично'));
   });
   await test('подмена звука распознаётся и называется («o» вместо «ö»)', async () => {
-    await setItem(p, { target:'ön', partner:'on', partnerMeaning:'десять', gid:'o' });
-    await p.evaluate(() => evalPair(['on'])); const t = await p.textContent('#result');
-    ok(t.includes('Прозвучало') && t.includes('«o» вместо «ö»'), t);
+    await setWord(p, { target:'ön' });
+    await p.evaluate(() => evalPhrase(['on'])); const t = await p.textContent('#result');
+    ok(t.includes('«o» вместо «ö»'), t);
   });
   await test('цифра от распознавателя понимается как слово (10 → on)', async () => {
-    await setItem(p, { target:'on', partner:'ön', gid:'o' });
-    await p.evaluate(() => evalPair(['10'])); ok((await p.textContent('#result')).includes('Верно'));
+    await setWord(p, { target:'on' });
+    await p.evaluate(() => evalPhrase(['10'])); ok((await p.textContent('#result')).includes('Отлично'));
   });
-  await test('нужное слово только в запасных вариантах — «почти»', async () => {
-    await setItem(p, { target:'köy', partner:'koy', gid:'o' });
-    await p.evaluate(() => evalPair(['kay', 'köy'])); ok((await p.textContent('#result')).includes('Почти'));
+  await test('нужное слово только в запасных вариантах — оценка 70, «Хорошо»', async () => {
+    await setWord(p, { target:'köy' });
+    await p.evaluate(() => evalPhrase(['kay', 'köy'])); const t = await p.textContent('#result'); ok(t.includes('Хорошо'), t);
   });
 
   console.log('Оценка произношения 0–100 и разбор ошибок');
@@ -114,10 +115,10 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return [document.querySelector('#result .score b').textContent, document.querySelector('#result .errs').textContent]; });
     eq(r[0], '83'); ok(r[1].includes('çay') && r[1].includes('«c» вместо «ç»'), r[1]);
   });
-  await test('пара: услышано другое слово — оценка, разбор звука; верно — 100 и реакция (+XP, слово зеленеет)', async () => {
-    const r = await p.evaluate(() => { setMode('pairs'); item = { target:'kör', partner:'kor', partnerMeaning:'угли', gid:'o' }; evalPair(['kor']);
+  await test('слово: услышано другое — оценка 50, разбор звука; верно — 100 и реакция (+XP, слово зеленеет)', async () => {
+    const r = await p.evaluate(() => { setMode('phrases'); item = { target:'kör', gid:'w-basic', meaning:'слепой', word:true }; evalPhrase(['kor']);
       const bad = [document.querySelector('#result .score b').textContent, document.querySelector('#result .errs').textContent.includes('«o» вместо «ö»')];
-      evalPair(['kör']); const res = document.getElementById('result');
+      evalPhrase(['kör']); const res = document.getElementById('result');
       return [bad, document.querySelector('#result .score b').textContent, res.classList.contains('win'), !!res.querySelector('.xp-pop'), document.getElementById('target').classList.contains('hit')]; });
     eq(r, [['50', true], '100', true, true, true]);
   });
@@ -233,6 +234,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await p.click('#delMine'); eq(await p.evaluate(() => loadList('soyle-mine').length), 1); // первое нажатие только спрашивает
     ok((await p.textContent('#delMine')).includes('ещё раз'));
     await p.click('#delMine'); eq(await p.evaluate(() => loadList('soyle-mine').length), 0);
+    await p.evaluate(() => { setId = 'hotel'; renderChips(); next(); });   // «мои» пусты — дальше тесты ждут карточку с фразой
   });
   const a = await openPage(browser, { android:true });
   await test('Android: нарастающие повторы фразы склеиваются в одну', async () => {
@@ -241,7 +243,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok((await a.textContent('#freeResult')).includes('«bana bir taksi çağırır mısınız»'));
   });
   await test('Android: если микрофон не делится, запись отключается один раз и запоминается', async () => {
-    const r = await a.evaluate(async () => { recordOn = true; window.__silent = true; setMode('pairs'); await startListening(); await new Promise(z => setTimeout(z, 100)); window.__silent = false; return [recordOn, localStorage.getItem('soyle-rec-conflict'), document.getElementById('freeMine').textContent]; });
+    const r = await a.evaluate(async () => { recordOn = true; window.__silent = true; setMode('phrases'); await startListening(); await new Promise(z => setTimeout(z, 100)); window.__silent = false; return [recordOn, localStorage.getItem('soyle-rec-conflict'), document.getElementById('freeMine').textContent]; });
     eq(r, [false, '1', 'Записать себя']);
   });
   await test('Android: «Сравнить» сам записывает и проигрывает образец → вас', async () => {
@@ -252,7 +254,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
 
   console.log('Запись и сравнение');
   await test('«Сравнить» не играет запись другого слова: без записи этого слова — полный цикл эхо', async () => {
-    await p.evaluate(() => setMode('pairs'));
+    await p.evaluate(() => setMode('phrases'));
     const r = await p.evaluate(async () => { recordOn = true; stream = null; window.__say = item.target; await startListening(); await new Promise(z => setTimeout(z, 200));
       const first = myRecFor === item.target; next(); await (nativePending || Promise.resolve()); nativeCache.set(clean(item.target), [{ url:'https://x/ref.wav', who:'T' }]);
       window.__say = item.target; window.__played = []; compareVoices(); await new Promise(z => setTimeout(z, 1600));
@@ -264,7 +266,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
 
   await test('«Эхо»: образец → ваша попытка → сразу образец и ваша запись', async () => {
-    const r = await p.evaluate(async () => { setMode('pairs'); recordOn = true; stream = null; await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 100)); nativeCache.set(clean(item.target), [{ url:'https://x/ref.wav', who:'T' }]);
+    const r = await p.evaluate(async () => { setMode('phrases'); recordOn = true; stream = null; await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 100)); nativeCache.set(clean(item.target), [{ url:'https://x/ref.wav', who:'T' }]);
       window.__say = item.target; window.__played = []; echo(); await new Promise(z => setTimeout(z, 1600));
       return window.__played.map(s => s.startsWith('blob:') ? 'me' : s.split('/').pop()); });
     eq(r, ['ref.wav', 'ref.wav', 'me']);
@@ -286,12 +288,12 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('задание дня: прогресс только по своему набору, награда +50 XP один раз', async () => {
     const r = await p.evaluate(r => { eval(r); todayQuest(); game.quest.idx = 0; // «5 верных На слух»
-      award(1, 'o'); const other = game.quest.got; for(let i = 0; i < 5; i++) award(1, 'listen'); const xp1 = game.xp; award(1, 'listen'); const xp2 = game.xp;
+      award(1, 'o'); const other = game.quest.got; for(let i = 0; i < 5; i++) award(1, 'listenph'); const xp1 = game.xp; award(1, 'listenph'); const xp2 = game.xp;
       return [other, game.quest.done, xp2 - xp1 < 50, document.getElementById('gbQuestTxt').textContent.includes('выполнено')]; }, RESET);
     eq(r, [0, true, true, true]);
   });
   await test('задание на комбо засчитывается по серии', async () => {
-    const r = await p.evaluate(r => { eval(r); todayQuest(); game.quest.idx = 5; for(let i = 0; i < 5; i++) award(1, 'o'); return game.quest.done; }, RESET);
+    const r = await p.evaluate(r => { eval(r); todayQuest(); game.quest.idx = 4; for(let i = 0; i < 5; i++) award(1, 'o'); return game.quest.done; }, RESET);
     eq(r, true);
   });
   await test('уведомления идут очередью, а не перекрывают друг друга', async () => {
@@ -304,14 +306,14 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       for(let i = 0; i < 2; i++){ await new Promise(z => setTimeout(z, 60)); for(let k = 0; k < 40 && lsLocked; k++) await new Promise(z => setTimeout(z, 50)); answerListen(ls.right); }
       const during = document.getElementById('lsBlitz').textContent;
       await new Promise(z => setTimeout(z, 3200)); BLITZ_SEC = 60;
-      const res = [/^\d:\d\d · верно/.test(during), game.blitzBest, document.getElementById('lsResult').textContent.includes('рекорд'), document.getElementById('lsBlitz').textContent, blitz];
+      const res = [/^\d:\d\d · верно/.test(during), game.blitzBestPh, document.getElementById('lsResult').textContent.includes('рекорд'), document.getElementById('lsBlitz').textContent, blitz];
       document.getElementById('modalSecondary').click(); return res; }, RESET);
     eq(r, [true, 2, true, 'Блиц 60 с', null]);
   });
   await test('блиц — настоящие 60 секунд с ответами до конца: экран итогов, новые слова не идут, ответы заблокированы', async () => {
     const q = await openPage(browser);
     await q.clock.install();
-    await q.evaluate(() => { setMode('listen'); game.blitzBest = 0; });
+    await q.evaluate(() => { setMode('listen'); game.blitzBestPh = 0; });
     await q.click('#lsBlitz');
     // отвечаем правильно всю минуту, как пользователь
     for(let sec = 0; sec < 62; sec++){
@@ -321,7 +323,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       await q.clock.runFor(1000);
     }
     const after = await q.evaluate(() => ({ blitz, overlay: !document.getElementById('modal').hidden, text: document.getElementById('modalStats').textContent + ' ' + document.getElementById('modalTitle').textContent,
-      disabled: document.getElementById('lsA').disabled && document.getElementById('lsB').disabled, best: game.blitzBest, btn: document.getElementById('lsBlitz').textContent, word: ls && ls.answer }));
+      disabled: document.getElementById('lsA').disabled && document.getElementById('lsB').disabled, best: game.blitzBestPh, btn: document.getElementById('lsBlitz').textContent, word: ls && ls.answer }));
     // даже спустя время после конца новое слово не должно появиться само
     await q.clock.runFor(5000);
     const later = await q.evaluate(() => ls && ls.answer);
@@ -342,7 +344,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(again, [true, true, false]); eq(closed, [null, true, false, true]);
   });
   await test('блиц останавливается при уходе из режима «На слух»', async () => {
-    const r = await p.evaluate(() => { setMode('listen'); startBlitz(); setMode('pairs'); return [blitz, document.getElementById('lsBlitz').textContent]; });
+    const r = await p.evaluate(() => { setMode('listen'); startBlitz(); setMode('phrases'); return [blitz, document.getElementById('lsBlitz').textContent]; });
     eq(r, [null, 'Блиц 60 с']);
   });
   await test('конфетти не ломают страницу и отключены при «уменьшить движение»', async () => {
@@ -352,7 +354,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.context().close(); eq(drawn, true); eq(p.errors, []);
   });
   await test('панель прогресса не сдвигает кнопки при изменении текста задания', async () => {
-    const r = await p.evaluate(r => { eval(r); setMode('pairs'); const y = () => Math.round(document.getElementById('speak').getBoundingClientRect().y + scrollY);
+    const r = await p.evaluate(r => { eval(r); setMode('phrases'); const y = () => Math.round(document.getElementById('speak').getBoundingClientRect().y + scrollY);
       const a = y(); todayQuest(); game.quest.idx = 6; renderGame(); const b = y(); game.quest.done = true; renderGame(); return [a, b, y()]; }, RESET);
     eq(r[0], r[1]); eq(r[1], r[2]);
   });
@@ -362,7 +364,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q = await openPage(browser, { android:true });
     const r = await q.evaluate(async () => {
       const Hang = function(){ this.start = () => {}; this.stop = () => {}; this.abort = () => {}; };  // сервис молчит
-      SR = Hang; recordOn = true; setMode('pairs');
+      SR = Hang; recordOn = true; setMode('phrases');
       const t0 = Date.now(); startListening(); for(let t = 0; t < 160 && listening; t++) await new Promise(z => setTimeout(z, 100));
       return [listening, Math.round((Date.now()-t0)/1000), document.getElementById('result').textContent.includes('не ответил'), document.getElementById('speak').textContent, recordOn, localStorage.getItem('soyle-rec-conflict')];
     });
@@ -370,7 +372,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq([r[0], r[1] >= 12 && r[1] <= 15, r[2], r[3], r[4], r[5]], [false, true, true, 'Сказать', true, null]);
   });
   await test('«Сказать» → повторное нажатие во время зависания останавливает запись', async () => {
-    const r = await p.evaluate(async () => { const Hang = function(){ this.start = () => {}; this.stop = () => {}; this.abort = () => {}; }; const keep = SR; SR = Hang; setMode('pairs');
+    const r = await p.evaluate(async () => { const Hang = function(){ this.start = () => {}; this.stop = () => {}; this.abort = () => {}; }; const keep = SR; SR = Hang; setMode('phrases');
       startListening(); await new Promise(z => setTimeout(z, 200)); stopListening(); await new Promise(z => setTimeout(z, 1800)); SR = keep; return [listening, document.getElementById('speak').textContent]; });
     eq(r, [false, 'Сказать']);
   });
@@ -386,9 +388,9 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   console.log('Геймификация по навыку gamification-loops');
   await test('урок: 10 заданий нажатиями → окно итогов с точностью и ошибками; «Ещё урок» / «Отдохнуть»', async () => {
     const q = await openPage(browser);
-    await q.evaluate(() => { LESSON_SIZE = 10; setMode('pairs'); });
+    await q.evaluate(() => { LESSON_SIZE = 10; setMode('phrases'); });
     for(let i = 0; i < 10; i++){
-      const w = await q.evaluate(i => { const t = item.target; window.__say = i === 3 ? item.partner : t; return t; }, i);
+      const w = await q.evaluate(i => { const t = item.target; window.__say = i === 3 ? 'yanlış bir şey' : t; return t; }, i);
       await q.click('#speak'); await q.waitForTimeout(120);
       if(i < 9){ ok(await q.evaluate(() => document.getElementById('modal').hidden), 'окно раньше времени'); await q.click('#next'); }
     }
@@ -422,7 +424,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.context().close(); eq(cap, 2);
   });
   await test('новый уровень: окно со званием и сколько до следующего; Escape закрывает; горячие клавиши не срабатывают под окном', async () => {
-    const q = await openPage(browser); await q.evaluate(() => setMode('pairs'));   // стартовый экран теперь «Город» — для проверки Enter нужна карточка
+    const q = await openPage(browser); await q.evaluate(() => setMode('phrases'));   // стартовый экран теперь «Город» — для проверки Enter нужна карточка
     const r = await q.evaluate(() => { MILESTONE_MODALS = true; todayQuest(); game.quest.done = true; game.xp = 45; award(1, 'o'); return [document.getElementById('modalTitle').textContent, document.getElementById('modalText').textContent,
       document.getElementById('modalPrimary').getBoundingClientRect().width / document.querySelector('.modal-box').getBoundingClientRect().width]; });
     ok(r[2] > 0.8, 'одна кнопка должна быть во всю ширину, сейчас ' + Math.round(r[2]*100) + '%');
@@ -438,13 +440,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('неделя серии на экране «Прогресс»: 7 дней, сегодня отмечено, заморозка видна', async () => {
     const r = await p.evaluate(r => { eval(r); const y = new Date(Date.now() - 864e5).toISOString().slice(0,10); game.frozenDays = [y]; award(1, 'o'); setMode('progress');
-      const dots = [...document.querySelectorAll('#gbWeek .pv-dot')]; const out = [dots.length, dots[6].className.includes('done'), dots[5].className.includes('frozen')]; setMode('pairs'); return out; }, RESET);
+      const dots = [...document.querySelectorAll('#gbWeek .pv-dot')]; const out = [dots.length, dots[6].className.includes('done'), dots[5].className.includes('frozen')]; setMode('phrases'); return out; }, RESET);
     eq(r, [7, true, true]);
   });
   await test('блиц: праздники (новый уровень) не прерывают блиц, а показываются после итогов', async () => {
     const q = await openPage(browser); await q.clock.install();
     await q.evaluate(() => { MILESTONE_MODALS = true; todayQuest(); game.quest.done = true; game.xp = 48; BLITZ_SEC = 3; setMode('listen'); startBlitz(); });
-    await q.clock.runFor(400); await q.evaluate(() => answerListen(ls.right)); // уровень повышается во время блица (варианты открылись со звуком)
+    await q.clock.runFor(1600); await q.evaluate(() => answerListen(ls.right)); // уровень повышается во время блица (варианты открылись со звуком фразы ~1,4 с)
     const during = await q.evaluate(() => document.getElementById('modal').hidden);
     await q.clock.runFor(3500);
     const t1 = await q.evaluate(() => document.getElementById('modalTitle').textContent); await q.click('#modalSecondary'); await q.clock.runFor(300);
@@ -456,7 +458,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('WIG: турецкий текст и название не переводятся браузером; поля с name; касания без задержки; окно не прокручивает страницу', async () => {
     const r = await p.evaluate(() => { setMode('listen'); const out = [document.getElementById('target').getAttribute('translate'), document.querySelector('#lsA b').getAttribute('translate'), document.querySelector('h1').getAttribute('translate'),
       document.getElementById('intent').name, document.getElementById('bkInput').name, getComputedStyle(document.documentElement).touchAction, getComputedStyle(document.getElementById('modal')).overscrollBehaviorY,
-      document.getElementById('intent').placeholder.endsWith('…')]; setMode('pairs'); return out; });
+      document.getElementById('intent').placeholder.endsWith('…')]; setMode('phrases'); return out; });
     eq(r, ['no','no','no','intent','backup','manipulation','contain', true]);
   });
   await test('WIG: раздел в адресе — ссылка #phrases открывает «Фразы», переключение меняет адрес', async () => {
@@ -482,7 +484,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q = await openPage(browser); const consoleErr = [];
     q.on('console', m => { if(m.type() === 'error' && !/Failed to load resource|ERR_|from origin 'null'.*woff2|woff2.*from origin 'null'/.test(m.text())) consoleErr.push(m.text()); });
     await q.evaluate(() => { window.__say = 'merhaba'; });
-    for(const tab of ['tab-pairs','tab-phrases','tab-listen','tab-free','tab-city','tab-progress']){
+    for(const tab of ['tab-phrases','tab-listen','tab-free','tab-city','tab-progress']){
       await tap(q, tab); await q.waitForLoadState('networkidle');
       const ids = await q.evaluate(() => [...document.querySelectorAll('.screen > section:not([hidden]) button, .chips button')].filter(b => b.offsetParent && !b.disabled && !['bkYes','updateApp'].includes(b.id)).map((b, i) => { b.dataset.probe = String(i); return String(i); }));
       for(const id of ids){
@@ -506,7 +508,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     if(!document.getElementById('sheet').hidden) return en('sheetClose') ? '' : 'лист без «закрыть»';
     if([...document.querySelectorAll('.tabbar .tab')].some(t => t.disabled)) return 'вкладка выключена';
     if(mode === 'memory') return en('next') || [...document.querySelectorAll('#memGrades .grade')].some(vis) ? '' : `Память: нет выхода (фаза ${mem && mem.phase})`;
-    if(mode === 'pairs' || mode === 'phrases') return en('next') ? '' : `${mode}: «Дальше» выключена`;
+    if(mode === 'phrases') return en('next') ? '' : `${mode}: «Дальше» выключена`;
     if(mode === 'listen') return en('lsA') || en('lsB') || en('lsBlitz') || lsLocked ? '' : 'На слух: всё выключено';
     if(mode === 'free') return en('freeSpeak') ? '' : 'Свободно: «Сказать» выключена';
     if(mode === 'city') return en('ctSpeak') || en('ctShow') || en('ctNext') || [...document.querySelectorAll('.ct-task, .ct-note, #ctDayEnd')].some(b => vis(b) && !b.disabled)
@@ -546,13 +548,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('разрешение на микрофон не приходит: «Сказать» не зависает — «Стоп» сразу возвращает кнопку, без записи распознаёт через 4 с', async () => {
     const q = await openPage(browser);
     const r = await q.evaluate(async () => { navigator.mediaDevices.getUserMedia = () => new Promise(() => {}); stream = null; recordOn = true;
-      setMode('pairs'); window.__say = item.target; const out = [];
+      setMode('phrases'); window.__say = item.target; const out = [];
       document.getElementById('speak').click(); await new Promise(z => setTimeout(z, 200)); out.push(listening);
       document.getElementById('speak').click(); await new Promise(z => setTimeout(z, 50)); out.push(listening, document.querySelector('#speak .lbl').textContent);
       document.getElementById('speak').click(); await new Promise(z => setTimeout(z, 4400)); out.push(listening, document.getElementById('result').textContent.includes('из 100'));
       setMode('free'); document.getElementById('freeSpeak').click(); await new Promise(z => setTimeout(z, 200)); out.push(freeOn);
       document.getElementById('freeSpeak').click(); await new Promise(z => setTimeout(z, 50)); out.push(freeOn, document.querySelector('#freeSpeak .lbl').textContent);
-      setMode('pairs'); return out; });
+      setMode('phrases'); return out; });
     const errs = q.errors; await q.context().close();
     eq(r, [true, false, 'Сказать', false, true, true, false, 'Сказать']); eq(errs, []);
   });
@@ -570,7 +572,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     for(const [k, tab] of tabs.entries()){ await goTab(tab); bad.push(...(await monkey(q, tabs, 120, 7 + k * 101)).map(b => tab + ' ' + b)); }
     const errs = q.errors; await q.context().close(); eq(bad, []); eq(errs, []);
   });
-  await test('прохождение по нажатиям: «Память» — 12 фраз подряд с микрофоном в каждой фазе; «Фразы», «Звуки», «На слух» идут дальше', async () => {
+  await test('прохождение по нажатиям: «Память» — 12 фраз подряд с микрофоном в каждой фазе; «Фразы» и «На слух» идут дальше', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
     await q.click('#tab-memory'); const seen = new Set(), steps = [];
     for(let i = 0; i < 60 && seen.size < 12; i++){
@@ -583,7 +585,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       if(await q.evaluate(() => mem.phase === 'study' || mem.phase === 'prompt')) await q.evaluate(() => { const a = loadCards(); a.forEach(c => { if(c.due > Date.now() && c.state !== 2) c.due = Date.now() - 1; }); saveCards(a); });   // «прошло 10 минут»: короткие шаги наступили, дни — нет
     }
     const other = {};
-    for(const [tab, sel] of [['#tab-phrases', '#next'], ['#tab-pairs', '#next']]){
+    for(const [tab, sel] of [['#tab-phrases', '#next']]){
       await tap(q, tab.slice(1)); const t = new Set();
       for(let i = 0; i < 8; i++){ await q.click('#speak'); await q.waitForTimeout(80); t.add(await q.evaluate(() => item.target)); await q.click(sel); }
       other[tab] = t.size;
@@ -592,23 +594,23 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     for(let i = 0; i < 6; i++){ await q.waitForTimeout(400); heard.add(await q.evaluate(() => ls.answer)); await q.evaluate(() => { clearTimeout(lsNextTimer); answerListen(ls.right); clearTimeout(lsNextTimer); nextListen(); }); }
     const errs = q.errors; await q.context().close();
     ok(seen.size >= 12, `в «Памяти» пройдено фраз: ${seen.size}; фазы: ${steps.join(',')}`);
-    ok(other['#tab-phrases'] >= 5 && other['#tab-pairs'] >= 4 && heard.size >= 3, JSON.stringify([other, heard.size])); eq(errs, []);
+    ok(other['#tab-phrases'] >= 5 && heard.size >= 3, JSON.stringify([other, heard.size])); eq(errs, []);
   });
 
   console.log('Образец, Эхо и Синтез');
   const FAKE_VOICE = "trVoice = { name:'Test Türkçe', lang:'tr-TR' }; trVoices = [trVoice];";
   await test('«Синтез» произносит текущее слово', async () => {
-    const r = await p.evaluate(async v => { eval(v); setMode('pairs'); window.__spoken = []; document.getElementById('play').disabled = false; document.getElementById('play').click(); await new Promise(z => setTimeout(z, 100)); return [window.__spoken, item.target]; }, FAKE_VOICE);
+    const r = await p.evaluate(async v => { eval(v); setMode('phrases'); window.__spoken = []; document.getElementById('play').disabled = false; document.getElementById('play').click(); await new Promise(z => setTimeout(z, 100)); return [window.__spoken, item.target]; }, FAKE_VOICE);
     eq(r[0], [r[1]]);
   });
   await test('«Эхо» без записи носителя: сначала синтез-образец, потом микрофон', async () => {
-    const r = await p.evaluate(async v => { eval(v); setMode('pairs'); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
+    const r = await p.evaluate(async v => { eval(v); setMode('phrases'); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
       nativeCache.set(clean(item.target), []); recordOn = true; stream = null; window.__say = item.target; window.__log = []; echo();
       for(let t = 0; t < 60 && window.__log[window.__log.length-1] !== 'me'; t++) await new Promise(z => setTimeout(z, 100)); await new Promise(z => setTimeout(z, 300)); return window.__log; }, FAKE_VOICE);
     eq(r.slice(0, 2), ['synth', 'mic']); eq(r.slice(-2), ['synth', 'me']);
   });
   await test('«Эхо» продолжает работу, даже если телефон не сообщил о конце речи', async () => {
-    const r = await p.evaluate(async v => { eval(v); for(let t = 0; t < 50 && listening; t++) await new Promise(z => setTimeout(z, 100)); window.__noOnEnd = true; setMode('pairs'); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
+    const r = await p.evaluate(async v => { eval(v); for(let t = 0; t < 50 && listening; t++) await new Promise(z => setTimeout(z, 100)); window.__noOnEnd = true; setMode('phrases'); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
       item.target = 'on'; nativeCache.set('on', []); recordOn = true; stream = null; window.__say = 'on'; window.__log = []; echo();
       for(let t = 0; t < 80 && window.__log[window.__log.length-1] !== 'me'; t++) await new Promise(z => setTimeout(z, 100)); window.__noOnEnd = false; return window.__log; }, FAKE_VOICE);
     ok(r[0] === 'synth' && r.includes('mic') && r[r.length-1] === 'me', JSON.stringify(r));
@@ -618,7 +620,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r, [['synth'], true]);
   });
   await test('Android: «Эхо» — образец звучит ДО открытия микрофона, затем образец и вы', async () => {
-    const q = await openPage(browser, { android:true, storage:{ 'soyle-rec-conflict':'1' } }); await q.evaluate(() => setMode('pairs'));
+    const q = await openPage(browser, { android:true, storage:{ 'soyle-rec-conflict':'1' } }); await q.evaluate(() => setMode('phrases'));
     const r = await q.evaluate(async v => { eval(v); await (nativePending || Promise.resolve()); await new Promise(z => setTimeout(z, 80));
       item.target = 'on'; nativeCache.set('on', []); window.__log = []; echo(); await new Promise(z => setTimeout(z, 3200)); return [recordOn, window.__log]; }, FAKE_VOICE);
     await q.context().close();
@@ -629,7 +631,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   for(const [w, h] of [[390, 844], [360, 640], [412, 915]]) await test(`${w}×${h}: страница не прокручивается, упражнение целиком на экране, подписи не обрезаны`, async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:w, height:h });
     const bad = [];
-    for(const m of ['pairs','phrases','listen','free','progress']){
+    for(const m of ['phrases','listen','free','progress']){
       await q.evaluate(m => setMode(m), m); await q.waitForTimeout(60);
       const r = await q.evaluate(() => { const c = [...document.querySelectorAll('.screen > section')].find(x => !x.hidden);
         const nav = document.querySelector('.tabbar').getBoundingClientRect();
@@ -644,15 +646,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       document.getElementById('tab-free').click(); const free = [!document.getElementById('freeCard').hidden, document.getElementById('tab-free').getAttribute('aria-pressed'), document.getElementById('tab-train').getAttribute('aria-pressed'), document.getElementById('subtabs').hidden];
       document.getElementById('tab-progress').click(); const prog = [!document.getElementById('progressView').hidden, document.getElementById('card').hidden, document.getElementById('subtabs').hidden, document.getElementById('tab-train').getAttribute('aria-pressed')];
       document.getElementById('tab-train').click(); const back = [mode, localStorage.getItem('soyle-train')];
-      document.getElementById('tab-pairs').click(); return [tabs, subs, free, prog, back]; });
-    eq(r, [['tab-city','tab-memory','tab-train','tab-progress'], ['tab-pairs','tab-phrases','tab-listen','tab-free'], [true, 'true', 'true', false], [true, true, true, 'false'], ['free', 'free']]);
+      document.getElementById('tab-phrases').click(); return [tabs, subs, free, prog, back]; });
+    eq(r, [['tab-city','tab-memory','tab-train','tab-progress'], ['tab-phrases','tab-listen','tab-free'], [true, 'true', 'true', false], [true, true, true, 'false'], ['free', 'free']]);
   });
   await test('игра видна всегда: верхняя панель обновляется после ответа, нажатие открывает «Прогресс»', async () => {
     const r = await p.evaluate(r => { eval(r); renderGame(); const ring0 = document.getElementById('tbRing').style.strokeDashoffset;
       for(let i = 0; i < 3; i++) award(1, 'o');
       const out = [document.getElementById('tbStreak').textContent, document.getElementById('tbRing').style.strokeDashoffset !== ring0];
       document.getElementById('tbProgress').click(); out.push(!document.getElementById('progressView').hidden, document.getElementById('gbRank').textContent, document.getElementById('badgeCount').textContent.startsWith(game.badges.length + ' /'));
-      setMode('pairs'); return out; }, RESET);
+      setMode('phrases'); return out; }, RESET);
     eq(r, ['1', true, true, 'Турист', true]);
   });
   await test('устанавливается как приложение: манифест, иконки, standalone', async () => {
@@ -669,15 +671,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const u = await openPage(browser);
     const log = [];
     const say = t => u.evaluate(t => { window.__seq = null; window.__say = t; }, t);
-    // 1. Звуки: сказать верно → «Верно», очки на верхней панели
-    await tap(u, 'tab-pairs'); await say(await u.evaluate(() => item.target));
+    // 1. Фразы: сказать верно → «все слова», «Сравнить» включилась
+    await tap(u, 'tab-phrases'); await say(await u.evaluate(() => item.target));
     await u.click('#speak'); await u.waitForTimeout(250);
-    ok((await u.textContent('#result')).includes('Верно'), 'Звуки: нет «Верно»');
-    ok(!(await u.isDisabled('#compare')), 'Звуки: «Сравнить» не включилась после попытки');
+    ok((await u.textContent('#result')).includes('все слова'), 'Фразы: нет «все слова»');
+    ok(!(await u.isDisabled('#compare')), 'Фразы: «Сравнить» не включилась после попытки');
     const w1 = await u.evaluate(() => item.target); await u.click('#next'); ok(await u.evaluate(w => item.target !== w || true, w1));
-    // 2. Звуки: сказать слово-пару → названа путаница
-    await say(await u.evaluate(() => item.partner)); await u.click('#speak'); await u.waitForTimeout(250);
-    ok((await u.textContent('#result')).includes('Прозвучало'), 'Звуки: путаница не распознана');
+    // 2. Фразы: сказать не то → оценка низкая, разбор
+    await say('yanlış bir şey'); await u.click('#speak'); await u.waitForTimeout(250);
+    ok(!(await u.textContent('#result')).includes('все слова'), 'Фразы: чужая фраза засчитана');
     // 3. Фразы: выбрать «отель», сказать фразу целиком
     await tap(u, 'tab-phrases'); await u.click('.chip[data-s="hotel"]');
     await say(await u.evaluate(() => item.target)); await u.click('#speak'); await u.waitForTimeout(250);
@@ -698,7 +700,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const pr = await u.evaluate(() => [!document.getElementById('progressView').hidden, game.xp > 0, game.badges.includes('first'), document.getElementById('gbQuestTxt').textContent.length > 0, document.getElementById('tbStreak').textContent]);
     eq(pr, [true, true, true, true, '1']);
     // 8. Подсказки «?» и возврат
-    await u.click('#hintsBtn'); await tap(u, 'tab-pairs'); ok(await u.isVisible('#tip'), 'подсказка не видна');
+    await u.click('#hintsBtn'); await tap(u, 'tab-phrases'); ok(await u.isVisible('#tip'), 'подсказка не видна');
     await u.click('#hintsBtn');
     const errs = u.errors; await u.context().close(); eq(errs, []);
   });
@@ -731,22 +733,16 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       const b = document.getElementById('lsBlitz'); setLbl(b, '0:42 · верно 3'); a.push(b.querySelectorAll('svg').length, b.textContent); setLbl(b, 'Блиц 60 с'); return a; });
     eq(r, [2, 'Слушаю…', 1, '0:42 · верно 3']);
   });
-  await test('трудная буква подсвечена: в паре и в вариантах «На слух»', async () => {
-    const r = await p.evaluate(() => [markDiff('göl', 'gol'), markDiff('gol', 'göl'), markDiff('şiş', 'sis')]);
-    eq(r, ['g<span class="dia" data-ch="ö">o</span>l', 'g<span class="dia whole">o</span>l', '<span class="dia low" data-ch="ş">s</span>i<span class="dia low" data-ch="ş">s</span>']);
-    const n = await p.evaluate(() => { setMode('listen'); nextListen(); const k = document.querySelectorAll('#lsA .dia, #lsB .dia').length; setMode('pairs'); next(); return [k, document.querySelectorAll('#target .dia').length]; });
-    ok(n[0] >= 1 && n[1] >= 1, JSON.stringify(n));
-  });
   await test('урок: 10 делений, верные и ошибки окрашены', async () => {
-    const r = await p.evaluate(() => { const old = LESSON_SIZE; LESSON_SIZE = 10; setMode('pairs'); lessons.pairs = null; lessonStep(1); lessonStep(0); lessonStep(1);
+    const r = await p.evaluate(() => { const old = LESSON_SIZE; LESSON_SIZE = 10; setMode('phrases'); lessons.phrases = null; lessonStep(1); lessonStep(0); lessonStep(1);
       const segs = [...document.querySelectorAll('#lessonSegs i')].map(i => i.className); const lab = document.getElementById('lessonBar').getAttribute('aria-label');
-      lessons.pairs = null; LESSON_SIZE = old; renderLesson(); return [segs.length, segs.slice(0, 4).join(','), lab]; });
+      lessons.phrases = null; LESSON_SIZE = old; renderLesson(); return [segs.length, segs.slice(0, 4).join(','), lab]; });
     eq(r, [10, 'ok,bad,ok,', 'Урок: 3 из 10, верно 2']);
   });
   await test('кольцо уровня и достижения-жетоны без эмодзи', async () => {
     const r = await p.evaluate(() => { game.xp = 125; renderGame(); renderBadges(); const off = parseFloat(document.getElementById('gbLevelRing').style.strokeDashoffset);
       return [document.getElementById('gbLevel2').textContent, off > 100 && off < 200, document.querySelectorAll('#badgeGrid .badge').length, BADGES.every(b => !/\p{Extended_Pictographic}/u.test(b.ic))]; });
-    eq(r, ['2', true, 28, true]);
+    eq(r, ['2', true, 20, true]);
   });
 
   console.log('«Память»: вспоминание (эффект тестирования) + FSRS-6');
@@ -815,7 +811,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('честная оценка не стоит очков: опыт за «понять на слух» одинаков при «Забыл» и «Помню»', async () => {
     const r = await p.evaluate(r => { eval(r); const now = Date.now(); const out = [];
       for(const g of [1, 3]){ saveCards([{ ...newMemCard('Merhaba.', '', 'Привет.', 'rec', now), seen:true, due:now - 1 }]); game.combo = 0; setMode('memory'); memReveal(); const x0 = game.xp; memGrade(g); out.push(game.xp - x0); }
-      setMode('pairs'); return out; }, RESET);
+      setMode('phrases'); return out; }, RESET);
     eq(r[0] > 0 && r[0] === r[1], true);
   });
   await test('«сказать» открывается, когда «понять на слух» держится ≥ 3 дней; новые — по кругу из разных тем, не больше 10 в день', async () => {
@@ -825,7 +821,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       const plan = memPlan(); const topic = tr => (PHRASE_SETS.find(g => g.items.some(p => p.tr === tr)) || {}).id;
       const firstTopics = memTopicPool().slice(0, PHRASE_SETS.length).map(c => topic(c.tr));   // порядок новых: по кругу из разных тем
       const d = memDay(); d.newN = 10; memSaveDay(d); const none = memPlan().fresh.length; d.extra = 5; memSaveDay(d); const more = memPlan().fresh.length;
-      setMode('pairs'); return [!!prod && prod.ru, plan.fresh.length, new Set(firstTopics).size === PHRASE_SETS.length, none, more]; });
+      setMode('phrases'); return [!!prod && prod.ru, plan.fresh.length, new Set(firstTopics).size === PHRASE_SETS.length, none, more]; });
     eq(r, ['Счёт, пожалуйста.', 10, true, 0, 5]);
   });
   await test('«Память» помещается: знакомство, вопрос и ответ с оценками и разбором речи на 360×640 и 390×844', async () => {
@@ -840,46 +836,42 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         saveCards([]); localStorage.removeItem('soyle-memday'); setMode('memory'); await new Promise(z => setTimeout(z, 100)); check('знакомство');
         saveCards([{ ...newMemCard('Kendinizi nasıl hissediyorsunuz?', 'кендинизи насыл хиссэдийорсунуз', 'Как вы себя чувствуете?', 'prod', now), due:now - 1 }]); mem = null; memNext(); await new Promise(z => setTimeout(z, 50)); check('вопрос');
         window.__say = 'kendinizi nasıl hisediyorsunuz'; startListening(); await new Promise(z => setTimeout(z, 200)); check('ответ');
-        setMode('pairs'); return res; });
+        setMode('phrases'); return res; });
       bad.push(...x.map(s => `${w}x${h} ${s}`));
     }
     await q.context().close(); eq(bad, []);
   });
 
   console.log('«На слух» и блиц: фразы; честный блиц; медали достижений');
-  await test('«На слух» → «фразы»: две похожие фразы с записью, разный перевод, отличающиеся слова подчёркнуты; выбор запоминается', async () => {
+  await test('«На слух»: две похожие фразы с записью, разный перевод, отличающиеся слова подчёркнуты; выбор запоминается', async () => {
     const q = await openPage(browser);
-    await tap(q, 'tab-listen'); await q.click('#lsKindChip');
+    await tap(q, 'tab-listen');
     const r = await q.evaluate(() => { const voiced = new Set(PHRASE_SETS.flatMap(g => g.items.map(p => p.tr))); const out = [];
       for(let i = 0; i < 30; i++){ nextListen(); const a = document.querySelector('#lsA b').textContent, b = document.querySelector('#lsB b').textContent;
         out.push([voiced.has(a) && voiced.has(b), a !== b, document.querySelector('#lsA small').textContent !== document.querySelector('#lsB small').textContent, phraseSim(a, b) > 0]); }
       return { ok: out.every(x => x.every(Boolean)), q: document.querySelector('.ls-q').textContent, dw: document.querySelectorAll('#lsA .dw, #lsB .dw').length > 0,
-        saved: localStorage.getItem('soyle-lskind'), chips: [...document.querySelectorAll('#chips .chip[data-g]')].map(c => c.dataset.g).slice(0, 3) }; });
+        chips: [...document.querySelectorAll('#chips .chip[data-g]')].map(c => c.dataset.g).slice(0, 3) }; });
     await q.click('#chips .chip[data-g="food"]');
     const topic = await q.evaluate(() => { const food = new Set(PHRASE_SETS.find(g => g.id === 'food').items.map(p => p.tr)); const t = [];
       for(let i = 0; i < 15; i++){ nextListen(); t.push(food.has(ls.answer)); } return t.every(Boolean); });
     const ans = await q.evaluate(() => { const s0 = (stats.listenph || {}).ok || 0, srs = localStorage.getItem('soyle-srs'); answerListen(ls.right);
       return [((stats.listenph || {}).ok || 0) - s0, localStorage.getItem('soyle-srs') === srs, XP_WEIGHT.listenph]; });
     const errs = q.errors; await q.context().close();
-    eq(r.ok, true); eq(r.q, 'Какая фраза прозвучала?'); eq(r.dw, true); eq(r.saved, 'phrases'); eq(r.chips, ['all', 'basic', 'hotel']);
+    eq(r.ok, true); eq(r.q, 'Какая фраза прозвучала?'); eq(r.dw, true); eq(r.chips, ['all', 'basic', 'hotel']);
     eq(topic, true); eq(ans, [1, true, 0.4]); eq(errs, []);
   });
-  await test('блиц честный: выбрать можно только после начала звука; ошибка −3 с; рекорды слов и фраз раздельные, бонус фраз 3 XP', async () => {
+  await test('блиц честный: выбрать можно только после начала звука; ошибка −3 с; рекорд фраз, бонус 3 XP за верную', async () => {
     const q = await openPage(browser); await q.clock.install();
-    const r = await q.evaluate(r => { eval(r); window.__noOnEnd = true; setMode('listen'); setLsKind('phrases'); startBlitz();
+    const r = await q.evaluate(r => { eval(r); window.__noOnEnd = true; setMode('listen'); startBlitz();
       const locked = [lsLocked, document.getElementById('listenCard').classList.contains('wait')]; answerListen('A'); const early = blitz.total;
       return { locked, early }; }, RESET);
     await q.clock.runFor(1500);   // фраза: запись/синтез через ~150–300 мс, варианты открываются со звуком
     const r2 = await q.evaluate(() => { const open = !lsLocked; const left = blitz.left; answerListen(ls.right === 'A' ? 'B' : 'A');
       return [open, left - blitz.left, document.getElementById('lsResult').textContent.includes('−3 с')]; });
     await q.clock.runFor(2500);
-    const r3 = await q.evaluate(() => { answerListen(ls.right); const xp = game.xp; endBlitz(true); return [game.blitzBestPh, game.blitzBest, game.xp - xp]; });
+    const r3 = await q.evaluate(() => { answerListen(ls.right); const xp = game.xp; endBlitz(true); return [game.blitzBestPh, game.xp - xp]; });
     await q.context().close();
-    eq(r.locked, [true, true]); eq(r.early, 0); eq(r2, [true, 3, true]); eq(r3, [1, 0, 3]);
-  });
-  await test('блиц не смешивает слова и фразы: переключение вида останавливает блиц', async () => {
-    const r = await p.evaluate(() => { setMode('listen'); setLsKind('words'); startBlitz(); setLsKind('phrases'); const out = [blitz, lsKind]; setLsKind('words'); return out; });
-    eq(r, [null, 'phrases']);
+    eq(r.locked, [true, true]); eq(r.early, 0); eq(r2, [true, 3, true]); eq(r3, [1, 3]);
   });
   await test('медали: у каждой редкость и цель; не полученные — прогресс «7 / 10», впереди ближайшие; касание открывает карточку', async () => {
     const q = await openPage(browser);
@@ -897,21 +889,21 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('редкая медаль — окно с медалью (после блица — после итогов); обычная — уведомление; дата получения; «Чистая речь» считает 90+', async () => {
     const q = await openPage(browser);
-    const r = await q.evaluate(r => { eval(r); MILESTONE_MODALS = true; stats.o = { t:15, ok:15 }; checkBadges();
+    const r = await q.evaluate(r => { eval(r); MILESTONE_MODALS = true; stats.listenph = { t:20, ok:20 }; checkBadges();
       const m = [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, !!document.querySelector('#modalMedal .medal.t2')];
       document.getElementById('modalPrimary').click();
       game.total = 1; checkBadges(); const t = document.getElementById('toast').textContent;
       const p0 = game.perfect; celebrate(document.getElementById('result'), 95); celebrate(document.getElementById('result'), 80);
-      return [m, t, game.badgeDates.o === new Date().toISOString().slice(0, 10), game.perfect - p0]; }, RESET);
+      return [m, t, game.badgeDates.earph === new Date().toISOString().slice(0, 10), game.perfect - p0]; }, RESET);
     const old = await q.evaluate(() => { game = { xp:10, badges:['first'] }; normalizeGame(); return [typeof game.badgeDates, game.perfect, game.blitzBestPh]; });
     await q.context().close();
-    eq(r[0], [false, 'Достижение: Мастер ö', true]); eq(r[1], 'Достижение: Первое слово'); eq(r[2], true); eq(r[3], 1); eq(old, ['object', 0, 0]);
+    eq(r[0], [false, 'Достижение: Слышу фразы', true]); eq(r[1], 'Достижение: Первое слово'); eq(r[2], true); eq(r[3], 1); eq(old, ['object', 0, 0]);
   });
   await test('фразы «На слух» помещаются: самая длинная пара на 360×640 и 390×844, без наложения и обрезки', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844]]){
       await q.setViewportSize({ width:w, height:h });
-      const x = await q.evaluate(async () => { setMode('listen'); setLsKind('phrases');
+      const x = await q.evaluate(async () => { setMode('listen');
         const all = lsPhrasePool('all').sort((a, b) => b.tr.length + b.ru.length - a.tr.length - a.ru.length);
         const pickPhrasePair0 = pickPhrasePair; pickPhrasePair = () => ({ target:all[0].tr, meaning:all[0].ru, partner:all[1].tr, partnerMeaning:all[1].ru, gid:'listenph' });
         nextListen(); pickPhrasePair = pickPhrasePair0; await new Promise(z => setTimeout(z, 200)); autofit();
@@ -919,7 +911,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         const cut = opts.some(o => o.scrollHeight > o.clientHeight + 1 || o.scrollWidth > o.clientWidth + 1);
         const kids = [...card.children].filter(e => e.offsetParent); let overlap = false;
         for(let i = 0; i + 1 < kids.length; i++) if(kids[i].getBoundingClientRect().bottom > kids[i+1].getBoundingClientRect().top + 1) overlap = true;
-        setLsKind('words'); return { cut, overlap, scroll: document.scrollingElement.scrollHeight > innerHeight + 1 }; });
+        return { cut, overlap, scroll: document.scrollingElement.scrollHeight > innerHeight + 1 }; });
       if(x.cut || x.overlap || x.scroll) bad.push(`${w}x${h} ${JSON.stringify(x)}`);
     }
     await q.context().close(); eq(bad, []);
@@ -929,7 +921,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q = await openPage(browser); const out = [];
     for(const [w, h] of [[360, 560], [360, 640], [390, 844], [412, 732], [412, 915]]){
       await q.setViewportSize({ width:w, height:h });
-      for(const m of ['pairs','phrases','words','listen','free']){
+      for(const m of ['phrases','words','listen','free']){
         out.push(await q.evaluate(([m, w, h]) => { if(m === 'words'){ wordsKind = true; setId = 'food'; m = 'phrases'; } else if(m === 'phrases') wordsKind = false; setMode(m); autofit(); const card = [...document.querySelectorAll('.screen > .card')].find(c => !c.hidden);
           const fit = +getComputedStyle(document.querySelector('.app')).getPropertyValue('--fit');
           const tab = document.querySelector('.tabbar').getBoundingClientRect().bottom;
@@ -941,7 +933,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     }
     await q.context().close();
     eq(out.filter(o => o.over).map(o => o.k + ' ' + o.over), []); eq(out.filter(o => !o.round).map(o => o.k), []);
-    ok(out.find(o => o.k === '360x560 pairs').fit < 1 && out.find(o => o.k === '412x915 phrases').fit > 1, JSON.stringify(out.map(o => o.k + ':' + o.fit)));
+    ok(out.find(o => o.k === '360x560 phrases').fit < 1 && out.find(o => o.k === '412x915 phrases').fit > 1, JSON.stringify(out.map(o => o.k + ':' + o.fit)));
   });
 
   await test('одно слово не переносится: все слова тем и самое длинное (14 букв) — в одну строку и не шире карточки на 360×640, 390×844, 412×915', async () => {
@@ -956,10 +948,9 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
           const t = document.getElementById('target'), rg = document.createRange(); rg.selectNodeContents(t);
           const lines = new Set([...rg.getClientRects()].map(x => Math.round(x.top))).size, bw = rg.getBoundingClientRect(), cw = t.getBoundingClientRect();
           if(item.target !== tr || lines > 1 || bw.left < cw.left - 1 || bw.right > cw.right + 1 || parseFloat(getComputedStyle(t).fontSize) < 22) out.push(`${tr}: строк ${lines}, ${Math.round(parseFloat(getComputedStyle(t).fontSize))}px`); }
-        setKind(false); setMode('pairs'); next(); autofit(); const t = document.getElementById('target');
-        return { n:words.length, out, pairOne: t.classList.contains('oneword') }; });
+        setKind(false); return { n:words.length, out }; });
       if(r.n < 200) bad.push(`${w}x${h}: слов всего ${r.n}`);
-      bad.push(...r.out.map(x => `${w}x${h} ${x}`)); if(!r.pairOne) bad.push(`${w}x${h}: слово в «Звуках» не помечено`);
+      bad.push(...r.out.map(x => `${w}x${h} ${x}`));
     }
     const errs = q.errors; await q.context().close(); eq(bad, []); eq(errs, []);
   });
@@ -969,14 +960,14 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const LONG = 'Этот телефон не даёт микрофону одновременно записывать и распознавать. Дальше распознавание работает само, а себя можно записать кнопкой «Записать себя». Скажите ещё раз.';
     for(const [w, h] of [[360, 640], [390, 844]]){
       await q.setViewportSize({ width:w, height:h });
-      for(const [m, fill] of [['pairs', `setResult('bad', LONG)`], ['phrases', `item = { target:'İki gece için bir oda istiyorum.', gid:'ph-hotel', meaning:'x' }; evalPhrase(['iki gece icin bir oda istiyorm'])`], ['free', `setFree('bad', LONG)`], ['listen', `document.getElementById('lsResult').innerHTML = '<span class=verdict>' + LONG + '</span>'`]]){
+      for(const [m, fill] of [['words', `setKind(true); setResult('bad', LONG)`], ['phrases', `item = { target:'İki gece için bir oda istiyorum.', gid:'ph-hotel', meaning:'x' }; evalPhrase(['iki gece icin bir oda istiyorm'])`], ['free', `setFree('bad', LONG)`], ['listen', `document.getElementById('lsResult').innerHTML = '<span class=verdict>' + LONG + '</span>'`]]){
         const r = await q.evaluate(async ([m, fill, LONG]) => { setMode(m); eval(fill); await new Promise(z => setTimeout(z, 120)); autofit();
           const res = document.querySelector('.screen > .card:not([hidden]) .result'), card = res.closest('.card'), rr = res.getBoundingClientRect(), cr = card.getBoundingClientRect();
           return { cut: res.scrollHeight > res.clientHeight + 1, outside: rr.bottom > cr.bottom + 1 && card.scrollHeight <= card.clientHeight + 1, bg: getComputedStyle(res).backgroundColor }; }, [m, fill, LONG]);
         if(r.cut || r.outside) bad.push(`${w}x${h} ${m} ${JSON.stringify(r)}`);
       }
     }
-    const infoBg = await q.evaluate(() => { setMode('pairs'); next(); return getComputedStyle(document.getElementById('result')).backgroundColor; });
+    const infoBg = await q.evaluate(() => { setMode('phrases'); next(); return getComputedStyle(document.getElementById('result')).backgroundColor; });
     await q.context().close();
     eq(bad, []); eq(infoBg, 'rgb(243, 232, 207)');   // песочный, как на выбранном экране (#F3E8CF)
   });
@@ -984,13 +975,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   console.log('Видео и перевод — внутри приложения, без перехода');
   // подмена внешних сервисов: виджет YouGlish и перевод MyMemory (настоящие проверяются в CI задачей probe)
   const FAKE_YG = `var YG={Widget:function(id,o){this.fetch=function(q,l){(window.__ygq=window.__ygq||[]).push(q);var f=document.getElementById(id).querySelector('iframe')||document.createElement('iframe');f.title='YouGlish';f.setAttribute('data-q',q+'|'+l);document.getElementById(id).appendChild(f);setTimeout(function(){o.events.onFetchDone({totalResult:(q.indexOf(' ')>0&&q.length>12)?0:7,query:q})},30)}}};setTimeout(function(){window.onYouglishAPIReady&&window.onYouglishAPIReady()},10);`;
-  async function openInApp(opts){ const q = await openPage(browser, opts); await q.evaluate(() => setMode('pairs'));   // стартовый экран — «Город»; здесь нужна карточка слова
+  async function openInApp(opts){ const q = await openPage(browser, opts); await q.evaluate(() => setMode('phrases'));   // стартовый экран — «Город»; здесь нужна карточка слова
     await q.route('**/youglish.com/public/emb/widget.js', r => r.fulfill({ contentType:'application/javascript', body:FAKE_YG }));
     await q.route('**/api.mymemory.translated.net/**', r => r.fulfill({ json:{ responseStatus:200, quotaFinished:false, responseData:{ translatedText:'Можно мне счёт?' } } }));
     return q; }
   await test('«Видео»: окно внутри приложения, ролики по текущему слову, без новой вкладки и перехода', async () => {
     const q = await openInApp(); const pages = []; q.context().on('page', x => pages.push(x));
-    const url0 = q.url(); const word = await q.evaluate(() => item.target);
+    const url0 = q.url(); const word = await q.evaluate(() => { setKind(true); return item.target; });   // одно слово: у фразы целиком роликов нет (как у подменённого виджета)
     await q.click('#yg'); await q.click('#exVideo'); await q.waitForSelector('#sheet:not([hidden]) iframe', { timeout:5000 }); await q.waitForFunction(() => /Отрывков/.test(document.getElementById('ygMsg').textContent), null, { timeout:5000 });
     const r = await q.evaluate(() => [document.querySelector('#sheet iframe').dataset.q, document.getElementById('ygMsg').textContent, document.activeElement.id]);
     await q.keyboard.press('Escape');
@@ -1324,7 +1315,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       let tot = 0, miss = []; [...PHRASE_SETS.flatMap(g => g.items), ...OLD_PHRASES].forEach(p => p.tr.split(/\s+/).forEach(w => { const core = w.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, ''); if(!nphr(core)) return; tot++; if(!wordGloss(core)) miss.push(core); }));
       out.tot = tot; out.miss = miss;
       // слово-карточка и пары: слова не нажимаются
-      setKind(true); out.wordMode = document.querySelectorAll('#target .wd').length; setKind(false); setMode('pairs'); out.pairMode = document.querySelectorAll('#target .wd').length;
+      setKind(true); out.wordMode = document.querySelectorAll('#target .wd').length; setKind(false);
       return out; });
     const errs = q.errors; await q.context().close();
     eq(r.spans, ['Size', 'odanızı', 'göstereyim.']); eq(r.rendered, 'Size odanızı göstereyim.'); ok(r.gap >= 4, 'зазор между словами на экране: ' + r.gap + 'px'); eq(r.partner0, '[сизе оданызы гёстерейим]'); ok(/Нажатие на слово/.test(r.info), r.info);
@@ -1332,7 +1323,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.rec, '«Size» — вам носитель'); eq(r.played, ['https://x/size.wav']); eq(r.spokenAfterRec, 1); eq(r.on, 'Size');
     eq(r.verb, '«göstereyim» — давайте покажу · göstermek: показывать синтез'); eq(r.over <= 1, true);
     eq(r.restored, '[кахвалты дахиль ми]'); eq(r.mi, '«mi» — вопросительная частица — делает фразу вопросом синтез'); eq(r.dahil, '«dahil» — включено (kahvaltı dahil mi — завтрак включён?) синтез');
-    ok(r.tot > 1000, 'слов во фразах: ' + r.tot); eq(r.miss, []); eq([r.wordMode, r.pairMode], [0, 0]); eq(errs, []);
+    ok(r.tot > 1000, 'слов во фразах: ' + r.tot); eq(r.miss, []); eq(r.wordMode, 0); eq(errs, []);
   });
   console.log('«Город» (Mahalle): разговоры с последствиями');
   const openCity = async (opts) => { const q = await openPage(browser, opts); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-city'); await q.waitForTimeout(100); return q; };
@@ -1518,6 +1509,16 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
 
   console.log('Интерфейс');
+  await test('«Звуки» и пары слов убраны: нет подвкладки, режима и чипа «слова/фразы», блиц — только фразы, медали звуков сняты', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => ({ tab: !!document.getElementById('tab-pairs'), modes: MODES, train: TRAIN,
+      groups: typeof GROUPS, lsChip: !!document.getElementById('lsKindChip'), badges: BADGES.map(b => b.id),
+      quest: QUESTS.some(x => /Звук/.test(x.t)), help: document.querySelector('details.help').textContent }));
+    const errs = q.errors; await q.context().close();
+    eq([r.tab, r.lsChip, r.quest], [false, false, false]); eq(r.modes, ['city','memory','phrases','listen','free','progress']); eq(r.train, ['phrases','listen','free']);
+    eq(r.groups, 'undefined'); eq(r.badges.length, 20); ok(!r.badges.some(id => ['ear','blitz10','blitz20','o','u','i','c','sounds'].includes(id)), 'медали звуков: ' + r.badges.join());
+    ok(!/Звуки/.test(r.help), 'справка упоминает «Звуки»'); eq(errs, []);
+  });
   await test('кнопки не сдвигаются при смене слов и нажатиях', async () => {
     const pos = () => p.evaluate(() => [...document.querySelectorAll('#card .btngrid .btn')].map(b => { const r = b.getBoundingClientRect(); return Math.round(r.y + scrollY) + ',' + Math.round(r.x); }).join(' '));
     await p.evaluate(() => { setMode('phrases'); setId = 'hotel'; next(); }); const base = await pos();
@@ -1530,7 +1531,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('упражнение видно на первом экране телефона (390×844)', async () => {
     await p.setViewportSize({ width:390, height:844 });   // предыдущие тесты могли сменить размер общей страницы
-    for(const m of ['pairs','phrases','listen','free']){
+    for(const m of ['phrases','listen','free']){
       await p.evaluate(m => { setMode(m); scrollTo(0,0); }, m);
       const bottom = await p.evaluate(() => [...document.querySelectorAll('.card')].find(c => !c.hidden).querySelector('.mic, .ls-opt').getBoundingClientRect().bottom);
       ok(bottom < 844, `${m}: главная кнопка ниже экрана (${Math.round(bottom)})`);
@@ -1538,11 +1539,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('нет горизонтальной прокрутки на 320px (≈ масштаб 200%)', async () => {
     await p.setViewportSize({ width:320, height:700 });
-    for(const m of ['pairs','phrases','listen','free']){ await p.evaluate(m => setMode(m), m); ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), m); }
+    for(const m of ['phrases','listen','free']){ await p.evaluate(m => setMode(m), m); ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), m); }
     await p.setViewportSize({ width:390, height:844 });
   });
   await test('пробел на кнопке нажимает кнопку, а не включает микрофон', async () => {
-    await p.evaluate(() => setMode('pairs')); await p.focus('#next'); const t = await p.evaluate(() => item.target);
+    await p.evaluate(() => setMode('phrases')); await p.focus('#next'); const t = await p.evaluate(() => item.target);
     let changed = false; for(let i = 0; i < 6 && !changed; i++){ await p.keyboard.press('Space'); changed = (await p.evaluate(() => item.target)) !== t; }
     ok(changed);
   });
@@ -1553,7 +1554,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   if(AXE) for(const scheme of ['light','dark']) await test(`WCAG 2.1 AA (axe-core), ${scheme === 'light' ? 'светлая' : 'тёмная'} тема`, async () => {
     const q = await openPage(browser, { scheme });
     const v = [];
-    for(const m of ['pairs','phrases','listen','free','progress']){
+    for(const m of ['phrases','listen','free','progress']){
       await q.evaluate(m => { setMode(m); document.body.classList.add('hints'); }, m); await q.addScriptTag({ content:AXE });
       v.push(...(await q.evaluate(async () => (await axe.run(document, { runOnly:['wcag2a','wcag2aa','wcag21aa'] })).violations.map(x => x.id))).map(id => m + ':' + id));
     }
