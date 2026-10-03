@@ -1311,6 +1311,12 @@ function wordPool(topic){
 // стоит в фразах. Многозначные и служебные (artık, kadar, daha, sürer, bağlı, частицы mi/mı…) не берутся совсем.
 const PHRASE_DICT = {
   "oda":["комната, номер", "oda odada odama odanızı"],
+  "ekmek":["хлеб", "ekmek"],
+  "yumurta":["яйцо", "yumurta"],
+  "meydan":["площадь", "meydan meydanı meydana"],
+  "kat":["этаж", "kat"],
+  "numara":["номер", "numara"],
+  "kombi":["котёл (газовая колонка: отопление и горячая вода)", "kombi"],
   "anahtar":["ключ", "anahtar anahtarları anahtarın"],
   "otel":["отель", "otel"],
   "banyo":["ванная", "banyoyu"],
@@ -1432,7 +1438,7 @@ const PHRASE_DICT = {
   "tabii":["конечно", "tabii"],
   "umarım":["надеюсь", "umarım"],
   "istemek":["хотеть", "ister istersin istiyor istiyorum istersiniz istemiyorum"],
-  "gitmek":["идти, ехать", "gidebilirim gidiyorum gittin gidiyor gidiyorsunuz gitmek"],
+  "gitmek":["идти, ехать", "gidebilirim gidiyorum gittin gidiyor gidiyorsunuz gitmek gidelim giderim"],
   "gelmek":["приходить, приезжать", "geldiniz gelin geliyor geliyorum geliyorsunuz"],
   "almak":["брать, покупать; принимать (душ, лекарство)", "alabilir alacağım alıyorum aldın"],
   "vermek":["давать", "ver verelim"],
@@ -3128,8 +3134,8 @@ const SCENES = {
           { key:["olur", "tamam", "sorun değil", "sorun yok", "evet", "peki", "gidelim"], say:["Olur, sorun değil.", "Tamam, gidelim."], ru:"Хорошо, не проблема.", go:"arrive", fx:{ min:25 } },
           { key:["hayır", "olmaz", "metro", "inmek", "ineyim", "kalsın"], say:["O zaman kalsın, metroyla giderim."], ru:"Тогда не надо, поеду на метро.", go:"metro", fx:{ min:40, money:-30 } },
         ] },
-      metro:{ end:{ kind:"ok", text:"Вы поехали на метро: 40 минут с пересадкой, зато всего 30 ₺. Шофёр пожал плечами — не обиделся.", fx:{} } },
-      wrong:{ npc:"Kadıköy mü? Tamam, vapur iskelesine gidiyoruz.", ru:"В Кадыкёй? Хорошо, едем к пристани парома.",
+      metro:{ end:{ kind:"near", text:"Вы поехали на метро: 40 минут с пересадкой, зато всего 30 ₺. Шофёр пожал плечами — не обиделся.", fx:{} } },
+      wrong:{ npc:"Kadıköy mü? Tamam, vapur iskelesine gidiyoruz.", ru:"В Кадыкёй? Хорошо, едем к пристани парома.", again:"Kadıköy, değil mi?", againRu:"В Кадыкёй, верно?",
         moves:[
           { key:["hayır", "taksim", "yanlış", "pardon", "dur", "durun"], say:["Pardon, Taksim'e lütfen!"], ru:"Простите, на Таксим!", go:"where", fx:{ min:5 } },
           { key:["*"], say:["Tamam."], ru:"Хорошо.", go:"lost", hide:true },
@@ -3154,7 +3160,8 @@ const SCENES = {
           { key:["hoş bulduk", "hoşbulduk"], say:["Hoş bulduk!"], ru:"Рад быть здесь! (ответ на «hoş geldin»)", go:"list", fx:{ rel:1 } },
           { key:["merhaba", "iyi günler", "selam", "günaydın", "kolay gelsin"], say:["Merhaba!"], ru:"Здравствуйте!", go:"list" },
         ] },
-      list:{ npc:"Ne lazım?", ru:"Что нужно?", again:"Anlamadım. Ne lazım: ekmek, su?", againRu:"Не понял. Что нужно: хлеб, вода?", shop:true,
+      list:{ npc:"Ne lazım?", ru:"Что нужно?", again:"Anlamadım. Ne lazım: ekmek, su?", againRu:"Не понял. Что нужно: хлеб, вода?", shop:true, extra:[
+          { key:["veresiye"], say:["Veresiye olur mu?"], ru:"Можно в долг? (так покупают у знакомого бакала)", go:"veresiye" } ],
         items:{ ekmek:["ekmek"], su:["su", "sular", "şişe su"], yumurta:["yumurta", "yumurtalar"] }, itemRu:{ ekmek:"хлеб", su:"вода", yumurta:"яйца" },
         none:{ key:["peynir", "süt", "çay", "kahve", "zeytin", "bira", "sigara"], npc:"O kalmadı, kusura bakma. Başka?", ru:"Этого не осталось, извини. Что ещё?" },
         done:{ key:["hepsi", "bu kadar", "tamam", "yeter", "yok", "başka yok"], say:["Hepsi bu kadar."], ru:"Это всё." },
@@ -3163,6 +3170,12 @@ const SCENES = {
           { key:["su"], say:["Bir su lütfen."], ru:"Воду, пожалуйста." },
           { key:["yumurta"], say:["On tane yumurta lütfen."], ru:"Десять яиц, пожалуйста." },
         ], go:"price" },
+      veresiye:{ npc:"Seni daha yeni tanıyorum komşu, veresiye olmaz. Nakit var mı?", ru:"Я тебя только узнал, сосед, в долг не выйдет. Наличные есть?", again:"Nakit var mı?", againRu:"Наличные есть?",
+        moves:[
+          { key:["var", "tamam", "nakit", "vereyim", "peki"], say:["Tamam, nakit vereyim."], ru:"Хорошо, дам наличными.", go:"price" },
+          { key:["kalsın", "yok", "başka zaman", "olmaz"], say:["O zaman kalsın."], ru:"Тогда не надо.", go:"nobuy" },
+        ] },
+      nobuy:{ end:{ kind:"near", text:"Ушли без покупок. В долг здесь дают только своим — когда Хасан вас запомнит. Хлеб придётся искать в супермаркете.", fx:{ min:20, money:-60 } } },
       price:{ npc:"Hepsi yüz on lira.", ru:"Всего сто десять лир.", pay:{ price:110, notes:[100, 200, 500], short:"On lira daha.", shortRu:"Ещё десять лир.", go:"bye" } },
       bye:{ npc:"Buyur, poşet. İyi günler!", ru:"Держи, пакет. Хорошего дня!", again:"İyi günler komşu!", againRu:"Хорошего дня, сосед!",
         moves:[
@@ -3290,7 +3303,9 @@ function cityNode(id, replyHtml){
 const SHOP_LINES = { ekmek:["Ekmek lütfen.", "Хлеб, пожалуйста."], su:["Bir su lütfen.", "Воду, пожалуйста."], yumurta:["On tane yumurta lütfen.", "Десять яиц, пожалуйста."] };
 function ctMoves(n){
   if(n.shop){ const out = Object.keys(n.items).filter(it => !ct.bought.has(it)).map(it => ({ key:n.items[it], say:[SHOP_LINES[it][0]], ru:SHOP_LINES[it][1], item:it }));
-    if(ct.bought.size) out.push({ key:n.done.key, say:n.done.say, ru:n.done.ru, doneShop:true }); return out; }
+    if(ct.bought.size) out.push({ key:n.done.key, say:n.done.say, ru:n.done.ru, doneShop:true });
+    if(!ct.bought.size) (n.extra || []).filter(m => !m.hide).forEach(m => out.push(m));   // ходы лавки помимо товаров («в долг?») — пока ничего не взяли; обычные ходы со своим go
+    return out; }
   return n.moves.filter(m => !m.hide);
 }
 const mastery = tr => (city.mastery || {})[tr] || 0;
@@ -3384,6 +3399,7 @@ function cityAnswer(alts){
     if(n.none.key.some(k => ctHas(heardN, k))){ ctEl("ctTr").textContent = n.none.npc; ctEl("ctRu").textContent = n.none.ru; npcSay(n.none.npc);
       return ctResult("near", `<span class="verdict">Этого у Хасана нет.</span><div class="alts">«${esc(n.none.ru)}»</div>`); }
     const done = ctMoves(n).find(m => m.doneShop && m.key.some(k => ctHas(heardN, k))); if(done) return cityAccept(done, alts, polite, 100);
+    const ex = ctMoves(n).find(m => m.go && !m.item && m.key.some(k => ctHas(heardN, k))); if(ex) return cityAccept(ex, alts, polite, 100);   // дополнительный ход лавки («в долг?»)
     return cityMiss();
   }
   let best = null;                                                                     // сказали своё, без выбора — узнаём по ключевым словам
@@ -3399,7 +3415,7 @@ function cityAccept(m, alts, polite, score, names){
   if(m.xp !== false) count("city", 1);
   const lvl = mastery(line), grown = lvl >= 3 ? " Реплика освоена: дальше — по памяти." : lvl === 2 ? " В следующий раз — только первые буквы." : "";
   const head = `<div class="res-head">${scoreHtml(score, "Произношение")}<div class="res-body">`, tail = `</div></div>`;
-  if(n.shop){
+  if(n.shop && (m.item || m.doneShop || !m.go)){
     if(m.item){ ct.bought.add(m.item); ct.lines.push({ tr:line, ru:m.ru, ok:true });
       const all = Object.keys(n.items).every(it => ct.bought.has(it)); names = names || n.itemRu[m.item];
       if(all) return cityResolve(n.go, "ok", `${head}<span class="verdict">Взяли: ${esc(names)}. Всё из списка.</span>${tail}`);
@@ -3428,7 +3444,7 @@ function cityPhone(){   // показали фразу на экране тел�
   const n = ct.node; if(!n || n.end || n.pay || ct.resolved) return;
   const m = ct.pick || ctMoves(n)[0]; if(!m) return;
   ct.phoned = true; city.min += 3; ct.n++;
-  if(n.shop){ if(m.item){ ct.bought.add(m.item); } else { Object.keys(n.items).forEach(it => ct.bought.add(it)); }
+  if(n.shop && (m.item || m.doneShop || !m.go)){ if(m.item){ ct.bought.add(m.item); } else { Object.keys(n.items).forEach(it => ct.bought.add(it)); }
     const all = Object.keys(n.items).every(it => ct.bought.has(it));
     if(!all){ ct.pick = null; cityOptions(); return ctResult("near", `<span class="verdict">Показали на телефоне: «${esc(m.say[0])}».</span><div class="alts">Хасан положил. Без разговора — без опыта. Что ещё?</div>`); }
     return cityResolve(n.go, "near", `<span class="verdict">Вы показали список на телефоне. Хасан собрал всё молча.</span><div class="alts">Без разговора — без опыта. В следующий раз скажите сами.</div>`); }
@@ -3495,6 +3511,8 @@ ctEl("ctBack").onclick = () => { if(!ct) return; cityLeave(); ct = null; cityRen
 // Перевод формы — вручную (FORM_GLOSS: как слово значит именно в этой форме), служебные слова и частицы — FUNC_GLOSS,
 // словарная форма и значение — PHRASE_DICT. Машинного перевода здесь нет: нет глоссы — честно «отдельного перевода нет».
 const FORM_GLOSS = {
+  meydanı:"площадь (Taksim Meydanı — площадь Таксим)", meydana:"на площадь (куда?)", gidelim:"поедем, пойдём (давайте)", giderim:"поеду, пойду (я)",
+  kalsın:"пусть останется; не надо (üstü kalsın — сдачи не надо; o zaman kalsın — тогда не надо)", üstü:"верх; сдача (üstü kalsın — сдачи не надо)", beşinci:"пятый",
   odada:"в комнате, в номере", odama:"в мою комнату (в мой номер)", odanızı:"ваш номер (кого? что?)", anahtarları:"ключи (кого? что?)", anahtarın:"твой ключ (anahtarın var mı — у тебя есть ключ?)",
   banyoyu:"ванную (кого? что?)", asansörü:"лифт (кого? что?)", tuvaletiniz:"ваш туалет (у вас есть туалет?)", telefonunuz:"ваш телефон", elektriğimiz:"наше электричество", şikayetimiz:"наша жалоба",
   hesabı:"счёт (кого? что?)", yemekte:"на обед, на ужин (букв. «в еде»)", peyniri:"сыр (кого? что?)", otobüsü:"автобус (кого? что?)", trene:"в поезд, на поезд (куда?)", treni:"поезд (кого? что?)",
@@ -3520,6 +3538,9 @@ const FORM_GLOSS = {
   üşümüyor:"не мёрзнет (üşümüyor musun — тебе не холодно?)", kilitledin:"ты запер", açar:"открывает (açar mısınız — откройте, пожалуйста)",
 };
 const FUNC_GLOSS = {
+  veresiye:"в долг, в кредит (у знакомого продавца)", nakit:"наличные", vereyim:"дам (давайте дам)",
+  o:"он, она, оно; тот (o zaman — тогда)", on:"десять", fark:"разница (fark etmez — без разницы, всё равно)", etmez:"не делает (fark etmez — без разницы)", hepsi:"всё, все (hepsi bu kadar — это всё)",
+  taksim:"Таксим — площадь и район в центре Стамбула", kadıköy:"Кадыкёй — район на азиатском берегу Стамбула",
   mi:"вопросительная частица — делает фразу вопросом", mı:"вопросительная частица — делает фразу вопросом", mu:"вопросительная частица — делает фразу вопросом", mü:"вопросительная частица — делает фразу вопросом",
   misin:"вопрос к «ты» (…ли ты?)", mısın:"вопрос к «ты» (…ли ты?)", musun:"вопрос к «ты» (…ли ты?)", müsün:"вопрос к «ты» (…ли ты?)",
   misiniz:"вопрос к «вы» (…ли вы?)", mısınız:"вопрос к «вы» (…ли вы?)", musunuz:"вопрос к «вы» (…ли вы?)", müsünüz:"вопрос к «вы» (…ли вы?)",

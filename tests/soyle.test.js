@@ -1,70 +1,9 @@
 // Автотесты тренажёра Söyle. Запуск: node tests/soyle.test.js [путь к index.html]
-// Нужен Playwright (npm i playwright). Распознавание речи, микрофон и сеть подменяются заглушками.
-const { chromium } = require('playwright');
-const fs = require('fs'), path = require('path');
-const FILE = 'file://' + path.resolve(process.argv[2] || path.join(__dirname, '..', 'index.html'));
+// Нужен Playwright (npm i playwright). Распознавание речи, микрофон и сеть подменяются заглушками (tests/harness.js).
+const { chromium, fs, path, FILE, test, tap, eq, ok, openPage, summary } = require('./harness');
 const AXE = process.env.AXE && fs.existsSync(process.env.AXE) ? fs.readFileSync(process.env.AXE, 'utf8') : null;
-
-let passed = 0, failed = 0;
 const PHRASE_DICT_SRC = (() => { const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8'); const m = src.match(/const PHRASE_DICT = (\{[\s\S]*?\n\});/); return m ? eval('(' + m[1] + ')') : {}; })();
 const PHRASE_DICT_RU = lemma => (PHRASE_DICT_SRC[lemma] || [])[0];
-async function test(name, fn){
-  if(process.env.ONLY && !name.includes(process.env.ONLY)) return;   // ONLY="часть названия" — прогнать выбранные тесты
-  try { await fn(); passed++; console.log('  ✓', name); }
-  catch(e){ failed++; console.log('  ✗', name, '\n     ', e.message); }
-}
-const tap = (q, id) => q.evaluate(id => document.getElementById(id).click(), id);   // подвкладки тренировки скрыты вне неё — нажимаем из страницы
-const eq = (a, b, msg) => { if(JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${msg||''} ожидалось ${JSON.stringify(b)}, получено ${JSON.stringify(a)}`); };
-const ok = (v, msg) => { if(!v) throw new Error(msg || 'условие не выполнено'); };
-
-// Заглушки: распознаватель отдаёт window.__say (или последовательность window.__seq), микрофон — тон генератора
-const INIT = () => {
-  window.SOYLE_TEST = true; // без случайных бонусов и окон-праздников; отдельные тесты включают их сами
-  const SR = function(){ const self = this;
-    this.start = () => setTimeout(() => {
-      if(window.__silent){ self.onend(); return; }
-      const seq = window.__seq || [window.__say || ''];
-      const results = seq.map(t => { const r = [{ transcript:t, confidence:.9 }]; r.isFinal = true; return r; });
-      self.onresult({ resultIndex:0, results }); self.onend();
-    }, 20);
-    this.stop = () => {}; this.abort = () => {};
-  };
-  window.SpeechRecognition = SR; window.webkitSpeechRecognition = SR;
-  // журнал событий звука и микрофона: synth / rec / me / mic
-  window.__log = [];
-  navigator.mediaDevices.getUserMedia = async () => { window.__log.push('mic'); const c = new AudioContext(), d = c.createMediaStreamDestination(), o = c.createOscillator(); o.connect(d); o.start(); return d.stream; };
-  window.SpeechSynthesisUtterance = function(t){ this.text = t; };
-  window.__spoken = []; speechSynthesis.speak = u => { window.__spoken.push(u.text); window.__log.push('synth'); if(!window.__noOnEnd) setTimeout(() => u.onend && u.onend(), 10); };
-  HTMLMediaElement.prototype.play = function(){
-    (window.__played = window.__played || []).push(this.src);
-    if(this.src.includes('broken')) return Promise.reject(new Error('load failed'));
-    window.__log.push(this.src.startsWith('blob:') ? 'me' : 'rec');
-    setTimeout(() => this.onended && this.onended(), 10); return Promise.resolve();
-  };
-};
-async function openPage(browser, opts = {}){
-  const ctx = await browser.newContext({ viewport:{ width:390, height:844 }, userAgent: opts.android ? 'Mozilla/5.0 (Linux; Android 14) Chrome/128 Mobile' : undefined, colorScheme: opts.scheme || 'light' });
-  const p = await ctx.newPage(); p.errors = []; p.on('pageerror', e => p.errors.push((e.stack || e.message).split('\n').slice(0, 3).join(' | ')));   // со стеком: видно, где упало
-  // тесты не зависят от сети: всё внешнее, что не подменено ниже, отклоняется (как в CI, так и локально)
-  await p.route(u => /^https?:/.test(u.href) && !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(u.href), r => r.abort());
-  await p.route('**/*googleapis*/**', r => r.abort());
-  await p.route('**/*wiktionary.org/**', r => r.fulfill({ json:{ tr:[{ partOfSpeech:'Noun', definitions:[{ definition:'<i>test</i> meaning' }] }] } }));
-  await p.route('**/commons.wikimedia.org/**', r => {
-    const u = decodeURIComponent(r.request().url());
-    if(u.includes('categorymembers')) return r.fulfill({ json:{ query:{ pages: u.includes('Lingua') ? {
-      1:{ title:'File:LL-Q256 (tur)-Zeynep-merhaba.wav', imageinfo:[{ url:'https://x/m1.wav' }] },
-      2:{ title:'File:LL-Q256 (tur)-Ali-merhaba.wav', imageinfo:[{ url:'https://x/m2.wav' }] },
-      3:{ title:'File:LL-Q256 (tur)-Ali-köy.wav', imageinfo:[{ url:'https://x/k.wav' }] } } : {} } } });
-    const m = u.match(/"([^"]+)"$/);
-    if(m && ['köy','ön'].includes(m[1])) return r.fulfill({ json:{ query:{ pages:{ 1:{ title:`File:LL-Q256 (tur)-Zeynep-${m[1]}.wav`, imageinfo:[{ url:`https://x/${m[1]}.wav` }] } } } } });
-    return r.fulfill({ json:{ query:{ pages:{} } } });
-  });
-  await p.addInitScript(INIT);
-  if(opts.storage) await p.addInitScript(s => { if(!sessionStorage.getItem('seeded')){ localStorage.clear(); Object.entries(s).forEach(([k,v]) => localStorage.setItem(k, v)); sessionStorage.setItem('seeded','1'); } }, opts.storage);
-  else await p.addInitScript(() => { if(!sessionStorage.getItem('seeded')){ localStorage.clear(); sessionStorage.setItem('seeded','1'); } });
-  await p.goto(FILE); await p.waitForTimeout(150);
-  return p;
-}
 const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', meaning:'', partnerMeaning:'' }, it); }, it);
 
 (async () => {
@@ -1356,7 +1295,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await ctPick(q, 1); const metro = await ctSay(q, 'kalsın metroyla giderim'); ok(/на метро/.test(metro.res) && metro.next, metro.res);
     await ctNext(q); await q.waitForTimeout(80);
     const end = await q.evaluate(() => [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, city.money, city.min, loadCards().filter(c => /Taksim|Fark|metroyla/.test(c.tr)).map(c => c.tr).sort()]);
-    eq(end, [false, 'Такси до Таксима — получилось', 470, 540 + 1 + 1 + 2 + 1 + 40, ['Fark etmez.', 'O zaman kalsın, metroyla giderim.', "Taksim'e lütfen."]]);   // метро: −30 ₺, +40 мин; сказанное — в «Память»
+    eq(end, [false, 'Такси до Таксима — так себе', 470, 540 + 1 + 1 + 2 + 1 + 40, ['Fark etmez.', 'O zaman kalsın, metroyla giderim.', "Taksim'e lütfen."]]);   // метро: −30 ₺, +40 мин; сказанное — в «Память»
     await q.click('#modalPrimary'); await q.waitForTimeout(60);
     // освоение: уровень 1 — без чтения; уровень 2 — первые буквы; подсмотрели — уровень не растёт
     await q.evaluate(() => { city.done = []; cityRender(); }); await q.click('.ct-task[data-scene="taxi"]'); await q.waitForTimeout(80);
@@ -1376,7 +1315,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.click('.ct-task[data-scene="bakkal"]'); await q.waitForTimeout(80);
     eq(await q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)), ['Рад быть здесь! (ответ на «hoş geldin»)', 'Здравствуйте!']);
     await ctPick(q, 0); const hb = await ctSay(q, 'hoş bulduk'); ok(hb.next, hb.res); await ctNext(q);
-    eq(await q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)), ['Хлеб, пожалуйста.', 'Воду, пожалуйста.', 'Десять яиц, пожалуйста.']);
+    eq(await q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)), ['Хлеб, пожалуйста.', 'Воду, пожалуйста.', 'Десять яиц, пожалуйста.', 'Можно в долг? (так покупают у знакомого бакала)']);
     await ctPick(q, 0); const br = await ctSay(q, 'ekmek lütfen'); ok(/Взяли: хлеб/.test(br.res) && /Осталось: вода, яйца/.test(br.res) && !br.next, br.res);
     eq(br.opts, ['Воду, пожалуйста.', 'Десять яиц, пожалуйста.', 'Это всё.']);
     const none = await ctSay(q, 'peynir var mı'); ok(/нет/.test(none.res) && none.pat === 3, none.res);                 // своё, без карточки: нет такого товара — не промах
@@ -1389,6 +1328,19 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await ctPick(q, 0); const bye = await ctSay(q, 'kolay gelsin'); ok(bye.next, bye.res); await ctNext(q); await q.waitForTimeout(80);
     eq(await q.evaluate(() => [document.getElementById('modalTitle').textContent, city.money, city.rel.bakkal, city.flags && city.flags.bakkalFriend]), ['Bakkal — лавка у дома — получилось', 190, 4, 1]);   // +1 «hoş bulduk», +1 «lütfen», +2 «kolay gelsin»
     const errs = q.errors; await q.context().close(); eq(errs, []);
+  });
+  await test('Город: bakkal — «в долг» незнакомому не дают: развилка по смыслу → «тогда не надо» = концовка «так себе» (−60 ₺ супермаркет, +20 мин); дополнительный ход в лавке не ломает список покупок', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; });
+    await q.click('.ct-task[data-scene="bakkal"]'); await q.waitForTimeout(80);
+    await ctPick(q, 1); await ctSay(q, 'merhaba'); await ctNext(q);
+    await ctPick(q, 3); const v = await ctSay(q, 'veresiye olur mu'); ok(v.next, v.res); await ctNext(q);
+    const node = await q.evaluate(() => [ct.nodeId, document.getElementById('ctTr').textContent, ct.bought.size]);
+    eq(node, ['veresiye', 'Seni daha yeni tanıyorum komşu, veresiye olmaz. Nakit var mı?', 0]);
+    const m0 = await q.evaluate(() => [city.money, city.min]);
+    await ctPick(q, 1); const k = await ctSay(q, 'o zaman kalsın'); ok(k.next, k.res); await ctNext(q); await q.waitForTimeout(80);
+    const r = await q.evaluate(m0 => [document.getElementById('modalTitle').textContent, m0[0] - city.money, city.min - m0[1] >= 20, city.done[0].kind], m0);
+    const errs = q.errors; await q.context().close();
+    eq(r, ['Bakkal — лавка у дома — так себе', 60, true, 'near']); eq(errs, []);
   });
   await test('Город: терпение кончилось — сцена провалена с последствиями; «Показать» на телефоне — путь без речи и без опыта; итог дня и новый день; всё сохраняется', async () => {
     const q = await openCity();
@@ -1563,6 +1515,5 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('за весь прогон на странице не было JS-ошибок', async () => eq(p.errors, []));
 
   await browser.close();
-  console.log(`\nИтог: ${passed} пройдено, ${failed} с ошибкой`);
-  process.exit(failed ? 1 : 0);
+  process.exit(summary());
 })();

@@ -3,7 +3,7 @@
   "private": true,
   "description": "Тренажёр турецкого произношения",
   "scripts": {
-    "test": "AXE=tests/axe.min.js node tests/soyle.test.js index.html && node tests/real-media.test.js"
+    "test": "AXE=tests/axe.min.js node tests/soyle.test.js index.html && node tests/city.test.js index.html && node tests/real-media.test.js"
   },
   "devDependencies": {
     "playwright": "1.56.0"
