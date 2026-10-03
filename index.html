@@ -616,14 +616,34 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-res .ct-money{font:700 15px var(--display)}
 .ct-res .ct-time{display:inline-flex; align-items:center; gap:3px} .ct-res .ct-time .ic{width:14px; height:14px}
 .ct-pat{display:inline-flex; gap:3px} .ct-pat i{width:8px; height:8px; border-radius:50%; border:1.5px solid var(--accent); display:inline-block} .ct-pat i.on{background:var(--accent)}
-.ct-home{display:flex; flex-direction:column; gap:calc(10px * var(--fit)); flex:1; min-height:0}
-.ct-day{margin:0; font:700 max(17px, calc(22px * var(--fit)))/1.2 var(--display); text-align:left}
-.ct-tasks{display:flex; flex-direction:column; gap:8px}
-.ct-task{display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; min-height:max(56px, calc(68px * var(--fit))); padding:10px 14px; border:1px solid var(--line); border-radius:14px; background:var(--surface); color:var(--ink)}
-.ct-task b{font:700 max(15px, calc(17px * var(--fit)))/1.2 var(--display)} .ct-task span{font-size:13px; color:var(--muted); line-height:1.3}
-.ct-task:not(:disabled):hover{border-color:var(--accent)}
-.ct-task.done{opacity:.85} .ct-task.done.ok{background:var(--ok-soft)} .ct-task.done.near{background:var(--near-soft)} .ct-task.done.bad{background:var(--bad-soft)}
-.ct-intro{text-align:left; margin-top:auto}
+.ct-home{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0; width:100%}
+/* Поле-настолка: кольцо 7×7 из кнопок-клеток (зона нажатия ≥ 44px на 360px), внутри кольца — дела дня и кубик; срезки — пунктирные улицы под ним */
+.bd{position:relative; display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); grid-template-rows:repeat(7, minmax(0, 1fr)); gap:3px; width:100%; aspect-ratio:1; max-width:420px; margin:0 auto}
+.bd-streets{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; fill:none; stroke:var(--line); stroke-width:.06; stroke-dasharray:.18 .14}
+.bd-cell{position:relative; min-width:0; min-height:0; padding:0 0 4px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:600 max(9px, calc(10px * var(--fit)))/1.1 var(--body); display:flex; align-items:flex-end; justify-content:center; cursor:default; overflow:hidden}
+.bd-cell.place{border-color:color-mix(in srgb, var(--accent) 45%, var(--line))}
+.bd-cell.event{background:#F3E8CF; color:var(--ink); font:700 max(14px, calc(18px * var(--fit)))/1 var(--display); align-items:center; padding-bottom:0}
+.bd-cell.home{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.bd-cell.reach{cursor:pointer; outline:2px solid var(--accent); outline-offset:-2px; background:color-mix(in srgb, var(--accent) 14%, var(--surface))}
+.bd-cell.reach:hover{background:color-mix(in srgb, var(--accent) 24%, var(--surface))}
+.bd-cell:disabled{cursor:default; opacity:1}
+.bd-cell .bd-pin{position:absolute; top:3px; right:3px; width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 2px var(--surface)}
+.bd-cell .bd-pin.closed{background:var(--muted)} .bd-cell .bd-pin.done{background:var(--ok)}
+.bd-cell .bd-token{position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:var(--tulip); box-shadow:0 0 0 2px var(--surface)}
+.bd-cell.home .bd-token, .bd-cell.home .bd-pin{box-shadow:0 0 0 2px var(--ink)}
+.bd-inner{grid-area:2 / 2 / 7 / 7; display:flex; flex-direction:column; gap:calc(6px * var(--fit)); min-height:0; min-width:0; padding:calc(6px * var(--fit)) 4px; text-align:left; background:color-mix(in srgb, var(--bg) 88%, transparent); border-radius:12px}
+.ct-day{margin:0; font:700 max(13px, calc(15px * var(--fit)))/1.2 var(--display); text-align:left}
+.ct-tasks{display:flex; flex-direction:column; gap:3px; margin:0; padding:0; list-style:none; min-height:0; overflow:hidden}
+.ct-task{display:flex; align-items:baseline; gap:6px; text-align:left; font-size:max(11px, calc(12px * var(--fit))); line-height:1.25; color:var(--ink); min-width:0}
+.ct-task b{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0} .ct-task span{color:var(--muted); flex:none; font-size:.92em}
+.ct-task i{flex:none; width:8px; height:8px; border-radius:50%; background:var(--accent); transform:translateY(-1px)} .ct-task.closed i{background:var(--muted)}
+.ct-task.done{color:var(--muted)} .ct-task.done.ok i{background:var(--ok)} .ct-task.done.near i{background:var(--near)} .ct-task.done.bad i{background:var(--bad)}
+.ct-dice{display:flex; align-items:center; gap:10px; margin-top:auto}
+.ct-roll{min-height:44px; padding:0 18px; flex:none}
+.ct-rolled{font:700 max(20px, calc(26px * var(--fit)))/1 var(--display); color:var(--accent); min-width:1.2em}
+.ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px}
+#ctDayEnd{width:100%; min-height:44px}
+.ct-intro{text-align:left; margin:0; font-size:12px; line-height:1.3}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
 .ct-goal{margin:0; font-size:13px; color:var(--muted); text-align:left; display:flex; gap:8px; align-items:baseline} .ct-goal > span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
 .ct-npc{display:flex; gap:10px; align-items:flex-start}
@@ -764,8 +784,17 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
     <section class="card city" id="cityCard" hidden aria-label="Город">
       <div class="ct-head"><span class="ct-place" id="ctPlace"></span><span class="ct-res" id="ctRes"></span></div>
       <div class="ct-home" id="ctHome">
-        <p class="ct-day" id="ctDay"></p>
-        <div class="ct-tasks" id="ctTasks"></div>
+        <div class="bd" id="ctBoard" role="group" aria-label="Квартал: клетки поля">
+          <svg class="bd-streets" viewBox="0 0 7 7" aria-hidden="true" preserveAspectRatio="none"><path d="M3.5 .5V6.5M.5 3.5H6.5"/></svg>
+          <div class="bd-inner" id="ctInner">
+            <p class="ct-day" id="ctDay"></p>
+            <ul class="ct-tasks" id="ctTasks"></ul>
+            <div class="ct-dice" id="ctDice">
+              <button class="btn primary ct-roll" id="ctRoll">Zar at</button><b class="ct-rolled" id="ctRolled" aria-live="polite"></b>
+            </div>
+            <div class="ct-homebtns"><button class="linkbtn" id="ctTaxi">Taksi çağır</button><button class="linkbtn" id="ctHomeBtn">Eve dön</button></div>
+          </div>
+        </div>
         <p class="hint ct-intro" id="ctIntro"></p>
       </div>
       <div class="ct-scene" id="ctScene" hidden>
@@ -3108,7 +3137,63 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 // (узлы, ветки, флаги). Собеседник говорит синтезом: это персонаж, а не образец для подражания (записей всех реплик нет нигде).
 // Сцена: nodes[id] = { npc, ru, moves:[{ key:[слова, по которым узнаём ответ], say:[как сказать], ru, go, fx, hide }],
 //   again (переспрос), pay:{ price, notes }, end:{ kind, text, fx } }. fx: { money, min, rel, flag }.
-const CITY_START = { ver:2, day:1, money:500, min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0 };
+const CITY_START = { ver:2, day:1, money:500, min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, pos:0, roll:null, visited:[], plan:null };
+// Поле-настолка (спек §4а): кольцо из 24 клеток по периметру сетки 7×7 (по часовой от дома в левом верхнем углу), две срезки-улицы.
+// kind: home — дом (звонки, визиты мастеров), place — место со сценами, event — клетка «?» (карта из колоды). dat — дательный падеж для такси («Eczaneye lütfen»).
+const BOARD = [
+  { id:"ev",      kind:"home",  title:"Дом",               short:"Ev",      dat:"Eve",            scenes:["su", "cilingir", "kargo", "goc", "tesisatci", "elektrikci"] },
+  { id:"kapici",  kind:"place", title:"Подъезд",           short:"Kapıcı",  dat:"Eve",            scenes:["kapici", "aidat"] },
+  { id:"bakkal",  kind:"place", title:"Bakkal",            short:"Bakkal",  dat:"Bakkala",        gen:"лавки", scenes:["bakkal"] },
+  { id:"q3",      kind:"event", title:"Что-то случилось" },
+  { id:"durak",   kind:"place", title:"Остановка долмуша", short:"Durak",   dat:"Durağa",         gen:"остановки", scenes:["dolmus"] },
+  { id:"simitci", kind:"place", title:"Симитчи",           short:"Simit",   dat:"Simitçiye",      gen:"симитчи", scenes:["simit"] },
+  { id:"metro",   kind:"place", title:"Метро",             short:"Metro",   dat:"Metroya",        gen:"метро", scenes:["metro", "istanbulkart"] },
+  { id:"q7",      kind:"event", title:"Что-то случилось" },
+  { id:"taksi",   kind:"place", title:"Стоянка такси",     short:"Taksi",   dat:"Taksi durağına", gen:"стоянки", scenes:["taxi"] },
+  { id:"firin",   kind:"place", title:"Пекарня",           short:"Fırın",   dat:"Fırına",         gen:"пекарни", scenes:["firin"] },
+  { id:"q10",     kind:"event", title:"Что-то случилось" },
+  { id:"eczane",  kind:"place", title:"Аптека",            short:"Eczane",  dat:"Eczaneye",       gen:"аптеки", scenes:["eczane", "veteriner"] },
+  { id:"pazar",   kind:"place", title:"Площадь рынка",     short:"Pazar",   dat:"Pazara",         gen:"рынка", scenes:["pazar", "manav", "kasap"] },
+  { id:"cay",     kind:"place", title:"Çay bahçesi",       short:"Çay",     dat:"Çay bahçesine",  gen:"чайной", scenes:["cay"] },
+  { id:"q14",     kind:"event", title:"Что-то случилось" },
+  { id:"lokanta", kind:"place", title:"Локанта",           short:"Lokanta", dat:"Lokantaya",      gen:"локанты", scenes:["lokanta"] },
+  { id:"market",  kind:"place", title:"Супермаркет",       short:"Market",  dat:"Markete",        gen:"супермаркета", scenes:["market", "spor"] },
+  { id:"ptt",     kind:"place", title:"PTT и банк",        short:"PTT",     dat:"PTT'ye",         gen:"почты", scenes:["ptt", "banka", "fatura", "telefon"] },
+  { id:"q18",     kind:"event", title:"Что-то случилось" },
+  { id:"berber",  kind:"place", title:"Берберь",           short:"Berber",  dat:"Berbere",        gen:"берберя", scenes:["kuafor", "terzi"] },
+  { id:"iskele",  kind:"place", title:"Пристань",          short:"İskele",  dat:"İskeleye",       gen:"пристани", scenes:["vapur", "balikci", "otopark"] },
+  { id:"q21",     kind:"event", title:"Что-то случилось" },
+  { id:"komsu",   kind:"place", title:"Дом Айше-тейзе",    short:"Komşu",   dat:"Ayşe teyzeye",   gen:"Айше-тейзе", scenes:["komsu", "misafir"] },
+  { id:"meydan",  kind:"place", title:"Площадь",           short:"Meydan",  dat:"Meydana",        gen:"площади", scenes:["muhtar", "noter", "doktor", "emlakci"] },
+];
+const SHORTCUTS = [[3, 15], [9, 21]];       // улицы через квартал: вес 2 шага
+const STEP_MIN = 10;                         // минут на клетку
+const DAY_END = 21 * 60;
+const boardXY = i => i <= 6 ? [i, 0] : i <= 12 ? [6, i - 6] : i <= 18 ? [18 - i, 6] : [0, 24 - i];     // столбец, строка в сетке 7×7
+function boardNeighbors(i){
+  const n = BOARD.length, out = [[(i + 1) % n, 1], [(i + n - 1) % n, 1]];
+  SHORTCUTS.forEach(([a, b]) => { if(a === i) out.push([b, 2]); if(b === i) out.push([a, 2]); });
+  return out;
+}
+function boardDistAll(from){                 // кратчайшие пути по кольцу в обе стороны и через срезки (Дейкстра на 24 узлах)
+  const d = Array(BOARD.length).fill(Infinity), seen = new Set(); d[from] = 0;
+  for(;;){ let u = -1; d.forEach((v, i) => { if(!seen.has(i) && v < Infinity && (u < 0 || v < d[u])) u = i; }); if(u < 0) break; seen.add(u);
+    boardNeighbors(u).forEach(([v, w]) => { if(d[u] + w < d[v]) d[v] = d[u] + w; }); }
+  return d;
+}
+const boardDist = (a, b) => boardDistAll(a)[b];
+const boardReach = (from, n) => boardDistAll(from).map((d, i) => d > 0 && d <= n ? i : -1).filter(i => i >= 0);
+const cityPlanIds = () => city.plan || CITY_PLAN;
+const cityDoneId = id => city.done.some(d => d.id === id);
+const cityErrandAt = i => cityPlanIds().find(id => (BOARD[i].scenes || []).includes(id) && SCENES[id] && !cityDoneId(id) && cityOpenNow(id).open);
+function cityOpenNow(id){ return { open:true }; }      // часы работы — задача календаря; пока всё открыто
+// Числа словами для реплик с ценой («Yüz yetmiş lira»)
+const TR_ONES = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"], TR_TENS = ["", "on", "yirmi", "otuz", "kırk", "elli", "altmış", "yetmiş", "seksen", "doksan"];
+function trNumWords(n){ n = Math.round(n); if(n <= 0) return "sıfır"; const parts = [];
+  const h = Math.floor(n / 100) % 10, t = Math.floor(n / 10) % 10, o = n % 10, th = Math.floor(n / 1000);
+  if(th) parts.push(th === 1 ? "bin" : TR_ONES[th] + " bin"); if(h) parts.push(h === 1 ? "yüz" : TR_ONES[h] + " yüz"); if(t) parts.push(TR_TENS[t]); if(o) parts.push(TR_ONES[o]);
+  return parts.join(" "); }
+const cap = t => t ? t[0].toLocaleUpperCase("tr-TR") + t.slice(1) : t;
 // Персонажи квартала (спек §8, §4а): у каждого свой голос, терпение, характер (виден в репликах) и то, за что он прибавляет отношение.
 // На одном месте — разные люди (`pool` у сцены): кто встретится — случай с весом 1 + отношения; в тестах — window.__char или первый.
 const CHARS = {
@@ -3241,6 +3326,8 @@ function cityNormalize(){
   const obj = k => { if(!city[k] || typeof city[k] !== "object" || Array.isArray(city[k])) city[k] = {}; }, arr = k => { if(!Array.isArray(city[k])) city[k] = []; };
   ["rel", "mastery", "seen", "flags", "played", "skill"].forEach(obj); ["done", "carry", "todaySaid"].forEach(arr);
   if(typeof city.debt !== "number") city.debt = 0; if(typeof city.haggleWins !== "number") city.haggleWins = 0;
+  if(!Array.isArray(city.plan)) city.plan = CITY_PLAN.slice(); if(!Array.isArray(city.visited)) city.visited = [];
+  if(typeof city.pos !== "number" || !BOARD[city.pos]) city.pos = 0; if(typeof city.roll !== "number") city.roll = null;
   if(city.ver !== 2){
     const rel = {}; Object.entries(city.rel).forEach(([k, v]) => { const c = REL_V1[k] || k; rel[c] = (rel[c] || 0) + v; }); city.rel = rel;
     city.money = Math.max(city.money, 1500); city.ver = 2;
@@ -3273,24 +3360,78 @@ function cityRender(){
   ctEl("ctHome").hidden = !home; ctEl("ctScene").hidden = home;
   ctEl("ctPlace").textContent = home ? `Mahalle · день ${city.day}` : ct.scene.place;
   cityRes();
-  if(home){
-    const allDone = CITY_PLAN.every(id => city.done.some(d => d.id === id));
-    ctEl("ctDay").textContent = allDone ? "Все дела на сегодня сделаны." : `Дела на сегодня — ${CITY_PLAN.filter(id => !city.done.some(d => d.id === id)).length} из ${CITY_PLAN.length}`;
-    ctEl("ctTasks").innerHTML = CITY_PLAN.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id);
-      return `<button class="ct-task${d ? " done " + d.kind : ""}" data-scene="${id}" ${d ? "disabled" : ""}><b>${esc(s.title)}</b><span>${d ? esc(d.short) : esc(s.goal)}</span></button>`; }).join("")
-      + (allDone ? `<button class="btn primary big" id="ctDayEnd">Итоги дня</button>` : "");
-    ctEl("ctTasks").querySelectorAll("[data-scene]").forEach(b => b.onclick = () => cityStart(b.dataset.scene));
-    const de = ctEl("ctDayEnd"); if(de) de.onclick = cityDayEnd;
-    ctEl("ctIntro").textContent = city.days ? `Отношения: ${Object.entries(city.rel).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} ${v > 0 ? "+" : ""}${v}`).join(", ") || "пока ни с кем"}`
-      : "Вы переехали в стамбульский квартал. Говорите с людьми голосом — они отвечают и реагируют на то, что вы сказали. Ошибки стоят денег и времени.";
-  }
+  if(home) cityBoard();
   scheduleFit();
 }
-function cityStart(id){
+// Дом = поле: клетки-кнопки по периметру, внутри — дела дня (булавки на клетках), кубик, «Taksi çağır» / «Eve dön»
+const cellOfScene = id => BOARD.findIndex(b => (b.scenes || []).includes(id));
+const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c; };
+function cityBoard(){
+  const plan = cityPlanIds().filter(id => SCENES[id]), allDone = plan.every(cityDoneId), reach = city.roll ? new Set(boardReach(city.pos, city.roll)) : new Set();
+  const pins = {}; plan.forEach(id => { const i = cellOfScene(id); if(i < 0) return; const d = city.done.find(x => x.id === id); pins[i] = d ? "done" : cityOpenNow(id).open ? "" : "closed"; });
+  const bd = ctEl("ctBoard"); bd.querySelectorAll(".bd-cell").forEach(e => e.remove());
+  BOARD.forEach((c, i) => { const [x, y] = boardXY(i), b = document.createElement("button"); b.type = "button"; b.dataset.i = i;
+    b.className = `bd-cell ${c.kind}${reach.has(i) ? " reach" : ""}`; b.style.gridArea = `${y + 1} / ${x + 1}`; b.disabled = !reach.has(i);
+    b.setAttribute("aria-label", `${c.title}${i === city.pos ? " — вы здесь" : ""}${pins[i] !== undefined ? ", дело дня" : ""}${reach.has(i) ? ", можно пойти" : ""}`);
+    b.innerHTML = `${c.kind === "event" ? "?" : esc(c.short)}${i === city.pos ? '<span class="bd-token" aria-hidden="true"></span>' : ""}${pins[i] !== undefined ? `<span class="bd-pin ${pins[i]}" aria-hidden="true"></span>` : ""}`;
+    b.onclick = () => cityMoveTo(i); bd.insertBefore(b, ctEl("ctInner")); });
+  const left = plan.filter(id => !cityDoneId(id)).length;
+  ctEl("ctDay").textContent = allDone ? "Все дела сделаны — домой." : `Дела на сегодня — ${left} из ${plan.length}`;
+  ctEl("ctTasks").innerHTML = plan.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id), i = cellOfScene(id), op = cityOpenNow(id), dist = i < 0 ? 0 : boardDist(city.pos, i);
+    const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? "вы здесь" : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
+    return `<li class="ct-task${d ? " done " + d.kind : !op.open ? " closed" : ""}" data-scene="${id}"><i aria-hidden="true"></i><b>${esc(s.title)}</b><span>${where}</span></li>`; }).join("");
+  ctEl("ctDice").hidden = allDone; ctEl("ctHomeBtn").hidden = allDone; ctEl("ctTaxi").hidden = allDone || !!city.roll;
+  let de = ctEl("ctDayEnd"); if(allDone && !de){ de = document.createElement("button"); de.className = "btn primary big"; de.id = "ctDayEnd"; de.textContent = "Итоги дня"; de.onclick = cityDayEnd; ctEl("ctInner").insertBefore(de, ctEl("ctHomeBtn").parentElement); }
+  else if(!allDone && de) de.remove();
+  ctEl("ctRoll").disabled = !!city.roll || city.min >= DAY_END; ctEl("ctRolled").textContent = city.roll ? String(city.roll) : "";
+  ctEl("ctIntro").textContent = city.roll ? `Выпало ${city.roll}: нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`
+    : city.days || city.visited.length ? `Отношения: ${Object.entries(city.rel).filter(([, v]) => v).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} ${v > 0 ? "+" : ""}${v}`).join(", ") || "пока ни с кем"}`
+    : "Вы переехали в стамбульский квартал. Бросайте кубик, ходите по клеткам, говорите с людьми голосом — они отвечают и реагируют. Ошибки стоят денег и времени.";
+}
+function cityRoll(){
+  if(ct || city.roll || city.min >= DAY_END) return;
+  city.roll = TESTMODE ? Math.max(1, Math.min(6, +window.__dice || 1)) : 1 + Math.floor(Math.random() * 6);
+  citySave(); cityRender();
+}
+function cityMoveTo(i){
+  if(ct || !city.roll || !boardReach(city.pos, city.roll).includes(i)) return;
+  city.min += STEP_MIN * boardDist(city.pos, i); city.pos = i; city.roll = null; city.visited.push(i); citySave();
+  cityArrive(i);
+}
+function cityArrive(i){
+  const c = BOARD[i]; cityRender();
+  if(city.min >= DAY_END && !ct) return cityGoHome();                           // 21:00 — день закончился по дороге
+  if(c.kind === "place"){ const id = cityErrandAt(i); if(id) return cityStart(id); return cityVisit(i); }
+  if(c.kind === "event"){ if(typeof cityDraw === "function") cityDraw(); return; }
+  if(c.kind === "home"){ const plan = cityPlanIds().filter(id => SCENES[id]); if(plan.length && plan.every(cityDoneId)) return cityDayEnd(); }
+}
+function cityVisit(i){
+  const c = BOARD[i], vid = "visit_" + c.id, v = !!SCENES[vid];
+  showModal({ ic:"Buyurun?", title:`${c.title} — зайти?`, text: v ? "Дел здесь нет, но можно поздороваться: отношения растут, если вы вежливы." : "Дел здесь сегодня нет. Заглянуть на минуту — 5 минут.",
+    primary:{ label:"Зайти", fn:() => { if(v) return cityStart(vid); city.min += 5; citySave(); cityRender(); toast("Заглянули на минуту."); } },
+    secondary:{ label:"Дальше", fn:cityRender } });
+}
+function cityGoHome(){
+  if(ct) return;
+  city.min += STEP_MIN * boardDist(city.pos, 0); city.pos = 0; city.roll = null; citySave(); cityRender(); cityDayEnd();
+}
+function cityTaxiTo(i){                                            // такси до клетки: разговор с водителем, цена по расстоянию; в конце сцены фишка переезжает
+  if(ct || !BOARD[i] || BOARD[i].kind === "event" || i === city.pos) return;
+  cityStart("taxi", { dest:i });
+}
+function cityTaxiAsk(){                                            // кнопка «Taksi çağır»: до ближайшего несделанного дела
+  const id = cityPlanIds().find(x => SCENES[x] && !cityDoneId(x) && cellOfScene(x) >= 0 && cellOfScene(x) !== city.pos);
+  if(!id){ toast("Такси некуда: дела рядом или сделаны."); return; }
+  const i = cellOfScene(id), price = 100 + 10 * boardDist(city.pos, i);
+  showModal({ ic:"Taksi!", title:`Такси до «${BOARD[i].title}»`, text:`Примерно ${price} ₺ и 25 минут, зато без кубика. Договариваться с водителем — по-турецки.`,
+    primary:{ label:"Вызвать", fn:() => cityTaxiTo(i) }, secondary:{ label:"Не надо", fn:cityRender } });
+}
+function cityStart(id, opts){
   const scene = SCENES[id]; if(!scene) return;
-  const char = pickChar(scene), pat = CHARS[char] ? CHARS[char].patience : 3;
-  ct = { id, scene, char, node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
-  ctEl("ctGoal").textContent = "Цель: " + scene.goal; ctEl("ctGoal").title = scene.goal; ctEl("ctWho").textContent = ctWho();
+  const char = pickChar(scene), pat = CHARS[char] ? CHARS[char].patience : 3, dest = opts && typeof opts.dest === "number" ? opts.dest : null;
+  ct = { id, scene, char, dest, taxiFrom:city.pos, node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
+  const goal = dest !== null ? `Доехать до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}. Не переплатить.` : scene.goal;
+  ctEl("ctGoal").textContent = "Цель: " + goal; ctEl("ctGoal").title = goal; ctEl("ctWho").textContent = ctWho();
   cityRender();
   cityNode(scene.start);
 }
@@ -3317,8 +3458,16 @@ function npcSay(text, onDone){
     setTimeout(once, 1200 + Array.from(text).length * 150);     // телефон может не прислать onend
   }, busy ? 150 : 30);
 }
+// Такси до клетки поля: первая реплика — «<место>'e lütfen» (без уточнения адреса), цена — по расстоянию, числом на слух
+function ctTaxiNode(id, n){
+  if(ct.id !== "taxi" || ct.dest === null) return n;
+  const c = BOARD[ct.dest], price = 100 + 10 * boardDist(ct.taxiFrom, ct.dest);
+  if(id === "greet") return Object.assign({}, n, { moves:[{ key:[nphr(c.short), nphr(c.dat.split(" ")[0])], say:[`${c.dat} lütfen.`], ru:`До ${c.gen || ("«" + c.title + "»")}, пожалуйста.`, go:"traffic" }, ...n.moves.slice(1)] });
+  if(id === "arrive") return Object.assign({}, n, { npc:`Geldik. ${cap(trNumWords(price))} lira.`, ru:`Приехали. ${price} лир.`, pay:Object.assign({}, n.pay, { price, short:`Eksik. ${cap(trNumWords(price))} lira.`, shortRu:`Не хватает. ${price} лир.` }) });
+  return n;
+}
 function cityNode(id, replyHtml){
-  const n = ct.scene.nodes[id]; if(!n) return;
+  const n0 = ct.scene.nodes[id]; if(!n0) return; const n = ctTaxiNode(id, n0);
   ct.node = n; ct.nodeId = id; ct.tries = 0; ct.revealed = false; ct.resolved = false; ct.pendingGo = null; ct.polite = false; ct.pick = null; ct.peeked = false;
   if(n.end) return cityEnd(n.end);
   ct.firstTime = !(city.seen || (city.seen = {}))[n.npc]; city.seen[n.npc] = 1;      // первую встречу с репликой переводим бесплатно
@@ -3527,17 +3676,19 @@ function cityEnd(end, failed){
   const learned = ct.lines.filter(l => l.ok && l.tr), missed = ct.lines.filter(l => !l.ok && l.tr);
   learned.forEach(l => memEnroll(l.tr, l.ru));                                   // сказанное в разговоре — в «Память», повторится по расписанию
   citySave();
-  const id = ct.id; ct = null; cityRender();
+  const id = ct.id, dest = ct.dest, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title;
+  if(dest !== null && kind !== "bad"){ city.pos = dest; city.roll = null; city.visited.push(dest); citySave(); }     // доехали — фишка на месте
+  ct = null; cityRender();
   const stats = [["время", `${took} мин`], ["потрачено", `${spent} ₺`], ["реплик верно", `${learned.length}`]];
-  showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: SCENES[id].title + " — " + short, text: end.text + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
-    stats, primary:{ label:"К делам", fn:cityRender } });
+  showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: title + " — " + short, text: end.text + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
+    stats, primary:{ label:"К делам", fn:() => { cityRender(); if(dest !== null && kind !== "bad") cityArrive(dest); } } });
 }
 function cityDayEnd(){
   const okN = city.done.filter(d => d.kind === "ok").length, spent = city.done.reduce((a, d) => a + d.spent, 0);
   const rels = Object.entries(city.rel).filter(([, v]) => v > 0).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} +${v}`).join(", ");
   showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${city.done.length}. ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}`,
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
-    primary:{ label:"Новый день", fn:() => { city.day++; city.days++; city.done = []; city.min = 9 * 60; city.money += 500; citySave(); cityRender(); toast("Новый день: +500 ₺ на расходы"); } },
+    primary:{ label:"Новый день", fn:() => { city.day++; city.days++; city.done = []; city.min = 9 * 60; city.money += 500; city.pos = 0; city.roll = null; city.visited = []; citySave(); cityRender(); toast("Новый день: +500 ₺ на расходы"); } },
     secondary:{ label:"Остаться", fn:cityRender } });
 }
 function memEnroll(tr, ru){ try { const all = loadCards(); if(all.some(c => c.tr === tr)) return; all.push(newMemCard(tr, trToCyr(tr), ru, "rec", Date.now())); saveCards(all); updateMemTab(); } catch(e){} }
@@ -3548,6 +3699,9 @@ ctEl("ctNext").onclick = cityNextNode;
 ctEl("ctReplay").onclick = cityReplay;
 ctEl("ctTr").onclick = cityReveal;
 ctEl("ctBack").onclick = () => { if(!ct) return; cityLeave(); ct = null; cityRender(); };
+ctEl("ctRoll").onclick = cityRoll;
+ctEl("ctHomeBtn").onclick = cityGoHome;
+ctEl("ctTaxi").onclick = cityTaxiAsk;
 // ---------- слово во фразе: нажатие — произношение и перевод этого слова в контексте фразы ----------
 // Просьба: «в режиме фраз при нажатии на слово он произносит и пишет перевод слова в контексте этой фразы».
 // Перевод формы — вручную (FORM_GLOSS: как слово значит именно в этой форме), служебные слова и частицы — FUNC_GLOSS,
