@@ -641,6 +641,9 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 #ctLive:empty{display:none}
 .ct-scene .main-row{margin-top:auto}
 #ctLive{min-height:1.2em; text-align:left; font-size:15px}
+.wd{cursor:pointer; border-radius:4px; transition:color .15s} .wd.on{color:var(--accent)}
+.wd-line{display:inline-block; text-align:center; line-height:1.35} .wd-line b{font-family:var(--display); color:var(--ink)} .wd-lemma{color:var(--muted)} .wd-src{font-size:11px; color:var(--muted)}
+@media (prefers-reduced-motion: reduce){ .wd{transition:none} }
 .ct-opts{display:flex; flex-direction:column; gap:6px}
 .ct-opt{display:flex; align-items:stretch; gap:6px}
 .ct-opt-main{flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; min-height:44px; padding:8px 12px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink)}
@@ -1752,7 +1755,7 @@ function next(){
     $("partner").innerHTML = `не путать с <b>${esc(item.partner)}</b> — ${esc(item.partnerMeaning)}`;
     $("partner").hidden = false;
   } else {
-    t.textContent = item.target;
+    if(mode === "phrases" && !item.word) t.innerHTML = wordsHtml(item.target); else t.textContent = item.target;   // слова фразы — нажимаются (произношение и перевод в контексте)
     $("partner").innerHTML = item.native
       ? `Записей носителей: ${(nativeCache.get(clean(item.target))||[]).length} · <button class="linkbtn" data-tr="1">перевод</button>`
       : item.own ? `<button class="linkbtn" data-tr="1">перевод</button> · <button class="linkbtn" id="delMine">удалить из моих</button>`
@@ -1767,7 +1770,7 @@ function next(){
   prefetchNative();
   $("meaning").textContent = item.meaning; scheduleFit();
   $("tip").textContent = item.tip;
-  setResult("info", mode==="pairs" || item.word ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком.");
+  setResult("info", mode==="pairs" || item.word ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком. Нажатие на слово — его звучание и перевод.");
   $("compare").disabled = false; synthSlow = false; echoPending = false;
 }
 
@@ -3594,6 +3597,104 @@ ctEl("ctNext").onclick = cityNextNode;
 ctEl("ctReplay").onclick = cityReplay;
 ctEl("ctTr").onclick = cityReveal;
 ctEl("ctBack").onclick = () => { if(!ct) return; cityLeave(); ct = null; cityRender(); };
+// ---------- слово во фразе: нажатие — произношение и перевод этого слова в контексте фразы ----------
+// Просьба: «в режиме фраз при нажатии на слово он произносит и пишет перевод слова в контексте этой фразы».
+// Перевод формы — вручную (FORM_GLOSS: как слово значит именно в этой форме), служебные слова и частицы — FUNC_GLOSS,
+// словарная форма и значение — PHRASE_DICT. Машинного перевода здесь нет: нет глоссы — честно «отдельного перевода нет».
+const FORM_GLOSS = {
+  odada:"в комнате, в номере", odama:"в мою комнату (в мой номер)", odanızı:"ваш номер (кого? что?)", anahtarları:"ключи (кого? что?)", anahtarın:"твой ключ (anahtarın var mı — у тебя есть ключ?)",
+  banyoyu:"ванную (кого? что?)", asansörü:"лифт (кого? что?)", tuvaletiniz:"ваш туалет (у вас есть туалет?)", telefonunuz:"ваш телефон", elektriğimiz:"наше электричество", şikayetimiz:"наша жалоба",
+  hesabı:"счёт (кого? что?)", yemekte:"на обед, на ужин (букв. «в еде»)", peyniri:"сыр (кого? что?)", otobüsü:"автобус (кого? что?)", trene:"в поезд, на поезд (куда?)", treni:"поезд (кого? что?)",
+  metroyla:"на метро (с помощью метро)", biletler:"билеты", biletinizi:"ваш билет (кого? что?)", biletleri:"билеты (кого? что?)", paran:"твои деньги", paranız:"ваши деньги", doların:"твои доллары (есть ли у тебя)",
+  rengi:"его цвет", cüzdanım:"мой кошелёк", çantam:"моя сумка", doktora:"к врачу (куда?)", ağrın:"твоя боль (ağrın var mı — у тебя болит?)", başın:"твоя голова", karnım:"мой живот (karnım aç — я голоден)",
+  sağlığım:"моё здоровье", alerjim:"моя аллергия (alerjim var — у меня аллергия)", akşamlar:"вечера (iyi akşamlar — добрый вечер)", günler:"дни (iyi günler — добрый день)", evde:"дома (где?)",
+  sırada:"в очереди", isminiz:"ваше имя", adınız:"ваше имя", arkadaşlar:"друзья", dostum:"мой друг", özüre:"в извинении (özüre gerek yok — не нужно извиняться)", yaşındasın:"тебе (столько-то) лет",
+  lezzetliymiş:"оказывается, вкусно", pahalıdır:"дорого (утверждение)", uzaklıkta:"на расстоянии", memnunum:"я доволен, рад", veganım:"я веган", sağa:"направо (куда?)", herkese:"всем (кому?)",
+  neredeyiz:"где мы?", neredesin:"где ты?", nasıldı:"как было? как прошло?", nasılsın:"как ты?", nasılsınız:"как вы?", kimle:"с кем?", yoktur:"нет, не имеется (утверждение)",
+  ister:"хочет (ister misin — хочешь?)", istersin:"ты хочешь", istiyor:"он хочет", istiyorum:"я хочу", istersiniz:"вы хотите", istemiyorum:"я не хочу",
+  gidebilirim:"я могу пойти", gidiyorum:"я иду, еду", gittin:"ты ходил, сходил", gidiyor:"идёт, едет", gidiyorsunuz:"вы едете, идёте", geldiniz:"вы пришли, приехали", gelin:"приходите",
+  geliyor:"идёт сюда, приходит", geliyorum:"я иду (уже иду)", geliyorsunuz:"вы приходите, приезжаете", alabilir:"может взять (alabilir miyim — можно мне?)", alacağım:"я возьму, приму", alıyorum:"я беру, принимаю", aldın:"ты взял, купил",
+  ver:"дай", verelim:"давайте дадим (sipariş verelim — сделаем заказ)", yapayım:"мне сделать? (что мне делать?)", yaptın:"ты сделал", yapıyorsun:"ты делаешь",
+  konuşmuyorum:"я не говорю", konuşur:"говорит (konuşur musunuz — говорите ли вы?)", konuşuyorlar:"они говорят", konuşuyorsun:"ты говоришь", bekleyeceğiz:"мы будем ждать", bekleyin:"подождите", bekle:"подожди",
+  anlamadım:"я не понял", anlamıyorum:"я не понимаю", anladım:"я понял", biliyor:"знает (biliyor musunuz — вы знаете?)", bilmiyorum:"я не знаю", sever:"любит (sever misin — любишь?)", sevmiyorum:"я не люблю",
+  içer:"пьёт (içer misin — будешь пить?)", içmem:"я не пью", çalışıyorum:"я работаю", çalışıyorsunuz:"вы работаете", yaşıyorsun:"ты живёшь", yaşıyorum:"я живу", kalıyorsun:"ты остановился (живёшь временно)", kalacaksın:"ты остановишься",
+  çağırayım:"мне вызвать? (вызвать ли?)", çağırsın:"пусть вызовет", çağırın:"вызовите", durdurun:"остановите", getirin:"принесите", göstereyim:"давайте покажу", gösterir:"покажет (gösterir misin — покажешь?)",
+  bulurum:"я найду", deneyelim:"давайте попробуем", deneyebilir:"может попробовать (deneyebilir miyim — можно попробовать?)", kullanabilir:"может пользоваться (kullanabilir miyim — можно воспользоваться?)", öderim:"я заплачу",
+  hissediyorum:"я чувствую", hissediyorsun:"ты чувствуешь", hissediyorsunuz:"вы чувствуете", kayboldum:"я потерялся", acıktım:"я проголодался", görünüyor:"выглядит", geceler:"ночи (iyi geceler — спокойной ночи)",
+  kapıyı:"дверь (кого? что?)", eşyalarım:"мои вещи", yerin:"твоё место (kalacak yerin — где остановиться)", tadı:"его вкус", tadına:"на вкус (tadına bakmak — попробовать)", arabayı:"машину (кого? что?)",
+  tarafta:"на стороне (hangi tarafta — с какой стороны?)", taraftan:"со стороны", faturamı:"мой счёт (кого? что?)", randevunuz:"ваша запись на приём", aspirinin:"твой аспирин (есть ли у тебя)", tedavisi:"его лечение (tedavisi var mı — это лечится?)",
+  yorgunum:"я устал", soruyu:"вопрос (кого? что?)", kimliğiniz:"ваше удостоверение", durumunuz:"ваша ситуация", beğendim:"мне понравилось", görebilir:"может увидеть (görebilir miyim — можно посмотреть?)",
+  üşümüyor:"не мёрзнет (üşümüyor musun — тебе не холодно?)", kilitledin:"ты запер", açar:"открывает (açar mısınız — откройте, пожалуйста)",
+};
+const FUNC_GLOSS = {
+  mi:"вопросительная частица — делает фразу вопросом", mı:"вопросительная частица — делает фразу вопросом", mu:"вопросительная частица — делает фразу вопросом", mü:"вопросительная частица — делает фразу вопросом",
+  misin:"вопрос к «ты» (…ли ты?)", mısın:"вопрос к «ты» (…ли ты?)", musun:"вопрос к «ты» (…ли ты?)", müsün:"вопрос к «ты» (…ли ты?)",
+  misiniz:"вопрос к «вы» (…ли вы?)", mısınız:"вопрос к «вы» (…ли вы?)", musunuz:"вопрос к «вы» (…ли вы?)", müsünüz:"вопрос к «вы» (…ли вы?)",
+  miyim:"вопрос к «я» (…ли я? можно мне?)", mıyım:"вопрос к «я» (…ли я?)", muyum:"вопрос к «я» (…ли я?)", müyüm:"вопрос к «я» (…ли я?)", mıydı:"вопрос в прошедшем (было ли?)", miydi:"вопрос в прошедшем (было ли?)",
+  da:"тоже; и (после слова)", de:"тоже; и (после слова)", ki:"что; ведь (союз)", ama:"но", hiç:"совсем (не), никогда", daha:"ещё; более", kadar:"до; настолько (ne kadar — сколько)", artık:"уже; больше (не)",
+  pek:"не очень (с отрицанием)", peki:"ладно, хорошо", galiba:"кажется, наверное", hâlâ:"всё ещё", hala:"всё ещё", şu:"вот этот, тот", şuna:"на это, вот на то", bunun:"этого (у этого)", onu:"его, её (кого? что?)", beni:"меня", biz:"мы",
+  sizde:"у вас (sıra sizde — ваша очередь)", sizin:"ваш", kendimi:"себя (я)", kendinizi:"себя (вы)", kim:"кто", kimse:"кто-нибудь; никто", nedir:"что это?", neresi:"какое место, где именно", nerelisin:"откуда ты родом?",
+  olur:"ладно, подойдёт (букв. «будет»)", olmaz:"нельзя, не пойдёт", olabilir:"может быть, возможно", ol:"будь (sakin ol — успокойся)", olsun:"пусть будет (afiyet olsun — приятного аппетита)", olun:"будьте (sağ olun — спасибо, букв. «будьте здоровы»)",
+  oldum:"я стал (memnun oldum — рад познакомиться)", olarak:"в качестве (tam olarak — точно)", ederim:"делаю (teşekkür ederim — благодарю; rica ederim — пожалуйста)", edin:"сделайте (yardım edin — помогите)",
+  edebilir:"может сделать (yardım edebilir misiniz — можете помочь?)", edemez:"не может (tamir edemez misin — не можешь починить?)", etsin:"пусть сделает (yardım etsin — пусть поможет)", teşekkür:"благодарность (teşekkür ederim — спасибо)",
+  dilerim:"желаю (özür dilerim — прошу прощения)", rica:"просьба (rica ederim — пожалуйста)", afiyet:"аппетит, здоровье (afiyet olsun — приятного аппетита)", geçmiş:"прошедшее (geçmiş olsun — выздоравливайте)",
+  kolay:"лёгкий (kolay gelsin — лёгкой работы)", gelsin:"пусть придёт (kolay gelsin)", hoş:"приятный (hoş geldiniz — добро пожаловать)", hoşça:"приятно (hoşça kal — пока, букв. «оставайся приятно»)", güle:"смеясь (güle güle — пока, говорит остающийся)",
+  kal:"оставайся (hoşça kal)", buyurun:"пожалуйста: проходите, берите, слушаю вас", buyur:"пожалуйста (на «ты»): бери, проходи, слушаю", efendim:"вежливое обращение; «простите?» (переспрос)", hey:"эй",
+  aç:"голодный (karnım aç); открой", acıyor:"болит (neresi acıyor — где болит?)", ağrıyor:"болит (başın ağrıyor mu — голова болит?)", ateşi:"его температура, жар", ateşin:"твоя температура (ateşin var mı — у тебя температура?)",
+  aldım:"я взял (soğuk aldım — простудился)", bakabilir:"может посмотреть (bakabilir miyim — можно посмотреть?)", bakalım:"ну-ка, давай посмотрим (частица)", bakar:"смотрит (bakar mısınız — извините, можно вас?)",
+  bağlı:"зависит (sana bağlı — зависит от тебя)", bekleyebilirsiniz:"вы можете подождать", bozuk:"мелкий (bozuk para — мелочь); сломанный", dedi:"сказал", değilim:"я не (emin değilim — я не уверен)",
+  duyan:"слышащий (beni duyan var mı — кто-нибудь меня слышит?)", dönün:"поверните", gürültülüydü:"было шумно", haftasonun:"твои выходные", iyidirler:"у них всё хорошо (надеюсь)", iyiyim:"у меня всё хорошо",
+  kalacak:"который останется (kalacak yerin — где остановиться)", kaldık:"мы остались (geç kaldık — опоздали)", kalkalım:"давайте встанем, пойдём", kalkıyor:"отправляется (vapur kaçta kalkıyor)", kaçta:"во сколько?",
+  meyve:"фрукт (meyve suyu — сок)", suyu:"его вода; сок (meyve suyu)", müsait:"свободен, удобно (müsait misiniz)", oturun:"садитесь", oturuyorsunuz:"вы живёте (в каком районе)", rahatsız:"нездоровится; обеспокоенный",
+  sağ:"правый; живой (sağ olun — спасибо)", sonları:"концы (hafta sonları — выходные)", sürer:"длится (ne kadar sürer — сколько займёт)", sıradaki:"следующий (в очереди)", tam:"точно, ровно", tamir:"ремонт",
+  tutun:"держите (asansörü tutun — придержите лифт)", varız:"мы есть (sırada biz varız — наша очередь)", yaralanan:"пострадавший", yardımcı:"помощник (yardımcı olabilir miyim — могу помочь?)", yağıyor:"идёт (о дожде)",
+  yerinde:"на месте (sağlığım yerinde — я здоров)", yeter:"хватит, достаточно", yiyelim:"давайте поедим", zamana:"до времени (ne zamana kadar — до какого времени)", çıktı:"вышел; случился (yangın mı çıktı — пожар?)", an:"момент (şu an — сейчас)",
+  türkçe:"турецкий язык; по-турецки", türkçesi:"его турецкий вариант (bunun Türkçesi ne — как это по-турецки?)", rusça:"русский язык; по-русски", köşe:"угол", köşesi:"его угол (yaz köşesi — летний угол)",
+  iki:"два", üç:"три", dahil:"включено (kahvaltı dahil mi — завтрак включён?)", kilo:"килограмм", çalındı:"украден (çantam çalındı — у меня украли сумку)", orası:"то место, там",
+  okula:"в школу (куда?)", öğreniyorum:"я учу, изучаю", kardeşim:"мой брат или сестра (üç kardeşim var — у меня трое братьев и сестёр)", köyde:"в деревне", büyüdüm:"я вырос", gözlerin:"твои глаза",
+  dün:"вчера", dışarı:"наружу, на улицу", çıkmadık:"мы не выходили", doğru:"верно, правильно; прямо", yaz:"лето", kış:"зима", ortada:"посередине", şişesi:"его бутылка (su şişesi — бутылка воды)",
+  rezervasyonum:"моя бронь", boş:"свободный, пустой", odanız:"ваш номер (boş odanız var mı — есть свободный номер?)", gecelik:"за ночь (gecelik fiyatı — цена за ночь)", fiyatı:"его цена",
+  kaçıncı:"который по счёту (kaçıncı kat — какой этаж)", katta:"на этаже", şifresi:"его пароль (internet şifresi — пароль от интернета)", havlu:"полотенце", çağırır:"вызовет (çağırır mısınız — вызовите, пожалуйста)",
+  bavulumu:"мой чемодан (кого? что?)", bırakabilir:"может оставить (bırakabilir miyim — можно оставить?)", klima:"кондиционер", çalışmıyor:"не работает", temizlenmedi:"не убран (oda temizlenmedi — номер не убрали)",
+  odayı:"номер (кого? что?)", değiştirebilir:"может поменять (değiştirebilir miyim — можно поменять?)", çıkış:"выезд; выход", kartla:"картой", ödeyebilir:"может заплатить (ödeyebilir miyim — можно заплатить?)",
+  hesapta:"в счёте", hata:"ошибка", her:"каждый; her şey — всё", güzeldi:"было хорошо, красиво", bulduk:"мы нашли (hoş bulduk — ответ на hoş geldiniz)", kişilik:"на (столько-то) человек (iki kişilik — на двоих)",
+  masa:"стол, столик", menüyü:"меню (кого? что?)", tavsiye:"совет (tavsiye edersiniz — посоветуете)", edersiniz:"вы сделаете (ne tavsiye edersiniz — что посоветуете?)", acı:"острый; горький",
+  olmasın:"пусть не будет (acı olmasın — не острое)", et:"мясо", yemiyorum:"я не ем", lezzetliydi:"было вкусно", servis:"обслуживание", adrese:"по адресу, на адрес (куда?)",
+  götürür:"отвезёт (götürür müsünüz — отвезёте?)", havalimanına:"в аэропорт (куда?)", taksimetreyi:"таксометр (кого? что?)", durabilir:"может остановиться (durabilir misiniz — можете остановиться?)",
+  sola:"налево", düz:"прямо", gidin:"идите, езжайте", istasyonu:"его станция (metro istasyonu — станция метро)", taksime:"на Таксим (куда?)", gider:"идёт, ходит (gider mi — идёт ли?)",
+  indirim:"скидка", yapar:"сделает (indirim yapar mısınız — сделаете скидку?)", son:"последний", bakıyorum:"я смотрю", büyük:"большой", domates:"помидор", yarım:"половина", poşet:"пакет",
+  eczane:"аптека", başım:"моя голова (başım ağrıyor — у меня болит голова)", midem:"мой желудок (midem bulanıyor — меня тошнит)", bulanıyor:"мутит, тошнит", ateşim:"моя температура (ateşim var — у меня температура)",
+  ihtiyacım:"моя нужда (ihtiyacım var — мне нужно)", kesici:"режущий (ağrı kesici — обезболивающее)", günde:"в день", kere:"раз (kaç kere — сколько раз)", biliyorum:"я знаю, умею (Türkçe biliyorum — говорю по-турецки)",
+  eder:"делает (tekrar eder misiniz — повторите, пожалуйста)", yavaş:"медленно", telefonum:"мой телефон", en:"самый (en yakın — ближайший)", yakın:"близкий, близко",
+  geç:"поздно (geç kaldık — опоздали)", bu:"это, этот", ne:"что", var:"есть", yok:"нет", bir:"один; какой-нибудь", çok:"очень, много", iyi:"хороший, хорошо", lütfen:"пожалуйста (просьба)", evet:"да", hayır:"нет", tamam:"хорошо, ладно",
+};
+function wordGloss(raw){
+  const k = nphr(raw); if(!k) return null;
+  const lemma = PHRASE_FORMS.get(k) || (PHRASE_DICT[raw] ? raw : Object.keys(PHRASE_DICT).find(l => nphr(l) === k));
+  const base = lemma ? { lemma, ru:PHRASE_DICT[lemma][0] } : null;
+  if(FORM_GLOSS[k]) return { ctx:FORM_GLOSS[k], ...(base && nphr(lemma) !== k ? base : {}) };
+  if(base) return { ctx:base.ru, ...(nphr(lemma) !== k ? base : {}) };
+  if(FUNC_GLOSS[k]) return { ctx:FUNC_GLOSS[k] };
+  return null;
+}
+function wordsHtml(text){ return text.split(/(\s+)/).map(tok => /\S/.test(tok) ? `<span class="wd" data-w="${esc(tok)}">${esc(tok)}</span>` : tok).join(""); }
+let wdTok = 0;
+async function wordTap(raw){
+  const word = raw.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, ""), key = nphr(word); if(!key) return;
+  const it = item, tok = ++wdTok, g = wordGloss(word);
+  $("target").querySelectorAll(".wd").forEach(s => s.classList.toggle("on", nphr(s.dataset.w) === key));
+  const show = src => { if(item !== it) return;
+    const line = g ? `<b lang="tr" translate="no">«${esc(word)}»</b> — ${esc(g.ctx)}${g.lemma ? ` <span class="wd-lemma">· <span lang="tr" translate="no">${esc(g.lemma)}</span>: ${esc(g.ru)}</span>` : ""}`
+      : `<b lang="tr" translate="no">«${esc(word)}»</b> — отдельного перевода нет; смысл — в переводе фразы.`;
+    $("partner").innerHTML = `<span class="wd-line">${line}${src ? ` <span class="wd-src">${src}</span>` : ""}</span>`; scheduleFit(); };
+  show("");
+  // звук: запись носителя этого слова (Common Voice, Tatoeba, Commons — не дольше 1,5 с), иначе синтез с пометкой
+  let recs = null; try { recs = await Promise.race([findRecordings(word), new Promise(z => setTimeout(() => z(null), 1500))]); } catch(e){}
+  if(tok !== wdTok || item !== it) return;
+  if(recs && recs.length){ const a = $("nativeAudio"); speechSynthesis && speechSynthesis.cancel(); a.src = recs[0].url; a.play().catch(() => sayText(word)); show("носитель"); }
+  else { sayText(word); show(trVoice ? "синтез" : ""); }
+}
+$("target").addEventListener("click", e => { const s = e.target.closest(".wd"); if(s && mode === "phrases" && item && !item.word) wordTap(s.dataset.w); });
 const MODES = ["city","memory","pairs","phrases","listen","free","progress"];
 const TRAIN = ["pairs","phrases","listen","free"];           // раздел «Тренировка» объединяет прежние четыре вкладки
 let lastTrain = (() => { try { const v = localStorage.getItem("soyle-train"); return TRAIN.includes(v) ? v : "phrases"; } catch(e){ return "phrases"; } })();

@@ -1301,6 +1301,36 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r, 'хлеб');
   });
 
+  console.log('Слово во фразе: нажатие — произношение и перевод в контексте');
+  await test('нажатие на слово фразы: звучит (запись носителя, иначе синтез с пометкой), перевод именно этой формы + словарная форма; частицы объяснены; у каждого слова всех фраз есть перевод', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    const r = await q.evaluate(async () => { setMode('phrases'); setId = 'hotel'; trVoice = { name:'T', lang:'tr-TR' }; trVoices = [trVoice]; window.__spoken = []; window.__played = [];
+      const show = (list, tr) => { const x = list.find(i => i.tr === tr); const pp = pickPhrase; pickPhrase = () => ({ target:x.tr, translit:x.tl, meaning:x.ru, tip:x.focus, gid:'ph-x' }); next(); pickPhrase = pp; };
+      show(PHRASE_SETS.find(g => g.id === 'hotel').items, 'Size odanızı göstereyim.');
+      const out = { spans:[...document.querySelectorAll('#target .wd')].map(s => s.textContent), partner0: document.getElementById('partner').textContent, info: document.getElementById('result').textContent };
+      nativeCache.set('size', [{ url:'https://x/size.wav', who:'Z' }]);
+      const tap = async i => { document.querySelectorAll('#target .wd')[i].click(); await new Promise(z => setTimeout(z, 1700)); return document.getElementById('partner').textContent; };
+      out.form = await tap(1); out.spokenForm = window.__spoken.slice();                              // форма: перевод формы + словарная форма; записи нет — синтез с пометкой
+      out.rec = await tap(0); out.played = window.__played.slice(); out.spokenAfterRec = window.__spoken.length;   // есть запись носителя — играет она, не синтез
+      out.on = document.querySelector('#target .wd.on').textContent;
+      out.verb = await tap(2);
+      autofit(); out.over = document.getElementById('card').scrollHeight - document.getElementById('card').clientHeight;
+      setId = 'novoice'; show(OLD_PHRASES, 'Kahvaltı dahil mi?'); out.restored = document.getElementById('partner').textContent;
+      out.mi = await tap(2); out.dahil = await tap(1);
+      // все слова всех фраз — с переводом вручную (машинного перевода здесь нет)
+      let tot = 0, miss = []; [...PHRASE_SETS.flatMap(g => g.items), ...OLD_PHRASES].forEach(p => p.tr.split(/\s+/).forEach(w => { const core = w.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, ''); if(!nphr(core)) return; tot++; if(!wordGloss(core)) miss.push(core); }));
+      out.tot = tot; out.miss = miss;
+      // слово-карточка и пары: слова не нажимаются
+      setKind(true); out.wordMode = document.querySelectorAll('#target .wd').length; setKind(false); setMode('pairs'); out.pairMode = document.querySelectorAll('#target .wd').length;
+      return out; });
+    const errs = q.errors; await q.context().close();
+    eq(r.spans, ['Size', 'odanızı', 'göstereyim.']); eq(r.partner0, '[сизе оданызы гёстерейим]'); ok(/Нажатие на слово/.test(r.info), r.info);
+    eq(r.form, '«odanızı» — ваш номер (кого? что?) · oda: комната, номер синтез'); eq(r.spokenForm, ['odanızı']);
+    eq(r.rec, '«Size» — вам носитель'); eq(r.played, ['https://x/size.wav']); eq(r.spokenAfterRec, 1); eq(r.on, 'Size');
+    eq(r.verb, '«göstereyim» — давайте покажу · göstermek: показывать синтез'); eq(r.over <= 1, true);
+    eq(r.restored, '[кахвалты дахиль ми]'); eq(r.mi, '«mi» — вопросительная частица — делает фразу вопросом синтез'); eq(r.dahil, '«dahil» — включено (kahvaltı dahil mi — завтрак включён?) синтез');
+    ok(r.tot > 1000, 'слов во фразах: ' + r.tot); eq(r.miss, []); eq([r.wordMode, r.pairMode], [0, 0]); eq(errs, []);
+  });
   console.log('«Город» (Mahalle): разговоры с последствиями');
   const openCity = async (opts) => { const q = await openPage(browser, opts); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-city'); await q.waitForTimeout(100); return q; };
   const ctSay = async (q, t) => { await q.evaluate(t => { window.__say = t; window.__silent = !t; }, t); await q.click('#ctSpeak'); await q.waitForTimeout(120);
