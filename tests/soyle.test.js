@@ -667,6 +667,10 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const found = [...new Set(src.match(/[\p{Extended_Pictographic}✓✔★⇄▶⏹⏱]/gu) || [])];
     eq(found, []);
   });
+  await test('название в заголовке — «Söyle» с настоящей ö (не «Soyle»)', async () => {
+    const t = await p.evaluate(() => document.querySelector('h1').textContent);
+    eq(t, 'Söyle');
+  });
   await test('смена надписи не стирает иконку: «Сказать», «Записать себя», блиц', async () => {
     const r = await p.evaluate(() => { const s = document.getElementById('speak'); setLbl(s, 'Слушаю…'); const a = [s.querySelectorAll('svg').length, s.getAttribute('aria-label')]; setLbl(s, 'Сказать');
       const b = document.getElementById('lsBlitz'); setLbl(b, '0:42 · верно 3'); a.push(b.querySelectorAll('svg').length, b.textContent); setLbl(b, 'Блиц 60 с'); return a; });
