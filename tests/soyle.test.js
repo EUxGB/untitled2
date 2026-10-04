@@ -1309,6 +1309,14 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       opts: [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent), score: (document.querySelector('#ctResult .score b') || {}).textContent })); };
   const ctNext = async q => { await q.click('#ctNext'); await q.waitForTimeout(60); };
   const ctPick = async (q, i) => { await q.click(`#ctOpts .ct-opt-main[data-i="${i}"]`); await q.waitForTimeout(40); return q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)); };
+  await test('портреты (просьба 17:02): у каждого из персонажей свой рисунок (все разные), он в списке «Люди», в окне звонка и на лице собеседника в сцене', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
+    const r = await q.evaluate(async () => { const ids = Object.keys(CHARS), svgs = ids.map(c => charAvatar(c)); const out = { all:ids.every(c => AVATARS[c]), uniq:new Set(svgs).size === ids.length, emoji:svgs.some(x => /\p{Extended_Pictographic}/u.test(x)) };
+      city.rel = { sofor:3 }; city.met = { sofor:1 }; city.contacts = { sofor:1 }; cityRender(); document.getElementById('ctTabPeople').click(); out.row = !!document.querySelector('#ctChars .ct-char[data-char="sofor"] i svg.avatar');
+      document.querySelector('#ctChars .ct-char[data-char="sofor"]').click(); out.dm = !!document.querySelector('#dmIc svg.avatar'); document.getElementById('dmClose').click();
+      cityStart('taxi'); out.face = !!document.querySelector('#ctInitial svg.avatar'); const f = document.getElementById('ctReplay').getBoundingClientRect(); out.faceSize = [Math.round(f.width), Math.round(f.height)]; return out; });
+    eq([r.all, r.uniq, r.emoji, r.row, r.dm, r.face], [true, true, false, true, true, true]); eq(r.faceSize, [44, 44]); eq(q.errors, []); await q.context().close();
+  });
   await test('чат: окно со всеми 8 темами помещается на 3 размерах (кнопки ≥ 44 px, ничего не обрезано), «Закрыть» на месте; «Занять денег» (+200 ₺, долг до зарплаты) и «Погода» (зонт) меняют состояние игры', async () => {
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
       const q = await openCity(); await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { window.__busy = ''; city.rel = { bakkal:6 }; city.met = { bakkal:1 }; city.contacts = { bakkal:1 }; cityRender(); document.getElementById('ctTabPeople').click(); document.querySelector('#ctChars .ct-char[data-char="bakkal"]').click(); });
@@ -1572,11 +1580,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       SCENES.t = { title:'t', who:'Айше', char:'komsu', place:'p', goal:'g', start:'a', fail:{ text:'f', fx:{} }, nodes:{ a:{ npc:'Buyur.', ru:'…', again:'?', againRu:'?', moves:[{ key:['*'], say:['Tamam.'], ru:'ок', go:'e' }] }, e:{ end:{ kind:'ok', text:'e', fx:{} } } } };
       cityStart('t'); await new Promise(z => setTimeout(z, 120)); const out = { ver: city.ver, rel: Object.assign({}, city.rel), money: city.money, day: city.day, pat: ct.patience, voice: window.__lastVoice, want: trVoices[CHARS.komsu.voice % 3].name, who: document.getElementById('ctWho').textContent, arrays: [Array.isArray(city.carry), Array.isArray(city.todaySaid), typeof city.skill, typeof city.played, city.debt] };
       cityFx({ rel:1 }); out.relAfter = city.rel.komsu; cityLeave(); ct = null;
-      window.__char = 'sofor_hasan'; cityStart('taxi'); out.pool = [ct.char, document.getElementById('ctWho').textContent, document.getElementById('ctTr').textContent, ct.patience, document.getElementById('ctInitial').textContent];
+      window.__char = 'sofor_hasan'; cityStart('taxi'); out.pool = [ct.char, document.getElementById('ctWho').textContent, document.getElementById('ctTr').textContent, ct.patience, document.querySelectorAll('#ctInitial svg.avatar').length ? 'портрет' : document.getElementById('ctInitial').textContent];   // у персонажа — свой портрет (просьба 17:02)
       cityLeave(); ct = null; window.__char = null; cityStart('taxi'); out.def = [ct.char, document.getElementById('ctTr').textContent]; return out; });
     const errs = q.errors; await q.context().close();
     eq([r.ver, r.day, r.money], [2, 3, 1500]); eq(r.rel, { sofor:2, bakkal:5 }); eq(r.pat, 4); eq(r.voice, r.want); eq(r.who, 'Айше-тейзе'); eq(r.arrays, [true, true, 'object', 'object', 0]); eq(r.relAfter, 1);
-    eq(r.pool, ['sofor_hasan', 'Хасан-амджа', 'Nereye.', 2, 'H']); eq(r.def, ['sofor', 'Buyurun, nereye?']); eq(errs, []);
+    eq(r.pool, ['sofor_hasan', 'Хасан-амджа', 'Nereye.', 2, 'портрет']); eq(r.def, ['sofor', 'Buyurun, nereye?']); eq(errs, []);
   });
   console.log('«Город»: поле-настолка (кубик, клетки, визит, домой, такси)');
   await test('Поле: 28 клеток кольцом 7×9, расстояния в обе стороны (без срезок), кубик с точками; бросок подсвечивает клетки ≤ N, остановка раньше, шаг 10 мин; место с делом — сцена, без дела — «Зайти?»; бросок сохраняется; «Eve dön»', async () => {

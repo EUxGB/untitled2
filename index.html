@@ -678,6 +678,10 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-scene .main-row{margin-top:auto}
 #ctLive{min-height:1.2em; text-align:left; font-size:15px}
 .wd{cursor:pointer; border-radius:4px; transition:color .15s} .wd.on{color:var(--accent)}
+.avatar{display:block; width:100%; height:100%; border-radius:50%}
+.ct-face:has(.avatar){background:none; padding:0; overflow:hidden} .ct-face .avatar{width:44px; height:44px}
+.ct-char i:has(.avatar){background:none !important; overflow:hidden; width:34px; height:34px} .ct-char i .avatar{width:34px; height:34px}
+.dm-box .modal-ic .avatar{width:84px; height:84px; margin:0 auto}
 .dm-box{max-height:92dvh; overflow:auto}
 .dm-tr{font:700 18px/1.3 var(--display); color:var(--ink) !important} .dm-ru{font-size:14px}
 .dm-topics{display:grid; grid-template-columns:1fr 1fr; gap:8px} .dm-topic{min-height:44px; padding:6px 10px; font-size:14px; line-height:1.2; display:flex; flex-direction:column; justify-content:center; gap:1px} .dm-topic small{font-size:11px; color:var(--muted); font-weight:500}
@@ -4781,11 +4785,53 @@ const relLevel = v => v >= 6 ? 2 : v >= 3 ? 1 : 0, REL_NAME = ["", "знаком
 const metChars = () => Object.keys(CHARS).filter(c => city.rel[c] !== undefined || (city.met || {})[c]).sort((a, b) => (city.rel[b] || 0) - (city.rel[a] || 0));
 function cityCharsHtml(){
   const list = metChars(); if(!list.length) return `<p class="hint" style="margin:0">Пока никого не встретили. Поговорите с кем-нибудь в квартале.</p>`;
-  return list.map(c => { const v = city.rel[c] || 0, lv = relLevel(v); return `<button class="ct-char lv${lv}" data-char="${c}"><i aria-hidden="true">${esc(CHARS[c].initial)}</i><b>${esc(CHARS[c].name)}</b>${city.contacts[c] ? '<svg class="ic ct-num" aria-label="номер есть"><use href="#i-phone"/></svg>' : ""}<span class="ct-char-lvl">${REL_NAME[lv] || (v ? `+${v}` : "")}</span></button>`; }).join("");
+  return list.map(c => { const v = city.rel[c] || 0, lv = relLevel(v); return `<button class="ct-char lv${lv}" data-char="${c}"><i aria-hidden="true">${charAvatar(c) || esc(CHARS[c].initial)}</i><b>${esc(CHARS[c].name)}</b>${city.contacts[c] ? '<svg class="ic ct-num" aria-label="номер есть"><use href="#i-phone"/></svg>' : ""}<span class="ct-char-lvl">${REL_NAME[lv] || (v ? `+${v}` : "")}</span></button>`; }).join("");
 }
 function citySkillsHtml(){
   return Object.entries(SKILLS).map(([id, sk]) => { const n = (city.skill[id] || {}).n || 0, lvl = skillLvl(id), next = SKILL_LVLS[lvl] || SKILL_LVLS[SKILL_LVLS.length - 1], pct = lvl >= 5 ? 100 : Math.round(n / next * 100);
     return `<div class="ct-skill" data-skill="${id}"><span>${esc(sk.name)} · ${esc(sk.ru)}</span><span class="bar" aria-label="${n} из ${next}"><i style="width:${pct}%"></i></span><b>${lvl}</b></div>`; }).join("");
+}
+// ---- портреты персонажей: свои SVG (рисуются кодом из признаков), без внешних картинок ----
+const AVATARS = {
+  sofor:       { skin:"#E3B48B", hair:"#2B2220", style:"short", mus:1, shirt:"#C9A227", cap:"#2B3A42" },
+  sofor_hasan: { skin:"#D9A678", hair:"#9A9A9A", style:"short", mus:2, glasses:1, shirt:"#5B6B73" },
+  sofor_emre:  { skin:"#E8C09A", hair:"#3A2A1E", style:"quiff", shades:1, shirt:"#C62F35" },
+  bakkal:      { skin:"#DDB08A", hair:"#B8B8B8", style:"bald", mus:2, shirt:"#3F7D5B", apron:"#F0EEE6" },
+  bakkal_emre: { skin:"#E6BC96", hair:"#2A211C", style:"short", stubble:1, shirt:"#34506B" },
+  kapici:      { skin:"#D7A57C", hair:"#4B4038", style:"short", mus:1, flatcap:"#6B5B4B", shirt:"#7A6A58" },
+  komsu:       { skin:"#E6BF9C", hair:"#6B4E3D", style:"scarf", scarf:"#8E4B6B", shirt:"#8E4B6B", f:1 },
+  pazarci:     { skin:"#D49C70", hair:"#241B16", style:"short", mus:2, flatcap:"#B5472E", shirt:"#B5472E" },
+  berber:      { skin:"#E3B48B", hair:"#1F1A18", style:"quiff", beard:1, shirt:"#222B33", apron:"#F0EEE6" },
+  eczaci:      { skin:"#EBC7A6", hair:"#3B2A22", style:"bun", glasses:1, shirt:"#F4F6F4", coat:1, f:1 },
+  usta:        { skin:"#DDB08A", hair:"#8A8A8A", style:"short", mus:1, chef:1, shirt:"#F4F4F0" },
+};
+function charAvatar(id, cls){
+  const a = AVATARS[id]; if(!a) return "";
+  const sk = a.skin, h = a.hair, o = [];
+  o.push(`<circle cx="24" cy="24" r="24" fill="${a.coat ? "#CFE3E0" : a.shirt}" opacity=".28"/>`);
+  o.push(`<path d="M5 46c1-9 8-13 19-13s18 4 19 13a24 24 0 0 1-38 0z" fill="${a.shirt}"/>`);
+  if(a.apron) o.push(`<path d="M15 46l2-11h14l2 11z" fill="${a.apron}"/>`);
+  if(a.coat) o.push(`<path d="M24 34l-6 12M24 34l6 12" stroke="#B7C7C4" stroke-width="1.2" fill="none"/>`);
+  if(a.style === "scarf") o.push(`<path d="M10 24c0-10 6-16 14-16s14 6 14 16v8c0 4-4 6-14 6S10 36 10 32z" fill="${a.scarf}"/>`);
+  if(a.style === "bun") o.push(`<circle cx="24" cy="7" r="4.2" fill="${h}"/>`);
+  o.push(`<rect x="21" y="29" width="6" height="6" rx="2" fill="${sk}"/>`);
+  o.push(`<ellipse cx="24" cy="21" rx="9" ry="10.5" fill="${sk}"/>`);
+  if(a.style === "short") o.push(`<path d="M15 19c0-7 4-10 9-10s9 3 9 10c-2-3-5-4-9-4s-7 1-9 4z" fill="${h}"/>`);
+  if(a.style === "quiff") o.push(`<path d="M15 19c0-8 4-11 10-11 4 0 8 3 8 11-1-3-3-5-6-5-4 0-8 0-12 5z" fill="${h}"/>`);
+  if(a.style === "bun") o.push(`<path d="M15 20c0-8 4-11 9-11s9 3 9 11c-2-4-5-6-9-6s-7 2-9 6z" fill="${h}"/>`);
+  if(a.style === "scarf") o.push(`<ellipse cx="24" cy="21" rx="8" ry="9.6" fill="${sk}"/>`);
+  if(a.style === "bald") o.push(`<path d="M15 21c-1-2 0-5 1-6 0 3 1 5 1 6zM33 21c1-2 0-5-1-6 0 3-1 5-1 6z" fill="${h}"/>`);
+  if(a.flatcap) o.push(`<path d="M14 15c1-5 5-7 10-7s9 2 10 7z" fill="${a.flatcap}"/><path d="M14 15h20l4 2H12z" fill="${a.flatcap}"/>`);
+  if(a.cap) o.push(`<path d="M15 15c1-5 5-7 9-7s8 2 9 7z" fill="${a.cap}"/><rect x="14" y="14" width="20" height="2.4" rx="1" fill="${a.cap}"/>`);
+  if(a.chef) o.push(`<path d="M15 14c-3-1-4-6 0-7 1-3 6-3 7-1 2-2 6-1 7 1 4 1 3 6 0 7z" fill="#fff"/><rect x="15" y="13" width="18" height="3" fill="#fff"/>`);
+  if(a.shades) o.push(`<rect x="15" y="19" width="8" height="4" rx="1.6" fill="#14262B"/><rect x="25" y="19" width="8" height="4" rx="1.6" fill="#14262B"/><path d="M23 20.5h2" stroke="#14262B" stroke-width="1.2"/>`);
+  else o.push(`<circle cx="20.3" cy="21" r="1.15" fill="#14262B"/><circle cx="27.7" cy="21" r="1.15" fill="#14262B"/>`);
+  if(a.glasses) o.push(`<circle cx="20.3" cy="21" r="3.4" fill="none" stroke="#14262B" stroke-width="1"/><circle cx="27.7" cy="21" r="3.4" fill="none" stroke="#14262B" stroke-width="1"/><path d="M23.7 21h.6" stroke="#14262B"/>`);
+  if(a.beard) o.push(`<path d="M15.5 24c1 8 5 10 8.500 10s7.500-2 8.500-10c-2 3-5 4-8.500 4s-6.500-1-8.500-4z" fill="${h}"/>`);
+  if(a.stubble) o.push(`<path d="M16 25c1 6 4 8 8 8s7-2 8-8c-2 3-5 4-8 4s-6-1-8-4z" fill="${h}" opacity=".35"/>`);
+  if(a.mus) o.push(`<path d="M24 25.2c-2-1.8-5-1.800-7.500 0 2 .8 4 1.400 7.500 1.400s5.500-.6 7.500-1.400c-2.500-1.800-5.500-1.800-7.500 0z" fill="${h}" transform="${a.mus === 2 ? "scale(1.1 1.4) translate(-2.2 -7.3)" : ""}"/>`);
+  o.push(`<path d="M21 29c1.800 1.300 4.200 1.300 6 0" stroke="${a.beard || a.mus ? "#14262B" : "#8A4B3D"}" stroke-width="1.200" fill="none" stroke-linecap="round" opacity="${a.beard ? 0 : .8}"/>`);
+  return `<svg class="avatar${cls ? " " + cls : ""}" viewBox="0 0 48 48" aria-hidden="true">${o.join("")}</svg>`;
 }
 // ---- звонок человеку: ответил (темы) или не взял трубку по причине ----
 const DM_WHY = {
@@ -4815,7 +4861,7 @@ function dmAvail(char){
   return { ok:true };
 }
 const dmEl = id => document.getElementById(id);
-function dmOpenBox(ch, title, text){ dmEl("dmIc").textContent = ch.initial; dmEl("dmTitle").textContent = title; dmEl("dmText").textContent = text;
+function dmOpenBox(ch, title, text){ dmEl("dmIc").innerHTML = charAvatar(ch.id || Object.keys(CHARS).find(k => CHARS[k] === ch)) || esc(ch.initial); dmEl("dmTitle").textContent = title; dmEl("dmText").textContent = text;
   ["dmTr", "dmRu", "dmTopics"].forEach(k => { dmEl(k).hidden = true; }); dmEl("dmTopics").innerHTML = ""; dmEl("dmModal").hidden = false; setTimeout(() => dmEl("dmClose").focus(), 50); }
 function dmClose(){ dmEl("dmModal").hidden = true; wordPopHide(); }
 function dmCall(id){
@@ -5004,7 +5050,7 @@ function cityNode(id, replyHtml){
   const tr = ctEl("ctTr"), ru = ctEl("ctRu");
   const greet = skillLvl("nezaket") >= 2 && n.greetAlt;                                   // вас уже знают — здороваются первыми
   tr.textContent = greet ? n.greetAlt : ctNpc(n); tr.classList.add("veil"); ru.hidden = true; ru.textContent = greet && n.greetAltRu ? n.greetAltRu : ctRu(n);
-  ctEl("ctInitial").textContent = CHARS[ct.char] ? CHARS[ct.char].initial : ct.scene.initial;
+  ctEl("ctInitial").innerHTML = charAvatar(ct.char) || esc(CHARS[ct.char] ? CHARS[ct.char].initial : ct.scene.initial);
   ctEl("ctLive").textContent = "";
   if(n.pay){
     if(city.money < n.pay.price && ct.char === "bakkal" && (city.rel.bakkal || 0) >= 6){   // свой человек: остаток — в долг, спишется с зарплаты
@@ -5022,7 +5068,7 @@ function cityNode(id, replyHtml){
     ctEl("ctPay").innerHTML = opts.map(v => `<button class="ct-note ct-code" data-v="${esc(String(v))}" lang="tr" translate="no"><span>${esc(String(v))}</span></button>`).join("");
     ctEl("ctPay").querySelectorAll(".ct-code").forEach(b => b.onclick = () => cityCode(b.dataset.v));
   }
-  if(ct.scene.phone) ctEl("ctInitial").innerHTML = '<svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>';
+  if(ct.scene.phone && !ct.dm) ctEl("ctInitial").innerHTML = '<svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>';
   cityOptions();
   ctResult("info", replyHtml || `<span class="verdict">${n.pay ? "Сколько дать? Послушайте цену." : n.code ? "Какое число прозвучало? Выберите." : "Слушайте. Потом выберите, что ответить, и скажите это по-турецки."}</span>`);
   ctButtons(); ctEl("ctSpeak").disabled = true; ctEl("ctShow").disabled = true;
