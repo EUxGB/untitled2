@@ -1704,10 +1704,52 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(r.n >= 50 && r.uniq === r.n, `светских реплик ${r.n}, разных ${r.uniq}`); eq(r.bad, []); eq(r.gloss, []); ok(r.arrays >= 8, 'узлов со списком реплик: ' + r.arrays);
     eq(r.chat, [true, true, true, ['Да, так и есть. (поддержать разговор)', 'Угу. (кивнуть)']]); ok(s.next, s.res);
     eq(r2.liked, true); eq(r2.greet, [true, 'Hoş geldin komşu! Buyur.', 'Добро пожаловать, сосед! Слушаю.']);
-    eq(r2.seed1, [true, 'Hoş geldin! Ne lazım bugün?', 'Добро пожаловать! Что нужно сегодня?']); eq(r2.mama, ['Komşu, hoş geldin! Ne lazım?', 'Сосед, добро пожаловать! Что нужно?', 5]);
+    eq(r2.seed1, [true, 'Hoş geldin! Ne lazım bugün?', 'Добро пожаловать! Что нужно сегодня?']); eq(r2.mama, ['Komşu, hoş geldin! Ne lazım?', 'Сосед, добро пожаловать! Что нужно?', 8]);   // 07:52: приветствий у бакала 8
     const taxi = r2.visits.find(v => v[0] === 'taksi'), rest = r2.visits.filter(v => v[0] !== 'taksi');
     ok(taxi && taxi[1] === 'toast', 'такси без дел — подсказка: ' + JSON.stringify(taxi));
     eq(rest.length, 19); eq(rest.filter(v => v[1] !== 'Зайти' || !v[3] || !v[4]).map(v => v.slice(0, 4)), []); eq(errs, []);
+  });
+  await test('Вариативность (07:52): узлы с alt — свой вариант на визит (window.__alt или seed), «сквозной» pass пропускает узел, подряд не повторяется, текст итога — список; «Корм для кота» — ≥ 50 разных реплик игрока, два визита с разными seed отличаются; у всех 20 мест своя сцена visit_*, дом среди дня — в дверь звонят; свободное дело вместо захода', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; });
+    const r = await q.evaluate(() => { const out = {}; const tr = () => document.getElementById('ctTr').textContent, opts = () => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent);
+      SCENES.__t = { title:'t', who:'t', initial:'T', place:'t', goal:'t', start:'a', fail:{ text:'f', fx:{} }, nodes:{
+        a:{ npc:'A sıfır.', ru:'а0', again:'A?', againRu:'а?', moves:[{ key:['bir'], say:['Bir.'], ru:'раз', go:'b' }],
+            alt:[ {}, { npc:'A bir.', ru:'а1', moves:[{ key:['iki'], say:['İki.'], ru:'два', go:'b' }] } ] },
+        b:{ npc:'B.', ru:'б', again:'B?', againRu:'б?', moves:[{ key:['üç'], say:['Üç.'], ru:'три', go:'e' }], alt:[ {}, { pass:'e' } ] },
+        e:{ end:{ kind:'ok', text:['конец ноль', 'конец один'], fx:{} } } } };
+      window.__alt = { a:1, b:0 }; window.__seed = 0; cityStart('__t');
+      out.alt1 = [tr(), opts(), ct.alts.a];
+      cityNode('b'); out.b0 = [tr(), !!ct.node.end];
+      cityLeave(); ct = null; window.__alt = { a:0, b:1 }; cityStart('__t');
+      out.alt0 = [tr(), opts()];
+      cityNode('b'); out.pass = [!ct, document.getElementById('modalText').textContent]; closeModal();          // сквозной: b пропущен, сразу концовка; текст итога — по seed
+      window.__alt = undefined; window.__seed = 1; cityStart('__t'); out.seed1 = [tr(), opts()]; cityNode('e'); out.end1 = document.getElementById('modalText').textContent; closeModal();
+      // в игре выбор случайный и не тот, что в прошлый визит: ctAltPick с памятью city.altLast
+      city.altLast = {}; const seen = new Set(); let same = 0, prev = -1;
+      for(let i = 0; i < 40; i++){ const k = ctAltPick('__t', 'a', 3, true); if(k === prev) same++; prev = k; seen.add(k); }
+      out.pick = [same, [...seen].sort().join(''), city.altLast['__t.a']];
+      delete SCENES.__t; window.__seed = 0;
+      // корм коту: по всем вариантам всех узлов — разных реплик игрока ≥ 50; два визита с разными seed — другая реплика собеседника и другие карточки
+      const says = new Set(); Object.values(SCENES.mama.nodes).forEach(n => [n, ...(n.alt || []), ...(n.variants || [])].forEach(v => (v.moves || []).concat(v.extra || []).forEach(m => says.add(m.say[0]))));
+      out.mamaSays = says.size;
+      window.__char = 'bakkal'; const visit = seed => { window.__seed = seed; cityStart('mama'); const v = [tr(), opts()]; cityNode('ask'); v.push(tr(), opts()); cityLeave(); ct = null; return v; };
+      const v0 = visit(0), v1 = visit(1); window.__seed = 0; window.__char = undefined;
+      out.twoVisits = [v0[0] !== v1[0], JSON.stringify(v0[1]) !== JSON.stringify(v1[1]), v0[2] !== v1[2], JSON.stringify(v0[3]) !== JSON.stringify(v1[3])];
+      // клетки: у каждого места своя visit_*, дом — visit_ev (в дверь звонят), стоянка — вызов такси
+      out.noVisit = BOARD.filter(c => c.kind === 'place' && c.id !== 'taksi' && !SCENES['visit_' + c.id]).map(c => c.id);
+      city.plan = ['taxi']; city.done = []; city.money = 3000; city.pos = 0; city.min = 12 * 60; cityArrive(0);
+      out.ev = [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, document.getElementById('modalPrimary').textContent]; document.getElementById('modalPrimary').click(); out.evScene = ct ? ct.id : null; cityLeave(); ct = null;
+      // свободное дело (симит без плана) вместо короткой сцены — кандидаты: visit_* и сцены с free:true
+      window.__visit = 'simit'; cityVisit(cellOfScene('simit')); out.freeText = document.getElementById('modalText').textContent; document.getElementById('modalPrimary').click(); out.free = ct ? ct.id : null; cityLeave(); ct = null;
+      window.__visit = 'nope'; cityVisit(cellOfScene('simit')); document.getElementById('modalPrimary').click(); out.freeDefault = ct ? ct.id : null; cityLeave(); ct = null; window.__visit = undefined;
+      out.frees = Object.keys(SCENES).filter(id => SCENES[id].free);
+      return out; });
+    const errs = q.errors; await q.context().close();
+    eq(r.alt1, ['A bir.', ['два'], 1]); eq(r.b0, ['B.', false]); eq(r.alt0, ['A sıfır.', ['раз']]); eq(r.pass, [true, 'конец ноль']); eq(r.seed1, ['A bir.', ['два']]); eq(r.end1, 'конец один');
+    eq(r.pick[0], 0); eq(r.pick[1], '012'); ok(r.pick[2] >= 0 && r.pick[2] <= 2, 'altLast ' + r.pick[2]);
+    ok(r.mamaSays >= 50, 'разных реплик игрока в «Корм для кота»: ' + r.mamaSays); eq(r.twoVisits, [true, true, true, true]);
+    eq(r.noVisit, []); eq(r.ev, [false, 'Дом — в дверь звонят', 'Открыть']); eq(r.evScene, 'visit_ev');
+    eq(r.free, 'simit'); ok(/без плана/.test(r.freeText), r.freeText); eq(r.freeDefault, 'visit_simitci'); ok(r.frees.length >= 5, 'free: ' + r.frees.join(',')); eq(errs, []);
   });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];
