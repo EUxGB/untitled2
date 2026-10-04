@@ -655,7 +655,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-task b{font-weight:700} .ct-task span{color:var(--muted); font-size:.92em; white-space:nowrap} .ct-task span::before{content:"· "}
 .ct-task i{display:inline-block; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--accent); transform:translateY(-1px)} .ct-task.closed i{background:var(--muted)}
 .ct-task.done{color:var(--muted)} .ct-task.done.ok i{background:var(--ok)} .ct-task.done.near i{background:var(--near)} .ct-task.done.bad i{background:var(--bad)}
-.ct-dice{display:flex; align-items:center; gap:10px; margin-top:auto}
+.ct-dice{display:flex; align-items:center; gap:10px; flex:none}
 .ct-roll{flex:none; width:56px; height:56px; padding:0; border:0; border-radius:14px; background:none; cursor:pointer; display:grid; place-items:center}
 .ct-roll .die{width:52px; height:52px; fill:var(--surface); stroke:var(--accent); stroke-width:1.5; filter:drop-shadow(0 2px 2px rgba(0,0,0,.12)); transition:transform .15s} .ct-roll .die circle{fill:var(--accent); stroke:none}
 .ct-roll:not(:disabled):hover .die{transform:translateY(-1px)} .ct-roll:disabled{cursor:default} .ct-roll:disabled .die{stroke:var(--muted); filter:none} .ct-roll:disabled .die circle{fill:var(--ink)}
@@ -736,6 +736,65 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 @media (max-height: 600px){ #card .result{min-height:58px} .ctx-tr{font-size:14px} .ctx-ru{font-size:12px} }
 /* низкий экран (360×640 и ниже) при переключателе тренировки над наборами: экономим высоту карточки, чтобы самый длинный пример слова помещался */
 @media (max-height: 700px){ #card .result{min-height:56px} #card .target{font-size:max(22px, calc(var(--fit) * var(--wfit, 1) * clamp(44px, 12vh, 132px)))} .ctx-n{display:none} .ctx-ex{padding:3px 10px} .act .lbl{font-size:11px} }   /* низкий экран: без строки-подсказки */
+/* ---------- Грамматика (правила, разбор слова по частям) ---------- */
+.gram{flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding:4px 4px 14px; text-align:left; overscroll-behavior:contain}
+.gram[hidden]{display:none}
+.gm-head h2, .gm-title{font:700 20px/1.2 var(--display); color:var(--ink); margin:0; text-transform:none; letter-spacing:0}
+.gm-sub, .gm-hint{margin:4px 0 0; font-size:13px; line-height:1.4; color:var(--ink-2)}
+.gm-group{display:flex; flex-direction:column; gap:8px}
+.gm-group h3{margin:8px 0 0; font:700 12px var(--body); letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.gm-row{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 10px; text-align:left; min-height:44px; padding:10px 12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; color:var(--ink)}
+.gm-row:hover{border-color:var(--accent)}
+.gm-row.next{border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent)}
+.gm-row.done{background:var(--accent-soft)}
+.gm-ttl{font-weight:700; font-size:15px; line-height:1.3}
+.gm-lead{grid-column:1; font-size:12.5px; line-height:1.35; color:var(--ink-2)}
+.gm-st{grid-column:2; grid-row:1 / span 2; align-self:center; font-size:12px; color:var(--muted); text-align:right; max-width:84px}
+.gm-row.done .gm-st{color:var(--accent-ink); font-weight:700}
+.gm-back{align-self:flex-start; display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:0 8px 0 2px; background:none; border:0; color:var(--accent-ink); font:600 14px var(--body)}
+.gm-back .ic{width:18px; height:18px; transform:rotate(180deg)}
+.gm-lead2{margin:0; font:600 15px/1.35 var(--body); color:var(--accent-ink)}
+.gm-p{margin:0; font-size:14.5px; line-height:1.5; color:var(--ink)}
+.gram b.tr, .gm-fb b.tr, .sheet-body b.tr{font-family:var(--display); font-weight:700; white-space:nowrap; color:var(--ink)}
+.sheet-body .gm-p, .sheet-body .gm-t{color:var(--ink)} .sheet-body .gm-lead2{color:var(--accent-ink)} .sheet-body .gm-ru{color:var(--ink-2)}
+.wordpop .wd-line b{color:var(--bg)}
+.gm-tw{overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--surface)}
+.gm-t{border-collapse:collapse; width:100%; font-size:13px; line-height:1.35}
+.gm-t th, .gm-t td{padding:7px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+.gm-t th{font-weight:700; color:var(--muted); font-size:12px} .gm-t tr:last-child td{border-bottom:0}
+.gm-h3{margin:8px 0 0; font:700 15px var(--body); color:var(--ink); text-transform:none; letter-spacing:0}
+.gm-ph{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
+.gm-ph li{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:8px 12px; display:flex; flex-direction:column; gap:2px}
+.gm-tr{font:700 18px/1.35 var(--display); color:var(--ink)} .gm-ru{font-size:13px; color:var(--ink-2)}
+.gm-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:4px} .gm-actions .btn{min-height:44px}
+.gm-bar{display:flex; justify-content:space-between} .gm-count{font-size:13px; color:var(--muted)}
+.gm-segs{display:flex; gap:4px} .gm-segs i{flex:1; height:6px; border-radius:3px; background:var(--line)}
+.gm-segs i.cur{background:var(--accent-soft); outline:1px solid var(--accent)} .gm-segs i.ok{background:var(--accent)} .gm-segs i.bad{background:var(--tulip)}
+.gm-q{margin:4px 0 2px; font:700 19px/1.35 var(--display); color:var(--ink)}
+.gm-opts{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px}
+.gm-opt{min-height:48px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); font:600 14px/1.3 var(--body); text-align:center}
+.gm-opt[lang="tr"]{font:700 18px/1.2 var(--display)}
+.gm-opt:hover:not(:disabled){border-color:var(--accent)}
+.gm-opt.ok{background:var(--ok-soft); border-color:var(--ok); color:var(--ok)} .gm-opt.bad{background:var(--near-soft); border-color:var(--near); color:var(--near)}
+.gm-opt:disabled{opacity:1}
+.gm-built{min-height:52px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px; border:1px dashed var(--line); border-radius:12px}
+.gm-cell{background:var(--accent-soft); border-radius:8px; padding:6px 10px; font:700 18px var(--display); color:var(--accent-ink)} .gm-ph0{color:var(--muted); font-size:13px}
+.gm-chips{display:flex; flex-wrap:wrap; gap:8px}
+.gm-chip{min-height:44px; padding:6px 14px; border-radius:12px; border:1px solid var(--accent); background:var(--surface); color:var(--accent-ink); font:700 18px var(--display)} .gm-chip.used{opacity:.35}
+.gm-undo{align-self:flex-start; min-height:44px; background:none; border:0; color:var(--accent-ink); font:600 14px var(--body)}
+.gm-warn{margin:0; font-size:13px; color:var(--near)}
+.gm-fb{padding:10px 12px; border-radius:12px; font-size:14px; line-height:1.45; color:var(--ink)} .gm-fb.ok{background:var(--ok-soft)} .gm-fb.bad{background:var(--near-soft)}
+.gm-fb .wm{margin-top:8px}
+.gm-done{display:flex; flex-direction:column; gap:10px} .gm-score{font:700 34px var(--display); color:var(--ink)}
+.wm{display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start}
+.wm-c{display:inline-flex; flex-direction:column; align-items:center; text-align:center; padding:3px 7px; border-radius:8px; background:color-mix(in srgb, currentColor 12%, transparent); max-width:132px}
+.wm-c b{font:700 16px/1.2 var(--display); color:inherit} .wm-c i{font:normal 11px/1.2 var(--body); opacity:.85; overflow-wrap:anywhere; font-style:normal}
+.wm-c.suf b{font-weight:700} .wm-p{align-self:center; opacity:.6}
+.wm-box{display:flex; flex-direction:column; gap:6px; margin-top:6px}
+.wm-rules{display:flex; flex-wrap:wrap; gap:6px}
+.wm-rule{min-height:44px; padding:6px 12px; border-radius:999px; border:1px solid color-mix(in srgb, var(--bg) 45%, transparent); background:transparent; color:var(--bg); font:600 12.5px/1.2 var(--body); text-align:left}
+.wordpop .wm-c{color:var(--bg)} .wordpop .wm-c b{color:var(--bg)}
+.subtabs{gap:4px; padding-left:12px; padding-right:12px} .subtabs .chip.seg{padding:4px 10px; font-size:12.5px}
 </style>
 </head>
 <body>
@@ -812,6 +871,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
     <button class="chip seg" id="tab-phrases" aria-pressed="true">Фразы</button>
     <button class="chip seg" id="tab-listen" aria-pressed="false">На слух</button>
     <button class="chip seg" id="tab-free" aria-pressed="false">Свободно</button>
+    <button class="chip seg" id="tab-grammar" aria-pressed="false">Грамматика</button>
   </div>
   <div class="chips" id="chips"></div>
 
@@ -840,6 +900,9 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       <div class="ct-home" id="ctHome">
         <div class="bd" id="ctBoard" role="group" aria-label="Квартал: клетки поля">
           <div class="bd-inner" id="ctInner">
+            <div class="ct-dice" id="ctDice">
+              <button class="ct-roll" id="ctRoll" aria-label="Бросить кубик"></button><span class="ct-dice-hint" id="ctDiceHint" aria-live="polite"></span>
+            </div>
             <div class="ct-itabs" id="ctInnerTabs" role="group" aria-label="Внутри квартала">
               <button class="ct-itab" id="ctTabTasks" aria-pressed="true">Дела</button><button class="ct-itab" id="ctTabPeople" aria-pressed="false">Люди</button><button class="ct-itab" id="ctTabSkills" aria-pressed="false">Умения</button>
             </div>
@@ -847,9 +910,6 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
             <ul class="ct-tasks" id="ctTasks"></ul>
             <div class="ct-chars" id="ctChars" hidden></div>
             <div class="ct-skills" id="ctSkills" hidden></div>
-            <div class="ct-dice" id="ctDice">
-              <button class="ct-roll" id="ctRoll" aria-label="Бросить кубик"></button><span class="ct-dice-hint" id="ctDiceHint" aria-live="polite"></span>
-            </div>
             <div class="ct-homebtns"><button class="linkbtn" id="ctTaxi">Taksi çağır</button><button class="linkbtn" id="ctHomeBtn">Eve dön</button></div>
             <p class="hint ct-intro" id="ctIntro"></p>
           </div>
@@ -917,6 +977,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       </div>
     </section>
 
+    <section class="gram" id="gramView" hidden aria-label="Грамматика"></section>
     <section class="progress" id="progressView" hidden aria-label="Прогресс">
       <div class="pv-hero">
         <svg class="pv-ring" viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="42" class="ring-bg"/><circle cx="48" cy="48" r="42" class="ring-fg" id="gbLevelRing"/></svg>
@@ -977,6 +1038,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
           <li><b>Память</b> — всё, что сказали в «Городе» и тренировке, возвращается по расписанию FSRS: сначала вспомнить, потом ответ.</li>
           <li><b>Тренировка</b> — трудный звук (ö, ü, ı, ç, ş) в слове выделен цветом; разбор ошибок после «Сказать» показывает, какой звук спутан. Трудный звук выделен красным.</li>
           <li><b>Тренировка → Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «слова» — слова темы с примером.</li>
+          <li><b>Тренировка → Грамматика</b> — 20 коротких правил (падежи, времена, «быть», вопрос, словообразование) с примерами из ваших фраз и упражнениями. Нажмите на любое турецкое слово: под переводом — разбор по частям (корень + окончания) и кнопка «Правило».</li>
           <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Примеры</b> — фразы носителей с этим словом: перевод и живая запись; там же видео (YouGlish, до 20 поисков в день).</li>
           <li><b>Сравнить</b> — если вы ещё не говорили это слово: образец, вы, оценка, затем образец и ваша запись подряд; если уже сказали — образец и ваша запись.</li>
           <li><b>На слух</b> — звучит одна из двух похожих фраз, выберите какая. <b>Блиц</b> — сколько различите за 60 секунд.</li>
@@ -1870,7 +1932,7 @@ function setResult(kind, verdict, extra="", score){
 }
 
 function renderStats(){
-  const rows = [...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"mem-rec",label:"память: понять на слух"}, {id:"mem-prod",label:"память: сказать"}, {id:"ph-srs",label:"память: повторить за носителем"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listenph",label:"на слух: фразы"}, {id:"free",label:"любая фраза"}, {id:"city",label:"Город: разговоры"}];
+  const rows = [...PHRASE_SETS.map(g=>({id:"ph-"+g.id,label:g.label})), ...PHRASE_SETS.map(g=>({id:"w-"+g.id,label:"слова: "+g.label})), {id:"mem-rec",label:"память: понять на слух"}, {id:"mem-prod",label:"память: сказать"}, {id:"ph-srs",label:"память: повторить за носителем"}, {id:"ph-novoice",label:"без записи"}, {id:"ph-mine",label:"мои"}, {id:"listenph",label:"на слух: фразы"}, {id:"free",label:"любая фраза"}, {id:"city",label:"Город: разговоры"}, {id:"gram",label:"грамматика: упражнения"}];
   const used = rows.filter(r => (stats[r.id]||{}).t);
   if(!used.length){ $("stats").innerHTML = `<p class="hint" style="text-align:left">Здесь появится ваш прогресс по каждому набору.</p>`; return; }
   $("stats").innerHTML = used.map(r => {
@@ -1894,7 +1956,7 @@ function count(gid, okScore){
 const GOAL = 20;
 const TESTMODE = !!window.SOYLE_TEST;
 // вес опыта по трудности: выбрать из двух — 0,4; произнести — 1; своя фраза, которую понял носитель, — 1,5
-const XP_WEIGHT = { listen:0.4, listenph:0.4, free:1.5, "mem-rec":0.4, "mem-prod":1.5, city:1.5 };   // «Город»: сказать своё в разговоре — как «Свободно»   // «понять» оценивается самим собой — вес как у выбора из двух; «сказать по памяти» проверяет распознавание   // фразы на слух — тоже выбор из двух
+const XP_WEIGHT = { gram:0.4, listen:0.4, listenph:0.4, free:1.5, "mem-rec":0.4, "mem-prod":1.5, city:1.5 };   // «Город»: сказать своё в разговоре — как «Свободно»   // «понять» оценивается самим собой — вес как у выбора из двух; «сказать по памяти» проверяет распознавание   // фразы на слух — тоже выбор из двух
 let SURPRISE_P = TESTMODE ? 0 : 0.07;        // шанс неожиданного бонуса за верный ответ
 let MILESTONE_MODALS = !TESTMODE;            // окна-праздники: новый уровень, цель дня
 let LESSON_SIZE = TESTMODE ? 1e9 : 10;       // заданий в уроке
@@ -2128,6 +2190,9 @@ const BADGES = [
   { id:"free",    ic:"söyle", tier:2, t:"Меня поняли",    d:"5 фраз в «Свободно»",                  v:(g,s) => SOK(s,"free"), n:5 },
   { id:"memory",  ic:"1·3·7", tier:2, t:"Память слона",   d:"10 раз вспомнить в «Памяти»",          v:(g,s) => SOK(s,"mem-rec") + SOK(s,"mem-prod") + SOK(s,"ph-srs"), n:10 },
   { id:"strong",  ic:"21д",   tier:3, t:"Прочная память", d:"20 фраз держатся в памяти 3+ недели",  v:() => memStats().strong, n:20 },
+  { id:"gram3",   ic:"-ı",    tier:1, t:"Окончания",      d:"Освоить 3 правила грамматики",         v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:3 },
+  { id:"gram10",  ic:"-lar",  tier:2, t:"Грамматист",     d:"Освоить 10 правил грамматики",         v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:10 },
+  { id:"gramall", ic:"20",    tier:3, t:"Знаток окончаний", d:"Освоить все 20 правил грамматики",   v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:20 },
   { id:"level5",  ic:"6",     tier:3, t:"Стамбулец",      d:"Достичь 6-го уровня",                  v:g => levelOf(g.xp), n:6 },
   { id:"lesson10",ic:"×10",   tier:3, t:"Прилежный",      d:"Пройти 10 уроков",                     v:g => g.lessons, n:10 },
   { id:"hafta",   ic:"7g",    tier:2, t:"Hafta",          d:"Прожить неделю в квартале",            v:() => typeof city !== "undefined" ? city.days : 0, n:7 },
@@ -3220,6 +3285,7 @@ function bkApply(){
   try { game = JSON.parse(localStorage.getItem("soyle-game")) || {}; } catch(e){ game = {}; }
   normalizeGame(); stats = load();
   try { city = JSON.parse(localStorage.getItem("soyle-city")) || {}; } catch(e){ city = {}; }    // «Город» тоже перечитать — иначе следующий citySave затёр бы восстановленное
+  try { gstate = JSON.parse(localStorage.getItem("soyle-gram")) || {}; } catch(e){ gstate = {}; } if(typeof gramNormalize === "function") gramNormalize();
   cityNormalize(); if(typeof cityLeave === "function"){ cityLeave(); ct = null; } if(typeof cityRender === "function") cityRender(); if(typeof updateMemTab === "function") updateMemTab();
   bkPending = null; $("bkConfirm").hidden = true; $("bkInput").value = "";
   renderGame(); renderBadges(); renderStats(); renderChips();
@@ -4769,7 +4835,7 @@ function cityBoard(){
   else if(!allDone && de) de.remove();
   { const b = ctEl("ctRoll"); b.disabled = !!city.roll || rolling || city.min >= DAY_END; b.innerHTML = dieSvg(city.face); b.dataset.n = String(city.face);
     b.setAttribute("aria-label", city.roll ? `Выпало ${city.roll} — выберите клетку` : city.min >= DAY_END ? "День окончен" : `Бросить кубик (на кубике ${city.face})`);
-    ctEl("ctDiceHint").textContent = city.roll ? `Выпало ${city.roll}` : city.min >= DAY_END ? "21:00 — пора домой" : "Нажмите кубик"; }
+    ctEl("ctDiceHint").textContent = city.roll ? "Выберите клетку" : city.min >= DAY_END ? "21:00 — пора домой" : "Нажмите кубик"; }
   ctEl("ctIntro").textContent = city.roll ? `Нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`
     : city.days || city.visited.length ? `Отношения: ${Object.entries(city.rel).filter(([, v]) => v).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} ${v > 0 ? "+" : ""}${v}`).join(", ") || "пока ни с кем"}`
     : "Говорите с людьми: ошибки стоят денег и времени.";
@@ -5558,6 +5624,830 @@ Object.assign(FUNC_GLOSS, {
   ıslanırım:"я промокну",
   şükür:"слава Богу (çok şükür — слава Богу)"
 });   // слова чатов (личные звонки)
+// <MORPH-DATA> создан скриптом tests/morph-sync.py из tests/morph.json — руками не править
+const SUF = {
+  pl:{"f":"-lar/-ler","n":"мн. число","rule":"plural"},
+  poss1s:{"f":"-(ı)m","n":"мой","rule":"poss"},
+  poss2s:{"f":"-(ı)n","n":"твой","rule":"poss"},
+  poss3s:{"f":"-(s)ı","n":"его, её / «чего-то» (изафет)","rule":"poss"},
+  poss1p:{"f":"-(ı)mız","n":"наш","rule":"poss"},
+  poss2p:{"f":"-(ı)nız","n":"ваш","rule":"poss"},
+  acc:{"f":"-(y)ı","n":"вин. падеж: кого? что?","rule":"acc_dat"},
+  dat:{"f":"-(y)a/-(y)e","n":"дат. падеж: кому? куда?","rule":"acc_dat"},
+  loc:{"f":"-da/-de/-ta/-te","n":"где? в, на, у","rule":"loc_abl"},
+  abl:{"f":"-dan/-den/-tan/-ten","n":"откуда? из, от, с","rule":"loc_abl"},
+  gen:{"f":"-(n)ın","n":"родит. падеж: чей? чего?","rule":"gen_ins"},
+  ins:{"f":"-(y)la/-(y)le","n":"с кем? чем? на чём?","rule":"gen_ins"},
+  bn:{"f":"-n-","n":"соединительная n (после -sı и в bu-n-a, o-n-u)","rule":"cases_buffer"},
+  by:{"f":"-y-","n":"соединительная y между гласными","rule":"cases_buffer"},
+  ki:{"f":"-ki","n":"«тот, что относится к…»","rule":"deriv"},
+  li:{"f":"-lı/-li/-lu/-lü","n":"с чем-то; из (места)","rule":"deriv"},
+  siz:{"f":"-sız/-siz","n":"без","rule":"deriv"},
+  lik:{"f":"-lık/-lik/-luk/-lük","n":"на срок / для / состояние","rule":"deriv"},
+  ci:{"f":"-cı/-ci/-çı/-çi","n":"тот, кто занимается","rule":"deriv"},
+  ca:{"f":"-ça/-çe/-ca/-ce","n":"по-…, на языке","rule":"deriv"},
+  nci:{"f":"-(ı)ncı/-(i)nci","n":"порядковое число (-й)","rule":"deriv"},
+  cop1s:{"f":"-(y)ım/-(y)im","n":"я (есть)","rule":"cop"},
+  cop2s:{"f":"-sın/-sin","n":"ты (есть)","rule":"cop"},
+  cop1p:{"f":"-(y)ız/-(y)iz","n":"мы (есть)","rule":"cop"},
+  cop2p:{"f":"-sınız/-siniz","n":"вы (есть)","rule":"cop"},
+  cop3:{"f":"-dır/-dir/-tır/-tir","n":"есть, является (3 л.)","rule":"cop"},
+  cpast:{"f":"-(y)dı/-(y)di/-tı/-ti","n":"был(а), было","rule":"cop"},
+  q:{"f":"mı/mi/mu/mü","n":"вопрос: «ли?»","rule":"question"},
+  inf:{"f":"-mak/-mek","n":"инфинитив («делать»)","rule":"inf"},
+  neg:{"f":"-ma/-me","n":"отрицание: не","rule":"neg_can"},
+  negaor:{"f":"-maz/-mez","n":"не (общее отрицание, 3 л.)","rule":"neg_can"},
+  can:{"f":"-(y)ebil/-(y)abil","n":"мочь, уметь","rule":"neg_can"},
+  cannot:{"f":"-(y)eme/-(y)ame","n":"не мочь","rule":"neg_can"},
+  prog:{"f":"-(ı)yor","n":"настоящее длительное: делаю сейчас","rule":"prog"},
+  past:{"f":"-dı/-di/-du/-dü/-tı/-ti","n":"прошедшее","rule":"past"},
+  evid:{"f":"-mış/-miş","n":"прошедшее «оказывается/уже»","rule":"past"},
+  fut:{"f":"-(y)acak/-(y)ecek","n":"будущее","rule":"fut"},
+  aor:{"f":"-r/-ar/-er/-ır/-ir","n":"общее/вежливое: делаю, делает; «не могли бы…»","rule":"aor"},
+  imp2p:{"f":"-(y)ın/-(y)in/-(y)un/-(y)ün","n":"вежливое повеление (вы): сделайте","rule":"imp_opt"},
+  imp3s:{"f":"-sın/-sin","n":"пусть (он) сделает","rule":"imp_opt"},
+  opt1s:{"f":"-(y)ayım/-(y)eyim","n":"давайте я… / дайте я…","rule":"imp_opt"},
+  opt1p:{"f":"-(y)alım/-(y)elim","n":"давайте (мы)…","rule":"imp_opt"},
+  pass:{"f":"-ıl/-il/-ul/-ül/-ın/-in/-n","n":"страдательный залог: делается","rule":"deriv_verb"},
+  caus:{"f":"-dır/-tır/-ır/-ar/-t","n":"побудительный: заставить, дать сделать","rule":"deriv_verb"},
+  part:{"f":"-an/-en","n":"причастие: тот, кто делает/делал","rule":"deriv_verb"},
+  when:{"f":"-(y)ınca/-(y)ince","n":"когда (сделаю)","rule":"deriv_verb"},
+  cond:{"f":"-sa/-se","n":"если","rule":"deriv_verb"},
+  v1s:{"f":"-m / -(ı)m","n":"я","rule":"person"},
+  v2s:{"f":"-n / -sın","n":"ты","rule":"person"},
+  v1p:{"f":"-k / -(ı)z","n":"мы","rule":"person"},
+  v2p:{"f":"-nız / -sınız","n":"вы","rule":"person"},
+  v3p:{"f":"-lar/-ler","n":"они","rule":"person"},
+  ablty:{"f":"-(y)e/-(y)a","n":"возможность (в -eme-, -ebil-); перед -mez","rule":"neg_can"},
+  dik:{"f":"-dık/-dik/-duk/-dük","n":"причастие: то, что (я) знаю/делал","rule":"deriv_verb"},
+  vn:{"f":"-ma/-me","n":"отглагольное имя: «идти» как действие (gitmem gerek — мне нужно идти)","rule":"inf"}
+};
+const ROOT_GLOSS = {
+  "acımak":"болеть",
+  "ağrımak":"болеть",
+  "anne":"мама",
+  "aramak":"звонить; искать",
+  "artmak":"расти, увеличиваться",
+  "bakkal":"лавка, бакалейщик",
+  "bayılmak":"обожать; терять сознание",
+  "binmek":"садиться (в транспорт)",
+  "bitmek":"заканчиваться",
+  "boğaz":"горло",
+  "bulanmak":"мутиться (тошнить)",
+  "bura":"это место, здесь",
+  "büyümek":"расти",
+  "çocuk":"ребёнок",
+  "daire":"квартира",
+  "dünya":"мир",
+  "etmek":"делать",
+  "fener":"Фенербахче (клуб)",
+  "galatasaray":"Галатасарай (клуб)",
+  "geçmek":"проходить",
+  "gerekmek":"быть нужным",
+  "girmek":"входить",
+  "havalimanı":"аэропорт",
+  "ıslanmak":"промокнуть",
+  "ilgilenmek":"интересоваться",
+  "ingiliz":"англичанин",
+  "iskele":"пристань",
+  "izlemek":"смотреть",
+  "kadıköy":"Кадыкёй",
+  "kalkmak":"вставать, отправляться",
+  "kazanmak":"выигрывать",
+  "kendi":"сам, себя",
+  "kızmak":"сердиться",
+  "kilo":"килограмм",
+  "koymak":"класть",
+  "lezzet":"вкус",
+  "marka":"марка",
+  "martı":"чайка",
+  "nere":"где",
+  "okumak":"читать",
+  "olmak":"быть, становиться",
+  "ora":"то место (там, туда)",
+  "orta":"середина",
+  "ön":"перёд, перед",
+  "ateş":"температура, жар",
+  "kart":"карта",
+  "q":"вопросительная частица «ли»",
+  "rezervasyon":"бронь",
+  "rusya":"Россия",
+  "sormak":"спрашивать",
+  "söylemek":"говорить, сказать",
+  "susam":"кунжут",
+  "şikâyet":"жалоба",
+  "şu":"тот, вот этот",
+  "taksimetre":"таксометр",
+  "tavuk":"курица",
+  "tutmak":"держать",
+  "üsküdar":"Ускюдар",
+  "üzmek":"огорчать",
+  "yağmak":"идти (о дожде, снеге)",
+  "yoğun":"занятой, плотный",
+  "acele":"спешка",
+  "aile":"семья",
+  "atmak":"бросать",
+  "ayakkabı":"обувь",
+  "balık":"рыба",
+  "çekmek":"тянуть",
+  "çıkmak":"выходить",
+  "demek":"говорить",
+  "dinlemek":"слушать",
+  "dönmek":"поворачивать",
+  "çalmak":"красть; играть (на муз.)",
+  "görüşmek":"видеться, встречаться",
+  "gülümsemek":"улыбаться",
+  "götürmek":"отвезти, унести",
+  "kepek":"отруби",
+  "kusur":"вина, недостаток",
+  "mide":"желудок",
+  "muhtar":"староста квартала",
+  "oturmak":"сидеть, жить",
+  "oynamak":"играть",
+  "öğrenmek":"учить, изучать",
+  "önem":"важность",
+  "rahat":"покой, удобство",
+  "sol":"левый, лево",
+  "sonuç":"результат",
+  "taşınmak":"переезжать",
+  "türk":"турок, турецкий",
+  "ummak":"надеяться",
+  "vakit":"время",
+  "yan":"бок, сторона",
+  "yatmak":"лежать",
+  "yazmak":"писать",
+  "yollamak":"отправлять",
+  "içeri":"внутрь, внутри",
+  "japon":"японский",
+  "harika":"великолепный",
+  "köşe":"угол",
+  "taksim":"Таксим (район)",
+  "teşekkür":"благодарность",
+  "ay":"месяц",
+  "başlamak":"начинать(ся)",
+  "bırakmak":"оставлять",
+  "demlemek":"заваривать (чай)",
+  "dokunmak":"трогать",
+  "durmak":"останавливаться, стоять",
+  "efendi":"господин",
+  "evlat":"ребёнок, сын",
+  "fark":"разница",
+  "fiş":"чек, квитанция",
+  "fransız":"француз, французский",
+  "göz":"глаз",
+  "hız":"скорость",
+  "iki":"два",
+  "kaldırmak":"убирать, поднимать",
+  "korkmak":"бояться",
+  "köy":"деревня",
+  "maç":"матч",
+  "menü":"меню",
+  "nöbet":"дежурство",
+  "okul":"школа",
+  "öğretmek":"учить, обучать",
+  "paha":"цена",
+  "pazar":"рынок, базар",
+  "rica":"просьба",
+  "sayaç":"счётчик",
+  "şişe":"бутылка",
+  "tanımak":"знать (человека), узнавать",
+  "tebrik":"поздравление",
+  "temas":"контакт, касание",
+  "üç":"три",
+  "üst":"верх",
+  "istasyon":"станция",
+  "affetmek":"прощать",
+  "anlatmak":"рассказывать",
+  "bavul":"чемодан",
+  "buyurmak":"прошу, изволить",
+  "dilemek":"желать, просить",
+  "duymak":"слышать",
+  "dün":"вчера",
+  "haber":"новость",
+  "ısırmak":"кусать",
+  "ihtiyaç":"нужда",
+  "iyileşmek":"поправляться",
+  "kapatmak":"закрывать; положить трубку",
+  "kardeş":"брат, сестра",
+  "o":"он, она, оно",
+  "rus":"русский",
+  "ses":"звук, голос",
+  "son":"конец",
+  "sürmek":"длиться",
+  "takım":"команда",
+  "temizlemek":"убирать, чистить",
+  "tok":"сытый",
+  "yaralanmak":"получать ранение",
+  "yenikapı":"Еникапы (район)",
+  "ye-":"есть, кушать",
+  "haftasonu":"выходные (hafta sonu)",
+  "sakal":"борода"
+};
+const MORPH = {
+  "acelem":"acele m=poss1s",
+  "acıktım":"acık=acıkmak tı=past m=v1s",
+  "acıyor":"acı=acımak yor=prog",
+  "adrese":"adres e=dat",
+  "adı":"ad ı=poss3s",
+  "adınız":"ad ınız=poss2p",
+  "affedersiniz":"affed=affetmek er=aor siniz=v2p",
+  "ailen":"aile n=poss2s",
+  "akşamlar":"akşam lar=pl",
+  "alabilir":"al=almak abil=can ir=aor",
+  "alacağım":"al=almak acağ=fut ım=v1s",
+  "alalım":"al=almak alım=opt1p",
+  "alayım":"al=almak ayım=opt1s",
+  "aldım":"al=almak dı=past m=v1s",
+  "aldın":"al=almak dı=past n=v2s",
+  "aldınız":"al=almak dı=past nız=v2p",
+  "alerjim":"alerji m=poss1s",
+  "almadım":"al=almak ma=neg dı=past m=v1s",
+  "almayayım":"al=almak ma=neg yayım=opt1s",
+  "alınca":"al=almak ınca=when",
+  "alınıyor":"al=almak ın=pass ıyor=prog",
+  "alır":"al=almak ır=aor",
+  "alırsın":"al=almak ır=aor sın=v2s",
+  "alırım":"al=almak ır=aor ım=v1s",
+  "alıyorum":"al=almak ıyor=prog um=v1s",
+  "anahtarları":"anahtar lar=pl ı=acc",
+  "anahtarın":"anahtar ın=poss2s",
+  "anladım":"anla=anlamak dı=past m=v1s",
+  "anlamadım":"anla=anlamak ma=neg dı=past m=v1s",
+  "anlamam":"anla=anlamak ma=neg m=v1s",
+  "anlamıyorum":"anla=anlamak mı=neg yor=prog um=v1s",
+  "anlatırım":"anlat=anlatmak ır=aor ım=v1s",
+  "annem":"anne m=poss1s",
+  "annen":"anne n=poss2s",
+  "arabayı":"araba yı=acc",
+  "aradım":"ara=aramak dı=past m=v1s",
+  "arkadaşlar":"arkadaş lar=pl",
+  "arkadaşım":"arkadaş ım=poss1s",
+  "arttı":"art=artmak tı=past",
+  "arıyorsunuz":"ar=aramak ıyor=prog sunuz=v2p",
+  "asansörü":"asansör ü=acc",
+  "aspirinin":"aspirin in=poss2s",
+  "ateşi":"ateş i=poss3s",
+  "ateşim":"ateş im=poss1s",
+  "ateşin":"ateş in=poss2s",
+  "ateşiniz":"ateş iniz=poss2p",
+  "atmayın":"at=atmak ma=neg yın=imp2p",
+  "attılar":"at=atmak tı=past lar=v3p",
+  "atıyor":"at=atmak ıyor=prog",
+  "ayakkabılar":"ayakkabı lar=pl",
+  "aylık":"ay lık=lik",
+  "açar":"aç=açmak ar=aor",
+  "açın":"aç=açmak ın=imp2p",
+  "ağrın":"ağrı n=poss2s",
+  "ağrısı":"ağrı sı=poss3s",
+  "ağrıyor":"ağrı=ağrımak yor=prog",
+  "bakabilir":"bak=bakmak abil=can ir=aor",
+  "bakalım":"bak=bakmak alım=opt1p",
+  "bakamam":"bak=bakmak ama=cannot m=v1s",
+  "bakar":"bak=bakmak ar=aor",
+  "bakarım":"bak=bakmak ar=aor ım=v1s",
+  "bakayım":"bak=bakmak ayım=opt1s",
+  "bakkalda":"bakkal da=loc",
+  "bakma":"bak=bakmak ma=neg",
+  "bakmak":"bak=bakmak mak=inf",
+  "bakmayın":"bak=bakmak ma=neg yın=imp2p",
+  "bakıyorum":"bak=bakmak ıyor=prog um=v1s",
+  "balıklı":"balık lı=li",
+  "bana":"ban=ben a=dat",
+  "banyoyu":"banyo yu=acc",
+  "bavulumu":"bavul um=poss1s u=acc",
+  "bayılıyor":"bayıl=bayılmak ıyor=prog",
+  "başlıyor":"başl=başlamak ıyor=prog",
+  "başım":"baş ım=poss1s",
+  "başın":"baş ın=poss2s",
+  "bekleriz":"bekle=beklemek r=aor iz=v1p",
+  "bekleyebilirsiniz":"bekle=beklemek yebil=can ir=aor siniz=v2p",
+  "bekleyeceğiz":"bekle=beklemek yeceğ=fut iz=v1p",
+  "bekleyin":"bekle=beklemek yin=imp2p",
+  "bekliyorsunuz":"bekl=beklemek iyor=prog sunuz=v2p",
+  "bekliyorum":"bekl=beklemek iyor=prog um=v1s",
+  "bende":"ben de=loc",
+  "beni":"ben i=acc",
+  "benim":"ben im=gen",
+  "beğendim":"beğen=beğenmek di=past m=v1s",
+  "beşinci":"beş inci=nci",
+  "beşte":"beş te=loc",
+  "bildiğimden":"bil=bilmek diğ=dik im=poss1s den=abl",
+  "bileti":"bilet i=acc",
+  "biletinizi":"bilet iniz=poss2p i=acc",
+  "biletler":"bilet ler=pl",
+  "biletleri":"bilet ler=pl i=acc",
+  "biletlik":"bilet lik=lik",
+  "biliyor":"bil=bilmek iyor=prog",
+  "biliyorum":"bil=bilmek iyor=prog um=v1s",
+  "bilmem":"bil=bilmek me=neg m=v1s",
+  "bilmiyordum":"bil=bilmek mi=neg yor=prog du=cpast m=v1s",
+  "bilmiyorum":"bil=bilmek mi=neg yor=prog um=v1s",
+  "binelim":"bin=binmek elim=opt1p",
+  "biniyor":"bin=binmek iyor=prog",
+  "birazdan":"biraz dan=abl",
+  "bitmiyor":"bit=bitmek mi=neg yor=prog",
+  "bitti":"bit=bitmek ti=past",
+  "bizde":"biz de=loc",
+  "bizim":"biz im=gen",
+  "boğazım":"boğaz ım=poss1s",
+  "bulanıyor":"bulan=bulanmak ıyor=prog",
+  "bulduk":"bul=bulmak du=past k=v1p",
+  "bulurum":"bul=bulmak ur=aor um=v1s",
+  "bunun":"bu nun=gen",
+  "burada":"bura da=loc",
+  "burası":"bura sı=poss3s",
+  "buyurun":"buyur=buyurmak un=imp2p",
+  "büyüdüm":"büyü=büyümek dü=past m=v1s",
+  "bırakabilir":"bırak=bırakmak abil=can ir=aor",
+  "cüzdanım":"cüzdan ım=poss1s",
+  "dairedesiniz":"daire de=loc siniz=cop2p",
+  "dakikada":"dakika da=loc",
+  "dedi":"de=demek di=past",
+  "demledim":"demle=demlemek di=past m=v1s",
+  "dener":"dene=denemek r=aor",
+  "deneyebilir":"dene=denemek yebil=can ir=aor",
+  "deneyelim":"dene=denemek yelim=opt1p",
+  "değilim":"değil im=cop1s",
+  "değiştirebilir":"değiştir=değiştirmek ebil=can ir=aor",
+  "değiştirmek":"değiştir=değiştirmek mek=inf",
+  "dilerim":"dile=dilemek r=aor im=v1s",
+  "dinliyorum":"dinl=dinlemek iyor=prog um=v1s",
+  "doktora":"doktor a=dat",
+  "dokunma":"dokun=dokunmak ma=neg",
+  "doların":"dolar ın=poss2s",
+  "dostum":"dost um=poss1s",
+  "durabilir":"dur=durmak abil=can ir=aor",
+  "durakta":"durak ta=loc",
+  "durdurun":"durdur=durdurmak un=imp2p",
+  "durumunuz":"durum unuz=poss2p",
+  "duyan":"duy=duymak an=part",
+  "dönün":"dön=dönmek ün=imp2p",
+  "dünkü":"dün kü=ki",
+  "dünyası":"dünya sı=poss3s",
+  "edebilir":"ed=etmek ebil=can ir=aor",
+  "edemez":"ed=etmek e=ablty mez=negaor",
+  "eder":"ed=etmek er=aor",
+  "ederim":"ed=etmek er=aor im=v1s",
+  "edersiniz":"ed=etmek er=aor siniz=v2p",
+  "edin":"ed=etmek in=imp2p",
+  "efendim":"efendi m=poss1s",
+  "elektriğimiz":"elektriğ=elektrik imiz=poss1p",
+  "eline":"el in=poss2s e=dat",
+  "elinize":"el iniz=poss2p e=dat",
+  "ellerinize":"el ler=pl iniz=poss2p e=dat",
+  "etmez":"et=etmek mez=negaor",
+  "etsin":"et=etmek sin=imp3s",
+  "evde":"ev de=loc",
+  "evdeydim":"ev de=loc ydi=cpast m=v1s",
+  "evladım":"evlad=evlat ım=poss1s",
+  "evli":"ev li=li",
+  "eşyalarım":"eşya lar=pl ım=poss1s",
+  "farklı":"fark lı=li",
+  "faturamı":"fatura m=poss1s ı=acc",
+  "fenerli":"fener li=li",
+  "fenerliyim":"fener li=li yim=cop1s",
+  "fiyatı":"fiyat ı=poss3s",
+  "fişinizi":"fiş iniz=poss2p i=acc",
+  "fransızca":"fransız ca=ca",
+  "futboldan":"futbol dan=abl",
+  "futbolla":"futbol la=ins",
+  "galatasaraylı":"galatasaray lı=li",
+  "galatasaraylıyım":"galatasaray lı=li yım=cop1s",
+  "geceler":"gece ler=pl",
+  "gecelik":"gece lik=lik",
+  "geldi":"gel=gelmek di=past",
+  "geldik":"gel=gelmek di=past k=v1p",
+  "geldim":"gel=gelmek di=past m=v1s",
+  "geldin":"gel=gelmek di=past n=v2s",
+  "geldiniz":"gel=gelmek di=past niz=v2p",
+  "gelemem":"gel=gelmek eme=cannot m=v1s",
+  "gelin":"gel=gelmek in=imp2p",
+  "gelir":"gel=gelmek ir=aor",
+  "gelirim":"gel=gelmek ir=aor im=v1s",
+  "geliyor":"gel=gelmek iyor=prog",
+  "geliyorsunuz":"gel=gelmek iyor=prog sunuz=v2p",
+  "geliyorum":"gel=gelmek iyor=prog um=v1s",
+  "gelsem":"gel=gelmek se=cond m=v1s",
+  "gelsin":"gel=gelmek sin=imp3s",
+  "gerekir":"gerek=gerekmek ir=aor",
+  "getirin":"getir=getirmek in=imp2p",
+  "geçebilir":"geç=geçmek ebil=can ir=aor",
+  "geçiyordum":"geç=geçmek iyor=prog du=cpast m=v1s",
+  "geçmedi":"geç=geçmek me=neg di=past",
+  "geçmiş":"geç=geçmek miş=evid",
+  "geçti":"geç=geçmek ti=past",
+  "gidebilirim":"gid=gitmek ebil=can ir=aor im=v1s",
+  "gidecek":"gid=gitmek ecek=fut",
+  "gideceğiz":"gid=gitmek eceğ=fut iz=v1p",
+  "gidelim":"gid=gitmek elim=opt1p",
+  "gider":"gid=gitmek er=aor",
+  "giderim":"gid=gitmek er=aor im=v1s",
+  "gidin":"gid=gitmek in=imp2p",
+  "gidiyor":"gid=gitmek iyor=prog",
+  "gidiyorsun":"gid=gitmek iyor=prog sun=v2s",
+  "gidiyorsunuz":"gid=gitmek iyor=prog sunuz=v2p",
+  "gidiyorum":"gid=gitmek iyor=prog um=v1s",
+  "gidiyoruz":"gid=gitmek iyor=prog uz=v1p",
+  "girin":"gir=girmek in=imp2p",
+  "gitmek":"git=gitmek mek=inf",
+  "gitmem":"git=gitmek me=vn m=poss1s",
+  "gitmeyelim":"git=gitmek me=neg yelim=opt1p",
+  "gittin":"git=gitmek ti=past n=v2s",
+  "görebilir":"gör=görmek ebil=can ir=aor",
+  "görünüyor":"görün=görünmek üyor=prog",
+  "görüşelim":"görüş=görüşmek elim=opt1p",
+  "görüşürüz":"görüş=görüşmek ür=aor üz=v1p",
+  "göstereyim":"göster=göstermek eyim=opt1s",
+  "gösterir":"göster=göstermek ir=aor",
+  "götürür":"götür=götürmek ür=aor",
+  "gözlerin":"göz ler=pl in=poss2s",
+  "gülümseyin":"gülümse=gülümsemek yin=imp2p",
+  "günde":"gün de=loc",
+  "günler":"gün ler=pl",
+  "günü":"gün ü=poss3s",
+  "gürültülüydü":"gürültü lü=li ydü=cpast",
+  "güzeldi":"güzel di=cpast",
+  "haberin":"haber in=poss2s",
+  "haftasonun":"haftasonu n=poss2s",
+  "harikaydı":"harika ydı=cpast",
+  "hastanenin":"hastane nin=gen",
+  "havalimanına":"havalimanı n=bn a=dat",
+  "hayırdır":"hayır dır=cop3",
+  "herkese":"herkes e=dat",
+  "hesabı":"hesab=hesap ı=acc",
+  "hesapta":"hesap ta=loc",
+  "hissediyorsun":"hissed=hissetmek iyor=prog sun=v2s",
+  "hissediyorsunuz":"hissed=hissetmek iyor=prog sunuz=v2p",
+  "hissediyorum":"hissed=hissetmek iyor=prog um=v1s",
+  "hızlı":"hız lı=li",
+  "ihtiyacım":"ihtiyac=ihtiyaç ım=poss1s",
+  "ikametim":"ikamet im=poss1s",
+  "ikisinden":"iki si=poss3s n=bn den=abl",
+  "ilgilenmiyorum":"ilgilen=ilgilenmek mi=neg yor=prog um=v1s",
+  "inebilir":"in=inmek ebil=can ir=aor",
+  "inecek":"in=inmek ecek=fut",
+  "ineceksin":"in=inmek ecek=fut sin=v2s",
+  "ineceğim":"in=inmek eceğ=fut im=v1s",
+  "ingilizce":"ingiliz ce=ca",
+  "inmek":"in=inmek mek=inf",
+  "iskelesine":"iskele si=poss3s n=bn e=dat",
+  "isminiz":"ism=isim iniz=poss2p",
+  "istasyonu":"istasyon u=poss3s",
+  "istedim":"iste=istemek di=past m=v1s",
+  "istemem":"iste=istemek me=neg m=v1s",
+  "istemiyorum":"iste=istemek mi=neg yor=prog um=v1s",
+  "ister":"iste=istemek r=aor",
+  "isterim":"iste=istemek r=aor im=v1s",
+  "istersin":"iste=istemek r=aor sin=v2s",
+  "istersiniz":"iste=istemek r=aor siniz=v2p",
+  "isteyecektim":"iste=istemek yecek=fut ti=cpast m=v1s",
+  "istiyor":"ist=istemek iyor=prog",
+  "istiyorum":"ist=istemek iyor=prog um=v1s",
+  "iyidir":"iyi dir=cop3",
+  "iyidirler":"iyi dir=cop3 ler=v3p",
+  "iyileşir":"iyileş=iyileşmek ir=aor",
+  "iyisini":"iyi si=poss3s n=bn i=acc",
+  "iyiyim":"iyi yim=cop1s",
+  "izledim":"izle=izlemek di=past m=v1s",
+  "izledin":"izle=izlemek di=past n=v2s",
+  "izlemedim":"izle=izlemek me=neg di=past m=v1s",
+  "içelim":"iç=içmek elim=opt1p",
+  "içer":"iç=içmek er=aor",
+  "içeride":"içeri de=loc",
+  "içerim":"iç=içmek er=aor im=v1s",
+  "içersin":"iç=içmek er=aor sin=v2s",
+  "içersiniz":"iç=içmek er=aor siniz=v2p",
+  "içmem":"iç=içmek me=neg m=v1s",
+  "işim":"iş im=poss1s",
+  "işler":"iş ler=pl",
+  "japonca":"japon ca=ca",
+  "kadıköye":"kadıköy e=dat",
+  "kahvesi":"kahve si=poss3s",
+  "kalacak":"kal=kalmak acak=fut",
+  "kalacaksın":"kal=kalmak acak=fut sın=v2s",
+  "kaldı":"kal=kalmak dı=past",
+  "kaldık":"kal=kalmak dı=past k=v1p",
+  "kaldırırım":"kaldır=kaldırmak ır=aor ım=v1s",
+  "kalkalım":"kalk=kalkmak alım=opt1p",
+  "kalkıyor":"kalk=kalkmak ıyor=prog",
+  "kalkıyoruz":"kalk=kalkmak ıyor=prog uz=v1p",
+  "kalmadı":"kal=kalmak ma=neg dı=past",
+  "kalmak":"kal=kalmak mak=inf",
+  "kalmasın":"kal=kalmak ma=neg sın=imp3s",
+  "kalsın":"kal=kalmak sın=imp3s",
+  "kalıyorsun":"kal=kalmak ıyor=prog sun=v2s",
+  "kapatmam":"kapat=kapatmak ma=vn m=poss1s",
+  "kapının":"kapı nın=gen",
+  "kapıyı":"kapı yı=acc",
+  "kardeşim":"kardeş im=poss1s",
+  "karna":"karn=karın a=dat",
+  "karnı":"karn=karın ı=poss3s",
+  "karnım":"karn=karın ım=poss1s",
+  "kartla":"kart la=ins",
+  "kartı":"kart ı=acc",
+  "kartınız":"kart ınız=poss2p",
+  "kartınızda":"kart ınız=poss2p da=loc",
+  "katta":"kat ta=loc",
+  "kayboldum":"kaybol=kaybolmak du=past m=v1s",
+  "kazandı":"kazan=kazanmak dı=past",
+  "kaça":"kaç a=dat",
+  "kaçta":"kaç ta=loc",
+  "kaçıncı":"kaç ıncı=nci",
+  "kediler":"kedi ler=pl",
+  "kedim":"kedi m=poss1s",
+  "kedimiz":"kedi miz=poss1p",
+  "kedinin":"kedi nin=gen",
+  "kediye":"kedi ye=dat",
+  "kendimi":"kendi m=poss1s i=acc",
+  "kendinizi":"kendi niz=poss2p i=acc",
+  "kepekli":"kepek li=li",
+  "kilitledin":"kilitle=kilitlemek di=past n=v2s",
+  "kilosu":"kilo su=poss3s",
+  "kimi":"kim i=acc",
+  "kimle":"kim le=ins",
+  "kimliğiniz":"kimliğ=kimlik iniz=poss2p",
+  "kişilik":"kişi lik=lik",
+  "konuşmuyorum":"konuş=konuşmak mu=neg yor=prog um=v1s",
+  "konuşur":"konuş=konuşmak ur=aor",
+  "konuşuruz":"konuş=konuşmak ur=aor uz=v1p",
+  "konuşuyorlar":"konuş=konuşmak uyor=prog lar=v3p",
+  "konuşuyorsun":"konuş=konuşmak uyor=prog sun=v2s",
+  "korkma":"kork=korkmak ma=neg",
+  "koyma":"koy=koymak ma=neg",
+  "koymadık":"koy=koymak ma=neg dı=past k=v1p",
+  "koyuyor":"koy=koymak uyor=prog",
+  "kullanabilir":"kullan=kullanmak abil=can ir=aor",
+  "kusura":"kusur a=dat",
+  "köpekten":"köpek ten=abl",
+  "köyde":"köy de=loc",
+  "köşesi":"köşe si=poss3s",
+  "kızıyor":"kız=kızmak ıyor=prog",
+  "lezzetli":"lezzet li=li",
+  "lezzetliydi":"lezzetli ydi=cpast",
+  "lezzetliymiş":"lezzet li=li y=by miş=evid",
+  "maaşta":"maaş ta=loc",
+  "maaşımı":"maaş ım=poss1s ı=acc",
+  "mamadan":"mama dan=abl",
+  "maması":"mama sı=poss3s",
+  "markadan":"marka dan=abl",
+  "markayı":"marka yı=acc",
+  "martılar":"martı lar=pl",
+  "martılara":"martı lar=pl a=dat",
+  "maçtı":"maç tı=cpast",
+  "maçı":"maç ı=acc",
+  "memnunum":"memnun um=cop1s",
+  "menüyü":"menü yü=acc",
+  "metroyla":"metro yla=ins",
+  "meydana":"meydan a=dat",
+  "meydanı":"meydan ı=poss3s",
+  "meydanına":"meydan ı=poss3s n=bn a=dat",
+  "midem":"mide m=poss1s",
+  "misin":"mi=q sin=cop2s",
+  "misiniz":"mi=q siniz=cop2p",
+  "miyim":"mi=q yim=cop1s",
+  "muhtarlık":"muhtar lık=lik",
+  "musun":"mu=q sun=cop2s",
+  "musunuz":"mu=q sunuz=cop2p",
+  "müsünüz":"mü=q sünüz=cop2p",
+  "mısın":"mı=q sın=cop2s",
+  "mısınız":"mı=q sınız=cop2p",
+  "mıydı":"mı=q ydı=cpast",
+  "nasıldı":"nasıl dı=cpast",
+  "nasılsın":"nasıl sın=cop2s",
+  "nasılsınız":"nasıl sınız=cop2p",
+  "nedir":"ne dir=cop3",
+  "nerede":"nere de=loc",
+  "nereden":"nere den=abl",
+  "neredesin":"nere de=loc sin=cop2s",
+  "neredeyiz":"nere de=loc yiz=cop1p",
+  "nerelisin":"nere li=li sin=cop2s",
+  "neresi":"nere si=poss3s",
+  "nereye":"nere ye=dat",
+  "neyiniz":"ne yiniz=poss2p",
+  "numarası":"numara sı=poss3s",
+  "nöbetçi":"nöbet çi=ci",
+  "odada":"oda da=loc",
+  "odama":"oda m=poss1s a=dat",
+  "odanız":"oda nız=poss2p",
+  "odanızı":"oda nız=poss2p ı=acc",
+  "odayı":"oda yı=acc",
+  "okula":"okul a=dat",
+  "okulda":"okul da=loc",
+  "okutun":"oku=okumak t=caus un=imp2p",
+  "okuyacağım":"oku=okumak yacağ=fut ım=v1s",
+  "olabilir":"ol=olmak abil=can ir=aor",
+  "olacak":"ol=olmak acak=fut",
+  "olan":"ol=olmak an=part",
+  "olanı":"ol=olmak an=part ı=acc",
+  "olayım":"ol=olmak ayım=opt1s",
+  "oldu":"ol=olmak du=past",
+  "oldum":"ol=olmak du=past m=v1s",
+  "olmasın":"ol=olmak ma=neg sın=imp3s",
+  "olmaz":"ol=olmak maz=negaor",
+  "olsun":"ol=olmak sun=imp3s",
+  "olun":"ol=olmak un=imp2p",
+  "olur":"ol=olmak ur=aor",
+  "olursa":"ol=olmak ur=aor sa=cond",
+  "onu":"o n=bn u=acc",
+  "orada":"ora da=loc",
+  "orası":"ora sı=poss3s",
+  "oraya":"ora ya=dat",
+  "ortada":"orta da=loc",
+  "otobüsü":"otobüs ü=acc",
+  "oturacağım":"otur=oturmak acağ=fut ım=v1s",
+  "oturun":"otur=oturmak un=imp2p",
+  "oturuyorsunuz":"otur=oturmak uyor=prog sunuz=v2p",
+  "oynadı":"oyna=oynamak dı=past",
+  "oynar":"oyna=oynamak r=aor",
+  "pahalı":"paha lı=li",
+  "pahalıdır":"pahalı dır=cop3",
+  "pahalısı":"pahalı sı=poss3s",
+  "pahalısını":"pahalı sı=poss3s n=bn ı=acc",
+  "param":"para m=poss1s",
+  "paran":"para n=poss2s",
+  "paranız":"para nız=poss2p",
+  "parayı":"para yı=acc",
+  "pasaportum":"pasaport um=poss1s",
+  "pazara":"pazar a=dat",
+  "peyniri":"peynir i=acc",
+  "rahatsız":"rahat sız=siz",
+  "randevunuz":"randevu nuz=poss2p",
+  "rengi":"reng=renk i=poss3s",
+  "rezervasyonum":"rezervasyon um=poss1s",
+  "reçetem":"reçete m=poss1s",
+  "reçeteniz":"reçete niz=poss2p",
+  "reçeteye":"reçete ye=dat",
+  "ricam":"rica m=poss1s",
+  "rusyalıyım":"rusya lı=li yım=cop1s",
+  "rusça":"rus ça=ca",
+  "saate":"saat e=dat",
+  "saati":"saat i=poss3s",
+  "sakalı":"sakal ı=acc",
+  "sana":"san=sen a=dat",
+  "sayacını":"sayac=sayaç ı=poss3s n=bn ı=acc",
+  "sağa":"sağ a=dat",
+  "sağlığım":"sağlığ=sağlık ım=poss1s",
+  "seni":"sen i=acc",
+  "senin":"sen in=gen",
+  "sessiz":"ses siz=siz",
+  "sever":"sev=sevmek er=aor",
+  "sevmem":"sev=sevmek me=neg m=v1s",
+  "sevmiyor":"sev=sevmek mi=neg yor=prog",
+  "sevmiyorum":"sev=sevmek mi=neg yor=prog um=v1s",
+  "sizde":"siz de=loc",
+  "size":"siz e=dat",
+  "sizi":"siz i=acc",
+  "sizin":"siz in=gen",
+  "sokaktan":"sokak tan=abl",
+  "sola":"sol a=dat",
+  "sonları":"son lar=pl ı=poss3s",
+  "sonucu":"sonuc=sonuç u=poss3s",
+  "sormak":"sor=sormak mak=inf",
+  "soruyordum":"sor=sormak uyor=prog du=cpast m=v1s",
+  "soruyu":"soru yu=acc",
+  "sularınız":"su lar=pl ınız=poss2p",
+  "susamlı":"susam lı=li",
+  "suyu":"su yu=poss3s",
+  "suyunuz":"su yunuz=poss2p",
+  "söyler":"söyle=söylemek r=aor",
+  "söylerim":"söyle=söylemek r=aor im=v1s",
+  "sürer":"sür=sürmek er=aor",
+  "sırada":"sıra da=loc",
+  "sıradaki":"sıra da=loc ki=ki",
+  "tadı":"tad=tat ı=poss3s",
+  "tadına":"tad=tat ı=poss3s n=bn a=dat",
+  "taksimde":"taksim de=loc",
+  "taksime":"taksim e=dat",
+  "taksimetreyi":"taksimetre yi=acc",
+  "taksimin":"taksim in=gen",
+  "takımlısın":"takım lı=li sın=cop2s",
+  "tanıyorum":"tanı=tanımak yor=prog um=v1s",
+  "tarafta":"taraf ta=loc",
+  "taraftan":"taraf tan=abl",
+  "tavuklu":"tavuk lu=li",
+  "taşındım":"taşın=taşınmak dı=past m=v1s",
+  "tebrikler":"tebrik ler=pl",
+  "tedavisi":"tedavi si=poss3s",
+  "telefonum":"telefon um=poss1s",
+  "telefonunuz":"telefon unuz=poss2p",
+  "temassız":"temas sız=siz",
+  "temizlenmedi":"temizle=temizlemek n=pass me=neg di=past",
+  "teşekkürler":"teşekkür ler=pl",
+  "tokum":"tok um=cop1s",
+  "trene":"tren e=dat",
+  "treni":"tren i=acc",
+  "tutsak":"tut=tutmak sa=cond k=v1p",
+  "tutun":"tut=tutmak un=imp2p",
+  "tuvaletiniz":"tuvalet iniz=poss2p",
+  "türkçe":"türk çe=ca",
+  "türkçesi":"türk çe=ca si=poss3s",
+  "ucuzu":"ucuz u=poss3s",
+  "umarım":"um=ummak ar=aor ım=v1s",
+  "uzaklıkta":"uzak lık=lik ta=loc",
+  "uzaktan":"uzak tan=abl",
+  "vaktim":"vakt=vakit im=poss1s",
+  "vapuru":"vapur u=poss3s",
+  "vardı":"var dı=cpast",
+  "varız":"var ız=cop1p",
+  "veganım":"vegan ım=cop1s",
+  "vereceğim":"ver=vermek eceğ=fut im=v1s",
+  "verelim":"ver=vermek elim=opt1p",
+  "vereyim":"ver=vermek eyim=opt1s",
+  "verin":"ver=vermek in=imp2p",
+  "verir":"ver=vermek ir=aor",
+  "verirsin":"ver=vermek ir=aor sin=v2s",
+  "vermeye":"ver=vermek me=vn ye=dat",
+  "yanında":"yan ı=poss3s n=bn da=loc",
+  "yanınızda":"yan ınız=poss2p da=loc",
+  "yapalım":"yap=yapmak alım=opt1p",
+  "yapar":"yap=yapmak ar=aor",
+  "yapayım":"yap=yapmak ayım=opt1s",
+  "yapmak":"yap=yapmak mak=inf",
+  "yaptım":"yap=yapmak tı=past m=v1s",
+  "yaptın":"yap=yapmak tı=past n=v2s",
+  "yapılır":"yap=yapmak ıl=pass ır=aor",
+  "yapıyorsun":"yap=yapmak ıyor=prog sun=v2s",
+  "yaralanan":"yaralan=yaralanmak an=part",
+  "yardımcı":"yardım cı=ci",
+  "yatıyor":"yat=yatmak ıyor=prog",
+  "yazıyorum":"yaz=yazmak ıyor=prog um=v1s",
+  "yağacak":"yağ=yağmak acak=fut",
+  "yağıyor":"yağ=yağmak ıyor=prog",
+  "yaşında":"yaş ı=poss3s n=bn da=loc",
+  "yaşındasın":"yaş ı=poss3s n=bn da=loc sın=cop2s",
+  "yaşıyorsun":"yaş=yaşamak ıyor=prog sun=v2s",
+  "yaşıyorum":"yaş=yaşamak ıyor=prog um=v1s",
+  "yedim":"ye=ye- di=past m=v1s",
+  "yedin":"ye=ye- di=past n=v2s",
+  "yemedim":"ye=ye- me=neg di=past m=v1s",
+  "yemekte":"yemek te=loc",
+  "yemeğe":"yemeğ=yemek e=dat",
+  "yemiyorum":"ye=ye- mi=neg yor=prog um=v1s",
+  "yenikapıya":"yenikapı ya=dat",
+  "yer":"ye=ye- r=aor",
+  "yerde":"yer de=loc",
+  "yere":"yer e=dat",
+  "yerin":"yer in=poss2s",
+  "yerinde":"yer i=poss3s n=bn de=loc",
+  "yersiniz":"ye=ye- r=aor siniz=v2p",
+  "yiyelim":"yi=ye- yelim=opt1p",
+  "yoktur":"yok tur=cop3",
+  "yolda":"yol da=loc",
+  "yolladı":"yolla=yollamak dı=past",
+  "yorgunum":"yorgun um=cop1s",
+  "yoğunum":"yoğun um=cop1s",
+  "yükler":"yükle=yüklemek r=aor",
+  "yükleyebilirim":"yükle=yüklemek yebil=can ir=aor im=v1s",
+  "zamana":"zaman a=dat",
+  "zamanki":"zaman ki=ki",
+  "çalındı":"çal=çalmak ın=pass dı=past",
+  "çalışmıyor":"çalış=çalışmak mı=neg yor=prog",
+  "çalışıyorsunuz":"çalış=çalışmak ıyor=prog sunuz=v2p",
+  "çalışıyorum":"çalış=çalışmak ıyor=prog um=v1s",
+  "çantam":"çanta m=poss1s",
+  "çantama":"çanta m=poss1s a=dat",
+  "çaya":"çay a=dat",
+  "çağırayım":"çağır=çağırmak ayım=opt1s",
+  "çağırsın":"çağır=çağırmak sın=imp3s",
+  "çağırın":"çağır=çağırmak ın=imp2p",
+  "çağırır":"çağır=çağırmak ır=aor",
+  "çeker":"çek=çekmek er=aor",
+  "çocuklar":"çocuk lar=pl",
+  "çorbası":"çorba sı=poss3s",
+  "çıkalım":"çık=çıkmak alım=opt1p",
+  "çıkmadık":"çık=çıkmak ma=neg dı=past k=v1p",
+  "çıktı":"çık=çıkmak tı=past",
+  "ödemek":"öde=ödemek mek=inf",
+  "öderim":"öde=ödemek r=aor im=v1s",
+  "ödersin":"öde=ödemek r=aor sin=v2s",
+  "ödeyebilir":"öde=ödemek yebil=can ir=aor",
+  "ödeyeceksiniz":"öde=ödemek yecek=fut siniz=v2p",
+  "öne":"ön e=dat",
+  "önemli":"önem li=li",
+  "önünde":"ön ü=poss3s n=bn de=loc",
+  "önüne":"ön ü=poss3s n=bn e=dat",
+  "özüre":"özür e=dat",
+  "öğreniyorum":"öğren=öğrenmek iyor=prog um=v1s",
+  "öğretir":"öğret=öğretmek ir=aor",
+  "üsküdara":"üsküdar a=dat",
+  "üstü":"üst ü=poss3s",
+  "üzüldüm":"üz=üzmek ül=pass dü=past m=v1s",
+  "üçüncü":"üç üncü=nci",
+  "üşümüyor":"üşü=üşümek mü=neg yor=prog",
+  "ıslanırım":"ıslan=ıslanmak ır=aor ım=v1s",
+  "ısırmaz":"ısır=ısırmak maz=negaor",
+  "şekerli":"şeker li=li",
+  "şekersiz":"şeker siz=siz",
+  "şemsiyen":"şemsiye n=poss2s",
+  "şeyi":"şey i=acc",
+  "şeyim":"şey im=poss1s",
+  "şifresi":"şifre si=poss3s",
+  "şikayetimiz":"şikayet imiz=poss1p",
+  "şikâyetiniz":"şikâyet iniz=poss2p",
+  "şişesi":"şişe si=poss3s",
+  "şuna":"şu n=bn a=dat"
+};
+// </MORPH-DATA>
 function wordGloss(raw){
   const k = nphr(raw); if(!k) return null;
   const lemma = PHRASE_FORMS.get(k) || (PHRASE_DICT[raw] ? raw : Object.keys(PHRASE_DICT).find(l => nphr(l) === k));
@@ -5574,23 +6464,24 @@ let wdTok = 0, wdTimer = 0;
 // Перевод слова — всплывающая подсказка поверх экрана (fixed): раскладку она не двигает (жалоба: «фраза скачет» — строка перевода
 // меняла высоту, и вся карточка пересчитывалась) и работает везде, где есть турецкий текст: Фразы, Память, Город, чат.
 function wordPopHide(){ const pop = $("wordPop"); if(pop){ pop.hidden = true; } clearTimeout(wdTimer); document.querySelectorAll(".wd.on").forEach(e => e.classList.remove("on")); }
-function wordPopShow(el, html){
+function wordPopShow(el, html, ms){
   const pop = $("wordPop"); pop.innerHTML = html; pop.hidden = false;
   const r = el.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight, vw = innerWidth, vh = innerHeight;
   const left = Math.max(12, Math.min(vw - w - 12, r.left + r.width / 2 - w / 2));
   let top = r.bottom + 6; if(top + h > vh - 8) top = Math.max(8, r.top - h - 6);
   pop.style.left = left + "px"; pop.style.top = top + "px";
-  clearTimeout(wdTimer); wdTimer = setTimeout(wordPopHide, 7000);
+  clearTimeout(wdTimer); wdTimer = setTimeout(wordPopHide, ms || 7000);
 }
 async function wordTap(raw, el){
   const word = raw.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, ""), key = nphr(word); if(!key) return;
-  const it = item, tok = ++wdTok, g = wordGloss(word), box = el.closest(".wds") || el.parentElement;
+  const it = item, tok = ++wdTok, g = wordGloss(word), mo = morphOf(word), box = el.closest(".wds") || el.parentElement;
   document.querySelectorAll(".wd.on").forEach(s => s.classList.remove("on"));
   box.querySelectorAll(".wd").forEach(s => s.classList.toggle("on", nphr(s.dataset.w) === key));
   const show = src => { if(!el.isConnected) return;
     const line = g ? `<b lang="tr" translate="no">«${esc(word)}»</b> — ${esc(g.ctx)}${g.lemma ? ` <span class="wd-lemma">· <span lang="tr" translate="no">${esc(g.lemma)}</span>: ${esc(g.ru)}</span>` : ""}`
+      : mo ? `<b lang="tr" translate="no">«${esc(word)}»</b> — ${esc(morphMeaning(mo))} <span class="wd-lemma">(значение собрано по частям)</span>`
       : `<b lang="tr" translate="no">«${esc(word)}»</b> — отдельного перевода нет; смысл — в переводе фразы.`;
-    wordPopShow(el, `<span class="wd-line">${line}${src ? ` <span class="wd-src">${src}</span>` : ""}</span>`); };
+    wordPopShow(el, `<span class="wd-line">${line}${src ? ` <span class="wd-src">${src}</span>` : ""}</span>${mo ? morphBlock(mo) : ""}`, mo ? 12000 : 0); };
   show("");
   // звук: запись носителя этого слова (Common Voice, Tatoeba, Commons — не дольше 1,5 с), иначе синтез с пометкой
   let recs = null; try { recs = await Promise.race([findRecordings(word), new Promise(z => setTimeout(() => z(null), 1500))]); } catch(e){}
@@ -5605,8 +6496,466 @@ document.addEventListener("click", e => {
   e.preventDefault(); e.stopPropagation(); wordTap(s.dataset.w, s);
 }, true);
 document.addEventListener("keydown", e => { if(e.key === "Escape") wordPopHide(); });
-const MODES = ["city","memory","phrases","listen","free","progress"];
-const TRAIN = ["phrases","listen","free"];           // раздел «Тренировка» объединяет прежние четыре вкладки
+// <GRAMMAR-RULES> правила и упражнения; {слово} — турецкое (жирным), остальное — по-русски
+const GRAMMAR = [
+{ id:"harmony", grp:"Основа", t:"Гармония гласных", lead:"Окончание подстраивается под последнюю гласную слова",
+  txt:["В турецком смысл даёт окончание, а его гласная зависит от последней гласной корня. Поэтому одно и то же окончание выглядит по-разному: {evde} (дома), но {okulda} (в школе).",
+       "Двухвариантные окончания (a / e): {-lar/-ler}, {-da/-de}, {-dan/-den}, {-a/-e}. После a, ı, o, u ставится «a», после e, i, ö, ü ставится «e».",
+       "Четырёхвариантные (ı / i / u / ü): {-ı}, {-ım}, {-dı}. После a, ı — «ı»; после e, i — «i»; после o, u — «u»; после ö, ü — «ü».",
+       "Согласные: после глухих (ç, f, h, k, p, s, ş, t) начало окончания глохнет: {-da} → {-ta}, {-dan} → {-tan}, {-dı} → {-tı}: {sokakta}, {yaptım}. А последние p, ç, t, k перед гласной часто звонкие: {kitap} → {kitabı}, {git-} → {gidiyor}, {ayak} → {ayağı}."],
+  tbl:{ head:["Последняя гласная","2 варианта","4 варианта","Пример"], rows:[
+    ["a","a","ı","{araba} — {arabalar}, {arabayı}"],["ı","a","ı","{kapı} — {kapılar}, {kapıyı}"],
+    ["o","a","u","{doktor} — {doktorlar}, {doktoru}"],["u","a","u","{okul} — {okullar}, {okulu}"],
+    ["e","e","i","{ev} — {evler}, {evi}"],["i","e","i","{kedi} — {kediler}, {kediyi}"],
+    ["ö","e","ü","{göz} — {gözler}, {gözü}"],["ü","e","ü","{gün} — {günler}, {günü}"]] },
+  ex:[
+    { q:"Где? Слово {ev} + окончание места:", o:["evda","evde","evdı","evdi"], a:1, w:"Последняя гласная e → двухвариантное окончание берёт «e»: {evde}." },
+    { q:"Школы: {okul} + мн. число", o:["okuller","okullar","okulular","okulüler"], a:1, w:"Последняя гласная u → «a»: {okullar}." },
+    { q:"Врача (кого?): {doktor} + вин. падеж", o:["doktoru","doktori","doktorü","doktorı"], a:0, w:"Последняя гласная o → четырёхвариантное окончание берёт «u»: {doktoru}." },
+    { q:"Книгу (вин. падеж): {kitap} + окончание", o:["kitapı","kitabı","kitapi","kitabi"], a:1, w:"Конечное p перед гласной становится b, гласная — по гармонии (a → ı): {kitabı}." },
+    { q:"С улицы (откуда?): {sokak} + окончание", o:["sokakdan","sokaktan","sokakden","sokakten"], a:1, w:"После глухой «k» окончание начинается с «t», гласная a → «a»: {sokaktan}." },
+    { q:"Коты: {kedi} + мн. число", o:["kediler","kedilar","kedılar","kedüler"], a:0, w:"Последняя гласная i → «e»: {kediler}." } ] },
+
+{ id:"qwords", grp:"Основа", t:"Вопросительные слова", lead:"Что, кто, где, куда, откуда, как, сколько",
+  txt:["Вопросительное слово ставится на то место, где в ответе будет нужное слово — обычно перед глаголом: {Bu ne?} — Что это? {Siz kimsiniz?} — Кто вы?",
+       "{Nere} — «какое место» — берёт те же окончания, что и любое слово: {nerede} (где?), {nereye} (куда?), {nereden} (откуда?). Так же образуются {burada / buraya / buradan} и {orada / oraya / oradan}.",
+       "Остальное запоминается целиком: {ne} что, {kim} кто, {nasıl} как, {kaç} сколько, {hangi} какой, {neden} почему, {ne zaman} когда, {kaçta} во сколько."],
+  tbl:{ head:["Слово","Значение","Пример"], rows:[
+    ["{ne}","что","{Bu ne?} — Что это?"],["{kim}","кто","{Kim o?} — Кто это?"],["{nerede}","где","{Tuvalet nerede?} — Где туалет?"],
+    ["{nereye}","куда","{Nereye gidiyorsunuz?} — Куда вы едете?"],["{nereden}","откуда","{Nereden geliyorsun?} — Откуда ты?"],
+    ["{nasıl}","как","{Nasılsınız?} — Как вы?"],["{kaç}","сколько","{Kaç lira?} — Сколько лир?"],["{hangi}","какой","{Hangi otobüs?} — Какой автобус?"]] },
+  ex:[
+    { q:"Где?", o:["Nerede","Nereye","Nereden","Nasıl"], a:0, w:"{nere} + {-de} — место, где: {nerede}." },
+    { q:"Куда?", o:["Nerede","Nereye","Nereden","Kaç"], a:1, w:"{nere} + {-ye} (куда?): {nereye}." },
+    { q:"Откуда?", o:["Nereden","Nereye","Neden","Nerede"], a:0, w:"{nere} + {-den} (откуда?): {nereden}. А {neden} — «почему»." },
+    { q:"Сколько?", o:["Nasıl","Kaç","Kim","Hangi"], a:1, w:"{kaç} — сколько: {Kaç lira?} — Сколько лир?" },
+    { q:"Как?", o:["Nasıl","Neden","Nerede","Kim"], a:0, w:"{nasıl} — как: {Nasılsınız?}" },
+    { q:"Когда?", o:["Ne zaman","Nerede","Nasıl","Neden"], a:0, w:"{ne zaman} — когда: {Ne zaman gidiyoruz?}" } ] },
+
+{ id:"plural", grp:"Существительные", t:"Множественное число", lead:"-lar после a, ı, o, u; -ler после e, i, ö, ü",
+  txt:["Множественное число — окончание {-lar} или {-ler} (по гармонии гласных): {çocuk — çocuklar} (дети), {ev — evler} (дома).",
+       "После числа и слов «сколько, много» существительное остаётся в единственном числе: {üç kedi} — три кота (а не «три коты»), {kaç kişi} — сколько человек.",
+       "К {-lar/-ler} дальше добавляются остальные окончания: {martı-lar-a} — чайкам, {bilet-ler-i} — билеты (вин. падеж)."],
+  tbl:{ head:["Окончание","Когда","Пример"], rows:[
+    ["{-lar}","после a, ı, o, u","{çocuk-lar} — дети; {ayakkabı-lar} — обувь"],["{-ler}","после e, i, ö, ü","{ev-ler} — дома; {bilet-ler} — билеты"],
+    ["число + ед. ч.","после числа","{üç kedi} — три кота; {iki bilet} — два билета"]] },
+  ex:[
+    { q:"Три кота:", o:["üç kedi","üç kediler"], a:0, w:"После числа существительное стоит в единственном числе: {üç kedi}." },
+    { q:"Билеты: {bilet} + мн. число", o:["biletlar","biletler"], a:1, w:"Последняя гласная e → «e»: {biletler}." },
+    { q:"Дети: {çocuk} + мн. число", o:["çocuklar","çocukler"], a:0, w:"Последняя гласная u → «a»: {çocuklar}." },
+    { q:"Обувь (пары): {ayakkabı} + мн. число", o:["ayakkabıler","ayakkabılar"], a:1, w:"Последняя гласная ı → «a»: {ayakkabılar}." },
+    { q:"Два билета:", o:["iki biletler","iki bilet"], a:1, w:"После числа — единственное число: {iki bilet}." } ] },
+
+{ id:"poss", grp:"Существительные", t:"Притяжательные: мой, твой, ваш", lead:"-ım, -ın, -ı, -ımız, -ınız: принадлежность в конце слова",
+  txt:["Принадлежность выражается окончанием на самом слове: {oda} — комната, {odam} — моя комната, {odanız} — ваша комната. Отдельного слова «мой, ваш» не нужно.",
+       "После гласной окончание короче ({oda-m}, {kedi-miz}), после согласной — с гласной ({arkadaş-ım}, {pasaport-um}); гласная — по гармонии.",
+       "Окончание «его, её» ({-ı/-si}) работает и как связка «чего-то»: {kedi maması} — корм кота, {Kadıköy vapuru} — паром Кадыкёй.",
+       "После такого окончания и падеж ставится с буфером {-n-}: {odası-n-da} — в его комнате."],
+  tbl:{ head:["Чей","После согласной","После гласной","Пример"], rows:[
+    ["мой","{-ım/-im/-um/-üm}","{-m}","{arkadaş-ım}, {anne-m}"],["твой","{-ın/-in/-un/-ün}","{-n}","{arkadaş-ın}, {anne-n}"],
+    ["его, её","{-ı/-i/-u/-ü}","{-sı/-si}","{ad-ı}, {oda-sı}"],["наш","{-ımız/-imiz…}","{-mız/-miz}","{ev-imiz}, {kedi-miz}"],
+    ["ваш","{-ınız/-iniz…}","{-nız/-niz}","{ad-ınız}, {oda-nız}"],["их","{-ları/-leri}","{-ları/-leri}","{oda-ları}"]] },
+  ex:[
+    { q:"Моя комната: {oda} + …", o:["odam","odem","odanız","odası"], a:0, w:"После гласной «мой» — {-m}: {odam}." },
+    { q:"Ваш номер: {numara} + …", o:["numaranız","numaram","numarası","numaramız"], a:0, w:"«Ваш» после гласной — {-nız}: {numaranız}." },
+    { q:"Наш кот: {kedi} + …", o:["kedim","kedimiz","kedisi","kedin"], a:1, w:"«Наш» после гласной — {-miz}: {kedimiz}." },
+    { q:"Твой друг: {arkadaş} + …", o:["arkadaşım","arkadaşın","arkadaşı","arkadaşınız"], a:1, w:"«Твой» после согласной — {-ın}: {arkadaşın}." },
+    { q:"Его паспорт: {pasaport} + …", o:["pasaportu","pasaportum","pasaportun","pasaportunuz"], a:0, w:"«Его» после согласной — {-u} (гармония o → u): {pasaportu}." },
+    { q:"Ваша цена: {fiyat} + …", o:["fiyatınız","fiyatım","fiyatı","fiyatımız"], a:0, w:"«Ваш» после согласной — {-ınız}: {fiyatınız}." } ] },
+
+{ id:"acc_dat", grp:"Существительные", t:"Кого? Что? Куда? — падежи -ı и -a", lead:"Винительный (что?) и дательный (куда? кому?)",
+  txt:["Винительный падеж — {-ı/-i/-u/-ü} (после гласной {-yı/-yi…}) — ставится на конкретный предмет, с которым что-то делают: {Kartı okutun} — приложите (эту) карту; {Parayı uzat} — протяни деньги.",
+       "Дательный падеж — {-a/-e} (после гласной {-ya/-ye}) — «куда?» и «кому?»: {Taksim'e gidiyorum} — еду на Таксим; {Bana verin} — дайте мне.",
+       "Если предмет неконкретный («хочу чай, купить хлеб вообще»), окончание не ставится: {Çay istiyorum}.",
+       "У местоимений формы особые: {ben — beni — bana}, {sen — seni — sana}, {o — onu — ona}, {biz — bizi — bize}, {siz — sizi — size}, {onlar — onları — onlara}."],
+  tbl:{ head:["Падеж","Вопрос","Окончание","Пример"], rows:[
+    ["винительный","кого? что?","{-ı/-i/-u/-ü} (после гласной {-yı…})","{bilet-i} — билет; {para-yı} — деньги"],
+    ["дательный","куда? кому?","{-a/-e} (после гласной {-ya/-ye})","{eve} — домой; {oda-ya} — в комнату"],
+    ["местоимения","","{beni/bana, seni/sana, onu/ona…}","{Bana verin} — дайте мне"]] },
+  ex:[
+    { q:"Еду на Таксим (куда?):", o:["Taksim'de","Taksim'e","Taksim'i","Taksim'den"], a:1, w:"«Куда?» — дательный падеж {-e}: {Taksim'e}." },
+    { q:"Дайте мне (кому? — мне):", o:["Beni verin","Bana verin","Benim verin","Bende verin"], a:1, w:"«Мне» — дательный от {ben}: {bana}." },
+    { q:"Вижу вас (кого?):", o:["Size görüyorum","Sizi görüyorum","Sizde görüyorum","Sizin görüyorum"], a:1, w:"«Вас» как предмет действия — винительный {sizi}." },
+    { q:"Иду на площадь (куда?): {meydan} + …", o:["meydanı","meydana","meydanda","meydandan"], a:1, w:"«Куда?» — {-a}: {meydana}." },
+    { q:"Я беру билет (конкретный):", o:["Bileti alıyorum","Bilete alıyorum","Biletten alıyorum","Biletle alıyorum"], a:0, w:"Конкретный предмет действия — винительный {-i}: {bileti}." },
+    { q:"Позвони мне:", o:["Beni ara","Bana ara","Benim ara","Bende ara"], a:0, w:"Глагол {ara-} («звонить, искать») берёт винительный: {beni ara}." } ] },
+
+{ id:"cases_buffer", grp:"Существительные", t:"Соединительные -y- и -n-", lead:"Две гласные подряд не стоят: между ними вставляется согласная",
+  txt:["Если слово кончается на гласную и окончание начинается с гласной, между ними вставляется {-y-}: {oda-y-a} — в комнату, {kedi-y-i} — кота, {araba-y-ı} — машину.",
+       "После окончания «его, её» ({-sı}) и у местоимений {o, bu, şu} перед падежным окончанием вставляется {-n-}: {oda-sı-n-da} — в его комнате; {o-n-a} — ему; {bu-n-u} — это (вин. падеж); {şu-n-a} — вот этому.",
+       "Эти буквы — не отдельные слова: просто «склейка». Увидев {-ya, -yı, -nda, -na}, ищите её между частями."],
+  tbl:{ head:["Склейка","Где","Пример"], rows:[
+    ["{-y-}","между двумя гласными","{oda-y-a}, {para-y-ı}, {taksimetre-y-i}"],
+    ["{-n-}","после {-sı/-si} + падеж","{iskele-si-n-e} — к его причалу, {yeri-n-de} — на его месте"],
+    ["{-n-}","у {o, bu, şu}","{o-n-a}, {bu-n-u}, {şu-n-a}"]] },
+  ex:[
+    { q:"В комнату (куда?): {oda} + …", o:["odaa","odaya","odana","odaye"], a:1, w:"Гласная + гласная — вставляется {-y-}: {oda-y-a}." },
+    { q:"Ему (кому?): {o} + …", o:["oa","oya","ona","oye"], a:2, w:"У местоимения {o} перед падежом вставляется {-n-}: {o-n-a}." },
+    { q:"Это (вин. падеж): {bu} + …", o:["buyu","bunu","buyı","bunı"], a:1, w:"У {bu} — {-n-} и гармония (u → u): {bu-n-u}." },
+    { q:"В его комнате: {odası} + место", o:["odasında","odasıda","odasıyda","odasıden"], a:0, w:"После {-sı} вставляется {-n-}: {oda-sı-n-da}." },
+    { q:"Кота (вин. падеж): {kedi} + …", o:["kediı","kediyi","kediyı","kediy"], a:1, w:"Гласная + гласная — {-y-}: {kedi-y-i}." } ] },
+
+{ id:"loc_abl", grp:"Существительные", t:"Где? Откуда? — -da и -dan", lead:"-da — место, -dan — откуда",
+  txt:["Местный падеж {-da/-de} (после глухих {-ta/-te}) отвечает на вопрос «где?»: {evde} — дома, {Kadıköy'de} — в Кадыкёе, {durakta} — на остановке.",
+       "Исходный падеж {-dan/-den} (после глухих {-tan/-ten}) — «откуда?»: {evden} — из дома, {Rusya'dan} — из России, {sokaktan} — с улицы. Ещё он значит «через/от»: {birazdan} — через минуту.",
+       "Три вопроса места: {nerede?} — где, {nereye?} — куда, {nereden?} — откуда. Им соответствуют окончания {-de}, {-e}, {-den}."],
+  tbl:{ head:["Окончание","Вопрос","Пример"], rows:[
+    ["{-da/-de}","где? (в, на, у)","{ev-de} — дома; {oda-da} — в комнате"],["{-ta/-te}","после глухих ç f h k p s ş t","{sokak-ta} — на улице; {durak-ta} — на остановке"],
+    ["{-dan/-den}","откуда? (из, от, с)","{ev-den} — из дома; {Rusya'-dan} — из России"],["{-tan/-ten}","после глухих","{sokak-tan} — с улицы; {kart-tan} — с карты"]] },
+  ex:[
+    { q:"Я из России:", o:["Rusya'dan","Rusya'da","Rusya'ya","Rusya'yı"], a:0, w:"«Откуда?» — исходный падеж: {Rusya'dan}." },
+    { q:"На остановке: {durak} + …", o:["durakda","durakta","durakdan","duraktan"], a:1, w:"После глухой «k» — {-ta}, значение «где?»: {durakta}." },
+    { q:"Я в Стамбуле:", o:["İstanbul'da","İstanbul'a","İstanbul'dan","İstanbul'u"], a:0, w:"«Где?» — местный падеж {-da}: {İstanbul'da}." },
+    { q:"Выхожу из дома: {ev} + …", o:["evde","evden","eve","evi"], a:1, w:"«Откуда?» — {-den}: {evden}." },
+    { q:"Что значит {birazdan}?", o:["через минуту, чуть позже","немного","дома","из России"], a:0, w:"{biraz} — немного, {-dan} — «через»: {birazdan} — чуть позже." } ] },
+
+{ id:"gen_ins", grp:"Существительные", t:"Чей? и С чем? — -ın и -la", lead:"Родительный: чей? Орудие и «вместе»: чем? с кем?",
+  txt:["Родительный падеж {-ın/-in/-un/-ün} (после гласной {-nın…}) — «чей?»: {Ali'nin evi} — дом Али. У владельца {-ın}, у предмета — «его» ({-i}): {hastane-nin yanında} — рядом с больницей.",
+       "Местоимения: {benim} — мой, {senin} — твой, {onun} — его, {bizim} — наш, {sizin} — ваш: {Benim değil} — это не моё.",
+       "Окончание {-la/-le} (то же, что слово {ile}) — «чем, на чём, с кем»: {kartla} — картой, {otobüsle} — на автобусе, {benimle} — со мной, {sizinle} — с вами."],
+  tbl:{ head:["Окончание","Значение","Пример"], rows:[
+    ["{-ın/-in/-un/-ün}","чей?","{Ali'nin} — Али; {hastane-nin} — больницы"],["{benim, senin, onun, bizim, sizin}","мой, твой, его, наш, ваш","{Sizin odanız} — ваша комната"],
+    ["{-la/-le} (после гласной {-yla/-yle})","чем? с кем?","{kart-la} — картой; {metro-yla} — на метро; {benimle} — со мной"]] },
+  ex:[
+    { q:"Картой (чем?): {kart} + …", o:["kartla","kartda","kartı","karta"], a:0, w:"«Чем» — {-la}: {kartla}." },
+    { q:"На автобусе: {otobüs} + …", o:["otobüsle","otobüsla","otobüsde","otobüsü"], a:0, w:"Последняя гласная ü → «e»: {otobüsle}." },
+    { q:"Дом Али:", o:["Ali'nin evi","Ali'ya evi","Ali'de evi","Ali'yi evi"], a:0, w:"Владелец — родительный {-nin}, «дом» — с «его» {-i}: {Ali'nin evi}." },
+    { q:"Родительный падеж слова {hastane} (больница):", o:["hastanenin","hastaneyin","hastaneyi","hastanede"], a:0, w:"После гласной родительный — {-nin}: {hastanenin} ({hastanenin yanında} — рядом с больницей)." },
+    { q:"Со мной:", o:["benimle","bende","bana","benden"], a:0, w:"{benim} (мой) + {-le}: {benimle}." } ] },
+
+{ id:"cop", grp:"Предложение", t:"«Быть»: я есть, был", lead:"В настоящем глагола нет — вместо него окончание на слове",
+  txt:["В настоящем времени глагола «быть» нет. К существительному или прилагательному прибавляется окончание лица: {iyi-yim} — я в порядке, {hasta-yım} — я болен, {memnun-um} — я рад, {nasıl-sın?} — как ты?, {iyi-siniz} — вы в порядке.",
+       "Для «он, она, это» окончания обычно нет: {Bu güzel} — это красиво. Книжное окончание {-dır/-dir} («является») в живой речи почти не встречается; вы услышите его в устойчивых словах вроде {Hayırdır?} — Что случилось?",
+       "Отрицание — слово {değil} + окончание лица: {iyi değilim} — мне нехорошо, {Bu pahalı değil} — это не дорого.",
+       "Прошедшее — {-ydı/-ydi} (после согласной {-dı/-di}): {evdeydim} — я был дома, {harikaydı} — было отлично. Перед ним ещё окончание лица: {evdeydim}."],
+  tbl:{ head:["Лицо","Окончание","Пример"], rows:[
+    ["я","{-(y)ım/-(y)im/-(y)um/-(y)üm}","{iyi-yim}, {hasta-yım}, {memnun-um}"],["ты","{-sın/-sin/-sun/-sün}","{iyi-sin}, {nasıl-sın}"],
+    ["он, она, это","—","{Bu güzel}"],["мы","{-(y)ız/-(y)iz…}","{iyi-yiz}"],["вы","{-sınız/-siniz…}","{iyi-siniz}, {daire-de-siniz} — вы в квартире"],
+    ["был(а)","{-ydı/-ydi}","{ev-de-ydi-m} — я был дома"]] },
+  ex:[
+    { q:"Я в порядке: {iyi} + …", o:["iyiyim","iyisin","iyiyiz","iyiydi"], a:0, w:"Я — {-(y)im}: после гласной {iyi-yim}." },
+    { q:"Вы в Стамбуле: {İstanbul'da} + …", o:["İstanbul'dasınız","İstanbul'dasın","İstanbul'dayım","İstanbul'dayız"], a:0, w:"«Вы» — {-sınız}: {İstanbul'dasınız}." },
+    { q:"Мне нехорошо (я не в порядке):", o:["iyi değilim","iyi değilsin","iyim değil","değilim iyi"], a:0, w:"{değil} + окончание лица, слова идут в таком порядке: {iyi değilim}." },
+    { q:"Я был дома: {evde} + …", o:["evdeydi","evdeyim","evdesin","evdeydim"], a:3, w:"{-ydi} («был») + {-m} («я»): {evdeydim}." },
+    { q:"Было отлично: {harika} + …", o:["harikaydı","harikayım","harikasın","harikalar"], a:0, w:"«Было» — {-ydı}: {harikaydı}." } ] },
+
+{ id:"question", grp:"Предложение", t:"Вопрос: mı / mi / mu / mü", lead:"Частица «ли?» пишется отдельно и ставится после нужного слова",
+  txt:["Вопрос без вопросительного слова — частица {mı/mi/mu/mü} («ли?») после слова, о котором спрашивают: {Hazır mı?} — готов? {Güzel mi?} — красиво?",
+       "Гласная — по последней гласной слова перед частицей: a, ı → {mı}; e, i → {mi}; o, u → {mu}; ö, ü → {mü}.",
+       "К частице добавляется окончание лица: {iyi misiniz?} — вы в порядке? {Müsait misiniz?} — вы свободны? {Anlıyor musunuz?} — вы понимаете?",
+       "С глаголом вопрос часто означает вежливую просьбу: {Yardım eder misiniz?} — не поможете? {Bakar mısınız?} — извините, можно вас?"],
+  tbl:{ head:["Частица","После гласной","Пример"], rows:[
+    ["{mı}","a, ı","{Hazır mı?} — готово?"],["{mi}","e, i","{Güzel mi?} — красиво?"],["{mu}","o, u","{Yok mu?} — нет?"],["{mü}","ö, ü","{Büyük mü?} — большой?"]] },
+  ex:[
+    { q:"Готов? {hazır} + …", o:["mi","mı","mu","mü"], a:1, w:"Последняя гласная ı → {mı}: {Hazır mı?}" },
+    { q:"Красиво? {güzel} + …", o:["mi","mı","mu","mü"], a:0, w:"Последняя гласная e → {mi}: {Güzel mi?}" },
+    { q:"Нет в наличии? {yok} + …", o:["mi","mı","mu","mü"], a:2, w:"Последняя гласная o → {mu}: {Yok mu?}" },
+    { q:"Большой? {büyük} + …", o:["mi","mı","mu","mü"], a:3, w:"Последняя гласная ü → {mü}: {Büyük mü?}" },
+    { q:"Вы в порядке? {iyi} + …", o:["mısınız","misiniz","musunuz","müsünüz"], a:1, w:"Последняя гласная i → {mi} + окончание «вы» {-siniz}: {iyi misiniz?}" } ] },
+
+{ id:"inf", grp:"Глаголы", t:"Инфинитив и «хочу, нужно»", lead:"Словарная форма на -mak/-mek; без -mak/-mek остаётся корень",
+  txt:["В словаре глагол стоит в форме на {-mak/-mek}: {gelmek} — приходить, {yapmak} — делать, {gitmek} — идти, {kalmak} — оставаться. Отбросьте {-mak/-mek} — получится корень: {gel-}, {yap-}, {git-}. К корню добавляются все остальные окончания.",
+       "Корень без окончаний — приказ «ты»: {Gel!} — приходи, {Bak!} — смотри.",
+       "«Хотеть» — {-mek istiyorum}: {gitmek istiyorum} — хочу пойти. «Нужно» — {-me + лицо} и слово {gerek}: {gitmem gerek} — мне нужно идти (буквально «моё идти — нужно»)."],
+  tbl:{ head:["Форма","После гласной","Пример"], rows:[
+    ["{-mak}","a, ı, o, u","{yap-mak}, {kal-mak}, {otur-mak}"],["{-mek}","e, i, ö, ü","{gel-mek}, {git-mek}, {gör-mek}"],
+    ["{-mek istiyorum}","хочу","{görmek istiyorum} — хочу увидеть"],["{-me-m gerek}","мне нужно","{gitmem gerek} — мне нужно идти"]] },
+  ex:[
+    { q:"Приходить: {gel} + …", o:["gelmak","gelmek","gelmeke","gelmik"], a:1, w:"Последняя гласная e → {-mek}: {gelmek}." },
+    { q:"Делать: {yap} + …", o:["yapmek","yapmak","yapmık","yapmuk"], a:1, w:"Последняя гласная a → {-mak}: {yapmak}." },
+    { q:"Хочу пойти:", o:["gitmek istiyorum","gitmak istiyorum","gitmek istiyor","gidmek istiyorum"], a:0, w:"{git-mek} (инфинитив) + {istiyorum} (хочу): {gitmek istiyorum}." },
+    { q:"Корень глагола {bakmak}:", o:["bak","bakm","bakma","bakmak"], a:0, w:"Отбросьте {-mak}: корень {bak-}." },
+    { q:"Мне нужно идти:", o:["gitmem gerek","gitmek gerek ben","gitme gerek","giderim gerek"], a:0, w:"{git-me-m} («моё идти») + {gerek} («нужно»): {gitmem gerek}." } ] },
+
+{ id:"prog", grp:"Глаголы", t:"Что делаю сейчас: -iyor", lead:"Корень + -(ı)yor + лицо",
+  txt:["Настоящее длительное: корень + {-(ı)yor} + окончание лица. {gel-iyor-um} — я иду/прихожу, {bekl-iyor-sunuz} — вы ждёте, {konuş-uyor-lar} — они разговаривают. Часто означает и ближайшее будущее.",
+       "Гласная перед {-yor} — по гармонии: {-ıyor, -iyor, -uyor, -üyor}: {yap-ıyor, gel-iyor, otur-uyor, gör-üyor}.",
+       "Если основа оканчивается на «a» или «e», эта гласная сужается: {bekle} → {bekliyor}, {ara} → {arıyor}, {söyle} → {söylüyor}. Если на другую гласную — просто {-yor}: {oku} → {okuyor}.",
+       "Конечные p, ç, t, k мягчают: {git-} → {gidiyor}, {et-} → {ediyor}."],
+  tbl:{ head:["Окончание","Основа","Пример"], rows:[
+    ["{-ıyor}","на согласную, a / ı","{yap-ıyor} — делает; {al-ıyor} — берёт"],["{-iyor}","на согласную, e / i","{gel-iyor} — приходит"],
+    ["{-uyor / -üyor}","o u / ö ü","{otur-uyor}, {gör-üyor}"],["сужение a/e","основа на гласную","{bekle → bekl-iyor}, {ara → ar-ıyor}"],["смягчение","git, et","{gid-iyor}, {ed-iyor}"]] },
+  ex:[
+    { q:"Я делаю: {yap} + …", o:["yapıyorum","yapiyorum","yapuyorum","yapüyorum"], a:0, w:"Последняя гласная a → {-ıyor}: {yap-ıyor-um}." },
+    { q:"Я вижу: {gör} + …", o:["görıyorum","görüyorum","göriyorum","görayorum"], a:1, w:"Последняя гласная ö → {-üyor}: {gör-üyor-um}." },
+    { q:"Он идёт сейчас: {git} + …", o:["gitiyor","gidiyor","gideyor","gidyor"], a:1, w:"{t} между гласными становится {d}: {gid-iyor}." },
+    { q:"Мы приходим: {gel} + …", o:["geliyoruz","gelıyoruz","geluyoruz","gelüyoruz"], a:0, w:"Последняя гласная e → {-iyor}, «мы» — {-uz}: {geliyoruz}." },
+    { q:"Он ждёт: {bekle} + …", o:["bekliyor","bekleiyor","beklayor","beklıyor"], a:0, w:"«e» на конце основы сужается и сливается: {bekl-iyor}." } ] },
+
+{ id:"person", grp:"Глаголы", t:"Кто делает: я, ты, мы, вы, они", lead:"Два набора окончаний лица: после -dı и после -yor, -ecek, -r",
+  txt:["Лицо ставится в самом конце глагола. Набор зависит от времени.",
+       "После прошедшего {-dı}: я {-m}, ты {-n}, мы {-k}, вы {-nız}: {geldim, geldin, geldik, geldiniz}. «Он» — без окончания: {geldi}; «они» — {geldiler}.",
+       "После {-yor}, {-ecek}, {-r}: я {-um/-ım}, ты {-sun/-sın}, мы {-uz/-ız}, вы {-sunuz/-sınız}: {gidiyorum, gidiyorsun, gidiyoruz, gidiyorsunuz}. «Он» — {gidiyor}, «они» — {gidiyorlar}.",
+       "Местоимения ({ben, sen, biz, siz}) в речи опускаются: лицо уже слышно в окончании."],
+  tbl:{ head:["Лицо","После -dı","После -yor / -ecek / -r"], rows:[
+    ["я","{-m} — {geldi-m}","{-(ı)m} — {geliyor-um}"],["ты","{-n} — {geldi-n}","{-sın/-sun…} — {geliyor-sun}"],["он, она","— {geldi}","— {geliyor}"],
+    ["мы","{-k} — {geldi-k}","{-(ı)z} — {geliyor-uz}"],["вы","{-nız} — {geldi-niz}","{-sınız} — {geliyor-sunuz}"],["они","{-ler} — {geldi-ler}","{-lar} — {geliyor-lar}"]] },
+  ex:[
+    { q:"Ты пришёл: {geldi} + …", o:["geldin","geldim","geldik","geldiniz"], a:0, w:"«Ты» после {-di} — {-n}: {geldin}." },
+    { q:"Мы идём: {gidiyor} + …", o:["gidiyoruz","gidiyorum","gidiyorsun","gidiyorlar"], a:0, w:"«Мы» после {-yor} — {-uz}: {gidiyoruz}." },
+    { q:"Вы ждёте: {bekliyor} + …", o:["bekliyorsunuz","bekliyorsun","bekliyoruz","bekliyorlar"], a:0, w:"«Вы» после {-yor} — {-sunuz}: {bekliyorsunuz}." },
+    { q:"Я заплатил: {ödedi} + …", o:["ödedim","ödedin","ödedik","ödediler"], a:0, w:"«Я» после {-di} — {-m}: {ödedim}." },
+    { q:"Они разговаривают: {konuşuyor} + …", o:["konuşuyorlar","konuşuyoruz","konuşuyorsun","konuşuyorum"], a:0, w:"«Они» — {-lar}: {konuşuyorlar}." } ] },
+
+{ id:"past", grp:"Глаголы", t:"Что сделал: -dı", lead:"Корень + -dı/-di/-du/-dü + лицо",
+  txt:["Прошедшее время: корень + {-dı/-di/-du/-dü} + лицо: {gel-di-m} — я пришёл, {bul-du-k} — мы нашли, {kal-dı} — остался. Гласная — по гармонии.",
+       "После глухих согласных (ç, f, h, k, p, s, ş, t) вместо «d» стоит «t»: {yap-tı-m} — я сделал, {git-ti} — ушёл, {art-tı} — вырос.",
+       "Отрицание — {-ma/-me} перед временем: {gel-me-di-m} — я не пришёл, {anla-ma-dı-m} — я не понял.",
+       "Есть и второе прошедшее {-mış/-miş} — «оказывается, говорят» и результат: {Geçmiş olsun} — выздоравливайте («пусть пройдёт»), {lezzetliymiş} — оказывается, вкусно."],
+  tbl:{ head:["Окончание","Когда","Пример"], rows:[
+    ["{-dı/-di/-du/-dü}","после гласных и звонких","{gel-di-m}, {bul-du-k}, {öde-di-m}"],["{-tı/-ti/-tu/-tü}","после глухих ç f h k p s ş t","{yap-tı-m}, {git-ti}, {bit-ti}"],
+    ["{-ma/-me} + время","отрицание","{gel-me-di-m} — не пришёл"],["{-mış/-miş}","оказывается","{geç-miş}, {lezzetli-ymiş}"]] },
+  ex:[
+    { q:"Я пришёл: {gel} + …", o:["geldim","geltim","geldum","geldım"], a:0, w:"После «l» (звонкая) — {-di}, гармония e → i: {gel-di-m}." },
+    { q:"Я сделал: {yap} + …", o:["yapdım","yaptım","yapdim","yaptim"], a:1, w:"После глухой «p» — {-tı}: {yap-tı-m}." },
+    { q:"Мы нашли: {bul} + …", o:["bulduk","bultuk","buldık","buldük"], a:0, w:"Последняя гласная u → {-du}, «мы» — {-k}: {bul-du-k}." },
+    { q:"Он ушёл: {git} + …", o:["gitdi","gitti","gittu","gittı"], a:1, w:"После глухой «t» — {-ti}: {git-ti}." },
+    { q:"Я не пришёл: {gel} + …", o:["gelmedim","gelmadım","geldmedim","gelmediim"], a:0, w:"Сначала отрицание {-me}, потом {-di}, потом {-m}: {gel-me-di-m}." } ] },
+
+{ id:"fut", grp:"Глаголы", t:"Что сделаю: -ecek", lead:"Корень + -(y)acak/-(y)ecek; перед окончанием лица k → ğ",
+  txt:["Будущее: корень + {-acak/-ecek} (после гласной {-yacak/-yecek}) + лицо: {gid-eceğ-im} — я пойду, {ol-acak} — будет, {yağ-acak} — пойдёт (дождь).",
+       "Перед окончаниями лица на гласную «k» смягчается в «ğ»: {gideceğim, gideceğiz} (я и мы). Без смягчения: {gideceksin, gideceksiniz} (ты, вы), {gidecek} (он).",
+       "Часто то же самое выражают настоящим временем: {Yarın gidiyorum} — завтра еду."],
+  tbl:{ head:["Лицо","Окончание","Пример"], rows:[
+    ["я","{-eceğ-im}","{gid-eceğ-im}"],["ты","{-ecek-sin}","{gid-ecek-sin}"],["он","{-ecek}","{gid-ecek}"],["мы","{-eceğ-iz}","{gid-eceğ-iz}"],["вы","{-ecek-siniz}","{gid-ecek-siniz}"],["они","{-ecek-ler}","{gid-ecek-ler}"]] },
+  ex:[
+    { q:"Я пойду: {gid} + …", o:["gideceğim","gidecekim","gidacağım","gideceyim"], a:0, w:"«e» → {-eceğ-}, «я» — {-im}: {gideceğim}." },
+    { q:"Будет дождь: {yağmur yağ} + …", o:["yağacak","yağecek","yağıcak","yağaçak"], a:0, w:"Последняя гласная a → {-acak}: {yağacak}." },
+    { q:"Мы пойдём: {gid} + …", o:["gideceğiz","gidecekiz","gidacağız","gidecegiz"], a:0, w:"Перед окончанием на гласную k → ğ: {gideceğiz}." },
+    { q:"Я приду: {gel} + …", o:["geleceğim","gelacağım","gelecekim","gelceğim"], a:0, w:"{gel-eceğ-im}: гласная e, «k» → «ğ»." },
+    { q:"Вы пойдёте: {gid} + …", o:["gideceksiniz","gideceğsiniz","gideceğiniz","gidecekler"], a:0, w:"Перед «s» смягчения нет: {gid-ecek-siniz}." } ] },
+
+{ id:"neg_can", grp:"Глаголы", t:"Не, могу, не могу", lead:"-me отрицает, -ebil «может», -eme «не может»",
+  txt:["Отрицание — {-ma/-me} сразу после корня: {anla-ma-dı-m} — я не понял, {bil-mi-yor-um} — я не знаю. Перед {-yor} гласная меняется: {-mı/-mi/-mu/-mü}.",
+       "«Могу, можно» — {-(y)ebil/-(y)abil} + {-ir}: {gid-ebil-ir-im} — я могу пойти; {Bakabilir misiniz?} — можете посмотреть?; {Kartla ödeyebilir miyim?} — можно оплатить картой?",
+       "«Не могу» — {-(y)eme/-(y)ame}: {gel-eme-m} — я не смогу прийти, {ed-eme-z} — не сможет.",
+       "Общее отрицание «нельзя, не делает» — {-maz/-mez}: {ol-maz} — нельзя, не пойдёт. А {sevmem} — «я не люблю» (отрицание + «я» без -r)."],
+  tbl:{ head:["Окончание","Значение","Пример"], rows:[
+    ["{-ma/-me}","не","{anla-ma-dı-m} — не понял"],["{-mı/-mi/-mu/-mü} + {-yor}","не (в длительном)","{bil-mi-yor-um} — не знаю"],
+    ["{-ebil/-abil} + {-ir}","могу, можно","{gid-ebil-ir-im} — могу пойти"],["{-eme/-ame}","не могу","{gel-eme-m} — не смогу прийти"],["{-maz/-mez}","нельзя, не","{ol-maz} — нельзя"]] },
+  ex:[
+    { q:"Я не понял: {anla} + …", o:["anlamadım","anlayadım","anlamıdım","anlamdım"], a:0, w:"Отрицание {-ma} + прошедшее {-dı} + «я» {-m}: {anla-ma-dı-m}." },
+    { q:"Я не знаю: {bil} + …", o:["bilmiyorum","bilmuyorum","bilmeyorum","bilimiyorum"], a:0, w:"Перед {-yor} отрицание — {-mi}: {bil-mi-yor-um}." },
+    { q:"Я могу пойти: {gid} + …", o:["gidebilirim","gidemem","gidmem","gitmem"], a:0, w:"{-ebil} («мочь») + {-ir} + «я» {-im}: {gid-ebil-ir-im}." },
+    { q:"Я не смогу прийти: {gel} + …", o:["gelemem","gelebilirim","gelirim","geldim"], a:0, w:"{-eme} («не мочь») + «я» {-m}: {gel-eme-m}." },
+    { q:"Нельзя, не пойдёт:", o:["olmaz","olur","oldu","olacak"], a:0, w:"{ol-maz} — общее отрицание. А {olur} — «можно, ладно»." } ] },
+
+{ id:"aor", grp:"Глаголы", t:"Обычно, «посмотрю», вежливая просьба: -r", lead:"Корень + -r/-ar/-er/-ır/-ir/-ur/-ür + лицо",
+  txt:["Это «общее» настоящее: привычка, обещание, вежливая просьба. {öder-im} — заплачу, {bakar-ım} — посмотрю, {gelir-im} — приду, {Sever misin?} — любишь?",
+       "Гласная перед {-r}: после гласной основы — просто {-r} ({öde-r, bekle-r}). После одного слога на согласную чаще {-ar/-er} ({yap-ar, bak-ar, gid-er, iç-er}). Многосложные — {-ır/-ir/-ur/-ür} ({çağır-ır}). И 13 частых глаголов берут {-ır/-ir/-ur/-ür}: {al}, {bil}, {bul}, {dur}, {gel}, {gör}, {kal}, {ol}, {öl}, {san}, {var}, {ver}, {vur} — {alır}, {bilir}, {bulur}, {durur}, {gelir}, {görür}, {kalır}, {olur}, {ölür}, {sanır}, {varır}, {verir}, {vurur}.",
+       "Просьба: аорист + {mı/mi} + лицо: {Yardım eder misiniz?} — не поможете? {Bakar mısınız?} — не посмотрите? («Извините, можно вас?»). {Verir misiniz?} — дадите?"],
+  tbl:{ head:["Основа","Окончание","Пример"], rows:[
+    ["на гласную","{-r}","{öde-r-im}, {bekle-r-iz}"],["один слог на согласную","{-ar/-er}","{yap-ar}, {bak-ar-ım}, {gid-er}, {iç-er}"],
+    ["13 исключений","{-ır/-ir/-ur/-ür}","{gel-ir-im}, {ver-ir-sin}, {ol-ur}, {al-ır}"],["вежливая просьба","+ {mı/mi} + лицо","{Yardım eder misiniz?}"]] },
+  ex:[
+    { q:"Я заплачу: {öde} + …", o:["öderim","ödarım","ödırım","ödereim"], a:0, w:"Основа на гласную: только {-r}: {öde-r-im}." },
+    { q:"Я посмотрю: {bak} + …", o:["bakarım","bakirim","bakırım","bakerim"], a:0, w:"Один слог, гласная a → {-ar}: {bak-ar-ım}." },
+    { q:"Я приду (обычно): {gel} + …", o:["gelirim","gelerim","gelarım","gelürim"], a:0, w:"{gel} — исключение: {-ir}: {gel-ir-im}." },
+    { q:"Вы дадите? (вежливая просьба): {Verir} + …", o:["misiniz","mısınız","musunuz","müsünüz"], a:0, w:"Последняя гласная i → {mi}: {Verir misiniz?}" },
+    { q:"Не поможете? {Yardım eder} + …", o:["misiniz","mısınız","musunuz","müsünüz"], a:0, w:"{eder} кончается на e → {mi}: {misiniz}." } ] },
+
+{ id:"imp_opt", grp:"Глаголы", t:"Приказ, «давайте», «пусть»", lead:"gel! · gelin · gidelim · göstereyim · olsun",
+  txt:["Ты: просто корень — {Gel!}, {Bak!}, {Otur!}. Вы (вежливо): корень + {-(y)ın/-(y)in/-(y)un/-(y)ün}: {Oturun!} — присаживайтесь, {Verin} — дайте, {Girin} — входите, {Açın} — откройте.",
+       "«Давайте мы…» — {-(y)alım/-(y)elim}: {gidelim} — пойдём, {bakalım} — посмотрим, {çıkalım} — выйдем, {yiyelim} — поедим.",
+       "«Давайте я…» — {-(y)ayım/-(y)eyim}: {göstereyim} — покажу, {bakayım} — посмотрю, {alayım} — возьму.",
+       "«Пусть он…» — {-sın/-sin/-sun/-sün}: {olsun} — пусть будет, {çağırsın} — пусть позовёт; {Afiyet olsun} — приятного аппетита."],
+  tbl:{ head:["Форма","Окончание","Пример"], rows:[
+    ["ты","корень","{Gel!} — приходи"],["вы","{-(y)ın/-(y)in/-(y)un/-(y)ün}","{Otur-un}, {Ver-in}, {Gir-in}"],["давайте мы","{-(y)alım/-(y)elim}","{gid-elim}, {bak-alım}"],
+    ["давайте я","{-(y)ayım/-(y)eyim}","{göster-eyim}, {bak-ayım}"],["пусть он","{-sın/-sin/-sun/-sün}","{ol-sun}, {çağır-sın}"]] },
+  ex:[
+    { q:"Присаживайтесь (вы): {otur} + …", o:["oturun","oturın","oturin","oturün"], a:0, w:"Последняя гласная u → {-un}: {oturun}." },
+    { q:"Давайте пойдём: {gid} + …", o:["gidelim","gidalım","gidelım","gideliz"], a:0, w:"Гласная e → {-elim}: {gidelim}." },
+    { q:"Давайте я покажу: {göster} + …", o:["göstereyim","göstereim","gösterayım","gösterelim"], a:0, w:"«Давайте я» — {-eyim}: {göstereyim}." },
+    { q:"Пусть будет: {ol} + …", o:["olsun","olsın","olasın","olsan"], a:0, w:"«Пусть он» — {-sun} (гармония o → u): {olsun}." },
+    { q:"Откройте (вы): {aç} + …", o:["açın","açun","açan","açen"], a:0, w:"Последняя гласная a → {-ın}: {açın}." } ] },
+
+{ id:"deriv_verb", grp:"Глаголы", t:"Залог, «когда», «если», причастие", lead:"-ıl (делается), -t (заставить), -ınca (когда), -sa (если), -an (тот, кто)",
+  txt:["Страдательный залог — {-ıl/-il/-ul/-ül} (после «l» — {-ın/-in}): {yap-ıl-ır} — делается, {çal-ın-dı} — украли («было украдено»): {Telefonum çalındı}.",
+       "Побудительный — {-t/-dır/-tır}: {oku-t-un} — дайте прочитать (приложите): {Kartı okutun}.",
+       "«Когда» — {-(y)ınca/-(y)ince}: {al-ınca} — когда получу. «Если» — {-sa/-se}: {ol-ur-sa} — если будет, {gel-se-m} — если бы я пришёл.",
+       "Причастие — {-an/-en}: {yaralan-an} — раненый, {olan} — тот, который есть. Прошедшее причастие — {-dık/-dik}: {bil-diğ-im} — то, что я знаю."],
+  tbl:{ head:["Окончание","Значение","Пример"], rows:[
+    ["{-ıl/-il/-ul/-ül}","страдательный: делается","{yap-ıl-ır}"],["{-ın/-in}","после «l»","{çal-ın-dı}"],["{-t/-dır/-tır}","побудительный","{oku-t-un}"],
+    ["{-ınca/-ince}","когда","{al-ınca}"],["{-sa/-se}","если","{ol-ur-sa}, {gel-se-m}"],["{-an/-en}","тот, кто","{yaralan-an}, {ol-an}"]] },
+  ex:[
+    { q:"Делается: {yap} + …", o:["yapılır","yapıtır","yapınır","yaptır"], a:0, w:"{-ıl} (страдательный) + {-ır} (аорист): {yap-ıl-ır}." },
+    { q:"Когда получу: {al} + …", o:["alınca","alanca","alınsa","alıyor"], a:0, w:"«Когда» — {-ınca}: {alınca}." },
+    { q:"Если будет: {olur} + …", o:["olursa","olurmuş","olursun","olurken"], a:0, w:"«Если» — {-sa}: {ol-ur-sa}." },
+    { q:"Было украдено (о телефоне): {çal} + …", o:["çalındı","çaldı","çalıyor","çalacak"], a:0, w:"После «l» страдательный залог — {-ın}: {çal-ın-dı}." },
+    { q:"Приложите (дайте прочитать): {oku} + …", o:["okutun","okuyun","okusun","okudun"], a:0, w:"{oku-t-un} — побудительный залог {-t} + «вы» {-un}." } ] },
+
+{ id:"deriv", grp:"Слова из слов", t:"-lı, -sız, -cı, -lık, -ça, -ki, -ıncı", lead:"Окончания, которые делают из слова новое слово",
+  txt:["{-lı/-li/-lu/-lü} — «с чем-то» или «из места»: {şekerli} — с сахаром, {tavuklu} — с курицей, {Rusya'lı} — россиянин. {-sız/-siz} — «без»: {şekersiz} — без сахара.",
+       "{-cı/-ci/-çı/-çi} — «тот, кто занимается»: {nöbetçi} — дежурный. {-lık/-lik/-luk/-lük} — «на срок, для»: {gecelik} — на ночь, {iki kişilik masa} — стол на двоих.",
+       "{-ça/-çe} — «по-» и язык: {Türkçe} — турецкий, по-турецки; {İngilizce}, {Rusça}. {-ki} — «тот, что…»: {dünkü maç} — вчерашний матч.",
+       "{-ıncı/-inci/-uncu/-üncü} — порядковые числа: {beşinci} — пятый, {üçüncü} — третий, {kaçıncı} — который по счёту."],
+  tbl:{ head:["Окончание","Значение","Пример"], rows:[
+    ["{-lı/-li/-lu/-lü}","с, из","{şeker-li}, {tavuk-lu}, {Rusya'-lı}"],["{-sız/-siz}","без","{şeker-siz}"],["{-cı/-ci/-çı/-çi}","занимающийся","{nöbet-çi}"],
+    ["{-lık/-lik/-luk/-lük}","на срок, для","{gece-lik}, {kişi-lik}"],["{-ça/-çe/-ca/-ce}","по-, язык","{Türk-çe}, {Rus-ça}"],["{-ki}","тот, что …","{dün-kü}"],["{-ıncı/-inci/-uncu/-üncü}","порядковое","{beş-inci}, {üç-üncü}"]] },
+  ex:[
+    { q:"Чай с сахаром: {şeker} + …", o:["şekerli","şekersiz","şekerci","şekerlik"], a:0, w:"«С чем-то» — {-li}: {şekerli}." },
+    { q:"Без сахара: {şeker} + …", o:["şekerli","şekersiz","şekerci","şekerlik"], a:1, w:"«Без» — {-siz}: {şekersiz}." },
+    { q:"По-турецки (турецкий): {Türk} + …", o:["Türkçe","Türkle","Türklü","Türkdan"], a:0, w:"Язык, «по-» — {-çe}: {Türkçe}." },
+    { q:"Стол на двоих: {iki kişi} + …", o:["kişilik","kişili","kişisiz","kişice"], a:0, w:"«Рассчитанный на» — {-lik}: {iki kişilik masa}." },
+    { q:"Пятый: {beş} + …", o:["beşinci","beşıncı","beşlik","beşli"], a:0, w:"Порядковое число — {-inci} (гармония e → i): {beşinci}." } ] }
+];
+// </GRAMMAR-RULES>
+// ---------- Грамматика: разбор слова по частям и раздел с правилами (просьба 2026-10-04 21:31–21:39: «не хватает грамматики») ----------
+// Данные разбора — MORPH (создан из tests/morph.json; каждое слово проверено дважды: исполнителем и независимым рецензентом, тест:
+// части в сумме дают слово, у каждого окончания и корня есть значение). Нет разбора — подсказка слова остаётся как была.
+const trLow = s => String(s).toLocaleLowerCase("tr").replace(/['’]/g, "");
+const shortGloss = g => String(g || "").split(/[;(]/)[0].trim();
+function morphOf(raw){
+  const word = String(raw).replace(/^[^\p{L}]+|[^\p{L}']+$/gu, "").replace(/['’]/g, "");
+  const v = word && MORPH[trLow(word)]; if(!v) return null;
+  const toks = v.split(" "), [rt, lm0] = toks[0].split("="), lemma = lm0 || rt;
+  let pos = 0; const cut = n => { const t = word.slice(pos, pos + n); pos += n; return t; };
+  const gloss = shortGloss((PHRASE_DICT[lemma] || [])[0] || ROOT_GLOSS[lemma] || ROOT_GLOSS[rt] || (PHRASE_DICT[rt] || [])[0]);
+  const parts = [{ t:cut(rt.length), root:true, lemma, gloss, verb:/(mak|mek|-)$/.test(lemma), ...(lemma === "q" ? { rule:"question", n:"частица вопроса: «ли?»" } : {}) }];
+  for(const p of toks.slice(1)){ const [t, tag] = p.split("="), s = SUF[tag] || {}; parts.push({ t:cut(t.length), tag, f:s.f, n:s.n, rule:s.rule }); }
+  return { word, parts, lemma };
+}
+const morphMeaning = m => m.parts.map(p => p.root ? p.gloss : p.n).filter(Boolean).join(" + ");
+function morphHtml(m){
+  return `<span class="wm" translate="no">${m.parts.map(p => p.root
+    ? `<span class="wm-c"><b lang="tr">${esc(p.t)}${p.verb ? "-" : ""}</b><i>${esc(p.gloss || "")}</i></span>`
+    : `<span class="wm-c suf"><b lang="tr">-${esc(p.t)}</b><i>${esc(p.n || "")}</i></span>`).join('<span class="wm-p" aria-hidden="true">+</span>')}</span>`;
+}
+function morphRules(m){ const seen = []; m.parts.forEach(p => { if(p.rule && !seen.includes(p.rule) && gramRule(p.rule)) seen.push(p.rule); }); return seen.slice(0, 2); }
+function morphBlock(m){
+  const rs = morphRules(m);
+  return `<span class="wm-box">${morphHtml(m)}${rs.length ? `<span class="wm-rules">${rs.map(id => `<button type="button" class="wm-rule" data-gr="${id}">Правило: ${esc(gramRule(id).t.split(/[:—]/)[0].trim())}</button>`).join("")}</span>` : ""}</span>`;
+}
+const gramRule = id => GRAMMAR.find(r => r.id === id);
+const gmFmt = s => esc(String(s)).replace(/\{([^}]+)\}/g, '<b class="tr" lang="tr" translate="no">$1</b>');
+const GRAM_GROUPS = ["Основа", "Существительные", "Предложение", "Глаголы", "Слова из слов"];
+let gstate = (() => { try { const o = JSON.parse(localStorage.getItem("soyle-gram")); return o && typeof o === "object" ? o : {}; } catch(e){ return {}; } })();
+function gramNormalize(){ if(!gstate || typeof gstate !== "object") gstate = {}; if(!gstate.r || typeof gstate.r !== "object") gstate.r = {};
+  for(const k of Object.keys(gstate.r)){ const s = gstate.r[k]; if(!s || typeof s !== "object") { delete gstate.r[k]; continue; } s.n = +s.n || 0; s.ok = +s.ok || 0; s.last = Array.isArray(s.last) ? s.last.slice(-12).map(x => x ? 1 : 0) : []; } }
+gramNormalize();
+const gramSave = () => { try { localStorage.setItem("soyle-gram", JSON.stringify(gstate)); } catch(e){} };
+function gramMastered(id){ const s = gstate.r[id]; if(!s) return false; const l = s.last.slice(-8); return s.n >= 6 && l.length >= 6 && l.reduce((a, b) => a + b, 0) / l.length >= 0.8; }
+const gramMasteredCount = () => GRAMMAR.filter(r => gramMastered(r.id)).length;
+const grnd = () => (typeof window.__grnd === "function" ? window.__grnd() : Math.random());
+const gshuf = a => { const b = a.slice(); for(let i = b.length - 1; i > 0; i--){ const j = Math.floor(grnd() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+const gwordsCache = {};
+function gramWordsFor(id){ return gwordsCache[id] || (gwordsCache[id] = Object.keys(MORPH).filter(w => MORPH[w].split(" ").slice(1).some(p => (SUF[p.split("=")[1]] || {}).rule === id) || (id === "question" && MORPH[w].split(" ")[0].split("=")[1] === "q"))); }
+const sufFamily = n => String(n).split(/[\s,:(/]/)[0];
+function gramMakeParse(r){
+  const ws = gramWordsFor(r.id); if(!ws.length) return null;
+  for(let k = 0; k < 30; k++){
+    const m = morphOf(ws[Math.floor(grnd() * ws.length)]); if(!m) continue;
+    const cand = m.parts.filter(p => (!p.root || p.lemma === "q") && p.rule === r.id && p.n); if(!cand.length) continue;
+    const p = cand[Math.floor(grnd() * cand.length)], fam = sufFamily(p.n), seenN = new Set([p.n]), wrong = [];
+    for(const s of gshuf(Object.values(SUF))){ if(wrong.length >= 3) break; if(!s.n || seenN.has(s.n) || sufFamily(s.n) === fam) continue; seenN.add(s.n); wrong.push(s.n); }
+    if(wrong.length < 3) continue;
+    const o = gshuf([p.n, ...wrong]);
+    return { type:"mc", dyn:true, q:p.root ? `Что такое {${p.t}} в слове {${m.word}}?` : `Что означает окончание {-${p.t}} в слове {${m.word}}?`, o, a:o.indexOf(p.n), lang:"ru", w:`{${m.word}} по частям: ${morphMeaning(m)}.`, mo:m };
+  }
+  return null;
+}
+function gramMakeBuild(r){
+  const all = gramWordsFor(r.id), pool = n => all.filter(w => { const k = MORPH[w].split(" ").length; return k >= n && k <= 6; }), ws = pool(3).length ? pool(3) : pool(2); if(!ws.length) return null;
+  const m = morphOf(ws[Math.floor(grnd() * ws.length)]); if(!m) return null;
+  return { type:"build", dyn:true, m, order:gshuf(m.parts.map((_, i) => i)), got:[], bad:false,
+    q:`Соберите слово по частям: ${m.parts.map(p => p.root ? (p.gloss || "корень") : p.n).join(" + ")}`, w:gmFmt(`{${m.word}}: ${morphMeaning(m)}.`) };
+}
+function gramBuildQuiz(r){
+  const dynN = gramWordsFor(r.id).length ? 3 : 0, hand = gshuf(r.ex).slice(0, dynN ? 5 : 6).map(x => ({ type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) }));
+  hand.forEach(x => { x.order = gshuf(x.o.map((_, i) => i)); });
+  const p1 = gramMakeParse(r); let p2 = null; for(let k = 0; k < 8 && p1 && !(p2 && p2.q !== p1.q); k++) p2 = gramMakeParse(r);
+  const dyn = [p1, p1 && p2 && p2.q !== p1.q ? p2 : null, gramMakeBuild(r)].filter(Boolean);
+  dyn.forEach(x => { if(x.type === "mc"){ x.html = false; x.order = x.o.map((_, i) => i); x.q = gmFmt(x.q); x.html = true; x.w = gmFmt(x.w); } });
+  return gshuf([...hand, ...dyn]);
+}
+function gramPhrases(r){
+  const items = PHRASE_SETS.flatMap(g => g.items).filter(p => !p.rare && p.tr && p.ru);
+  const inflected = tr => tr.split(/\s+/).map(morphOf).filter(Boolean);
+  const isQ = w => /^m[ıiuü](y[ıiuü]m|s[ıiuü]n([ıiuü]z)?)?[?.,!]*$/i.test(w);
+  const test = r.id === "question" ? tr => tr.split(/\s+/).some(isQ)
+    : r.id === "qwords" ? tr => /(^|\s)(ne|kim|nere\S*|nasıl|kaç\S*|hangi\S*|neden)(\s|$|[?.,!])/i.test(tr)
+    : r.id === "harmony" ? tr => inflected(tr).some(m => m.parts.length > 2)
+    : tr => inflected(tr).some(m => m.parts.some(p => p.rule === r.id));
+  const seen = new Set();
+  return items.filter(p => test(p.tr)).sort((a, b) => a.tr.length - b.tr.length || a.tr.localeCompare(b.tr)).filter(p => !seen.has(p.tr) && seen.add(p.tr)).slice(0, 4);
+}
+function gramRuleHtml(r, inSheet){
+  let h = `<p class="gm-lead2">${gmFmt(r.lead)}</p>` + r.txt.map(t => `<p class="gm-p">${gmFmt(t)}</p>`).join("");
+  if(r.tbl) h += `<div class="gm-tw"><table class="gm-t"><thead><tr>${r.tbl.head.map(c => `<th scope="col">${gmFmt(c)}</th>`).join("")}</tr></thead><tbody>${r.tbl.rows.map(row => `<tr>${row.map(c => `<td>${gmFmt(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const ph = gramPhrases(r);
+  if(ph.length) h += `<h3 class="gm-h3">Из ваших фраз</h3><p class="gm-hint">Нажмите на слово — увидите его разбор по частям.</p><ul class="gm-ph">${ph.map(p => `<li><span class="gm-tr" lang="tr" translate="no">${wordsHtml(p.tr)}</span><span class="gm-ru">${esc(p.ru)}</span></li>`).join("")}</ul>`;
+  return h + `<div class="gm-actions"><button class="btn native gm-go" data-act="quiz" data-rule="${r.id}">Упражнения</button></div>`;
+}
+// ---- раздел «Грамматика» ----
+let gram = { view:"list", rule:null, qs:[], i:0, ok:0, done:false };
+const gmEl = () => $("gramView");
+function gramListHtml(){
+  const m = gramMasteredCount(), next = GRAMMAR.find(r => !gramMastered(r.id));
+  let h = `<div class="gm-head"><h2>Грамматика</h2><p class="gm-sub">${GRAMMAR.length} правил, освоено ${m}. Читайте по порядку: каждое — коротко, с примерами из ваших фраз и упражнениями. Правило считается освоенным, когда верно не меньше 80% последних ответов.</p></div>`;
+  GRAM_GROUPS.forEach(g => { const rs = GRAMMAR.filter(r => r.grp === g); if(!rs.length) return;
+    h += `<section class="gm-group" aria-label="${esc(g)}"><h3>${esc(g)}</h3>` + rs.map(r => { const s = gstate.r[r.id], done = gramMastered(r.id);
+      return `<button class="gm-row${done ? " done" : ""}${next && next.id === r.id ? " next" : ""}" data-act="rule" data-rule="${r.id}"><span class="gm-ttl">${gmFmt(r.t)}</span><span class="gm-lead">${gmFmt(r.lead)}</span><span class="gm-st">${done ? "освоено" : s && s.n ? `верно ${s.ok} из ${s.n}` : next && next.id === r.id ? "начните с этого" : "не начато"}</span></button>`; }).join("") + `</section>`; });
+  return h;
+}
+const gmBack = lab => `<button class="gm-back" data-act="back"><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg><span>${esc(lab)}</span></button>`;
+function gramRender(){
+  const el = gmEl(); if(!el) return;
+  if(gram.view === "list") el.innerHTML = gramListHtml();
+  else if(gram.view === "rule"){ const r = gramRule(gram.rule); el.innerHTML = gmBack("Все правила") + `<h2 class="gm-title">${gmFmt(r.t)}</h2>` + gramRuleHtml(r); }
+  else if(gram.view === "quiz") gramQuizRender();
+  el.scrollTop = 0; scheduleFit();
+}
+function gramQuizRender(){
+  const el = gmEl(), r = gramRule(gram.rule), q = gram.qs[gram.i];
+  if(gram.done){
+    const n = gram.qs.length, m = gramMastered(r.id), idx = GRAMMAR.indexOf(r), nx = GRAMMAR.slice(idx + 1).find(x => !gramMastered(x.id)) || GRAMMAR.find(x => !gramMastered(x.id));
+    el.innerHTML = gmBack("Все правила") + `<h2 class="gm-title">${gmFmt(r.t)}</h2><div class="gm-done"><b class="gm-score">${gram.ok} из ${n}</b><p class="gm-p">${m ? "Правило освоено." : gram.ok === n ? "Без ошибок. Ещё один подход — и правило закрепится." : "Перечитайте правило и попробуйте ещё раз: ошибки полезны, они показывают, что запомнить."}</p>
+      <div class="gm-actions"><button class="btn native" data-act="quiz" data-rule="${r.id}">Ещё раз</button><button class="btn" data-act="rule" data-rule="${r.id}">К правилу</button>${nx && nx.id !== r.id ? `<button class="btn" data-act="rule" data-rule="${nx.id}">Дальше: ${gmFmt(nx.t)}</button>` : ""}</div></div>`;
+    return;
+  }
+  const segs = gram.qs.map((x, k) => `<i${x.res === undefined ? (k === gram.i ? ' class="cur"' : "") : x.res ? ' class="ok"' : ' class="bad"'}></i>`).join("");
+  let body = `<p class="gm-q" id="gmQ">${q.html ? q.q : esc(q.q)}</p>`;
+  if(q.type === "mc") body += `<div class="gm-opts" role="group" aria-labelledby="gmQ">${q.order.map(i => `<button class="gm-opt${q.chosen === i ? (q.res ? " ok" : " bad") : q.chosen !== undefined && i === q.a ? " ok" : ""}" data-act="opt" data-i="${i}" ${q.chosen !== undefined ? "disabled" : ""} ${q.lang === "tr" ? 'lang="tr" translate="no"' : ""}>${esc(q.o[i])}</button>`).join("")}</div>`;
+  else {
+    const built = q.got.map(i => `<span class="gm-cell" lang="tr" translate="no">${esc(q.m.parts[i].root ? q.m.parts[i].t : "-" + q.m.parts[i].t)}</span>`).join("");
+    body += `<div class="gm-built" aria-live="polite">${built || '<span class="gm-ph0">нажимайте части по порядку</span>'}</div><div class="gm-chips" role="group" aria-label="Части слова">${q.order.map(i => { const used = q.got.includes(i), p = q.m.parts[i];
+      return `<button class="gm-chip${used ? " used" : ""}" data-act="chip" data-i="${i}" ${used || q.res !== undefined ? "disabled" : ""} lang="tr" translate="no">${esc(p.root ? p.t : "-" + p.t)}</button>`; }).join("")}</div>`;
+    if(q.warn && q.res === undefined) body += `<p class="gm-warn" role="status">Не та часть. Порядок такой: сначала корень, потом окончания по очереди.</p>`;
+    if(q.got.length) body += `<button class="gm-undo" data-act="undo" ${q.res !== undefined ? "disabled" : ""}>Убрать последнюю</button>`;
+  }
+  const fb = q.res === undefined ? "" : `<div class="gm-fb ${q.res ? "ok" : "bad"}" role="status"><b>${q.res ? "Верно." : "Неверно."}</b> ${q.w}${q.mo ? morphHtml(q.mo) : q.m ? morphHtml(q.m) : ""}</div>`;
+  el.innerHTML = gmBack("К правилу") + `<div class="gm-bar"><span class="gm-count">${esc(gramRule(gram.rule).t.replace(/\{|\}/g, ""))} · ${gram.i + 1} из ${gram.qs.length}</span></div><div class="gm-segs" aria-hidden="true">${segs}</div>` + body + fb
+    + `<div class="gm-actions"><button class="btn native gm-next" data-act="next" ${q.res === undefined ? "disabled" : ""}>${gram.i + 1 === gram.qs.length ? "Итог" : "Дальше"}</button></div>`;
+}
+function gramRecord(id, ok){
+  const s = gstate.r[id] || (gstate.r[id] = { n:0, ok:0, last:[] }), was = gramMastered(id);
+  s.n++; s.ok += ok ? 1 : 0; s.last.push(ok ? 1 : 0); s.last = s.last.slice(-12); gramSave();
+  const st = stats.gram || (stats.gram = { t:0, ok:0 }); st.t++; st.ok += ok ? 1 : 0; save(); renderStats();
+  award(ok ? 1 : 0, "gram");
+  if(!was && gramMastered(id)) toast(`Правило освоено: ${gramRule(id).t.replace(/\{|\}/g, "")}`);
+}
+function gramResolve(ok){ const q = gram.qs[gram.i]; q.res = ok; if(ok) gram.ok++; gramRecord(gram.rule, ok); gramQuizRender(); scheduleFit(); const fb = gmEl().querySelector(".gm-fb"); if(fb && fb.scrollIntoView) fb.scrollIntoView({ block:"nearest" }); }
+function gramClick(e){
+  const b = e.target.closest("[data-act]"); if(!b || b.disabled) return; const act = b.dataset.act;
+  if(act === "rule"){ gram = { view:"rule", rule:b.dataset.rule, qs:[], i:0, ok:0, done:false }; gramRender(); }
+  else if(act === "quiz"){ closeSheet(); if(mode !== "grammar") setMode("grammar"); gram = { view:"quiz", rule:b.dataset.rule, qs:gramBuildQuiz(gramRule(b.dataset.rule)), i:0, ok:0, done:false }; gramRender(); }
+  else if(act === "back"){ if(gram.view === "quiz") gram = { view:"rule", rule:gram.rule, qs:[], i:0, ok:0, done:false }; else gram = { view:"list", rule:null, qs:[], i:0, ok:0, done:false }; gramRender(); }
+  else if(act === "opt"){ const q = gram.qs[gram.i]; if(q.chosen !== undefined) return; q.chosen = +b.dataset.i; gramResolve(q.chosen === q.a); }
+  else if(act === "chip"){ const q = gram.qs[gram.i]; if(q.res !== undefined) return; const i = +b.dataset.i, want = q.m.parts[q.got.length];
+    if(q.m.parts[i].t === want.t && (q.m.parts[i].root || false) === (want.root || false)){ q.got.push(i); q.warn = false; if(q.got.length === q.m.parts.length) gramResolve(!q.bad); else gramQuizRender(); }
+    else { q.bad = true; q.warn = true; gramQuizRender(); } }
+  else if(act === "undo"){ const q = gram.qs[gram.i]; if(q.res === undefined && q.got.length){ q.got.pop(); gramQuizRender(); } }
+  else if(act === "next"){ if(gram.i + 1 >= gram.qs.length){ gram.done = true; } else gram.i++; gramQuizRender(); gmEl().scrollTop = 0; scheduleFit(); }
+}
+function gramEnter(){ gram = { view:"list", rule:null, qs:[], i:0, ok:0, done:false }; gramRender(); }
+function gramSheet(id){ const r = gramRule(id); if(!r) return; openSheet(shortGloss(r.t) || r.t, gramRuleHtml(r, true)); }
+document.addEventListener("click", e => { if(e.target.closest && e.target.closest("#gramView")) gramClick(e); });
+$("wordPop").addEventListener("click", e => { const b = e.target.closest("[data-gr]"); if(b){ wordPopHide(); gramSheet(b.dataset.gr); } });
+$("sheetBody").addEventListener("click", e => { const b = e.target.closest("[data-act='quiz']"); if(b) gramClick(e); });
+document.addEventListener("keydown", e => { if(e.key === "Escape" && mode === "grammar" && $("sheet").hidden && !modalOpen && gram.view !== "list"){ const bk = gmEl().querySelector('[data-act="back"]'); if(bk) bk.click(); } });
+// <GRAMMAR-RULES-END>
+const MODES = ["city","memory","phrases","listen","free","grammar","progress"];
+const TRAIN = ["phrases","listen","free","grammar"];           // раздел «Тренировка» объединяет прежние четыре вкладки
 let lastTrain = (() => { try { const v = localStorage.getItem("soyle-train"); return TRAIN.includes(v) ? v : "phrases"; } catch(e){ return "phrases"; } })();
 // ---------- автоподгонка: всё на одном экране без прокрутки, на высоком экране — крупнее ----------
 // Подбираем --fit (0.6…1.15) двоичным поиском: наибольший, при котором карточка и страница не переполнены.
@@ -5831,12 +7180,13 @@ function setMode(m){
   $("subtabs").hidden = !TRAIN.includes(m);                      // тренировка: Фразы · На слух · Свободно — переключатель над наборами
   TRAIN.forEach(t => $("tab-" + t).setAttribute("aria-pressed", m===t));
   if(TRAIN.includes(m)){ lastTrain = m; try { localStorage.setItem("soyle-train", m); } catch(e){} }
-  $("card").hidden = m==="free" || m==="listen" || m==="progress" || m==="city"; $("freeCard").hidden = m!=="free"; $("listenCard").hidden = m!=="listen"; $("cityCard").hidden = m!=="city";
+  $("card").hidden = m==="free" || m==="listen" || m==="progress" || m==="city" || m==="grammar"; $("gramView").hidden = m!=="grammar"; $("freeCard").hidden = m!=="free"; $("listenCard").hidden = m!=="listen"; $("cityCard").hidden = m!=="city";
   $("progressView").hidden = m!=="progress";
   renderLesson(); scheduleFit();
   if(m!=="memory" && mem){ mem = null; memRestoreButtons(); }
   if(m==="memory"){ $("chips").hidden = true; return memNext(); }
   if(m==="city"){ $("chips").hidden = true; item = null; cityRender(); return; }
+  if(m==="grammar"){ $("chips").hidden = true; gramEnter(); return; }
   if(m==="free" || m==="progress"){ $("chips").hidden = true; if(m==="progress"){ renderGame(); renderBadges(); renderStats(); } return; }
   $("chips").hidden = false;
   renderChips();
@@ -5848,6 +7198,7 @@ $("tab-memory").onclick = () => setMode("memory");
 $("tab-train").onclick = () => setMode(lastTrain);
 $("tab-phrases").onclick = () => setMode("phrases");
 $("tab-free").onclick = () => setMode("free");
+$("tab-grammar").onclick = () => setMode("grammar");
 $("tab-listen").onclick = () => setMode("listen");
 $("tab-progress").onclick = () => setMode("progress");
 $("tbProgress").onclick = () => setMode("progress");
@@ -5872,7 +7223,7 @@ document.addEventListener("keydown", e => {
   // клавиши-сокращения не перехватывают пробел/Enter у кнопок, ссылок и полей (2.1.1)
   if(e.repeat || e.ctrlKey || e.metaKey || e.altKey || ["INPUT","TEXTAREA","SELECT","BUTTON","A","SUMMARY"].includes(e.target.tagName)) return;
   if(modalOpen || sheetOpen) return;  // пока открыто окно — горячие клавиши не работают
-  if(mode==="progress") return;
+  if(mode==="progress" || mode==="grammar") return;
   if(mode==="listen"){
     if(e.code==="Space"){ e.preventDefault(); ls && playReference(ls.answer, null, true); }
     else if(e.key==="1") answerListen("A"); else if(e.key==="2") answerListen("B");

@@ -586,7 +586,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       document.getElementById('tab-progress').click(); const prog = [!document.getElementById('progressView').hidden, document.getElementById('card').hidden, document.getElementById('subtabs').hidden, document.getElementById('tab-train').getAttribute('aria-pressed')];
       document.getElementById('tab-train').click(); const back = [mode, localStorage.getItem('soyle-train')];
       document.getElementById('tab-phrases').click(); return [tabs, subs, free, prog, back]; });
-    eq(r, [['tab-city','tab-memory','tab-train','tab-progress'], ['tab-phrases','tab-listen','tab-free'], [true, 'true', 'true', false], [true, true, true, 'false'], ['free', 'free']]);
+    eq(r, [['tab-city','tab-memory','tab-train','tab-progress'], ['tab-phrases','tab-listen','tab-free','tab-grammar'], [true, 'true', 'true', false], [true, true, true, 'false'], ['free', 'free']]);
   });
   await test('игра видна всегда: верхняя панель обновляется после ответа, нажатие открывает «Прогресс»', async () => {
     const r = await p.evaluate(r => { eval(r); renderGame(); const ring0 = document.getElementById('tbRing').style.strokeDashoffset;
@@ -685,7 +685,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('кольцо уровня и достижения-жетоны без эмодзи', async () => {
     const r = await p.evaluate(() => { game.xp = 125; renderGame(); renderBadges(); const off = parseFloat(document.getElementById('gbLevelRing').style.strokeDashoffset);
       return [document.getElementById('gbLevel2').textContent, off > 100 && off < 200, document.querySelectorAll('#badgeGrid .badge').length, BADGES.every(b => !/\p{Extended_Pictographic}/u.test(b.ic))]; });
-    eq(r, ['2', true, 22, true]);
+    eq(r, ['2', true, 25, true]);   // 22 медали + 3 за грамматику (gram3, gram10, gramall)
   });
 
   console.log('«Память»: вспоминание (эффект тестирования) + FSRS-6');
@@ -1264,9 +1264,9 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return out; });
     const errs = q.errors; await q.context().close();
     eq(r.spans, ['Size', 'odanızı', 'göstereyim.']); eq(r.rendered, 'Size odanızı göstereyim.'); ok(r.gap >= 4, 'зазор между словами на экране: ' + r.gap + 'px'); eq(r.partner0, '[сизе оданызы гёстерейим]'); ok(/Нажатие на слово/.test(r.info), r.info);
-    eq(r.form, '«odanızı» — ваш номер (кого? что?) · oda: комната, номер синтез'); eq(r.spokenForm, ['odanızı']);
-    eq(r.rec, '«Size» — вам носитель'); eq(r.played, ['https://x/size.wav']); eq(r.spokenAfterRec, 1); eq(r.on, 'Size');
-    eq(r.verb, '«göstereyim» — давайте покажу · göstermek: показывать синтез'); eq(r.over <= 1, true);
+    ok(r.form.startsWith('«odanızı» — ваш номер (кого? что?) · oda: комната, номер синтез'), r.form); ok(/odaкомната, номер\+-nızваш\+-ıвин\. падеж/.test(r.form), 'разбор по частям в подсказке: ' + r.form);   // после перевода — разбор слова (просьба 21:31) eq(r.spokenForm, ['odanızı']);
+    ok(r.rec.startsWith('«Size» — вам носитель'), r.rec); eq(r.played, ['https://x/size.wav']); eq(r.spokenAfterRec, 1); eq(r.on, 'Size');
+    ok(r.verb.startsWith('«göstereyim» — давайте покажу · göstermek: показывать синтез'), r.verb); eq(r.over <= 1, true);
     eq(r.partnerKept, '[сизе оданызы гёстерейим]'); eq(r.restored, '[кахвалты дахиль ми]'); eq(r.mi, '«mi» — вопросительная частица — делает фразу вопросом синтез'); eq(r.dahil, '«dahil» — включено (kahvaltı dahil mi — завтрак включён?) синтез');
     ok(r.tot > 1000, 'слов во фразах: ' + r.tot); eq(r.miss, []); eq(r.wordMode, 0); eq(errs, []);
   });
@@ -1306,6 +1306,127 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(c.npcWord && /^«/.test(c.npcPop), 'реплика: ' + JSON.stringify(c)); eq([c.ruHidden, c.pat], [true, true], 'нажатие на слово — не перевод реплики и не трата терпения');
     ok(c.cardWord && /«/.test(c.cardPop) && c.stillOpen, 'карточка ответа: ' + JSON.stringify(c)); eq(q.errors, []); await q.context().close();
   });
+  console.log('Грамматика: разбор слов по частям и 20 правил');
+  await test('разбор слов: части дают слово, у корня и каждого окончания есть значение, правила существуют', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => { const bad = []; let n = 0;
+      for(const w of Object.keys(MORPH)){ n++; const m = morphOf(w); if(!m){ bad.push(w + ': нет разбора'); continue; }
+        if(trLow(m.parts.map(p => p.t).join('')) !== w) bad.push(w + ': части дают ' + m.parts.map(p => p.t).join(''));
+        if(!m.parts[0].gloss) bad.push(w + ': нет значения корня ' + m.lemma);
+        m.parts.slice(1).forEach(p => { if(!SUF[p.tag] || !p.n) bad.push(w + ': нет окончания ' + p.tag); else if(!GRAMMAR.some(g => g.id === p.rule)) bad.push(w + ': нет правила ' + p.rule); }); }
+      return { n, bad:bad.slice(0, 10), noName:Object.keys(SUF).filter(t => !SUF[t].n || !SUF[t].f || !SUF[t].rule) }; });
+    ok(r.n >= 600, 'слов в разборе: ' + r.n); eq(r.bad, []); eq(r.noName, []); eq(q.errors, []); await q.context().close();
+  });
+  await test('правила: 20 штук, у каждого название, текст, таблица, ≥5 упражнений, один верный ответ, нет повторов; примеры из фраз; медали', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => { const ids = GRAMMAR.map(g => g.id);
+      return { n:GRAMMAR.length, uniq:new Set(ids).size, bad:GRAMMAR.filter(g => !(g.t && g.lead && GRAM_GROUPS.includes(g.grp) && g.txt.length >= 2 && g.tbl && g.tbl.rows.length >= 3 && g.ex.length >= 5
+          && g.ex.every(x => x.q && x.w && x.o.length >= 2 && x.a >= 0 && x.a < x.o.length && new Set(x.o).size === x.o.length))).map(g => g.id),
+        noPhrases:GRAMMAR.filter(g => !gramPhrases(g).length).map(g => g.id), badge:BADGES.find(b => b.id === 'gramall').n,
+        // у каждого правила, где есть окончания, хватает слов для упражнений «что значит» и «соберите»
+        dyn:GRAMMAR.filter(g => g.id !== 'harmony' && g.id !== 'qwords').filter(g => !gramMakeParse(g) || !gramMakeBuild(g)).map(g => g.id) }; });
+    eq([r.n, r.uniq], [20, 20]); eq(r.bad, []); eq(r.noPhrases, []); eq(r.dyn, []); eq(r.badge, 20, 'медаль «все правила» = число правил'); eq(q.errors, []); await q.context().close();
+  });
+  await test('подсказка слова: разбор по частям (корень + окончания), кнопки правил открывают окно; слово без перевода получает значение по частям', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    const r = await q.evaluate(async () => { setMode('phrases'); const out = {}; const pop = () => { const p = document.getElementById('wordPop'); return p.hidden ? null : p; };
+      document.getElementById('target').innerHTML = wordsHtml('Size odanızı gideceğiz.'); const w = i => document.querySelectorAll('#target .wd')[i];
+      w(1).click(); await new Promise(z => setTimeout(z, 80)); const p = pop();
+      out.cells = [...p.querySelectorAll('.wm-c')].map(c => c.querySelector('b').textContent + '|' + c.querySelector('i').textContent); out.rules = [...p.querySelectorAll('.wm-rule')].map(b => b.dataset.gr);
+      out.fits = p.getBoundingClientRect().right <= innerWidth && p.getBoundingClientRect().left >= 0; out.btnH = Math.min(...[...p.querySelectorAll('.wm-rule')].map(b => b.getBoundingClientRect().height));
+      out.noGloss = wordGloss('gideceğiz') === null; w(2).click(); await new Promise(z => setTimeout(z, 80)); out.noGlossPop = pop().textContent;
+      w(1).click(); await new Promise(z => setTimeout(z, 80)); pop().querySelector('.wm-rule').click(); await new Promise(z => setTimeout(z, 120));
+      out.sheet = !document.getElementById('sheet').hidden; out.sheetTitle = document.getElementById('sheetTitle').textContent; out.popHidden = !pop(); out.sheetHasTable = !!document.querySelector('#sheetBody table');
+      document.querySelector('#sheetBody [data-act="quiz"]').click(); await new Promise(z => setTimeout(z, 120));
+      out.mode = mode; out.sheetClosed = document.getElementById('sheet').hidden; out.view = gram.view; out.rule = gram.rule; return out; });
+    eq(r.cells, ['oda|комната, номер', '-nız|ваш', '-ı|вин. падеж: кого? что?']); eq(r.rules, ['poss', 'acc_dat']); ok(r.fits, 'подсказка вышла за экран'); ok(r.btnH >= 44, 'кнопка правила ниже 44px: ' + r.btnH);
+    ok(r.noGloss && /идти.* \+ будущее \+ мы/.test(r.noGlossPop), r.noGlossPop);
+    eq([r.sheet, r.popHidden, r.sheetHasTable], [true, true, true]); ok(/Притяжательные/.test(r.sheetTitle), r.sheetTitle);
+    eq([r.mode, r.sheetClosed, r.view, r.rule], ['grammar', true, 'quiz', 'poss']); eq(q.errors, []); await q.context().close();
+  });
+  await test('«Грамматика»: четвёртая вкладка тренировки, 20 правил списком, подвкладки и страницы без горизонтальной прокрутки на 3 размерах', async () => {
+    const q = await openPage(browser); const bad = [];
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h }); await q.click('#tab-train'); await tap(q, 'tab-grammar'); await q.waitForTimeout(60);
+      const r = await q.evaluate(() => ({ rows:document.querySelectorAll('#gramView .gm-row').length, mode, tab:document.getElementById('tab-grammar').getAttribute('aria-pressed'),
+        sub:[document.getElementById('subtabs').scrollWidth, document.getElementById('subtabs').clientWidth], page:document.documentElement.scrollWidth <= innerWidth, hash:location.hash }));
+      if(r.rows !== 20 || r.mode !== 'grammar' || r.tab !== 'true' || r.hash !== '#grammar') bad.push(`${w}: ${JSON.stringify(r)}`);
+      if(r.sub[0] > r.sub[1]) bad.push(`${w}: подвкладки не помещаются ${r.sub}`); if(!r.page) bad.push(`${w}: страница шире экрана`);
+      const bits = await q.evaluate(async () => { const out = [];
+        for(const g of GRAMMAR){ gram = { view:'rule', rule:g.id, qs:[], i:0, ok:0, done:false }; gramRender(); const el = document.getElementById('gramView');
+          if(el.scrollWidth > el.clientWidth + 1) out.push(g.id + ': страница правила шире');
+          if(document.documentElement.scrollWidth > innerWidth) out.push(g.id + ': документ шире');
+          gramSheet(g.id); const box = document.querySelector('#sheet .sheet-box'); if(box.scrollWidth > box.clientWidth + 1) out.push(g.id + ': окно правила шире'); closeSheet();
+          gram = { view:'quiz', rule:g.id, qs:gramBuildQuiz(g), i:0, ok:0, done:false };
+          for(let i = 0; i < gram.qs.length; i++){ gram.i = i; gramRender(); const q0 = gram.qs[i];
+            if(el.scrollWidth > el.clientWidth + 1) out.push(g.id + ' вопрос ' + i + ': шире');
+            const bs = [...el.querySelectorAll('.gm-opt, .gm-chip')]; if(bs.some(b => b.getBoundingClientRect().height < 44)) out.push(g.id + ' вопрос ' + i + ': кнопка ниже 44px'); }
+          gram.done = true; gramRender(); if(el.scrollWidth > el.clientWidth + 1) out.push(g.id + ': итог шире'); }
+        return out; });
+      bad.push(...bits.map(b => w + ' ' + b)); }
+    eq(bad, []); eq(q.errors, []); await q.context().close();
+  });
+  await test('упражнение: верный ответ — опыт и статистика, неверный — пояснение без наказания; итог, освоение правила после 6 ответов (≥80%), сохранение и медаль', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    await q.evaluate(() => { { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); } }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    await q.click('[data-rule="poss"]'); await q.click('.gm-go'); await q.waitForTimeout(60);
+    const total = await q.evaluate(() => gram.qs.length); eq(total, 8, '5 готовых + 2 «что значит» + 1 «соберите»');
+    // отвечаем «как человек»: для вопроса со сборкой — тоже нажатиями (по порядку)
+    const answer = async okay => q.evaluate(async okay => { const x = gram.qs[gram.i], xp0 = game.xp, wait = z => new Promise(r => setTimeout(r, z));
+      if(x.type === 'mc'){ const want = okay ? x.a : x.order.find(i => i !== x.a); document.querySelector(`#gramView [data-act="opt"][data-i="${want}"]`).click(); }
+      else { if(!okay){ const bad = [...document.querySelectorAll('#gramView .gm-chip')].find(b => b.textContent !== (x.m.parts[0].root ? x.m.parts[0].t : '-' + x.m.parts[0].t)); bad.click(); }
+        for(let k = 0; k < x.m.parts.length; k++){ const p = x.m.parts[k], lab = p.root ? p.t : '-' + p.t; [...document.querySelectorAll('#gramView .gm-chip')].find(b => !b.disabled && b.textContent === lab).click(); } }
+      await wait(30); const fb = document.querySelector('#gramView .gm-fb');
+      return { type:x.type, fb:fb ? fb.className + '|' + fb.textContent.slice(0, 40) : '', nextOn:!document.querySelector('#gramView .gm-next').disabled, dxp:game.xp - xp0 }; }, okay);
+    // первый вопрос — намеренно неверно (ошибка не наказывается: опыт не отнимается)
+    const first = await q.evaluate(() => gram.qs[gram.i].type); let wrong;
+    if(first === 'mc'){ wrong = await answer(false); ok(/gm-fb bad/.test(wrong.fb) && /Неверно/.test(wrong.fb) && wrong.nextOn && wrong.dxp === 0, JSON.stringify(wrong)); }
+    else { wrong = await answer(false); ok(/gm-fb bad/.test(wrong.fb), JSON.stringify(wrong)); }
+    await q.click('.gm-next'); const right = await answer(true); ok(/gm-fb ok/.test(right.fb) && right.dxp >= 2, JSON.stringify(right));
+    for(let i = 2; i < 6; i++){ await q.click('.gm-next'); await answer(true); }
+    const st = await q.evaluate(() => ({ s:JSON.parse(localStorage.getItem('soyle-gram')).r.poss, g:stats.gram, m:gramMastered('poss'), cnt:gramMasteredCount(), badge:BADGES.find(b => b.id === 'gram3').v(game, stats) }));
+    eq([st.s.n, st.s.ok, st.g.t, st.g.ok, st.m, st.cnt, st.badge], [6, 5, 6, 5, true, 1, 1], JSON.stringify(st));   // 5 из 6 = 83% ≥ 80% — освоено
+    await q.click('.gm-next'); await answer(true); await q.click('.gm-next'); await answer(true); await q.click('.gm-next');
+    const done = await q.evaluate(() => ({ score:document.querySelector('#gramView .gm-score').textContent, text:document.querySelector('#gramView .gm-done').textContent, btns:[...document.querySelectorAll('#gramView .gm-done .btn')].map(b => b.textContent) }));
+    eq(done.score, '7 из 8'); ok(/Правило освоено/.test(done.text), done.text); ok(done.btns.some(b => /Ещё раз/.test(b)) && done.btns.some(b => /Дальше/.test(b)), done.btns.join('|'));
+    await q.click('[data-act="back"]'); await q.click('[data-act="back"]'); const row = await q.evaluate(() => document.querySelector('[data-rule="poss"]').className + '|' + document.querySelector('[data-rule="poss"] .gm-st').textContent);
+    ok(/done/.test(row) && /освоено/.test(row), row);
+    // сохранение: после перезагрузки страницы прогресс на месте
+    await q.reload(); await q.waitForTimeout(150); const after = await q.evaluate(() => ({ m:gramMastered('poss'), n:gstate.r.poss.n }));
+    eq([after.m, after.n], [true, 8]); eq(q.errors, []); await q.context().close();
+  });
+  await test('упражнение «соберите слово»: неверная часть — подсказка и ошибка, верный порядок — засчитано, «убрать последнюю» работает', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    await q.evaluate(() => { { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); } }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    const set = rule => q.evaluate(rule => { gram = { view:'quiz', rule, qs:[gramMakeBuild(gramRule(rule))], i:0, ok:0, done:false }; gramRender(); const x = gram.qs[0]; return { word:x.m.word, n:x.m.parts.length, prompt:document.getElementById('gmQ').textContent }; }, rule);
+    const t1 = await set('prog'); ok(/Соберите слово/.test(t1.prompt) && t1.n >= 3, JSON.stringify(t1));
+    const bad = await q.evaluate(() => { const x = gram.qs[0], want = x.m.parts[0].t; const wrong = [...document.querySelectorAll('#gramView .gm-chip')].find(b => b.textContent !== want); wrong.click();
+      return { warn:!!document.querySelector('#gramView .gm-warn'), got:gram.qs[0].got.length }; }); eq(bad, { warn:true, got:0 });
+    const fin = await q.evaluate(() => { const x = gram.qs[0]; x.m.parts.forEach(p => { [...document.querySelectorAll('#gramView .gm-chip')].find(b => !b.disabled && b.textContent === (p.root ? p.t : '-' + p.t)).click(); });
+      return { cls:document.querySelector('#gramView .gm-fb').className, txt:document.querySelector('#gramView .gm-fb').textContent }; });
+    ok(/gm-fb bad/.test(fin.cls) && fin.txt.includes(t1.word), 'ошибка в первом нажатии — не засчитано: ' + JSON.stringify(fin));
+    await set('prog'); const good = await q.evaluate(() => { const x = gram.qs[0]; x.m.parts.slice(0, 2).forEach(p => { [...document.querySelectorAll('#gramView .gm-chip')].find(b => !b.disabled && b.textContent === (p.root ? p.t : '-' + p.t)).click(); });
+      const n2 = gram.qs[0].got.length; document.querySelector('#gramView .gm-undo').click(); const n1 = gram.qs[0].got.length;
+      x.m.parts.slice(1).forEach(p => { [...document.querySelectorAll('#gramView .gm-chip')].find(b => !b.disabled && b.textContent === (p.root ? p.t : '-' + p.t)).click(); });
+      return { n2, n1, cls:document.querySelector('#gramView .gm-fb').className }; });
+    eq([good.n2, good.n1], [2, 1]); ok(/gm-fb ok/.test(good.cls), good.cls); eq(q.errors, []); await q.context().close();
+  });
+  await test('«Грамматика»: правило проходится до конца ботом (все 20 правил, все вопросы), без ошибок JS; Escape ведёт на уровень выше', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    await q.evaluate(() => { { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); } }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    const r = await q.evaluate(async () => { const bad = [];
+      for(const g of GRAMMAR){ document.querySelector(`[data-rule="${g.id}"]`).click(); document.querySelector('.gm-go').click();
+        let steps = 0; while(!gram.done && steps++ < 20){ const x = gram.qs[gram.i];
+          if(x.type === 'mc') document.querySelector(`#gramView [data-act="opt"][data-i="${x.a}"]`).click();
+          else x.m.parts.forEach(p => { [...document.querySelectorAll('#gramView .gm-chip')].find(b => !b.disabled && b.textContent === (p.root ? p.t : '-' + p.t)).click(); });
+          if(!document.querySelector('#gramView .gm-fb.ok')) bad.push(g.id + ' ' + gram.i + ': не засчитано');
+          document.querySelector('#gramView .gm-next').click(); }
+        if(!gram.done || gram.ok !== gram.qs.length) bad.push(g.id + ': итог ' + gram.ok + '/' + gram.qs.length);
+        document.querySelector('#gramView [data-act="back"]').click(); document.querySelector('#gramView [data-act="back"]') ? 0 : 0; if(gram.view === 'rule') document.querySelector('#gramView [data-act="back"]').click(); }
+      return { bad, mastered:gramMasteredCount(), view:gram.view }; });
+    eq(r.bad, []); eq([r.mastered, r.view], [20, 'list']);
+    await q.click('[data-rule="plural"]'); await q.keyboard.press('Escape'); eq(await q.evaluate(() => gram.view), 'list'); eq(q.errors, []); await q.context().close();
+  });
   console.log('«Город» (Mahalle): разговоры с последствиями');
   const openCity = async (opts) => { const q = await openPage(browser, opts); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-city'); await q.waitForTimeout(100); return q; };
   const ctSay = async (q, t) => { await q.evaluate(t => { window.__say = t; window.__silent = !t; }, t); await q.click('#ctSpeak'); await q.waitForTimeout(120);
@@ -1313,6 +1434,16 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       opts: [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent), score: (document.querySelector('#ctResult .score b') || {}).textContent })); };
   const ctNext = async q => { await q.click('#ctNext'); await q.waitForTimeout(60); };
   const ctPick = async (q, i) => { await q.click(`#ctOpts .ct-opt-main[data-i="${i}"]`); await q.waitForTimeout(40); return q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)); };
+  await test('кубик на поле (просьба 22:05): стоит на одном месте при смене вкладок Дела · Люди · Умения, рядом нет надписи «Выпало N», грань показывает число', async () => {
+    for(const [w, h] of [[360, 640], [390, 844]]){
+      const q = await openCity(); await q.setViewportSize({ width:w, height:h });
+      const pos = []; for(const id of ['ctTabTasks', 'ctTabPeople', 'ctTabSkills', 'ctTabTasks']){ await q.evaluate(id => document.getElementById(id).click(), id); await q.waitForTimeout(40);
+        pos.push(await q.evaluate(() => { const r = document.getElementById('ctRoll').getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; })); }
+      eq(pos.every(x => x.join() === pos[0].join()), true, w + ': ' + JSON.stringify(pos));
+      await q.evaluate(() => { window.__dice = 4; }); await q.click('#ctRoll'); await q.waitForTimeout(80);
+      const r = await q.evaluate(() => ({ hint:document.getElementById('ctDiceHint').textContent, n:document.querySelector('#ctRoll .die').parentNode.dataset.n, dots:document.querySelectorAll('#ctRoll .die circle').length, text:document.getElementById('ctCard') ? '' : document.getElementById('cityCard').innerText }));
+      ok(!/Выпало/i.test(r.hint + r.text), 'надпись про выпавшее число осталась: ' + r.hint); eq(r.dots, 4); await q.context().close(); }
+  });
   await test('портреты (просьба 17:02): у каждого из персонажей свой рисунок (все разные), он в списке «Люди», в окне звонка и на лице собеседника в сцене', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
     const r = await q.evaluate(async () => { const ids = Object.keys(CHARS), svgs = ids.map(c => charAvatar(c)); const out = { all:ids.every(c => AVATARS[c]), uniq:new Set(svgs).size === ids.length, emoji:svgs.some(x => /\p{Extended_Pictographic}/u.test(x)) };
@@ -1564,7 +1695,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('Город: собеседник говорит голосом персонажа; турецкий текст открывается после звука; перевод знакомой реплики стоит терпения (один раз)', async () => {
     const q = await openCity({ storage:{ 'soyle-city': JSON.stringify({ seen:{ 'Hoş geldin komşu! Buyur.':1 } }) } });
     await q.evaluate(() => { trVoice = { name:'A', lang:'tr-TR' }; trVoices = [trVoice, { name:'B', lang:'tr-TR' }]; window.__spoken = []; window.__noOnEnd = true; });
-    await q.evaluate(() => cityStart('bakkal')); await q.waitForTimeout(30);
+    await q.evaluate(() => cityStart('bakkal')); await q.waitForFunction(() => window.__spoken.length > 0, null, { timeout:1500 });
     const during = await q.evaluate(() => [window.__spoken, document.getElementById('ctTr').classList.contains('veil'), document.getElementById('ctSpeak').disabled]);
     eq(during, [['Hoş geldin komşu! Buyur.'], true, true]);                                    // пока говорит — текст размыт, микрофон ждёт
     await q.waitForTimeout(1200 + 'Hoş geldin komşu! Buyur.'.length * 150 + 100);           // onend не пришёл — страховка открывает
@@ -2014,8 +2145,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       groups: typeof GROUPS, lsChip: !!document.getElementById('lsKindChip'), badges: BADGES.map(b => b.id),
       quest: QUESTS.some(x => /Звук/.test(x.t)), help: document.querySelector('details.help').textContent }));
     const errs = q.errors; await q.context().close();
-    eq([r.tab, r.lsChip, r.quest], [false, false, false]); eq(r.modes, ['city','memory','phrases','listen','free','progress']); eq(r.train, ['phrases','listen','free']);
-    eq(r.groups, 'undefined'); eq(r.badges.length, 22); ok(!r.badges.some(id => ['ear','blitz10','blitz20','o','u','i','c','sounds'].includes(id)), 'медали звуков: ' + r.badges.join());
+    eq([r.tab, r.lsChip, r.quest], [false, false, false]); eq(r.modes, ['city','memory','phrases','listen','free','grammar','progress']); eq(r.train, ['phrases','listen','free','grammar']);   // «Грамматика» — четвёртая подвкладка (просьба 21:39)
+    eq(r.groups, 'undefined'); eq(r.badges.length, 25); ok(!r.badges.some(id => ['ear','blitz10','blitz20','o','u','i','c','sounds'].includes(id)), 'медали звуков: ' + r.badges.join());
     ok(!/Звуки/.test(r.help), 'справка упоминает «Звуки»'); eq(errs, []);
   });
   await test('кнопки не сдвигаются при смене слов и нажатиях', async () => {
