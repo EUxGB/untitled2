@@ -27,6 +27,13 @@ jobs:
         run: |
           set -o pipefail
           npm test 2>&1 | tee test-output.txt || { grep -E '✗|ожидалось|получено|Error|Итог|условие' test-output.txt | head -40 | while IFS= read -r l; do echo "::error::$l"; done; exit 1; }
+      - name: Снимок вида при падении эталона (для обновления эталона по образу CI)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: approved-actual
+          path: tests/approved/*.actual.png
+          if-no-files-found: ignore
   # Публикация на GitHub Pages — только если все тесты прошли
   deploy:
     needs: test

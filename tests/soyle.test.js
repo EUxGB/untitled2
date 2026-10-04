@@ -1444,6 +1444,19 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       const r = await q.evaluate(() => ({ hint:document.getElementById('ctDiceHint').textContent, n:document.querySelector('#ctRoll .die').parentNode.dataset.n, dots:document.querySelectorAll('#ctRoll .die circle').length, text:document.getElementById('ctCard') ? '' : document.getElementById('cityCard').innerText }));
       ok(!/Выпало/i.test(r.hint + r.text), 'надпись про выпавшее число осталась: ' + r.hint); eq(r.dots, 4); await q.context().close(); }
   });
+  await test('больше персонажей (просьба 22:04): 18 человек, новые встречаются в местах своего пула, итог сцены называет их по имени, портреты все разные', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => { const out = { n:Object.keys(CHARS).length, bad:[] };
+      for(const sid of ['taxi', 'bakkal', 'visit_bakkal', 'mama', 'kapici', 'visit_kapici', 'cay', 'lokanta', 'visit_cay', 'visit_lokanta', 'eczane', 'visit_eczane', 'visit_berber', 'visit_pazar']){
+        const sc = SCENES[sid]; for(const c of sc.pool){ if(!CHARS[c]) { out.bad.push(sid + ': нет ' + c); continue; }
+          window.__char = c; city.min = (c === 'bakkal_emre' ? 19 : 10) * 60; cityStart(sid); if(!ct || ct.char !== c){ out.bad.push(sid + ' ' + c + ': не выбран (' + (ct && ct.char) + ')'); if(ct) ct = null; continue; }
+          const g = document.getElementById('ctGoal').textContent, w = document.getElementById('ctWho').textContent; if(w !== CHARS[c].name) out.bad.push(sid + ': имя ' + w);
+          const nm = ctNm(sc.fail ? sc.fail.text : ''); const d = CHARS[sc.pool[0]].name.split(/[ ,-]/)[0];
+          if(c !== sc.pool[0] && CHARS[c].short && typeof nm === 'string' && nm.includes(d)) out.bad.push(sid + ' ' + c + ': в итоге осталось имя ' + d);
+          ct = null; } }
+      cityRender(); return out; });
+    eq(r.n, 18); eq(r.bad, []); eq(q.errors, []); await q.context().close();
+  });
   await test('портреты (просьба 17:02): у каждого из персонажей свой рисунок (все разные), он в списке «Люди», в окне звонка и на лице собеседника в сцене', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
     const r = await q.evaluate(async () => { const ids = Object.keys(CHARS), svgs = ids.map(c => charAvatar(c)); const out = { all:ids.every(c => AVATARS[c]), uniq:new Set(svgs).size === ids.length, emoji:svgs.some(x => /\p{Extended_Pictographic}/u.test(x)) };

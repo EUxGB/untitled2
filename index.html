@@ -3515,12 +3515,19 @@ const CHARS = {
   berber:      { name:"Берберь Эрдем",    initial:"E", voice:6, patience:3, trait:"Болтливый, сплетничает про квартал.", likes:{ words:[] }, dm:{ work:[10*60, 20*60], fan:1, sleep:23*60 } },
   eczaci:      { f:1, name:"Эджзаджи Зейнеп",  initial:"Z", voice:7, patience:3, trait:"Строгая, точная, не любит «примерно».", likes:{ words:["teşekkür ederim"], firstTry:true }, dm:{ work:[9*60, 19*60], sleep:22*60 + 30, contactAt:5 } },
   usta:        { name:"Уста Кемаль",      initial:"K", voice:8, patience:3, trait:"Спокойный, скуп на слова, гордится кухней.", likes:{ words:["eline sağlık", "elinize sağlık", "ellerinize sağlık"] }, dm:{ work:[11*60, 22*60], devout:1, sleep:23*60, contactAt:6 } },
+  bakkal_ramiz:{ name:"Рамиз, друг Хасана", short:"Рамиз", initial:"R", voice:4, patience:3, trait:"Заходит поболтать, считает быстро, ничего не забывает.", likes:{ words:["kolay gelsin", "hoş bulduk"] }, when: c => c.min < 17 * 60, dm:{ work:[9*60, 17*60], sleep:22*60, contactAt:4 } },
+  sofor_selim: { name:"Селим-бей", short:"Селим", initial:"S", voice:3, patience:3, trait:"Вежливый, всегда включает счётчик, любит рассказывать про футбол.", likes:{ words:["sağ olun", "iyi günler"] }, dm:{ drive:1, fan:1, sleep:23*60 } },
+  pazarci_orhan:{ name:"Орхан, торговец фруктами", short:"Орхан", initial:"O", voice:7, patience:3, trait:"Хвалит свой товар, уступает, если с ним шутят.", likes:{ words:["kolay gelsin"], haggle:true }, dm:{ work:[8*60, 17*60], sleep:21*60 + 30, contactAt:4 } },
+  berber_burak:{ name:"Бурак, ученик берберя", short:"Бурак", initial:"B", voice:2, patience:3, trait:"Молодой, стеснительный, говорит быстро и тихо.", likes:{ firstTry:true }, dm:{ work:[10*60, 20*60], fan:1, sleep:24*60 } },
+  eczaci_meryem:{ f:1, name:"Мерьем, помощница фармацевта", short:"Мерьем", initial:"M", voice:6, patience:4, trait:"Терпеливо объясняет по два раза, пишет дозировку на коробке.", likes:{ words:["teşekkür ederim", "geçmiş olsun"] }, dm:{ work:[9*60, 19*60], sleep:22*60, contactAt:5 } },
+  usta_can:    { name:"Джан, официант", short:"Джан",  initial:"C", voice:1, patience:2, trait:"Спешит, носит три чашки сразу, не любит долгих раздумий.", likes:{ words:["eline sağlık", "teşekkürler"], firstTry:true }, dm:{ work:[11*60, 22*60], fan:1, sleep:23*60 + 30, contactAt:5 } },
+  kapici_ibrahim:{ name:"Ибрахим, сменщик капыджи", short:"Ибрахим", initial:"İ", voice:5, patience:3, trait:"Дежурит по выходным, добродушный, чинит всё скотчем.", likes:{ words:["kolay gelsin"] }, dm:{ work:[9*60, 17*60], devout:1, sleep:22*60, contactAt:4 } },
 };
 const contactAt = c => (CHARS[c] && CHARS[c].dm && CHARS[c].dm.contactAt) || 3;       // с какими отношениями человек дал бы номер: по умолчанию «знакомый»; молчуны и строгие — позже
 const POLITE = ["lütfen", "teşekkür", "teşekkürler", "sağ ol", "sağ olun", "kolay gelsin", "iyi günler", "hayırlı işler", "rica ederim"];
 const TR_NUMS = { sıfır:0, bir:1, iki:2, üç:3, dört:4, beş:5, altı:6, yedi:7, sekiz:8, dokuz:9, on:10, yirmi:20, otuz:30, kırk:40, elli:50, altmış:60, yetmiş:70, seksen:80, doksan:90, yüz:100 };
 const SCENES = {
-  taxi:{ title:"Такси до Таксима", who:"Шофёр", initial:"Ş", place:"У дома, стоянка такси", pool:["sofor", "sofor_hasan", "sofor_emre"],
+  taxi:{ title:"Такси до Таксима", who:"Шофёр", initial:"Ş", place:"У дома, стоянка такси", pool:["sofor", "sofor_hasan", "sofor_emre", "sofor_selim"],
     goal:"Доехать до площади Таксим. Не переплатить.",
     start:"greet",
     fail:{ text:"Шофёр не понял, куда вам, и уехал с другим пассажиром. Вы доехали на метро: дольше и с пересадкой.", fx:{ min:45, money:-30 } },
@@ -3567,7 +3574,7 @@ const SCENES = {
       tip:{ end:{ kind:"ok", text:"Шофёр заулыбался: «Sağ olun abi!» Чаевые здесь не обязательны, но «üstü kalsın» — это по-местному.", fx:{ tipChange:true } } },
       done:{ end:{ kind:"ok", text:"Вы на Таксиме. Шофёр понял вас с первого раза — так и должно быть.", fx:{} } },
     } },
-  bakkal:{ free:true, title:"Bakkal — лавка у дома", who:"Бакал Хасан", initial:"H", place:"Лавка на углу", pool:["bakkal", "bakkal_emre"],
+  bakkal:{ free:true, title:"Bakkal — лавка у дома", who:"Бакал Хасан", initial:"H", place:"Лавка на углу", pool:["bakkal", "bakkal_emre", "bakkal_ramiz"],
     goal:"Купить хлеб, воду и яйца. Запомниться хозяину.",
     start:"greet",
     fail:{ text:"Хасан развёл руками: «Anlamadım, kusura bakma». Вы ушли без покупок; хлеб придётся искать в супермаркете — дальше и дороже.", fx:{ min:30, money:-160 } },
@@ -3606,7 +3613,7 @@ const SCENES = {
       local:{ end:{ kind:"ok", text:"«Kolay gelsin» — так говорят местные. Хасан запомнил вас: в следующий раз отложит свежий хлеб.", fx:{ flag:"bakkalFriend" } } },
       done:{ end:{ kind:"ok", text:"Покупки сделаны. Хасан кивнул — вежливо, но пока вы для него просто покупатель.", fx:{} } },
     } },
-  kapici:{ title:"Kapıcı — нет горячей воды", who:"Капыджи Мехмет", initial:"M", place:"Подъезд, каморка у входа", char:"kapici",
+  kapici:{ title:"Kapıcı — нет горячей воды", who:"Капыджи Мехмет", initial:"M", place:"Подъезд, каморка у входа", pool:["kapici", "kapici_ibrahim"],
     goal:"Объяснить, что нет горячей воды, и добиться, чтобы починили сегодня.",
     start:"greet",
     fail:{ text:"Мехмет так и не понял, в чём дело, и ушёл выносить мусор. Вечером вы мылись холодной водой.", fx:{ min:10, flag:"coldShower" } },
@@ -3753,7 +3760,7 @@ const SCENES = {
       done:{ end:{ kind:"ok", text:"Чек в кармане, покупки в сумке. Касса за полминуты — вы здесь не впервые.", fx:{} } },
       done2:{ end:{ kind:"near", text:"Без чека. Дома выяснилось, что пробили лишний йогурт — доказать нечем.", fx:{ money:-10 } } },
     } },
-  cay:{ free:true, title:"Чайная у пристани", who:"Уста Кемаль", initial:"K", place:"Çay bahçesi", char:"usta",
+  cay:{ free:true, title:"Чайная у пристани", who:"Уста Кемаль", initial:"K", place:"Çay bahçesi", pool:["usta", "usta_can"],
     goal:"Выпить чай и расплатиться как местный.",
     start:"greet",
     fail:{ text:"Уста пожал плечами и ушёл к самовару. Чай вы так и не получили.", fx:{ min:10 } },
@@ -3789,7 +3796,7 @@ const SCENES = {
       done:{ end:{ kind:"ok", text:"Чай в тонком стакане, вид на пролив. «Elinize sağlık» — так благодарят того, кто приготовил.", fx:{} } },
       left:{ end:{ kind:"near", text:"Ушли без чая. В чайной у пристани кофе не варят — только çay.", fx:{} } },
     } },
-  lokanta:{ free:true, title:"Обед в локанте", who:"Уста Кемаль", initial:"K", place:"Эснаф-локанта", char:"usta",
+  lokanta:{ free:true, title:"Обед в локанте", who:"Уста Кемаль", initial:"K", place:"Эснаф-локанта", pool:["usta", "usta_can"],
     goal:"Понять, что есть, выбрать и расплатиться.",
     start:"greet",
     fail:{ text:"Уста махнул рукой: «Sonra gel». Обед не состоялся.", fx:{ min:10 } },
@@ -3818,7 +3825,7 @@ const SCENES = {
       done:{ end:{ kind:"ok", text:"Фасоль с пловом за сто двадцать — обед работяги. Уста кивнул на «elinize sağlık».", fx:{} } },
       done2:{ end:{ kind:"ok", text:"Сытно и недорого. В следующий раз попробуйте «elinize sağlık» — усте будет приятно.", fx:{} } },
     } },
-  eczane:{ title:"Аптека", who:"Эджзаджи Зейнеп", initial:"Z", place:"Аптека на углу", char:"eczaci",
+  eczane:{ title:"Аптека", who:"Эджзаджи Зейнеп", initial:"Z", place:"Аптека на углу", pool:["eczaci", "eczaci_meryem"],
     goal:"Купить что-нибудь от головной боли и понять дозировку.",
     start:"greet",
     fail:{ text:"Зейнеп строго сказала «Doktora gidin» и повернулась к следующему. Голова болит дальше.", fx:{ min:10 } },
@@ -4038,7 +4045,7 @@ const SCENES = {
       d:{ end:{ kind:"ok", text:"«Tamam, geçin.» Паспорт подошёл. Запомните: в PTT без документа — никак.", fx:{ min:2 } } },
       e:{ end:{ kind:"near", text:"«Kimliksiz olmaz.» Без документа нельзя. Прогулка до дома и обратно.", fx:{} } },
     } },
-  visit_berber:{ title:"Берберь: спросить цену", who:"Берберь Эрдем", initial:"E", place:"Берберь", char:"berber",
+  visit_berber:{ title:"Берберь: спросить цену", who:"Берберь Эрдем", initial:"E", place:"Берберь", pool:["berber", "berber_burak"],
     goal:"Узнать цену стрижки и записаться.", start:"a",
     fail:{ text:"Эрдем пожал плечами и вернулся к клиенту.", fx:{ min:5 } },
     nodes:{
@@ -4080,7 +4087,7 @@ const SCENES = {
       d:{ end:{ kind:"ok", text:"«Önemli değil.» Ничего страшного. Чайки обиделись, кассир — нет.", fx:{ min:1 } } },
       e:{ end:{ kind:"near", text:"«Herkes atıyor» — и поэтому они пикируют на детей. Кассир вздохнул.", fx:{ min:1 } } },
     } },
-  visit_pazar:{ title:"Рынок: присмотреться", who:"Пазарджи Юсуф", initial:"Y", place:"Площадь рынка", char:"pazarci",
+  visit_pazar:{ title:"Рынок: присмотреться", who:"Пазарджи Юсуф", initial:"Y", place:"Площадь рынка", pool:["pazarci", "pazarci_orhan"],
     goal:"Спросить цену помидоров — пока без торга.", start:"a",
     fail:{ text:"Юсуф уже кричал следующему. Цену так и не узнали.", fx:{ min:5 } },
     nodes:{
@@ -4101,7 +4108,7 @@ const SCENES = {
       d:{ end:{ kind:"ok", text:"Полкило клубники — и Юсуф положил сверху горсть «ikram». Так тут делают, если вы заговорили.", fx:{} } },
       e:{ end:{ kind:"near", text:"«Bak bak!» Попробовали, похвалили и ушли. Юсуф запомнил лицо — в следующий раз скидки не ждите.", fx:{} } },
     } },
-  visit_kapici:{ title:"Подъезд: капыджи", who:"Капыджи Мехмет", initial:"M", place:"Подъезд", char:"kapici",
+  visit_kapici:{ title:"Подъезд: капыджи", who:"Капыджи Мехмет", initial:"M", place:"Подъезд", pool:["kapici", "kapici_ibrahim"],
     goal:"Перекинуться словом с Мехметом.", start:"a",
     fail:{ text:"Мехмет не понял и ушёл подметать.", fx:{ min:5 } },
     nodes:{
@@ -4122,7 +4129,7 @@ const SCENES = {
       d:{ end:{ kind:"ok", text:"Мехмет кивнул. Обувь убрана, мир в подъезде сохранён.", fx:{ min:3 } } },
       e:{ end:{ kind:"near", text:"«Herkes» — для капыджи не довод. Разговор окончен; обувь он убрал сам — в подвал.", fx:{ min:3 } } },
     } },
-  visit_bakkal:{ title:"Лавка: заглянуть", who:"Бакал Хасан", initial:"H", place:"Лавка на углу", pool:["bakkal", "bakkal_emre"],
+  visit_bakkal:{ title:"Лавка: заглянуть", who:"Бакал Хасан", initial:"H", place:"Лавка на углу", pool:["bakkal", "bakkal_emre", "bakkal_ramiz"],
     goal:"Купить что-нибудь по мелочи или просто поболтать.", start:"a",
     fail:{ text:"Хасан отвлёкся на другого покупателя.", fx:{ min:5 } },
     nodes:{
@@ -4206,7 +4213,7 @@ const SCENES = {
       d:{ end:{ kind:"ok", text:"Отрубной за двадцать. Пекарь: «Sağlık için» — для здоровья.", fx:{ min:2 } } },
       e:{ end:{ kind:"near", text:"Пекарь кивнул. Запах хлеба увязался за вами до угла.", fx:{ min:1 } } },
     } },
-  visit_eczane:{ title:"Аптека: спросить", who:"Эджзаджи Зейнеп", initial:"Z", place:"Аптека", char:"eczaci",
+  visit_eczane:{ title:"Аптека: спросить", who:"Эджзаджи Зейнеп", initial:"Z", place:"Аптека", pool:["eczaci", "eczaci_meryem"],
     goal:"Спросить мелочь без рецепта.", start:"a",
     fail:{ text:"Зейнеп строго посмотрела поверх очков и позвала следующего.", fx:{ min:5 } },
     nodes:{
@@ -4229,7 +4236,7 @@ const SCENES = {
       e:{ end:{ kind:"ok", text:"Пастилки за шестьдесят: «Soğuk içme». Не пейте холодного.", fx:{ min:3 } } },
       f:{ end:{ kind:"near", text:"Зейнеп кивнула и вернулась к рецептам. Аптека — не место для «просто».", fx:{ min:1 } } },
     } },
-  visit_cay:{ title:"Чайная: один чай", who:"Уста Кемаль", initial:"K", place:"Çay bahçesi", char:"usta",
+  visit_cay:{ title:"Чайная: один чай", who:"Уста Кемаль", initial:"K", place:"Çay bahçesi", pool:["usta", "usta_can"],
     goal:"Выпить чай и посидеть десять минут.", start:"a",
     fail:{ text:"Кемаль поставил чай и ушёл, не дождавшись ответа. Чай всё равно считается.", fx:{ min:10, money:-10 } },
     nodes:{
@@ -4252,7 +4259,7 @@ const SCENES = {
       d:{ end:{ kind:"ok", text:"Чай, сахар, скамейка. Кемаль спросил, как дела, — и не слушал ответ: здесь так принято.", fx:{ min:10 } } },
       e:{ end:{ kind:"near", text:"Кемаль пожал плечами: сидеть здесь без чая — как сидеть без стула.", fx:{ min:5 } } },
     } },
-  visit_lokanta:{ title:"Локанта: спросить, что есть", who:"Уста Кемаль", initial:"K", place:"Локанта", char:"usta",
+  visit_lokanta:{ title:"Локанта: спросить, что есть", who:"Уста Кемаль", initial:"K", place:"Локанта", pool:["usta", "usta_can"],
     goal:"Узнать, что сегодня готовят, и, может, поесть.", start:"a",
     fail:{ text:"Кемаль ушёл на кухню. Обед откладывается.", fx:{ min:5 } },
     nodes:{
@@ -4347,7 +4354,7 @@ const SCENES = {
   // ---- утреннее дело после кота: корм у бакала (появляется в плане, пока кот живёт у вас) ----
   // Вариативность (спек §6а, просьба 07:52): каждый визит — своя цепочка: приветствие (8) → просьба (6 вариантов карточек) → уточнение (6) →
   // иногда осложнение (6, из них 2 сквозных) → цена (4) → прощание (4). Разных реплик игрока ≥ 50, сочетаний — тысячи (тест).
-  mama:{ title:"Корм для кота", who:"Бакал Хасан", initial:"H", place:"Лавка на углу", pool:["bakkal", "bakkal_emre"],
+  mama:{ title:"Корм для кота", who:"Бакал Хасан", initial:"H", place:"Лавка на углу", pool:["bakkal", "bakkal_emre", "bakkal_ramiz"],
     goal:"Купить коту корм. Кот ждёт.",
     start:"greet",
     fail:{ text:["Хасан не понял, что вам нужно. Кот вечером смотрел с укором и орал под дверью.", "Разговор не сложился, ушли без корма. Кот ночью спал на вашей голове — в знак протеста."], fx:{ min:15 } },
@@ -4788,6 +4795,8 @@ const pickChar = (scene, forced) => {
 };
 const ctWho = () => (ct && CHARS[ct.char] ? CHARS[ct.char].name : ct ? ct.scene.who : "");
 const pickLine = v => Array.isArray(v) ? v[(ct ? ct.seed : 0) % v.length] : v;      // реплика может быть списком вариантов — в каждой сцене свой (в тестах — первый)
+const ctNm = t => { if(!ct || !ct.char || typeof t !== "string") return t; const pl = ct.scene.pool || [], d = CHARS[pl[0]], c = CHARS[ct.char];
+  if(!d || !c || !c.short || pl[0] === ct.char) return t; const def = d.name.split(/[ ,-]/)[0]; return t.split(def).join(c.short).replace(new RegExp(c.short + "(ом|у|а|е)\\b", "g"), m => m); };   // тексты итогов написаны про «главного» человека места: для другого из пула подставляем его имя
 const ctNpc = n => pickLine((n.npcBy && ct && n.npcBy[ct.char]) || n.npc);
 const ctAgain = n => pickLine((n.againBy && ct && n.againBy[ct.char]) || n.again);
 const ctRu = n => pickLine(n.ru);                                                          // перевод — тоже список, параллельный npc (тот же номер варианта)
@@ -4870,6 +4879,13 @@ const AVATARS = {
   berber:      { skin:"#E3B48B", hair:"#1F1A18", style:"quiff", beard:1, shirt:"#222B33", apron:"#F0EEE6" },
   eczaci:      { skin:"#EBC7A6", hair:"#3B2A22", style:"bun", glasses:1, shirt:"#F4F6F4", coat:1, f:1 },
   usta:        { skin:"#DDB08A", hair:"#8A8A8A", style:"short", mus:1, chef:1, shirt:"#F4F4F0" },
+  bakkal_ramiz:{ skin:"#D9A678", hair:"#4A4A4A", style:"short", mus:1, flatcap:"#3F5B7D", shirt:"#3F7D5B" },
+  sofor_selim: { skin:"#DDB08A", hair:"#C9C9C9", style:"short", glasses:1, cap:"#7A2E2E", shirt:"#3E4C59" },
+  pazarci_orhan:{ skin:"#E0B08A", hair:"#2A1D17", style:"quiff", mus:2, shirt:"#C98A2E", apron:"#B5472E" },
+  berber_burak:{ skin:"#EBC7A6", hair:"#14100E", style:"quiff", stubble:1, shirt:"#6B7F8C", apron:"#222B33" },
+  eczaci_meryem:{ skin:"#E8C4A4", hair:"#2B2A3A", style:"scarf", scarf:"#5B7D8E", shirt:"#F4F6F4", coat:1, f:1, glasses:1 },
+  usta_can:    { skin:"#E8C09A", hair:"#3A2A1E", style:"short", shirt:"#222B33", apron:"#F0EEE6" },
+  kapici_ibrahim:{ skin:"#D49C70", hair:"#8A8A8A", style:"bald", mus:2, flatcap:"#4B5B4B", shirt:"#6B6B3E" },
 };
 function charAvatar(id, cls){
   const a = AVATARS[id]; if(!a) return "";
@@ -5042,7 +5058,7 @@ function cityStart(id, opts){
   const char = pickChar(scene, opts && opts.char), pat = (scene.patience || (CHARS[char] ? CHARS[char].patience : 3)) + (skillLvl("nezaket") >= 3 ? 1 : 0), dest = opts && typeof opts.dest === "number" ? opts.dest : null;
   if(char) (city.met || (city.met = {}))[char] = city.day;
   ct = { id, scene, char, dm:!!scene.dm, dmCap:!!scene.dm && city.dmDay[char] === city.day, dest, taxiFrom:city.pos, rel0:(city.rel[char] || 0), seed:TESTMODE ? (+window.__seed || 0) : Math.floor(Math.random() * 1000), alts:{}, node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
-  const goal = dest !== null ? `Доехать до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}. Не переплатить.` : scene.goal;
+  const goal = dest !== null ? `Доехать до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}. Не переплатить.` : ctNm(scene.goal);
   ctEl("ctGoal").textContent = "Цель: " + goal; ctEl("ctGoal").title = goal; ctEl("ctWho").textContent = ctWho();
   cityRender();
   const small = ctSmalltalk(scene);
@@ -5057,6 +5073,21 @@ function ctButtons(){
   ctEl("ctPay").hidden = !(n && (n.pay || n.code) && !ct.resolved);
   if(ct && ct.scene.phone) ctEl("ctShow").disabled = true;
 }
+// Запись носителя для точной фразы города: сначала то, что уже лежит у нас (Common Voice в audio/cv, Tatoeba из VOICED) — мгновенно;
+// для своей реплики (ear) ещё и поиск по сети не дольше 1,5 с. Нет записи или не загрузилась — синтез, как раньше.
+function localNative(text){ try { return [...cvRecordings(text), ...(TAT_REC.get(nphr(text)) || []).map(x => ({ url:tatoebaAudio(x.id), who:"Tatoeba" }))]; } catch(e){ return []; } }
+function playNativeOr(recs, synth, onDone){
+  if(!recs.length || TESTMODE) return synth();
+  const a = $("nativeAudio"); speechSynthesis && speechSynthesis.cancel(); a.pause(); let fell = false;
+  const fb = () => { if(fell) return; fell = true; a.onerror = null; a.onended = null; synth(); };
+  a.onended = () => { a.onended = null; onDone && onDone(); }; a.onerror = fb; a.src = recs[Math.floor(Math.random() * recs.length)].url; a.play().catch(fb);
+}
+async function sayNative(text){
+  if(TESTMODE) return sayText(text);
+  let recs = localNative(text);
+  if(!recs.length) recs = await Promise.race([findRecordings(text).catch(() => []), new Promise(r => setTimeout(() => r([]), 1500))]) || [];
+  playNativeOr(recs, () => sayText(text));
+}
 // Реплика собеседника: синтез голосом персонажа; текст по-турецки открывается, когда звук прозвучал; перевод — по нажатию (стоит терпения)
 let npcTok = 0;
 function npcSay(text, onDone){
@@ -5065,12 +5096,16 @@ function npcSay(text, onDone){
   const idx = ct && CHARS[ct.char] ? CHARS[ct.char].voice : ct ? Object.keys(SCENES).indexOf(ct.id) : 0, v = trVoices[idx % trVoices.length] || trVoice;
   const busy = speechSynthesis.speaking || speechSynthesis.pending; speechSynthesis.cancel();
   let done = false; const once = () => { if(done) return; done = true; finish(); };
+  { const rec = localNative(text); if(rec.length && !TESTMODE){ playNativeOr(rec, () => { speakNpc(); }, once); return; } }
+  speakNpc();
+  function speakNpc(){
   setTimeout(() => {
     if(tok !== npcTok) return;
     const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = Math.max(ct && ct.scene.phone ? 1.0 : 0, npcRate());
     u.onend = once; u.onerror = once; speechSynthesis.speak(u);
     setTimeout(once, 1200 + Array.from(text).length * 150);     // телефон может не прислать onend
   }, busy ? 150 : 30);
+  }
 }
 // Такси до клетки поля: первая реплика — «<место>'e lütfen» (без уточнения адреса), цена — по расстоянию, числом на слух
 function ctTaxiNode(id, n){
@@ -5185,7 +5220,7 @@ function cityOptions(){
     if(ct.pick === m){ ctPeek(m); return; }                                            // повторное нажатие на выбранное — открыть подсказку
     ct.pick = m; ct.peeked = false; cityOptions();
     ctResult("info", `<span class="verdict">Скажите это по-турецки — «Сказать».</span><div class="alts">Передумали — «другой ответ».</div>`); });
-  box.querySelectorAll("[data-ear]").forEach(b => b.onclick = () => { const m = list[+b.dataset.ear]; ctPeek(m, true); sayText(m.say[0]); });
+  box.querySelectorAll("[data-ear]").forEach(b => b.onclick = () => { const m = list[+b.dataset.ear]; ctPeek(m, true); sayNative(m.say[0]); });
   const o = ctEl("ctOther"); if(o) o.onclick = () => { ct.pick = null; ct.peeked = false; cityOptions(); };
   scheduleFit();
 }
@@ -5382,7 +5417,7 @@ function cityEnd(end, failed){
   const learned = ct.lines.filter(l => l.ok && l.tr), missed = ct.lines.filter(l => !l.ok && l.tr);
   learned.forEach(l => memEnroll(l.tr, l.ru));                                   // сказанное в разговоре — в «Память», повторится по расписанию
   citySave();
-  const contactNote = ct.char ? cityContactCheck(ct.char) : "", id = ct.id, ct0 = ct.char, dest = ct.dest, levelUps = ct.levelUps, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title, endText = pickLine(end.text);   // текст итога может быть списком — по seed визита
+  const contactNote = ct.char ? cityContactCheck(ct.char) : "", id = ct.id, ct0 = ct.char, dest = ct.dest, levelUps = ct.levelUps, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title, endText = ctNm(pickLine(end.text));   // текст итога может быть списком — по seed визита
   if(dest !== null && kind !== "bad"){ city.pos = dest; city.roll = null; city.visited.push(dest); citySave(); }     // доехали — фишка на месте
   ct = null; cityRender();
   const stats = [["время", `${took} мин`], ["потрачено", `${spent} ₺`], ["реплик верно", `${learned.length}`]];
