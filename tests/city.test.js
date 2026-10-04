@@ -28,10 +28,15 @@ function cityGraphCheck(sc, nodeForms){
       if(Array.isArray(n.againRu) && (!Array.isArray(n.again) || n.againRu.length !== n.again.length)) errs.push(`${tag}: againRu — список другой длины, чем again`);
       if(n.pay){ if(!n.pay.short || !n.pay.shortRu) errs.push(`${tag}: pay без short/shortRu`); }
       else if(!text(n.again) || !n.againRu) errs.push(`${tag}: нет again/againRu`);
-      const visible = (n.moves || []).filter(m => !m.hide).length;
+      const vis = (n.moves || []).filter(m => !m.hide), visible = vis.length;
       if(!visible && !n.pay && !n.code && !n.haggle && !n.shop) errs.push(`${tag}: нет видимых ходов`);
+      if(visible && vis.every(m => m.fx && m.fx.money < 0)) errs.push(`${tag}: все ходы платные — без денег не выйти`);   // ход дороже наличных не показывается (ctMoves)
+      if(n.variants && base.alt) errs.push(`${tag}: variants вместе с alt — variants из alt не применяются (ctNodeFor)`);
       if(n.code && (!Array.isArray(n.code.options) || new Set(n.code.options).size !== 4 || !n.code.options.includes(n.code.value))) errs.push(`${tag}: code.options — 4 разных, среди них value`);
       if(n.haggle && !(n.haggle.floor < n.haggle.ask)) errs.push(`${tag}: haggle floor < ask`); }); });
+  // сквозные варианты не зацикливаются (pass → pass → …): иначе cityNode уходит в бесконечную рекурсию
+  const passEdges = id => nodeForms(nodes[id] || {}).map(n => n.pass).filter(Boolean);
+  ids.forEach(id => { const seen = new Set([id]); let st = passEdges(id); while(st.length){ const x = st.pop(); if(x === id){ errs.push(`${id}: цикл по pass`); break; } if(!seen.has(x) && nodes[x]){ seen.add(x); st.push(...passEdges(x)); } } });
   // достижимость: все узлы из start; из каждого узла — хоть одна концовка
   const reach = (from) => { const seen = new Set([from]), st = [from]; while(st.length){ const x = st.pop(); edges(x).forEach(g => { if(nodes[g] && !seen.has(g)){ seen.add(g); st.push(g); } }); } return seen; };
   const fromStart = reach(sc.start);
@@ -77,7 +82,7 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
   });
 
   console.log('Сцены «Города»: бот проходит каждую сцену');
-  // policy: happy — первый видимый ход сказан верно; fail — тишина до конца терпения; phone — «Показать» в каждом узле
+  // policy: happy — первый видимый ход сказан верно; last — последний видимый ход (другие ветки, крупная купюра); fail — тишина до конца терпения; phone — «Показать» в каждом узле
   async function playScene(q, id, policy, seed = 0){
     await q.evaluate(([id, seed]) => { cityLeave(); ct = null; if(!document.getElementById('modal').hidden) closeModal(); city = Object.assign({}, CITY_START, { money:3000 }); cityNormalize(); window.__silent = false; window.__seed = seed; cityStart(id); }, [id, seed]);
     const t0 = await q.evaluate(() => [city.money, city.min]);
@@ -88,21 +93,21 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
       if(st.ended) break;
       if(st.veil){ await q.waitForTimeout(60); continue; }
       if(st.resolved){ await q.click('#ctNext'); await q.waitForTimeout(40); continue; }
-      if(st.pay){ const v = policy === 'fail' ? Math.min(...st.notes) : Math.min(...st.notes.filter(n => n >= st.price)); await q.evaluate(v => cityPay(v), v); await q.waitForTimeout(40); continue; }
+      if(st.pay){ const v = policy === 'fail' ? Math.min(...st.notes) : policy === 'last' ? Math.max(...st.notes) : Math.min(...st.notes.filter(n => n >= st.price)); await q.evaluate(v => cityPay(v), v); await q.waitForTimeout(40); continue; }
       if(st.code){ await q.evaluate(p => cityCode(p === 'fail' ? '__wrong__' : ct.node.code.value), policy); await q.waitForTimeout(40); continue; }
       if(policy === 'phone'){ await q.evaluate(() => { const b = document.querySelector('#ctOpts .ct-opt-main'); b && b.click(); cityPhone(); }); await q.waitForTimeout(40); continue; }
-      await q.evaluate(p => { const b = document.querySelector('#ctOpts .ct-opt-main'); b && b.click(); const m = ct.pick || ctMoves(ct.node)[0]; window.__silent = p === 'fail'; window.__say = p === 'fail' ? '' : m.say[0]; }, policy);
+      await q.evaluate(p => { const all = document.querySelectorAll('#ctOpts .ct-opt-main'), b = p === 'last' ? all[all.length - 1] : all[0]; b && b.click(); const m = ct.pick || ctMoves(ct.node)[0]; window.__silent = p === 'fail'; window.__say = p === 'fail' ? '' : m.say[0]; }, policy);   // last — последний видимый ход (вторые ветки: «завтра приду», две штуки, самая крупная купюра)
       await q.click('#ctSpeak'); await q.waitForTimeout(140);
     }
     const r = await q.evaluate(t0 => ({ ended: !ct && document.getElementById('modal').hidden, done: city.done.map(d => d.kind), money: t0[0] - city.money, min: city.min - t0[1] }), t0);
     r.errors = q.errors.splice(0); return r;
   }
-  await test('бот проходит каждую сцену тремя путями (верно / тишина / телефон) и верный путь — с каждым номером варианта (seed 0…максимум alt): сцена завершается, нет ошибок JS, деньги и время в пределах', async () => {
+  await test('бот проходит каждую сцену четырьмя путями (первый ход / последний ход / тишина / телефон), первый и последний — с каждым номером варианта (seed 0…максимум alt): сцена завершается, нет ошибок JS, деньги и время в пределах', async () => {
     const q = await open(); const bad = [];
     const ids = await q.evaluate(() => Object.keys(SCENES));
     for(const id of ids){
       const sc = await q.evaluate(id => ({ phone: !!SCENES[id].phone, event: !!SCENES[id].event, alts: Math.max(1, ...Object.values(SCENES[id].nodes).map(n => (n.alt || []).length)) }), id);
-      const runs = [['happy', 0], ['fail', 0], ['phone', 0]]; for(let s = 1; s < sc.alts; s++) runs.push(['happy', s]);
+      const runs = [['happy', 0], ['fail', 0], ['phone', 0], ['last', 0]]; for(let s = 1; s < sc.alts; s++) runs.push(['happy', s], ['last', s]);
       for(const [policy, seed] of runs){
         if(policy === 'phone' && sc.phone) continue;
         const r = await playScene(q, id, policy, seed), tag = `${id}/${policy}${seed ? '#' + seed : ''}`;

@@ -30,6 +30,15 @@ const URL = process.argv[2], OUT = process.argv[3];
         if(card.scrollHeight > card.clientHeight + 1) out.push('card-scroll'); return out; });
       if(cut.length) (info.cuts = info.cuts || []).push(tab + ': ' + cut.join(','));
     }
+    // «Город»: разговор (корм для кота — вариативный) и поле после броска — на каждом размере; в игре голоса могут отсутствовать: текст открыт сразу
+    try {
+      await p.evaluate(() => { setMode('city'); cityLeave(); ct = null; city.flags = city.flags || {}; city.flags.kedi = 1; cityStart('mama'); }); await p.waitForTimeout(2500);
+      const sc = await p.evaluate(() => ({ node: ct && ct.nodeId, npc: document.getElementById('ctTr').textContent, opts: [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent), alts: ct && ct.alts }));
+      (info.cityScene = info.cityScene || {})[name] = sc;
+      await p.screenshot({ path:`${OUT}/${name}-city-scene.png` });
+      await p.evaluate(() => { cityLeave(); ct = null; cityRender(); window.__dice = 4; cityRoll(); }); await p.waitForTimeout(1500);
+      await p.screenshot({ path:`${OUT}/${name}-city-board-roll.png` });
+    } catch(e){ info.cityError = String(e); }
     // «На слух» → фразы (выбор между похожими фразами) и медали достижений — на каждом размере
     try {
       await p.evaluate(() => { setMode('listen'); }); await p.waitForTimeout(2500);

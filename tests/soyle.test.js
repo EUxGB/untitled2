@@ -1512,7 +1512,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       out.day2 = [city.day, cityDow(), city.plan.slice(0, 2), city.carry, city.money];
       SCENES.banka = Object.assign({}, SCENES.kapici, { title:'Банк', char:undefined }); city.plan = ['banka']; city.min = 17 * 60 + 1; cityRender();
       out.bankClosed = [!!document.querySelector('.bd-pin.closed'), cityOpenNow('banka').text, document.querySelector('.ct-task.closed span').textContent];
-      city.pos = 17; window.__dice = 1; cityRoll(); cityMoveTo(18); out.noScene = [ct === null, document.getElementById('modal').hidden];   // 18 — PTT и банк
+      city.pos = 17; window.__dice = 1; cityRoll(); cityMoveTo(18); out.noScene = [ct === null, document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent]; if(!document.getElementById('modal').hidden) closeModal();   // 18 — PTT и банк: дело закрыто, но «Зайти?» есть (ревью 07:52)
       city.min = 10 * 60; out.bankOpen = cityOpenNow('banka'); city.day = 6; out.pazarSat = cityOpenNow('pazar').open; city.day = 7; out.pazarSun = cityOpenNow('pazar');
       city.debt = 200; city.money = 100; cityNewDay(); out.monday = [cityDow(), city.money, city.debt];
       // план дня: 3 из набора недели, вчерашние не повторяются, пока есть другие
@@ -1523,7 +1523,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const errs = q.errors; await q.context().close();
     eq(r.start, [1, 1, 3500, ['bakkal', 'taxi', 'kapici'], 3500]); eq(r.late, [true, true]); ok(/не успели: .*Bakkal/i.test(r.dayEndText), r.dayEndText);
     eq(r.day2, [2, 2, ['bakkal', 'kapici'], [], 3500]);                                 // перенесённые — первыми; зарплаты во вторник нет
-    eq(r.bankClosed, [true, 'пн–пт 09:00–17:00', 'пн–пт 09:00–17:00']); eq(r.noScene, [true, true]); eq(r.bankOpen.open, true); eq(r.pazarSat, true); eq([r.pazarSun.open, r.pazarSun.text], [false, 'вт и сб']);
+    eq(r.bankClosed, [true, 'пн–пт 09:00–17:00', 'пн–пт 09:00–17:00']); eq(r.noScene, [true, false, 'PTT и банк — зайти?']); eq(r.bankOpen.open, true); eq(r.pazarSat, true); eq([r.pazarSun.open, r.pazarSun.text], [false, 'вт и сб']);
     eq(r.monday, [1, 100 + 3500 - 200, 0]); eq(r.fresh.length, 3); ok(r.fresh.every(id => !['bakkal', 'taxi', 'kapici'].includes(id)), 'вчерашние повторились: ' + r.fresh.join()); eq(errs, []);
   });
   await test('Характер: за то, что персонаж любит, отношение растёт сверх вежливости (один раз за сцену); узел-разговор у болтливого шофёра даёт +1 за поддержку, молчун его пропускает; аптекарша ценит точность с первой попытки; молчун — ни одного переспроса', async () => {
@@ -1743,13 +1743,22 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       window.__visit = 'simit'; cityVisit(cellOfScene('simit')); out.freeText = document.getElementById('modalText').textContent; document.getElementById('modalPrimary').click(); out.free = ct ? ct.id : null; cityLeave(); ct = null;
       window.__visit = 'nope'; cityVisit(cellOfScene('simit')); document.getElementById('modalPrimary').click(); out.freeDefault = ct ? ct.id : null; cityLeave(); ct = null; window.__visit = undefined;
       out.frees = Object.keys(SCENES).filter(id => SCENES[id].free);
+      // ревью: ход с покупкой дороже наличных не предлагается (деньги не уходят в минус); если других ходов нет — остаётся
+      city.money = 50; window.__alt = { a:1 }; cityStart('visit_lokanta'); out.poor = ctMoves(ct.node).map(m => m.ru); cityLeave(); ct = null; window.__alt = undefined;
+      city.money = 3000; cityStart('visit_lokanta'); window.__alt = { a:1 }; ct.alts = {}; cityNode('a'); out.rich = ctMoves(ct.node).length; cityLeave(); ct = null; window.__alt = undefined;
+      // ревью: после 21:00 такси не вызвать (деньги в никуда); закрытое дело на клетке — всё равно «Зайти?»
+      city.min = 21 * 60 + 5; cityRender(); out.taxiLate = document.getElementById('ctTaxi').hidden; city.min = 12 * 60;
+      OPEN_HOURS.kapici = { days:[1], from:9 * 60, to:10 * 60 }; city.plan = ['kapici']; city.done = []; city.pos = 1; cityArrive(1); out.closed = [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent]; closeModal(); delete OPEN_HOURS.kapici;
+      // ревью: cityNormalize — копия CITY_START глубокая, числовые поля лечатся
+      city = { ver:2, money:'x', day:'y', min:null }; cityNormalize(); out.nums = [city.money, city.day, city.min, city.rel !== CITY_START.rel, city.carry !== CITY_START.carry];
       return out; });
     const errs = q.errors; await q.context().close();
     eq(r.alt1, ['A bir.', ['два'], 1]); eq(r.b0, ['B.', false]); eq(r.alt0, ['A sıfır.', ['раз']]); eq(r.pass, [true, 'конец ноль']); eq(r.seed1, ['A bir.', ['два']]); eq(r.end1, 'конец один');
     eq(r.pick[0], 0); eq(r.pick[1], '012'); ok(r.pick[2] >= 0 && r.pick[2] <= 2, 'altLast ' + r.pick[2]);
     ok(r.mamaSays >= 50, 'разных реплик игрока в «Корм для кота»: ' + r.mamaSays); eq(r.twoVisits, [true, true, true, true]);
     eq(r.noVisit, []); eq(r.ev, [false, 'Дом — в дверь звонят', 'Открыть']); eq(r.evScene, 'visit_ev');
-    eq(r.free, 'simit'); ok(/без плана/.test(r.freeText), r.freeText); eq(r.freeDefault, 'visit_simitci'); ok(r.frees.length >= 5, 'free: ' + r.frees.join(',')); eq(errs, []);
+    eq(r.free, 'simit'); ok(/без плана/.test(r.freeText), r.freeText); eq(r.freeDefault, 'visit_simitci'); ok(r.frees.length >= 5, 'free: ' + r.frees.join(','));
+    eq(r.poor, ['Сегодня не получится, в другой раз.']); eq(r.rich, 3); eq(r.taxiLate, true); eq(r.closed, [false, 'Подъезд — зайти?']); eq(r.nums, [3500, 1, 540, true, true]); eq(errs, []);
   });
   await test('Поле помещается на 360×640, 390×844, 412×915: клетки ≥ 44 px, дела внутри кольца, кубик и кнопки видны, без прокрутки', async () => {
     const q = await openPage(browser); const bad = [];
@@ -1793,16 +1802,16 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r, [true, false, false, 'Çok güzel, teşekkürler']);
   });
   await test('перенос на «другой телефон»: код → вставить → подтвердить → XP, достижения, мои фразы, повторения на месте', async () => {
-    const code = await p.evaluate(() => { game.xp = 777; game.badges = ['first','warm']; saveList('soyle-srs', [{ tr:'Hesap lütfen.', box:2, due:0 }]); saveList('soyle-mine', [{ tr:'Merhaba' }]); return bkCode(); });
+    const code = await p.evaluate(() => { game.xp = 777; game.badges = ['first','warm']; saveList('soyle-srs', [{ tr:'Hesap lütfen.', box:2, due:0 }]); saveList('soyle-mine', [{ tr:'Merhaba' }]); city.money = 4321; city.rel.bakkal = 5; citySave(); return bkCode(); });
     const q = await openPage(browser);
     await q.evaluate(() => { localStorage.setItem('soyle-rec-conflict','1'); setMode('progress'); });
     await q.fill('#bkInput', code); await q.click('#bkRestore');
     eq(await q.evaluate(() => [game.xp, document.getElementById('bkConfirm').hidden]), [0, false]); // до подтверждения ничего не меняется
     ok((await q.textContent('#bkConfirmText')).includes('777 XP'));
     await q.click('#bkYes');
-    const r = await q.evaluate(() => [game.xp, game.badges, loadList('soyle-mine')[0].tr, srsDue().length, document.getElementById('gbXp').textContent, document.getElementById('bkMsg').textContent, localStorage.getItem('soyle-rec-conflict')]);
+    const r = await q.evaluate(() => [game.xp, game.badges, loadList('soyle-mine')[0].tr, srsDue().length, document.getElementById('gbXp').textContent, document.getElementById('bkMsg').textContent, localStorage.getItem('soyle-rec-conflict'), city.money, city.rel.bakkal]);
     const errs = q.errors; await q.context().close();
-    eq(r, [777, ['first','warm'], 'Merhaba', 1, '777 / 800 XP', 'Прогресс восстановлен', '1']); eq(errs, []);
+    eq(r, [777, ['first','warm'], 'Merhaba', 1, '777 / 800 XP', 'Прогресс восстановлен', '1', 4321, 5]); eq(errs, []);   // «Город» тоже перечитан из копии (ревью 07:52: раньше citySave затирал восстановленное)
   });
   await test('«Отмена» ничего не меняет; мусор и чужой JSON отклоняются с понятным сообщением', async () => {
     const q = await openPage(browser);
