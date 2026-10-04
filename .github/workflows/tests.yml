@@ -5,7 +5,7 @@ on:
   pull_request:
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -27,13 +27,13 @@ jobs:
         run: |
           set -o pipefail
           npm test 2>&1 | tee test-output.txt || { grep -E '✗|ожидалось|получено|Error|Итог|условие' test-output.txt | head -40 | while IFS= read -r l; do echo "::error::$l"; done; exit 1; }
-      - name: Снимок вида при падении эталона (для обновления эталона по образу CI)
+      - name: Снимок вида при падении эталона — в ветку approved-actual
         if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: approved-actual
-          path: tests/approved/*.actual.png
-          if-no-files-found: ignore
+        shell: bash
+        run: |
+          shopt -s nullglob; f=(tests/approved/*.actual.png); [ ${#f[@]} -gt 0 ] || exit 0
+          mkdir -p /tmp/aa && cp "${f[@]}" /tmp/aa/ && cd /tmp/aa && git init -q && git checkout -q -b approved-actual && git config user.name ci && git config user.email ci@example.com
+          git add . && git commit -q -m "снимок вида из CI для эталона" && git push -f -q "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" approved-actual
   # Публикация на GitHub Pages — только если все тесты прошли
   deploy:
     needs: test
