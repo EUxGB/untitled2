@@ -99,18 +99,20 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
       await q.evaluate(p => { const all = document.querySelectorAll('#ctOpts .ct-opt-main'), b = p === 'last' ? all[all.length - 1] : all[0]; b && b.click(); const m = ct.pick || ctMoves(ct.node)[0]; window.__silent = p === 'fail'; window.__say = p === 'fail' ? '' : m.say[0]; }, policy);   // last — последний видимый ход (вторые ветки: «завтра приду», две штуки, самая крупная купюра)
       await q.click('#ctSpeak'); await q.waitForTimeout(140);
     }
+    for(let k = 0; k < 4; k++){ await q.waitForTimeout(220); if(await q.evaluate(() => !document.getElementById('modal').hidden)) await q.click('#modalPrimary'); else break; }   // очередь окон после итога (новый контакт, уровни) — закрыть, иначе она перекроет следующую сцену
     const r = await q.evaluate(t0 => ({ ended: !ct && document.getElementById('modal').hidden, done: city.done.map(d => d.kind), money: t0[0] - city.money, min: city.min - t0[1] }), t0);
     r.errors = q.errors.splice(0); return r;
   }
   await test('бот проходит каждую сцену четырьмя путями (первый ход / последний ход / тишина / телефон), первый и последний — с каждым номером варианта (seed 0…максимум alt): сцена завершается, нет ошибок JS, деньги и время в пределах', async () => {
     const q = await open(); const bad = [];
-    const ids = await q.evaluate(() => Object.keys(SCENES));
+    const ids = (await q.evaluate(() => Object.keys(SCENES))).filter(id => !process.env.SCENE_ONLY || id.startsWith(process.env.SCENE_ONLY));   // SCENE_ONLY=dm_ — прогнать часть сцен
     for(const id of ids){
       const sc = await q.evaluate(id => ({ phone: !!SCENES[id].phone, event: !!SCENES[id].event, alts: Math.max(1, ...Object.values(SCENES[id].nodes).map(n => (n.alt || []).length)) }), id);
       const runs = [['happy', 0], ['fail', 0], ['phone', 0], ['last', 0]]; for(let s = 1; s < sc.alts; s++) runs.push(['happy', s], ['last', s]);
       for(const [policy, seed] of runs){
         if(policy === 'phone' && sc.phone) continue;
-        const r = await playScene(q, id, policy, seed), tag = `${id}/${policy}${seed ? '#' + seed : ''}`;
+        const tag = `${id}/${policy}${seed ? '#' + seed : ''}`; if(process.env.DEBUG_SCENES) console.log('   …', tag);
+        const r = await playScene(q, id, policy, seed);
         if(!r.ended) bad.push(`${tag}: не завершилась`);
         if(r.errors.length) bad.push(`${tag}: ${r.errors.join(' ; ')}`);
         if(r.money > 600 || r.min > 180 || r.min < 0) bad.push(`${tag}: деньги −${r.money}, время +${r.min}`);

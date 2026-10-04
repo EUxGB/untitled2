@@ -1309,6 +1309,109 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       opts: [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent), score: (document.querySelector('#ctResult .score b') || {}).textContent })); };
   const ctNext = async q => { await q.click('#ctNext'); await q.waitForTimeout(60); };
   const ctPick = async (q, i) => { await q.click(`#ctOpts .ct-opt-main[data-i="${i}"]`); await q.waitForTimeout(40); return q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)); };
+  await test('чат: окно со всеми 8 темами помещается на 3 размерах (кнопки ≥ 44 px, ничего не обрезано), «Закрыть» на месте; «Занять денег» (+200 ₺, долг до зарплаты) и «Погода» (зонт) меняют состояние игры', async () => {
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      const q = await openCity(); await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { window.__busy = ''; city.rel = { bakkal:6 }; city.met = { bakkal:1 }; city.contacts = { bakkal:1 }; cityRender(); document.getElementById('ctTabPeople').click(); document.querySelector('#ctChars .ct-char[data-char="bakkal"]').click(); });
+      await q.waitForTimeout(450);
+      const r = await q.evaluate(() => { const box = document.querySelector('#dmModal .modal-box').getBoundingClientRect(), bs = [...document.querySelectorAll('#dmTopics .dm-topic')].map(b => b.getBoundingClientRect());
+        return { inside:box.top >= 0 && box.bottom <= innerHeight + 1 && box.left >= 0 && box.right <= innerWidth + 1, small:bs.filter(r => r.height < 43.5).length, n:bs.length, clipped:[...document.querySelectorAll('#dmTopics .dm-topic')].filter(b => b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1).length, close:document.getElementById('dmClose').getBoundingClientRect().height }; });
+      await q.context().close(); eq([r.inside, r.small, r.n, r.clipped], [true, 0, 8, 0], `${w}×${h}: ` + JSON.stringify(r)); ok(r.close >= 43.5, 'кнопка «Закрыть» ≥ 44px');
+    }
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; city.rel = { bakkal:6 }; city.met = { bakkal:1 }; city.contacts = { bakkal:1 }; });
+    const play = async () => { for(let i = 0; i < 6 && await q.evaluate(() => ct); i++){ await q.evaluate(() => { document.querySelector('#ctOpts .ct-opt-main').click(); }); const mv = await q.evaluate(() => ct.node.moves.filter(m => !m.hide)[0].say[0]); await ctSay(q, mv); await ctNext(q); } await q.waitForTimeout(250); await q.evaluate(() => { while(!document.getElementById('modal').hidden) document.getElementById('modalPrimary').click(); }); await q.waitForTimeout(200); };
+    await q.evaluate(() => { cityStart('dm_loan', { char:'bakkal' }); }); await q.waitForTimeout(80);
+    // loan: первый ход верхнего узла ведёт к «ask» → «how» → первый ход «yes»
+    await play(); const loan = await q.evaluate(() => [city.money, city.debt, city.played.dm_loan.ok]); eq(loan, [3700, 200, 1]);
+    await q.evaluate(() => { cityStart('dm_weather', { char:'bakkal' }); }); await q.waitForTimeout(80);
+    await play(); const wth = await q.evaluate(() => [!!city.flags.semsiye, city.played.dm_weather.ok]); eq(wth, [true, 1]);
+    eq(q.errors, []); await q.context().close();
+  });
+  console.log('Личные чаты с персонажами (просьба 16:00)');
+  const dmOpen = () => !document.getElementById('dmModal').hidden;
+  await test('чат: имя без номера — «Недоступно пока» (с причиной и сколько до знакомства); номер даёт персонаж при доверии (знакомый 3; молчуны и строгие — позже) окном «Новый контакт»; старые сохранения с высокими отношениями получают номера сами', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => { const out = {}; city.rel = { sofor:1, usta:3 }; city.met = { sofor:1, usta:1 }; city.contacts = {}; cityRender(); document.getElementById('ctTabPeople').click();
+      document.querySelector('#ctChars .ct-char[data-char="sofor"]').click(); out.no = [document.getElementById('modalTitle').textContent, document.getElementById('modalText').textContent, !document.getElementById('dmModal').hidden]; document.getElementById('modalPrimary').click();
+      out.ustaNo = (() => { document.querySelector('#ctChars .ct-char[data-char="usta"]').click(); const t = document.getElementById('modalText').textContent; document.getElementById('modalPrimary').click(); return t; })();   // Кемаль скуп: на «знакомый» номера ещё нет
+      out.at = { sofor:CHARS.sofor.dm.contactAt || 3, usta:CHARS.usta.dm.contactAt };
+      city.rel.sofor = 3; cityStart('taxi'); cityEnd({ kind:'ok', text:'Доехали.' }); out.granted = [!!city.contacts.sofor, !!city.contacts.usta];
+      out.queue = []; return out; });
+    eq(r.no[0], 'Шофёр Али'); ok(/Недоступно пока/.test(r.no[1]) && /номера нет/.test(r.no[1]) && /ещё 2/.test(r.no[1]), r.no[1]); eq(r.no[2], false);
+    ok(/Недоступно пока/.test(r.ustaNo), r.ustaNo); eq(r.at.sofor, 3); ok(r.at.usta >= 5, 'у Кемаля контакт позже: ' + r.at.usta); eq(r.granted, [true, false]);
+    const modal = await q.evaluate(() => [document.getElementById('modalTitle').textContent, document.getElementById('modalText').textContent]);   // номер — в итоговом окне сцены, без лишнего окна
+    ok(/Новый контакт: Шофёр Али дал вам свой номер/.test(modal[1]) && /Люди/.test(modal[1]), modal.join(' | '));
+    const mig = await q.evaluate(() => { city.contacts = {}; city.rel = { bakkal:4, usta:4 }; cityNormalize(); return Object.keys(city.contacts).sort(); }); eq(mig, ['bakkal']);   // отношения 4: у Хасана контакт (3) есть, у Кемаля (6) нет
+    eq(q.errors, []); await q.context().close();
+  });
+  await test('чат: есть номер — нажатие на имя звонит; ответил — темы (знакомый: 4, «свой»: ещё 4 закрыты замком с пояснением); тема запускает разговор с ЭТИМ человеком, время идёт, отношения растут раз в день', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
+    const r = await q.evaluate(async () => { const out = {}; city.rel = { sofor:3 }; city.met = { sofor:1 }; city.contacts = { sofor:1 }; cityRender(); document.getElementById('ctTabPeople').click();
+      out.label = document.querySelector('#ctChars .ct-char[data-char="sofor"] .ct-char-lvl').textContent;
+      document.querySelector('#ctChars .ct-char[data-char="sofor"]').click(); await new Promise(z => setTimeout(z, 60));
+      const tp = () => [...document.querySelectorAll('#dmTopics .dm-topic')].map(b => [b.dataset.id, b.disabled, b.textContent]);
+      out.open = !document.getElementById('dmModal').hidden; out.title = document.getElementById('dmTitle').textContent; out.topics = tp(); out.min0 = city.min;
+      document.querySelector('#dmTopics .dm-topic[data-id="dm_how"]').click(); await new Promise(z => setTimeout(z, 80));
+      out.ct = [ct && ct.id, ct && ct.char, ct && ct.dm, document.getElementById('dmModal').hidden, document.getElementById('ctWho').textContent, document.getElementById('ctScene').hidden];
+      return out; });
+    eq(r.open, true); eq(r.title, 'Шофёр Али'); eq(r.topics.length, 8, JSON.stringify(r.topics)); eq(r.topics.filter(t => !t[1]).length, 4, 'на «знакомый» открыты 4'); ok(r.topics.filter(t => t[1]).every(t => /свой/.test(t[2])), 'замок объясняет: ' + JSON.stringify(r.topics.filter(t => t[1])));
+    eq(r.ct, ['dm_how', 'sofor', true, true, 'Шофёр Али', false]); ok(/номер/.test(r.label) || /знаком/.test(r.label), r.label);
+    // разговор: верные реплики; отношения +1 в первый раз за день и не растут во второй
+    const play = async () => { await q.evaluate(() => { document.querySelector('#ctOpts .ct-opt-main').click(); });
+      const mv = await q.evaluate(() => ct.node.moves.filter(m => !m.hide)[0].say[0]); await ctSay(q, mv); await ctNext(q); return mv; };
+    for(let i = 0; i < 4 && await q.evaluate(() => ct); i++) await play();
+    await q.waitForTimeout(150); const after = await q.evaluate(() => [city.rel.sofor, !!ct, city.min]);
+    ok(after[2] > 540, 'разговор по телефону занял время: ' + after[2]); const rel1 = after[0];
+    await q.evaluate(() => { document.getElementById('modalPrimary').click(); }); await q.waitForTimeout(200);
+    const again = await q.evaluate(async () => { cityRender(); document.getElementById('ctTabPeople').click(); document.querySelector('#ctChars .ct-char[data-char="sofor"]').click(); await new Promise(z => setTimeout(z, 60)); document.querySelector('#dmTopics .dm-topic[data-id="dm_how"]').click(); await new Promise(z => setTimeout(z, 80)); return !!ct; });
+    eq(again, true); for(let i = 0; i < 4 && await q.evaluate(() => ct); i++) await play(); await q.waitForTimeout(150);
+    const rel2 = await q.evaluate(() => city.rel.sofor); ok(rel1 >= 4, 'первый разговор поднял отношения: ' + rel1); eq(rel2, rel1, 'второй разговор в тот же день отношений не прибавляет');
+    eq(q.errors, []); await q.context().close();
+  });
+  await test('чат: «свой» (6) открывает 8 тем; тема «Занять денег» закрыта замком, пока долг ≥ 200', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
+    const r = await q.evaluate(async () => { const out = {}; city.rel = { sofor:6 }; city.met = { sofor:1 }; city.contacts = { sofor:1 }; cityRender(); document.getElementById('ctTabPeople').click();
+      document.querySelector('#ctChars .ct-char[data-char="sofor"]').click(); await new Promise(z => setTimeout(z, 60));
+      out.enabled = [...document.querySelectorAll('#dmTopics .dm-topic')].filter(b => !b.disabled).length; document.getElementById('dmClose').click();
+      city.debt = 250; document.querySelector('#ctChars .ct-char[data-char="sofor"]').click(); await new Promise(z => setTimeout(z, 60));
+      const loan = document.querySelector('#dmTopics .dm-topic[data-id="dm_loan"]'); out.loanLocked = [loan.disabled, loan.textContent]; document.getElementById('dmClose').click(); city.debt = 0; return out; });
+    eq(r.enabled, 8); eq(r.loanLocked[0], true); ok(/долг/i.test(r.loanLocked[1]), r.loanLocked[1]);
+    eq(q.errors, []); await q.context().close();
+  });
+  await test('чат: не берёт трубку — причины: ночь (спит), клиент (работа), за рулём, пятничный намаз, матч, свадьба, болен, нет сети, просто занят; у каждой — свой заголовок, русское объяснение и короткое сообщение по-турецки (слова нажимаются); темы не показываются; перезванивает сам только там, где человек занят ненадолго', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; city.rel = { bakkal:6 }; city.met = { bakkal:1 }; city.contacts = { bakkal:1 }; cityRender(); document.getElementById('ctTabPeople').click(); });
+    const out = {};
+    for(const why of ['sleep', 'work', 'drive', 'prayer', 'match', 'wedding', 'sick', 'nosignal', 'busy']){
+      out[why] = await q.evaluate(async why => { window.__busy = why; city.callback = null; document.querySelector('#ctChars .ct-char[data-char="bakkal"]').click(); await new Promise(z => setTimeout(z, 450));   // окно выезжает снизу 0,3 с
+        const tr = document.getElementById('dmTr'); const o = { title:document.getElementById('dmTitle').textContent, text:document.getElementById('dmText').textContent, tr:tr.textContent, words:tr.querySelectorAll('.wd').length, ru:document.getElementById('dmRu').textContent,
+          topics:document.querySelectorAll('#dmTopics .dm-topic').length, cb:!!city.callback, atLater:city.callback ? city.callback.at > city.min : null, inside:(() => { const b = document.querySelector('#dmModal .modal-box').getBoundingClientRect(); return b.top >= 0 && b.bottom <= innerHeight + 1; })() };
+        document.getElementById('dmClose').click(); return o; }, why); }
+    const titles = Object.values(out).map(o => o.title); eq(new Set(titles).size, 9, 'у каждой причины свой заголовок: ' + titles.join(' / '));
+    for(const [why, o] of Object.entries(out)){ eq(o.topics, 0, why + ': темы'); ok(o.text.length > 20 && o.ru.length > 3, why + ': есть объяснение и перевод'); ok(o.words >= 2 && o.tr.length > 5, why + ': турецкое сообщение со словами'); ok(o.inside, why + ': окно помещается'); }
+    eq(Object.entries(out).filter(([, o]) => o.cb).map(([w]) => w).sort(), ['busy', 'drive', 'prayer', 'work']);
+    eq(out.work.atLater, true);
+    ok(/спит|ночь/i.test(out.sleep.text) && /Aradığınız|Uyu/i.test(out.sleep.tr), JSON.stringify(out.sleep));
+    eq(q.errors, []); await q.context().close();
+  });
+  await test('чат: время и день решают сами (без подмены): после 21:30 бабушка-соседка спит; в пятницу в обед у набожных — намаз; в среду вечером у болельщиков — матч; свой звонит редко занятому реже', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => { const out = {}; window.__busy = undefined; delete window.__busy;
+      city.min = 21 * 60 + 40; out.komsuNight = dmAvail('komsu').why; city.min = 10 * 60; out.komsuDay = dmAvail('komsu').ok === true;   // в тестах случайные причины выключены
+      city.day = 5; city.min = 12 * 60 + 30; out.prayer = dmAvail('kapici').why; out.prayerFan = dmAvail('berber').ok === true;
+      city.day = 3; city.min = 20 * 60 + 30; out.match = dmAvail('sofor_emre').why; out.matchNo = dmAvail('komsu').ok === true;
+      city.day = 3; city.min = 23 * 60; out.late = dmAvail('sofor_emre').why; return out; });
+    eq(r.komsuNight, 'sleep'); eq(r.komsuDay, true); eq(r.prayer, 'prayer'); eq(r.prayerFan, true); eq(r.match, 'match'); eq(r.matchNo, true); eq(r.late, 'sleep');
+    await q.context().close();
+  });
+  await test('чат: «перезванивает» — если человек был занят ненадолго, позже по ходу дня приходит звонок: «Ответить» открывает темы, «Не брать» — тишина; после конца дня обратный звонок не приходит', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; city.rel = { bakkal:6 }; city.met = { bakkal:1 }; city.contacts = { bakkal:1 }; });
+    const r = await q.evaluate(async () => { const out = {}; city.callback = { char:'bakkal', at:city.min + 30, why:'work' }; dmCallbackCheck(); out.early = document.getElementById('modal').hidden;
+      city.min += 31; dmCallbackCheck(); await new Promise(z => setTimeout(z, 60)); out.ring = [document.getElementById('modal').hidden, document.getElementById('modalTitle').textContent, document.getElementById('modalPrimary').textContent, city.callback];
+      document.getElementById('modalPrimary').click(); await new Promise(z => setTimeout(z, 120)); out.talk = [!document.getElementById('dmModal').hidden, document.querySelectorAll('#dmTopics .dm-topic').length]; document.getElementById('dmClose').click();
+      city.callback = { char:'bakkal', at:city.min + 5, why:'busy' }; city.min = 21 * 60 + 10; dmCallbackCheck(); await new Promise(z => setTimeout(z, 60)); out.late = [document.getElementById('modal').hidden, city.callback];
+      return out; });
+    eq(r.early, true); eq(r.ring[0], false); ok(/перезванивает|звонит/i.test(r.ring[1]) && /Бакал/.test(r.ring[1]), r.ring[1]); eq(r.ring[2], 'Ответить'); eq(r.ring[3], null); eq(r.talk, [true, 8]); eq(r.late, [true, null]);
+    eq(q.errors, []); await q.context().close();
+  });
   await test('центр поля: ни одна надпись внутри кольца не обрезана («Bakkal — лавка …», «Nezaket · ве…») — все три вкладки на 3 размерах (просьба 16:00)', async () => {
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
       const q = await openCity(); await q.setViewportSize({ width:w, height:h }); await q.waitForTimeout(100);
@@ -1825,7 +1928,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
           tasks: document.querySelectorAll('#ctTasks .ct-task').length, roll: vis('ctRoll'), home: vis('ctHomeBtn'), taxi: vis('ctTaxi'), tabs: {} };
         city.rel = { bakkal:3, sofor:6, kapici:1, komsu:2, usta:0 }; city.met = { eczaci:1, berber:1 }; city.skill = { dil:{ n:4, lvl:1 } }; cityRender();   // 7 человек и 4 умения — самые длинные вкладки
         for(const t of ['people', 'skills', 'tasks']){ cityInnerTab(t); autofit(); out.tabs[t] = [inner.scrollHeight > inner.clientHeight + 1, card.scrollHeight - card.clientHeight <= 1, vis('ctRoll'),
-          [...inner.querySelectorAll('.ct-char, .ct-skill')].filter(e => e.offsetParent).every(e => e.getBoundingClientRect().bottom <= inner.getBoundingClientRect().bottom + 1)]; }
+          [...inner.querySelectorAll('#ctChars, .ct-skill')].filter(e => e.offsetParent)   /* список людей прокручивается внутри — важно, что он сам в кольце */.every(e => e.getBoundingClientRect().bottom <= inner.getBoundingClientRect().bottom + 1)]; }
         return out; });
       if(r.small || r.cells !== 28 || !r.page || !r.card || r.innerCut || r.tasks !== 3 || !r.roll || !r.home || !r.taxi || Object.values(r.tabs).some(t => t[0] || !t[1] || !t[2] || !t[3])) bad.push(`${w}×${h}: ${JSON.stringify(r)}`);
     }

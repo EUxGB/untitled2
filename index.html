@@ -678,6 +678,11 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-scene .main-row{margin-top:auto}
 #ctLive{min-height:1.2em; text-align:left; font-size:15px}
 .wd{cursor:pointer; border-radius:4px; transition:color .15s} .wd.on{color:var(--accent)}
+.dm-box{max-height:92dvh; overflow:auto}
+.dm-tr{font:700 18px/1.3 var(--display); color:var(--ink) !important} .dm-ru{font-size:14px}
+.dm-topics{display:grid; grid-template-columns:1fr 1fr; gap:8px} .dm-topic{min-height:44px; padding:6px 10px; font-size:14px; line-height:1.2; display:flex; flex-direction:column; justify-content:center; gap:1px} .dm-topic small{font-size:11px; color:var(--muted); font-weight:500}
+.dm-topic:disabled{opacity:.55}
+.ct-char .ct-num{flex:none; width:15px; height:15px; fill:none; stroke:var(--accent); stroke-width:1.6; margin-left:auto} .ct-char .ct-num + .ct-char-lvl{margin-left:6px}
 .wordpop{position:fixed; z-index:60; max-width:min(300px, calc(100vw - 24px)); padding:8px 12px; border-radius:12px; background:var(--ink); color:var(--bg); font:500 14px/1.35 var(--body); box-shadow:0 6px 20px rgba(0,0,0,.25); text-align:left; pointer-events:auto}
 .wordpop[hidden]{display:none} .wordpop b{font-family:var(--display); color:inherit} .wordpop .wd-lemma, .wordpop .wd-src{color:color-mix(in srgb, var(--bg) 70%, transparent)} .wordpop .wd-src{font-size:11px}
 .wd-line{display:inline-block; text-align:center; line-height:1.35} .wd-line b{font-family:var(--display); color:var(--ink)} .wd-lemma{color:var(--muted)} .wd-src{font-size:11px; color:var(--muted)}
@@ -964,7 +969,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
       <details class="help">
         <summary>Как пользоваться</summary>
         <ol>
-          <li><b>Город</b> — жизнь в стамбульском квартале, как настольная игра: поле из 28 клеток, кубик (нажмите на него), три дела на день — каждый день другие. Дошли до места — разговор: собеседник говорит, вы выбираете, что ответить (карточки по-русски), и говорите это по-турецки. Что сказали — меняет исход: лиры, время (день до 21:00), терпение собеседника, отношения. Клетка «?» — событие: кошка, дождь, свадьба, карманник. На любое место можно просто зайти и поговорить (а в симитчи, пекарню, чайную — и купить без плана); дома среди дня звонят в дверь. Один и тот же разговор не повторяется: у корма для кота, например, больше 50 разных реплик и тысячи сочетаний — другое приветствие, другой вопрос, другая цена. Собеседники разные, у каждого характер и голос, часто начинают с разговора о погоде или матче — поддержите («Evet, öyle.»). Понедельник — зарплата 3500 ₺. Отношения (знакомый с 3, свой с 6) открывают скидки, долг и приглашения; умения — слух, речь, торг, вежливость — растут от успехов. Подсказка на реплике выцветает по мере освоения: сначала турецкий с чтением, потом первые буквы, потом по памяти. «Показать» — показать фразу на экране телефона, если сказать не выходит. Вечером — «Повторить фразы дня».</li>
+          <li><b>Город</b> — жизнь в стамбульском квартале, как настольная игра: поле из 28 клеток, кубик (нажмите на него), три дела на день — каждый день другие. Дошли до места — разговор: собеседник говорит, вы выбираете, что ответить (карточки по-русски), и говорите это по-турецки. Что сказали — меняет исход: лиры, время (день до 21:00), терпение собеседника, отношения. Клетка «?» — событие: кошка, дождь, свадьба, карманник. На любое место можно просто зайти и поговорить (а в симитчи, пекарню, чайную — и купить без плана); дома среди дня звонят в дверь. Один и тот же разговор не повторяется: у корма для кота, например, больше 50 разных реплик и тысячи сочетаний — другое приветствие, другой вопрос, другая цена. Собеседники разные, у каждого характер и голос, часто начинают с разговора о погоде или матче — поддержите («Evet, öyle.»). Понедельник — зарплата 3500 ₺. Отношения (знакомый с 3, свой с 6) открывают скидки, долг и приглашения; умения — слух, речь, торг, вежливость — растут от успехов. Подсказка на реплике выцветает по мере освоения: сначала турецкий с чтением, потом первые буквы, потом по памяти. «Показать» — показать фразу на экране телефона, если сказать не выходит. Нажмите на любое турецкое слово — звучит и переводится. Кто вам доверяет, даёт номер: во вкладке «Люди» нажмите на имя — можно позвонить и поговорить на разные темы, но человек бывает занят, на работе или спит. Вечером — «Повторить фразы дня».</li>
           <li><b>Память</b> — всё, что сказали в «Городе» и тренировке, возвращается по расписанию FSRS: сначала вспомнить, потом ответ.</li>
           <li><b>Тренировка</b> — трудный звук (ö, ü, ı, ç, ş) в слове выделен цветом; разбор ошибок после «Сказать» показывает, какой звук спутан. Трудный звук выделен красным.</li>
           <li><b>Тренировка → Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «слова» — слова темы с примером.</li>
@@ -999,6 +1004,16 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
   <div class="modal-box sheet-box">
     <div class="sheet-head"><h3 id="sheetTitle"></h3><button class="qbtn" id="sheetClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
     <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+<div class="modal" id="dmModal" hidden role="dialog" aria-modal="true" aria-labelledby="dmTitle">
+  <div class="modal-box dm-box">
+    <div class="modal-ic" id="dmIc" lang="tr" translate="no"></div>
+    <h3 id="dmTitle"></h3>
+    <p id="dmText"></p>
+    <p class="dm-tr" id="dmTr" lang="tr" translate="no" hidden></p><p class="dm-ru" id="dmRu" hidden></p>
+    <div class="dm-topics" id="dmTopics" role="group" aria-label="О чём поговорить" hidden></div>
+    <button class="btn" id="dmClose">Закрыть</button>
   </div>
 </div>
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -3241,7 +3256,7 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 // (узлы, ветки, флаги). Собеседник говорит синтезом: это персонаж, а не образец для подражания (записей всех реплик нет нигде).
 // Сцена: nodes[id] = { npc, ru, moves:[{ key:[слова, по которым узнаём ответ], say:[как сказать], ru, go, fx, hide }],
 //   again (переспрос), pay:{ price, notes }, end:{ kind, text, fx } }. fx: { money, min, rel, flag }.
-const CITY_START = { ver:2, day:1, money:3500, min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, pos:0, roll:null, visited:[], plan:null };
+const CITY_START = { ver:2, day:1, money:3500, min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, pos:0, roll:null, visited:[], plan:null, contacts:{}, dmDay:{}, callback:null };
 // Поле-настолка (спек §4а): кольцо из 24 клеток по периметру сетки 7×7 (по часовой от дома в левом верхнем углу), две срезки-улицы.
 // kind: home — дом (звонки, визиты мастеров), place — место со сценами, event — клетка «?» (карта из колоды). dat — дательный падеж для такси («Eczaneye lütfen»).
 const BOARD = [
@@ -3419,18 +3434,19 @@ const cap = t => t ? t[0].toLocaleUpperCase("tr-TR") + t.slice(1) : t;
 // Персонажи квартала (спек §8, §4а): у каждого свой голос, терпение, характер (виден в репликах) и то, за что он прибавляет отношение.
 // На одном месте — разные люди (`pool` у сцены): кто встретится — случай с весом 1 + отношения; в тестах — window.__char или первый.
 const CHARS = {
-  sofor:       { name:"Шофёр Али",        initial:"A", voice:0, patience:3, trait:"Разговорчивый, жалуется на пробки, зовёт «abi».", likes:{ words:["üstü kalsın"] } },
-  sofor_hasan: { name:"Хасан-амджа",      initial:"H", voice:1, patience:2, trait:"Молчун, радио на всю. Не любит, когда переспрашивают.", likes:{ quiet:true } },
-  sofor_emre:  { name:"Эмре",             initial:"E", voice:2, patience:3, trait:"Молодой, гонит, предлагает «короткий путь».", likes:{ words:["kısa yoldan"] } },
-  bakkal:      { name:"Бакал Хасан",      initial:"H", voice:1, patience:3, trait:"Радушный, всех зовёт «komşu», предлагает лишнее.", likes:{ words:["hoş bulduk", "kolay gelsin"] } },
-  bakkal_emre: { name:"Эмре, сын Хасана", initial:"E", voice:2, patience:3, trait:"Вечером за прилавком; сидит в телефоне, но вежлив.", likes:{ words:["kolay gelsin"] }, when: c => c.min >= 18 * 60 },
-  kapici:      { name:"Капыджи Мехмет",   initial:"M", voice:3, patience:3, trait:"Немногословный, ворчит, но делает.", likes:{ words:["kolay gelsin"], firstTry:true } },
-  komsu:       { name:"Айше-тейзе",       initial:"A", voice:4, patience:4, trait:"Хлебосольная, настойчиво кормит, расспрашивает.", likes:{ words:["ellerinize sağlık", "elinize sağlık"] } },
-  pazarci:     { name:"Пазарджи Юсуф",    initial:"Y", voice:5, patience:2, trait:"Громкий, шутит, уважает тех, кто торгуется.", likes:{ words:["kolay gelsin"], haggle:true } },
-  berber:      { name:"Берберь Эрдем",    initial:"E", voice:6, patience:3, trait:"Болтливый, сплетничает про квартал.", likes:{ words:[] } },
-  eczaci:      { name:"Эджзаджи Зейнеп",  initial:"Z", voice:7, patience:3, trait:"Строгая, точная, не любит «примерно».", likes:{ words:["teşekkür ederim"], firstTry:true } },
-  usta:        { name:"Уста Кемаль",      initial:"K", voice:8, patience:3, trait:"Спокойный, скуп на слова, гордится кухней.", likes:{ words:["eline sağlık", "elinize sağlık", "ellerinize sağlık"] } },
+  sofor:       { name:"Шофёр Али",        initial:"A", voice:0, patience:3, trait:"Разговорчивый, жалуется на пробки, зовёт «abi».", likes:{ words:["üstü kalsın"] }, dm:{ drive:1, sleep:23*60 + 30 } },
+  sofor_hasan: { name:"Хасан-амджа",      initial:"H", voice:1, patience:2, trait:"Молчун, радио на всю. Не любит, когда переспрашивают.", likes:{ quiet:true }, dm:{ drive:1, devout:1, sleep:22*60, contactAt:6 } },
+  sofor_emre:  { name:"Эмре",             initial:"E", voice:2, patience:3, trait:"Молодой, гонит, предлагает «короткий путь».", likes:{ words:["kısa yoldan"] }, dm:{ drive:1, fan:1, sleep:23*60 } },
+  bakkal:      { name:"Бакал Хасан",      initial:"H", voice:1, patience:3, trait:"Радушный, всех зовёт «komşu», предлагает лишнее.", likes:{ words:["hoş bulduk", "kolay gelsin"] }, dm:{ work:[9*60, 21*60], devout:1, sleep:22*60 + 30 } },
+  bakkal_emre: { name:"Эмре, сын Хасана", initial:"E", voice:2, patience:3, trait:"Вечером за прилавком; сидит в телефоне, но вежлив.", likes:{ words:["kolay gelsin"] }, when: c => c.min >= 18 * 60, dm:{ work:[18*60, 23*60], fan:1, sleep:24*60 } },
+  kapici:      { name:"Капыджи Мехмет",   initial:"M", voice:3, patience:3, trait:"Немногословный, ворчит, но делает.", likes:{ words:["kolay gelsin"], firstTry:true }, dm:{ work:[9*60, 17*60], devout:1, sleep:22*60, contactAt:4 } },
+  komsu:       { f:1, name:"Айше-тейзе",       initial:"A", voice:4, patience:4, trait:"Хлебосольная, настойчиво кормит, расспрашивает.", likes:{ words:["ellerinize sağlık", "elinize sağlık"] }, dm:{ devout:1, sleep:21*60 + 30 } },
+  pazarci:     { name:"Пазарджи Юсуф",    initial:"Y", voice:5, patience:2, trait:"Громкий, шутит, уважает тех, кто торгуется.", likes:{ words:["kolay gelsin"], haggle:true }, dm:{ work:[8*60, 17*60], fan:1, sleep:21*60, contactAt:4 } },
+  berber:      { name:"Берберь Эрдем",    initial:"E", voice:6, patience:3, trait:"Болтливый, сплетничает про квартал.", likes:{ words:[] }, dm:{ work:[10*60, 20*60], fan:1, sleep:23*60 } },
+  eczaci:      { f:1, name:"Эджзаджи Зейнеп",  initial:"Z", voice:7, patience:3, trait:"Строгая, точная, не любит «примерно».", likes:{ words:["teşekkür ederim"], firstTry:true }, dm:{ work:[9*60, 19*60], sleep:22*60 + 30, contactAt:5 } },
+  usta:        { name:"Уста Кемаль",      initial:"K", voice:8, patience:3, trait:"Спокойный, скуп на слова, гордится кухней.", likes:{ words:["eline sağlık", "elinize sağlık", "ellerinize sağlık"] }, dm:{ work:[11*60, 22*60], devout:1, sleep:23*60, contactAt:6 } },
 };
+const contactAt = c => (CHARS[c] && CHARS[c].dm && CHARS[c].dm.contactAt) || 3;       // с какими отношениями человек дал бы номер: по умолчанию «знакомый»; молчуны и строгие — позже
 const POLITE = ["lütfen", "teşekkür", "teşekkürler", "sağ ol", "sağ olun", "kolay gelsin", "iyi günler", "hayırlı işler", "rica ederim"];
 const TR_NUMS = { sıfır:0, bir:1, iki:2, üç:3, dört:4, beş:5, altı:6, yedi:7, sekiz:8, dokuz:9, on:10, yirmi:20, otuz:30, kırk:40, elli:50, altmış:60, yetmiş:70, seksen:80, doksan:90, yüz:100 };
 const SCENES = {
@@ -4520,24 +4536,179 @@ const SCENES = {
 let city = (() => { try { return JSON.parse(localStorage.getItem("soyle-city")) || {}; } catch(e){ return {}; } })();   // сырое сохранение; к версии 2 приводит cityNormalize
 // Сохранение всегда приводится к версии 2: недостающие поля, отношения по персонажам (v1 хранил их по сценам), старым игрокам — не меньше 1500 ₺
 const REL_V1 = { taxi:"sofor", bakkal:"bakkal", kapici:"kapici" };
+// ---------- личные чаты (просьба 16:00): звонок человеку, который дал номер; темы — мини-сцены dm_*, собеседник задаётся при запуске ----------
+// Свои приветствия у каждой темы не нужны: разговор начинается одинаково по-телефонному, вариант — по seed сцены.
+const DM_G = ["Alo, buyur.", "Alo, merhaba! Söyle bakalım.", "Efendim, dinliyorum."], DM_GRU = ["Алло, слушаю.", "Алло, привет! Ну, говори.", "Слушаю тебя."];
+const DM_GA = ["Hı? Söyle.", "Evet, söyle.", "Dinliyorum."], DM_GARU = ["М? Говори.", "Да, говори.", "Слушаю."];
+const dmEnd = (kind, text, fx) => ({ end:{ kind, text, fx:Object.assign({ min:10 }, fx || {}) } });
+Object.assign(SCENES, {
+  dm_how:{ title:"Позвонить: как дела", who:"Знакомый", initial:"Z", place:"Телефон", phone:true, event:true, dm:true, goal:"Поздороваться и спросить, как дела. Ответить на тот же вопрос.", start:"greet",
+    fail:{ text:"Связь пропала на полуслове — вы так и не поняли, как у человека дела.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:DM_G, ru:DM_GRU, again:DM_GA, againRu:DM_GARU, moves:[
+        { key:["nasılsın", "naber", "nasıl gidiyor"], say:["Merhaba, nasılsın?"], ru:"Привет, как ты?", go:"fine" },
+        { key:["sadece aradım", "bir şey yok", "aradım"], say:["Sadece aradım, bir şey yok."], ru:"Просто позвонил(а), ничего особенного.", go:"just" } ] },
+      fine:{ npc:"İyiyim, sağ ol. Sen nasılsın?", ru:"Хорошо, спасибо. А ты как?", again:"Sen nasılsın?", againRu:"А ты как?", moves:[
+        { key:["iyiyim", "çok iyiyim", "iyi"], say:["İyiyim, teşekkürler. Seni aradım."], ru:"Хорошо, спасибо. Решил(а) тебе позвонить.", go:"warm" },
+        { key:["yorgunum", "biraz yorgunum"], say:["Biraz yorgunum ama iyiyim."], ru:"Немного устал(а), но хорошо.", go:"care" } ] },
+      warm:dmEnd("ok", "Тёплый короткий разговор: приятно, когда звонят просто так.", { rel:1 }),
+      care:{ npc:"Dinlen biraz, bir çay iç.", ru:"Отдохни немного, выпей чаю.", again:"Biraz dinlen.", againRu:"Отдохни.", moves:[
+        { key:["sağ ol", "tamam", "içerim"], say:["Sağ ol, içerim. Görüşürüz."], ru:"Спасибо, выпью. Увидимся.", go:"cared" },
+        { key:["vaktim yok", "işim var"], say:["Vaktim yok, işim var."], ru:"Нет времени, дела.", go:"rush" } ] },
+      cared:dmEnd("ok", "Вас по-человечески пожалели, вы поблагодарили — так и дружат.", { rel:1 }),
+      rush:dmEnd("near", "Вы торопились — разговор вышел сухим."),
+      just:{ npc:"Aa, ne güzel! Bugün ne yaptın?", ru:"О, как приятно! Что сегодня делал(а)?", again:"Ne yaptın bugün?", againRu:"Что делал(а) сегодня?", moves:[
+        { key:["işe gittim", "çalıştım", "alışveriş"], say:["Sabah alışveriş yaptım, sonra evdeydim."], ru:"Утром ходил(а) за покупками, потом был(а) дома.", go:"day" },
+        { key:["kapatmam gerek", "görüşürüz"], say:["Kapatmam gerek, görüşürüz."], ru:"Мне пора, увидимся.", go:"bye" } ] },
+      day:dmEnd("ok", "Рассказали про свой день, вас выслушали. Для дружбы по-турецки этого достаточно.", { rel:1 }),
+      bye:dmEnd("near", "Разговор вышел коротким: вы позвонили и сразу попрощались.") } },
+  dm_weather:{ title:"Позвонить: про погоду", who:"Знакомый", initial:"Z", place:"Телефон", phone:true, event:true, dm:true, goal:"Спросить про погоду и поддержать разговор.", start:"greet",
+    fail:{ text:"Связь прервалась. Про погоду вы так ничего и не узнали.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:DM_G, ru:DM_GRU, again:DM_GA, againRu:DM_GARU, moves:[
+        { key:["yarın hava", "hava nasıl", "yağmur"], say:["Yarın hava nasıl olacak?"], ru:"Какая завтра будет погода?", go:"fc" },
+        { key:["bugün hava", "çok güzel", "değil mi"], say:["Bugün hava çok güzel, değil mi?"], ru:"Сегодня чудесная погода, правда?", go:"nice" } ] },
+      fc:{ npc:"Yağmur yağacak, şemsiye al.", ru:"Будет дождь, возьми зонт.", again:"Yarın yağmur var.", againRu:"Завтра дождь.", moves:[
+        { key:["şemsiye", "sağ ol", "alırım"], say:["Sağ ol, şemsiye alırım."], ru:"Спасибо, возьму зонт.", go:"umb" },
+        { key:["sorun değil", "önemli değil", "ıslanırım"], say:["Sorun değil, ıslanırım."], ru:"Ничего, промокну.", go:"wet" } ] },
+      umb:dmEnd("ok", "Вы узнали про дождь заранее и успеете купить зонт.", { rel:1, flag:"semsiye" }),
+      wet:dmEnd("near", "Зонта у вас нет — завтра, скорее всего, промокнете."),
+      nice:{ npc:"Evet, çok güzel. Dışarı çıkalım mı?", ru:"Да, чудесная. Выйдем погулять?", again:"Dışarı çıkalım mı?", againRu:"Погуляем?", moves:[
+        { key:["çıkalım", "olur", "gidelim"], say:["Olur, çıkalım."], ru:"Давай, выйдем.", go:"walk" },
+        { key:["olmaz", "işim var", "vaktim yok"], say:["Olmaz, işim var."], ru:"Не получится, дела.", go:"nowalk" } ] },
+      walk:dmEnd("ok", "Прогулялись по набережной. Хорошая погода сблизила.", { rel:1, min:30 }),
+      nowalk:dmEnd("near", "Вы отказались — вежливо, но без особого тепла.") } },
+  dm_food:{ title:"Позвонить: про еду", who:"Знакомый", initial:"Z", place:"Телефон", phone:true, event:true, dm:true, goal:"Поговорить о еде: что ели, как готовить.", start:"greet",
+    fail:{ text:"Звонок оборвался, пока вы подбирали слова.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:DM_G, ru:DM_GRU, again:DM_GA, againRu:DM_GARU, moves:[
+        { key:["ne yedin", "yemek", "yedin mi"], say:["Bugün ne yedin?"], ru:"Что ты сегодня ел(а)?", go:"ate" },
+        { key:["menemen", "nasıl yapılır", "tarif"], say:["Menemen nasıl yapılır?"], ru:"Как готовят менемен?", go:"recipe" } ] },
+      ate:{ npc:"Mercimek çorbası yaptım. Sen yedin mi?", ru:"Сварил(а) чечевичный суп. А ты поел(а)?", again:"Sen yedin mi?", againRu:"А ты поел(а)?", moves:[
+        { key:["afiyet olsun", "yedim"], say:["Afiyet olsun! Ben de yedim."], ru:"Приятного аппетита! Я тоже поел(а).", go:"yum" },
+        { key:["yemedim", "aç", "daha"], say:["Yok, daha yemedim."], ru:"Нет, ещё не ел(а).", go:"come" } ] },
+      yum:dmEnd("ok", "«Afiyet olsun» — самая тёплая фраза за столом. Вас запомнили.", { rel:1 }),
+      come:{ npc:"Gel, bende yemek var.", ru:"Приходи, у меня есть еда.", again:"Gel yemeğe.", againRu:"Приходи поесть.", moves:[
+        { key:["gelirim", "teşekkür", "akşam"], say:["Teşekkürler, akşam gelirim."], ru:"Спасибо, вечером зайду.", go:"inv" },
+        { key:["gelemem", "olmaz", "işim çok"], say:["Gelemem, çok işim var."], ru:"Не смогу, много дел.", go:"decl" } ] },
+      inv:dmEnd("ok", "Вас позвали на ужин, вы приняли приглашение. Это знак настоящего доверия.", { rel:1, min:20 }),
+      decl:dmEnd("near", "Вы отказались от ужина. Не страшно, но зовут реже."),
+      recipe:{ npc:"Önce soğan, sonra domates, en son yumurta.", ru:"Сначала лук, потом помидоры, в конце яйца.", again:"Soğan, domates, yumurta.", againRu:"Лук, помидоры, яйца.", moves:[
+        { key:["anladım", "teşekkür", "not aldım"], say:["Anladım, teşekkürler."], ru:"Понял(а), спасибо.", go:"learned" },
+        { key:["yavaş", "bir daha", "anlamadım"], say:["Biraz yavaş söyler misin?"], ru:"Можешь говорить помедленнее?", go:"slow" } ] },
+      learned:dmEnd("ok", "Рецепт менемена записан. В следующий раз получится вкуснее.", { rel:1 }),
+      slow:dmEnd("near", "Пришлось попросить помедленнее — рецепт вы поняли только наполовину.") } },
+  dm_football:{ title:"Позвонить: про футбол", who:"Знакомый", initial:"Z", place:"Телефон", phone:true, event:true, dm:true, goal:"Поговорить о вчерашнем матче.", start:"greet",
+    fail:{ text:"На линии помехи — про матч вы так и не поговорили.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:DM_G, ru:DM_GRU, again:DM_GA, againRu:DM_GARU, moves:[
+        { key:["dünkü maç", "maçı izledin", "izledin mi"], say:["Dünkü maçı izledin mi?"], ru:"Ты смотрел(а) вчерашний матч?", go:"watch" },
+        { key:["kim kazandı", "skor"], say:["Maçı kim kazandı?"], ru:"Кто выиграл матч?", go:"won" } ] },
+      watch:{ npc:"Tabii izledim! Son dakikada gol attılar.", ru:"Конечно смотрел(а)! На последней минуте забили гол.", again:"Son dakikada gol!", againRu:"Гол на последней минуте!", moves:[
+        { key:["harika", "çok güzel", "süper"], say:["Harikaydı! Çok güzel maçtı."], ru:"Было здорово! Отличный матч.", go:"fan" },
+        { key:["izlemedim", "görmedim"], say:["İzlemedim, işim vardı."], ru:"Не смотрел(а), были дела.", go:"miss" } ] },
+      fan:dmEnd("ok", "Вы болели «вместе», хоть и по телефону. Футбол сближает быстрее всего.", { rel:1 }),
+      miss:dmEnd("near", "Вы матч не видели — поговорить по душам не вышло."),
+      won:{ npc:"Bizim takım kazandı, iki bir!", ru:"Наша команда выиграла, два–один!", again:"İki bir!", againRu:"Два–один!", moves:[
+        { key:["tebrikler", "güzel oynadı"], say:["Tebrikler, bizim takım güzel oynadı."], ru:"Поздравляю, наша команда хорошо сыграла.", go:"cheer" },
+        { key:["ilgilenmiyorum", "futbol"], say:["Futbolla ilgilenmiyorum."], ru:"Я не интересуюсь футболом.", go:"cold" } ] },
+      cheer:dmEnd("ok", "«Наша команда» — вы сказали «bizim», и вас приняли за своего.", { rel:1 }),
+      cold:dmEnd("near", "Футбол здесь — почти религия. Ваше «не интересуюсь» прозвучало холодно.") } },
+  dm_family:{ title:"Позвонить: про семью", who:"Свой человек", initial:"S", place:"Телефон", phone:true, event:true, dm:true, goal:"Расспросить о семье с уважением.", start:"greet",
+    fail:{ text:"Связь прервалась, а вы так и не спросили главное.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:DM_G, ru:DM_GRU, again:DM_GA, againRu:DM_GARU, moves:[
+        { key:["ailen nasıl", "aile", "çocuklar"], say:["Ailen nasıl?"], ru:"Как твоя семья?", go:"fam" },
+        { key:["annen nasıl", "annen"], say:["Annen nasıl?"], ru:"Как твоя мама?", go:"mom" } ] },
+      fam:{ npc:"Çok şükür, herkes iyi. Çocuklar okulda.", ru:"Слава Богу, все здоровы. Дети в школе.", again:"Herkes iyi.", againRu:"Все здоровы.", moves:[
+        { key:["selam", "selam söyle"], say:["Herkese selam söyle."], ru:"Всем передай привет.", go:"greet2" },
+        { key:["bir gün görüşelim", "görüşelim"], say:["Bir gün görüşelim."], ru:"Как-нибудь увидимся.", go:"vague" } ] },
+      greet2:dmEnd("ok", "Привет всей семье — самое уважительное, что можно сказать.", { rel:2 }),
+      vague:dmEnd("near", "«Как-нибудь» — слишком расплывчато, но приятно."),
+      mom:{ npc:"Annem hasta, doktora gidecek.", ru:"Мама болеет, пойдёт к врачу.", again:"Annem hasta.", againRu:"Мама болеет.", moves:[
+        { key:["geçmiş olsun", "yardım"], say:["Geçmiş olsun! Yardım lazım mı?"], ru:"Выздоравливайте! Нужна помощь?", go:"help" },
+        { key:["üzüldüm", "umarım"], say:["Üzüldüm, umarım iyileşir."], ru:"Жаль, надеюсь, поправится.", go:"sorry" },
+        { key:["neyse", "bir şey sormak"], say:["Neyse, bir şey sormak istedim."], ru:"Ладно, я хотел(а) кое-что спросить.", go:"cold" } ] },
+      help:dmEnd("ok", "«Geçmiş olsun» и предложение помощи — вас запомнят надолго.", { rel:2 }),
+      sorry:dmEnd("ok", "Вы сочувствовали искренне. Это важно.", { rel:1 }),
+      cold:dmEnd("near", "Про маму вы выслушали, но тут же перешли к своему — человек обиделся.") } },
+  dm_meet:{ title:"Позвонить: встретиться", who:"Свой человек", initial:"S", place:"Телефон", phone:true, event:true, dm:true, goal:"Договориться о встрече: время и место.", start:"greet",
+    fail:{ text:"Звонок оборвался — так и не договорились.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:DM_G, ru:DM_GRU, again:DM_GA, againRu:DM_GARU, moves:[
+        { key:["çay içelim", "çay", "kahve"], say:["Bir çay içelim mi?"], ru:"Выпьем чаю?", go:"when" },
+        { key:["görüşelim mi", "bugün", "buluşalım"], say:["Bugün görüşelim mi?"], ru:"Увидимся сегодня?", go:"today" } ] },
+      when:{ npc:"Olur! Saat kaçta?", ru:"Давай! Во сколько?", again:"Saat kaçta?", againRu:"Во сколько?", moves:[
+        { key:["beş", "akşam", "altı"], say:["Akşam beşte olur mu?"], ru:"В пять вечера подойдёт?", go:"five" },
+        { key:["hemen", "şimdi"], say:["Hemen, kapının önünde."], ru:"Прямо сейчас, у двери.", go:"now" } ] },
+      five:{ npc:"Tamam, beşte görüşürüz.", ru:"Хорошо, в пять увидимся.", again:"Beşte görüşürüz.", againRu:"В пять увидимся.", moves:[
+        { key:["görüşürüz", "tamam", "bekliyorum"], say:["Tamam, görüşürüz."], ru:"Хорошо, увидимся.", go:"set" } ] },
+      set:dmEnd("ok", "Договорились чётко: время и место. Встреча — это повод для новых разговоров.", { rel:1 }),
+      now:dmEnd("ok", "Выпили чаю прямо у двери — по-соседски, без церемоний.", { rel:1, min:25 }),
+      today:{ npc:"Bugün yoğunum, yarın olur mu?", ru:"Сегодня занят(а), завтра можно?", again:"Yarın olur mu?", againRu:"Завтра можно?", moves:[
+        { key:["yarın olur", "olur", "yarın"], say:["Olur, yarın görüşelim."], ru:"Хорошо, давай завтра.", go:"tomorrow" },
+        { key:["bugün olsun", "lütfen"], say:["Bugün olsun, lütfen."], ru:"Давай сегодня, пожалуйста.", go:"push" } ] },
+      tomorrow:dmEnd("near", "Договорились на завтра — вежливо, но сегодня встречи не будет."),
+      push:dmEnd("near", "Вы настояли — согласились, но без радости.") } },
+  dm_loan:{ title:"Позвонить: занять денег", who:"Свой человек", initial:"S", place:"Телефон", phone:true, event:true, dm:true, goal:"Попросить небольшой долг и назвать срок возврата.", start:"greet",
+    fail:{ text:"Связь прервалась на самой просьбе. Деньги так и не заняли.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:DM_G, ru:DM_GRU, again:DM_GA, againRu:DM_GARU, moves:[
+        { key:["ricam var", "küçük bir rica"], say:["Küçük bir ricam var."], ru:"У меня небольшая просьба.", go:"ask" },
+        { key:["ödünç", "para lazım"], say:["Biraz ödünç para lazım."], ru:"Мне нужны деньги в долг, немного.", go:"how" } ] },
+      ask:{ npc:"Söyle, ne lazım?", ru:"Говори, что нужно?", again:"Ne lazım?", againRu:"Что нужно?", moves:[
+        { key:["iki yüz", "ödünç verir misin", "ödünç"], say:["İki yüz lira ödünç verir misin?"], ru:"Одолжишь двести лир?", go:"how" } ] },
+      how:{ npc:"Ne zaman geri verirsin?", ru:"Когда вернёшь?", again:"Ne zaman?", againRu:"Когда?", moves:[
+        { key:["pazartesi", "maaş", "maaşımı alınca"], say:["Pazartesi maaşımı alınca vereceğim."], ru:"Верну в понедельник, когда получу зарплату.", go:"yes" },
+        { key:["bilmiyorum", "sonra", "konuşuruz"], say:["Bilmiyorum, sonra konuşuruz."], ru:"Не знаю, потом поговорим.", go:"no" } ] },
+      yes:dmEnd("ok", "Двести лир у вас в кармане. В понедельник долг спишется с зарплаты.", { money:200, debt:200, rel:0 }),
+      no:dmEnd("near", "Без срока в долг не дают. Вежливо отказали.") } },
+  dm_advice:{ title:"Позвонить: совет", who:"Свой человек", initial:"S", place:"Телефон", phone:true, event:true, dm:true, goal:"Попросить совета и поблагодарить.", start:"greet",
+    fail:{ text:"Звонок оборвался, совета вы не услышали.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:DM_G, ru:DM_GRU, again:DM_GA, againRu:DM_GARU, moves:[
+        { key:["tavsiye", "tavsiye isteyecektim"], say:["Bir tavsiye isteyecektim."], ru:"Хотел(а) попросить совета.", go:"what" },
+        { key:["yardım eder misin", "yardım"], say:["Yardım eder misin?"], ru:"Поможешь?", go:"what" } ] },
+      what:{ npc:"Tabii, söyle bakalım.", ru:"Конечно, говори.", again:"Söyle bakalım.", againRu:"Ну, говори.", moves:[
+        { key:["ucuz", "nerede ucuz", "alışveriş"], say:["Nerede ucuz alışveriş yapılır?"], ru:"Где дёшево покупать продукты?", go:"cheap" },
+        { key:["doktor", "iyi bir doktor", "biliyor musun"], say:["İyi bir doktor biliyor musun?"], ru:"Ты знаешь хорошего врача?", go:"doc" } ] },
+      cheap:{ npc:"Salı ve cumartesi pazara git, orada her şey ucuz.", ru:"Во вторник и субботу иди на рынок, там всё дёшево.", again:"Pazara git.", againRu:"Иди на рынок.", moves:[
+        { key:["sağ ol", "teşekkür", "giderim"], say:["Sağ ol, pazara giderim."], ru:"Спасибо, пойду на рынок.", go:"cheapok" },
+        { key:["çok uzak", "uzak"], say:["Pazar çok uzak."], ru:"Рынок очень далеко.", go:"far" } ] },
+      cheapok:dmEnd("ok", "Совет дельный: на рынке по вторникам и субботам заметно дешевле.", { rel:1 }),
+      far:dmEnd("near", "Вы отмахнулись от совета — человек пожал плечами."),
+      doc:{ npc:"Evet, Doktor Selim iyidir, hastanenin yanında.", ru:"Да, доктор Селим хороший, рядом с больницей.", again:"Doktor Selim.", againRu:"Доктор Селим.", moves:[
+        { key:["sağ ol", "teşekkür", "giderim"], say:["Sağ ol, hemen giderim."], ru:"Спасибо, сразу пойду.", go:"docok" },
+        { key:["param yok", "pahalı"], say:["Param yok, çok pahalı olur."], ru:"Денег нет, будет слишком дорого.", go:"poor" } ] },
+      docok:dmEnd("ok", "Вы получили имя врача рядом с больницей — пригодится, если заболеете.", { rel:1 }),
+      poor:dmEnd("near", "Про деньги сказали честно, но совет остался без применения.") } },
+});
+// темы чата: id сцены, название по-русски, с каких отношений открыта (1 — знакомый, 2 — свой), доступность
+const DM_TOPICS = [
+  { id:"dm_how", ru:"Как дела", lv:1 }, { id:"dm_weather", ru:"Погода", lv:1 }, { id:"dm_food", ru:"Еда", lv:1 }, { id:"dm_football", ru:"Футбол", lv:1 },
+  { id:"dm_family", ru:"Семья", lv:2 }, { id:"dm_meet", ru:"Встретиться", lv:2 },
+  { id:"dm_loan", ru:"Занять денег", lv:2, lock:c => c.debt >= 200 ? "пока не вернёте прошлый долг" : "" }, { id:"dm_advice", ru:"Совет", lv:2 },
+];
 function cityNormalize(){
   const fresh = !city || !Object.keys(city).length, ver = fresh ? 2 : city.ver;   // версия смотрится ДО слияния с CITY_START (там уже ver:2); новая игра — сразу v2
   city = Object.assign({}, JSON.parse(JSON.stringify(CITY_START)), city || {}); city.ver = ver;     // копия глубокая: иначе rel/skill/carry общие с CITY_START (ревью 07:52)
   ["money", "min", "day", "days", "said", "ok"].forEach(k => { if(!Number.isFinite(city[k])) city[k] = CITY_START[k]; });
   const obj = k => { if(!city[k] || typeof city[k] !== "object" || Array.isArray(city[k])) city[k] = {}; }, arr = k => { if(!Array.isArray(city[k])) city[k] = []; };
-  ["rel", "mastery", "seen", "flags", "played", "skill", "met", "altLast"].forEach(obj); ["done", "carry", "todaySaid"].forEach(arr);
+  ["rel", "mastery", "seen", "flags", "played", "skill", "met", "altLast", "contacts", "dmDay"].forEach(obj); if(city.callback && typeof city.callback !== "object") city.callback = null; ["done", "carry", "todaySaid"].forEach(arr);
   if(typeof city.debt !== "number") city.debt = 0; if(typeof city.haggleWins !== "number") city.haggleWins = 0;
   if(!Array.isArray(city.visited)) city.visited = []; if(!Array.isArray(city.deckUsed)) city.deckUsed = []; if(!Array.isArray(city.prevPlan)) city.prevPlan = [];
   if(!Array.isArray(city.plan)) city.plan = cityPlanFor(city.day);
   if(typeof city.pos !== "number" || !BOARD[city.pos]) city.pos = 0; if(typeof city.roll !== "number") city.roll = null;
   if(!(city.face >= 1 && city.face <= 6)) city.face = TESTMODE ? 1 : 1 + Math.floor(Math.random() * 6);   // грань кубика до первого броска — случайная
+  Object.keys(CHARS).forEach(c => { if(!city.contacts[c] && (city.rel[c] || 0) >= contactAt(c)) city.contacts[c] = city.day || 1; });   // кто уже доверяет — номер есть (старые сохранения)
   if(city.ver !== 2){
     const rel = {}; Object.entries(city.rel).forEach(([k, v]) => { const c = REL_V1[k] || k; rel[c] = (rel[c] || 0) + v; }); city.rel = rel;
     city.money = Math.max(city.money, 1500); city.ver = 2;
   }
 }
 cityNormalize();
-const pickChar = scene => {                        // персонаж сцены: заданный, либо из пула места — знакомые встречаются чаще (вес 1 + отношения)
+const pickChar = (scene, forced) => {
+  if(scene.dm) return CHARS[forced] ? forced : "komsu";                      // чат: собеседник задан (в проверках сцен — по умолчанию Айше-тейзе)                        // персонаж сцены: заданный, либо из пула места — знакомые встречаются чаще (вес 1 + отношения)
   if(scene.char) return scene.char;
   const pool = (scene.pool || []).filter(c => CHARS[c] && (!CHARS[c].when || CHARS[c].when(city)));
   if(!pool.length) return null;
@@ -4610,17 +4781,76 @@ const relLevel = v => v >= 6 ? 2 : v >= 3 ? 1 : 0, REL_NAME = ["", "знаком
 const metChars = () => Object.keys(CHARS).filter(c => city.rel[c] !== undefined || (city.met || {})[c]).sort((a, b) => (city.rel[b] || 0) - (city.rel[a] || 0));
 function cityCharsHtml(){
   const list = metChars(); if(!list.length) return `<p class="hint" style="margin:0">Пока никого не встретили. Поговорите с кем-нибудь в квартале.</p>`;
-  return list.map(c => { const v = city.rel[c] || 0, lv = relLevel(v); return `<button class="ct-char lv${lv}" data-char="${c}"><i aria-hidden="true">${esc(CHARS[c].initial)}</i><b>${esc(CHARS[c].name)}</b><span class="ct-char-lvl">${REL_NAME[lv] || (v ? `+${v}` : "")}</span></button>`; }).join("");
+  return list.map(c => { const v = city.rel[c] || 0, lv = relLevel(v); return `<button class="ct-char lv${lv}" data-char="${c}"><i aria-hidden="true">${esc(CHARS[c].initial)}</i><b>${esc(CHARS[c].name)}</b>${city.contacts[c] ? '<svg class="ic ct-num" aria-label="номер есть"><use href="#i-phone"/></svg>' : ""}<span class="ct-char-lvl">${REL_NAME[lv] || (v ? `+${v}` : "")}</span></button>`; }).join("");
 }
 function citySkillsHtml(){
   return Object.entries(SKILLS).map(([id, sk]) => { const n = (city.skill[id] || {}).n || 0, lvl = skillLvl(id), next = SKILL_LVLS[lvl] || SKILL_LVLS[SKILL_LVLS.length - 1], pct = lvl >= 5 ? 100 : Math.round(n / next * 100);
     return `<div class="ct-skill" data-skill="${id}"><span>${esc(sk.name)} · ${esc(sk.ru)}</span><span class="bar" aria-label="${n} из ${next}"><i style="width:${pct}%"></i></span><b>${lvl}</b></div>`; }).join("");
 }
+// ---- звонок человеку: ответил (темы) или не взял трубку по причине ----
+const DM_WHY = {
+  sleep:{ title:"Спит", text:n => `${n}: ночь, человек спит и не берёт трубку. Звоните днём.`, tr:"Aradığınız numaraya şu anda ulaşılamıyor.", ru:"Абонент сейчас недоступен.", cb:0 },
+  work:{ title:"Занят: клиент", text:n => `${n} на работе, рядом покупатель. Обещал(а) перезвонить, как освободится.`, tr:"Müşteri var, sonra ararım.", ru:"Клиент, потом позвоню.", cb:40 },
+  drive:{ title:"За рулём", text:n => `${n} за рулём и не может говорить. Перезвонит, когда остановится.`, tr:"Direksiyondayım, sonra ararım.", ru:"Я за рулём, потом позвоню.", cb:45 },
+  prayer:{ title:"Пятничный намаз", text:n => `${n} в мечети на пятничной молитве. Перезвонит после неё.`, tr:"Namazdayım, sonra konuşuruz.", ru:"Я на намазе, потом поговорим.", cb:75 },
+  match:{ title:"Идёт матч", text:n => `${n} смотрит матч и не отвечает. Звоните завтра — после матча настроение лучше.`, tr:"Maç var, yarın ararım!", ru:"Идёт матч, завтра позвоню!", cb:0 },
+  wedding:{ title:"На свадьбе", text:n => `У родственников ${n} сегодня свадьба: шумно, телефон не слышно. Звоните в другой день.`, tr:"Düğündeyim, çok gürültü var, sonra ararım.", ru:"Я на свадьбе, очень шумно, потом позвоню.", cb:0 },
+  sick:{ title:"Болеет", text:n => `${n} простыл(а) и сегодня не разговаривает. Спросите о здоровье в другой день.`, tr:"Hastayım, bugün konuşamam.", ru:"Я болею, сегодня не могу говорить.", cb:0 },
+  nosignal:{ title:"Нет связи", text:n => `Телефон ${n} выключен или вне зоны сети. Попробуйте позже.`, tr:"Telefon kapalı veya kapsama alanı dışında.", ru:"Телефон выключен или вне зоны действия сети.", cb:0 },
+  busy:{ title:"Занят", text:n => `${n} сейчас занят(а) и не может говорить. Перезвонит сам(а).`, tr:"Şimdi müsait değilim, sonra ararım.", ru:"Сейчас не могу, потом позвоню.", cb:30 },
+};
+function dmAvail(char){
+  const ch = CHARS[char] || {}, d = ch.dm || {}, t = city.min, dow = cityDow(), rel = city.rel[char] || 0;
+  if(TESTMODE && typeof window.__busy === "string") return window.__busy ? { why:window.__busy } : { ok:true };
+  if(t >= (d.sleep || 22 * 60)) return { why:"sleep" };
+  if(d.devout && dow === 5 && t >= 12 * 60 + 15 && t < 13 * 60 + 30) return { why:"prayer" };
+  if(d.fan && (dow === 3 || dow === 6) && t >= 20 * 60 && t < 22 * 60) return { why:"match" };
+  if(TESTMODE) return { ok:true };                                                    // случайные причины в проверках выключены
+  const h = (city.day * 31 + char.length * 17 + char.charCodeAt(0) * 7) % 100;        // «погода дня» человека: не меняется от повторных звонков
+  if(h < 7) return { why:"wedding" }; if(h >= 7 && h < 12) return { why:"sick" };
+  if(d.drive && t < 19 * 60 && Math.random() < .5) return { why:"drive" };
+  if(d.work && t >= d.work[0] && t < d.work[1] && Math.random() < .45) return { why:"work" };
+  if(Math.random() < .05) return { why:"nosignal" };
+  if(Math.random() < Math.max(.04, .22 - .03 * rel)) return { why:"busy" };              // чем больше доверия, тем реже «занят»
+  return { ok:true };
+}
+const dmEl = id => document.getElementById(id);
+function dmOpenBox(ch, title, text){ dmEl("dmIc").textContent = ch.initial; dmEl("dmTitle").textContent = title; dmEl("dmText").textContent = text;
+  ["dmTr", "dmRu", "dmTopics"].forEach(k => { dmEl(k).hidden = true; }); dmEl("dmTopics").innerHTML = ""; dmEl("dmModal").hidden = false; setTimeout(() => dmEl("dmClose").focus(), 50); }
+function dmClose(){ dmEl("dmModal").hidden = true; wordPopHide(); }
+function dmCall(id){
+  const ch = CHARS[id]; if(!ch || ct) return; const av = dmAvail(id), v = city.rel[id] || 0, lv = relLevel(v);
+  if(!av.ok){
+    const w = DM_WHY[av.why] || DM_WHY.busy; dmOpenBox(ch, w.title, w.text(ch.name));
+    dmEl("dmTr").innerHTML = wordsHtml(w.tr); dmEl("dmTr").hidden = false; dmEl("dmRu").textContent = w.ru; dmEl("dmRu").hidden = false;
+    if(w.cb && city.min + w.cb < DAY_END) city.callback = { char:id, at:city.min + w.cb, why:av.why }; citySave();
+    return;
+  }
+  dmOpenBox(ch, ch.name, `${ch.name} на связи. ${ch.trait} О чём поговорить?`);
+  const box = dmEl("dmTopics"); box.hidden = false;
+  box.innerHTML = DM_TOPICS.map(t => { const lock = lv < t.lv ? `нужны отношения «${REL_NAME[t.lv]}»` : (t.lock && t.lock(city)) || "", sc = SCENES[t.id];
+    return `<button class="btn dm-topic" data-id="${t.id}" ${lock || !sc ? "disabled" : ""}>${esc(t.ru)}${lock ? `<small>${esc(lock)}</small>` : ""}</button>`; }).join("");
+  box.querySelectorAll(".dm-topic").forEach(b => b.onclick = () => { dmClose(); if(city.callback && city.callback.char === id) city.callback = null; cityStart(b.dataset.id, { char:id }); });
+}
+dmEl("dmClose").onclick = dmClose;
+dmEl("dmModal").addEventListener("keydown", e => { if(e.key === "Escape") dmClose(); });
+function dmCallbackCheck(){
+  const cb = city.callback; if(!cb || ct || city.min < cb.at) return false;
+  city.callback = null; citySave(); const ch = CHARS[cb.char]; if(!ch || city.min >= DAY_END) return false;
+  showModal({ ic:ch.initial, title:`${ch.name} перезванивает`, text:`${ch.name} ${ch.f ? "освободилась и звонит вам сама" : "освободился и звонит вам сам"}.`, primary:{ label:"Ответить", fn:() => dmCall(cb.char) }, secondary:{ label:"Не брать" } });
+  return true;
+}
+function cityContactCheck(char){     // → строка для итогового окна сцены («Новый контакт: …») или ""; номер даётся один раз, при достаточном доверии
+  const ch = CHARS[char]; if(!ch || city.contacts[char] || (city.rel[char] || 0) < contactAt(char)) return "";
+  city.contacts[char] = city.day; citySave();
+  return ` Новый контакт: ${ch.name} ${ch.f ? "дала" : "дал"} вам свой номер («Numaram sende olsun, ara»). Звонить — нажать на имя во вкладке «Люди»; человек бывает занят или спит.`;
+}
 function openChar(id){
-  const ch = CHARS[id]; if(!ch) return; const v = city.rel[id] || 0, lv = relLevel(v);
+  const ch = CHARS[id]; if(!ch) return; if(city.contacts[id]) return dmCall(id);
+  const v = city.rel[id] || 0, lv = relLevel(v);
   const where = Object.keys(city.played).filter(sid => SCENES[sid] && (SCENES[sid].char === id || (SCENES[sid].pool || []).includes(id))).map(sid => SCENES[sid].title);   // где бывает этот человек
-  const next = lv === 2 ? "Вы для него свой." : `До «${REL_NAME[lv + 1]}» ещё ${(lv === 0 ? 3 : 6) - v}.`;
-  showModal({ ic:ch.initial, title:ch.name, text:`${ch.trait} ${where.length ? "Встречали: " + where.join(", ") + "." : "Пока не встречали."} Отношения: ${v > 0 ? "+" + v : v}${lv ? " — " + REL_NAME[lv] : ""}. ${next}`, primary:{ label:"Закрыть", fn:cityRender } });
+  const need = contactAt(id) - v, next = lv === 2 ? "Вы для него свой." : `До «${REL_NAME[lv + 1]}» ещё ${(lv === 0 ? 3 : 6) - v}.`;
+  showModal({ ic:ch.initial, title:ch.name, text:`${ch.trait} ${where.length ? "Встречали: " + where.join(", ") + "." : "Пока не встречали."} Отношения: ${v > 0 ? "+" + v : v}${lv ? " — " + REL_NAME[lv] : ""}. ${next} Недоступно пока: номера нет — ${ch.f ? "она даст" : "он даст"} его, когда доверится вам (ещё ${Math.max(1, need)}).`, primary:{ label:"Понятно", fn:cityRender } });
 }
 function openCityStats(){
   const total = Object.keys(SCENES).filter(id => !SCENES[id].event).length, played = Object.keys(city.played).filter(id => SCENES[id] && !SCENES[id].event).length;
@@ -4655,7 +4885,8 @@ function cityMoveTo(i){
   city.min += STEP_MIN * boardDist(city.pos, i); city.pos = i; city.roll = null; city.visited.push(i); citySave();
   cityArrive(i);
 }
-function cityArrive(i){
+function cityArrive(i){ cityArrive0(i); if(!ct) dmCallbackCheck(); }      // по дороге могли перезвонить
+function cityArrive0(i){
   const c = BOARD[i]; cityRender();
   if(city.min >= DAY_END && !ct) return cityGoHome();                           // 21:00 — день закончился по дороге
   if(c.kind === "place"){ const id = cityErrandAt(i); if(id) return cityStart(id);
@@ -4696,9 +4927,9 @@ function cityTaxiAsk(){                                            // кнопк
 }
 function cityStart(id, opts){
   const scene = SCENES[id]; if(!scene) return;
-  const char = pickChar(scene), pat = (scene.patience || (CHARS[char] ? CHARS[char].patience : 3)) + (skillLvl("nezaket") >= 3 ? 1 : 0), dest = opts && typeof opts.dest === "number" ? opts.dest : null;
+  const char = pickChar(scene, opts && opts.char), pat = (scene.patience || (CHARS[char] ? CHARS[char].patience : 3)) + (skillLvl("nezaket") >= 3 ? 1 : 0), dest = opts && typeof opts.dest === "number" ? opts.dest : null;
   if(char) (city.met || (city.met = {}))[char] = city.day;
-  ct = { id, scene, char, dest, taxiFrom:city.pos, rel0:(city.rel[char] || 0), seed:TESTMODE ? (+window.__seed || 0) : Math.floor(Math.random() * 1000), alts:{}, node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
+  ct = { id, scene, char, dm:!!scene.dm, dmCap:!!scene.dm && city.dmDay[char] === city.day, dest, taxiFrom:city.pos, rel0:(city.rel[char] || 0), seed:TESTMODE ? (+window.__seed || 0) : Math.floor(Math.random() * 1000), alts:{}, node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
   const goal = dest !== null ? `Доехать до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}. Не переплатить.` : scene.goal;
   ctEl("ctGoal").textContent = "Цель: " + goal; ctEl("ctGoal").title = goal; ctEl("ctWho").textContent = ctWho();
   cityRender();
@@ -5013,6 +5244,7 @@ function cityFx(fx){
   if(!fx) return;
   if(fx.money){ city.money += fx.money; if(fx.money < 0 && ct) ct.spent -= fx.money; }
   if(fx.min) city.min += fx.min;
+  if(fx.rel > 0 && ct && ct.dm){ if(ct.dmCap) fx = Object.assign({}, fx, { rel:0 }); else city.dmDay[ct.char] = city.day; }     // чат поднимает отношения только в первом разговоре дня с человеком
   if(fx.rel && ct && ct.char){ city.rel[ct.char] = (city.rel[ct.char] || 0) + fx.rel * (fx.rel > 0 && skillLvl("nezaket") >= 5 ? 2 : 1); }
   if(fx.flag){ (city.flags = city.flags || {})[fx.flag] = city.day; }
   if(fx.unflag && city.flags){ delete city.flags[fx.unflag]; }
@@ -5038,11 +5270,11 @@ function cityEnd(end, failed){
   const learned = ct.lines.filter(l => l.ok && l.tr), missed = ct.lines.filter(l => !l.ok && l.tr);
   learned.forEach(l => memEnroll(l.tr, l.ru));                                   // сказанное в разговоре — в «Память», повторится по расписанию
   citySave();
-  const id = ct.id, ct0 = ct.char, dest = ct.dest, levelUps = ct.levelUps, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title, endText = pickLine(end.text);   // текст итога может быть списком — по seed визита
+  const contactNote = ct.char ? cityContactCheck(ct.char) : "", id = ct.id, ct0 = ct.char, dest = ct.dest, levelUps = ct.levelUps, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title, endText = pickLine(end.text);   // текст итога может быть списком — по seed визита
   if(dest !== null && kind !== "bad"){ city.pos = dest; city.roll = null; city.visited.push(dest); citySave(); }     // доехали — фишка на месте
   ct = null; cityRender();
   const stats = [["время", `${took} мин`], ["потрачено", `${spent} ₺`], ["реплик верно", `${learned.length}`]];
-  showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: title + " — " + short, text: endText + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
+  showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: title + " — " + short, text: endText + contactNote + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
     stats, primary:{ label:"К делам", fn:() => { cityRender(); if(dest !== null && kind !== "bad") cityArrive(dest); } } });
   if(quiet) $("modalText").textContent += ` ${CHARS[ct0].name} оценил: ни одного переспроса.`;
   (levelUps || []).forEach(citySkillModal);                                   // окна уровней — после итога сцены (очередь showModal)
@@ -5174,6 +5406,112 @@ const FUNC_GLOSS = {
   yenikapı:"Еникапы — станция метро и пристань на европейском берегу", acaba:"интересно; …ли (tuvalet nerede acaba — не подскажете, где туалет?)", pul:"почтовая марка", saç:"волосы; стрижка (saç ne kadar — сколько стоит стрижка?)",
   geç:"поздно (geç kaldık — опоздали)", bu:"это, этот", ne:"что", var:"есть", yok:"нет", bir:"один; какой-нибудь", çok:"очень, много", iyi:"хороший, хорошо", lütfen:"пожалуйста (просьба)", evet:"да", hayır:"нет", tamam:"хорошо, ладно",
 };
+Object.assign(FUNC_GLOSS, {
+  aa:"ах, о (удивление, радость)",
+  ailen:"твоя семья (ailen nasıl — как твоя семья?)",
+  al:"возьми (şemsiye al — возьми зонт)",
+  alanı:"зона, область (kapsama alanı — зона сети)",
+  alo:"алло (так отвечают по телефону)",
+  alınca:"когда получу, получив (maaşımı alınca — когда получу зарплату)",
+  alırım:"я возьму, куплю (şemsiye alırım — возьму зонт)",
+  alışveriş:"покупки (alışveriş yapmak — делать покупки)",
+  anda:"в момент (şu anda — сейчас)",
+  annem:"моя мама",
+  annen:"твоя мама",
+  ara:"позвони (ara — звони мне)",
+  aradım:"я позвонил(а) (sadece aradım — просто позвонил)",
+  aradığınız:"тот, кому вы звоните (aradığınız numara — набранный вами номер)",
+  ararım:"я позвоню (sonra ararım — позвоню позже)",
+  attılar:"забили, бросили (gol attılar — забили гол)",
+  bende:"у меня (bende yemek var — у меня есть еда)",
+  beşte:"в пять (часов)",
+  bizim:"наш (bizim takım — наша команда)",
+  cumartesi:"суббота",
+  dakikada:"на минуте (son dakikada — на последней минуте)",
+  dinlen:"отдохни",
+  dinliyorum:"слушаю (dinliyorum — я слушаю)",
+  direksiyondayım:"я за рулём (direksiyon — руль)",
+  dünkü:"вчерашний",
+  düğündeyim:"я на свадьбе (düğün — свадьба)",
+  dışında:"вне (kapsama alanı dışında — вне зоны сети)",
+  evdeydim:"я был(а) дома",
+  futbolla:"футболом (futbolla ilgilenmiyorum — не интересуюсь футболом)",
+  gelemem:"не смогу прийти",
+  geri:"назад (geri vermek — вернуть)",
+  gidecek:"пойдёт (doktora gidecek — пойдёт к врачу)",
+  gol:"гол",
+  görüşelim:"давай увидимся (görüşelim — давай встретимся)",
+  harikaydı:"было великолепно",
+  hastanenin:"больницы (hastanenin yanında — рядом с больницей)",
+  hastayım:"я болею",
+  ilgilenmiyorum:"я не интересуюсь (… ile ilgilenmiyorum — не интересуюсь …)",
+  istedim:"я хотел(а) (bir şey sormak istedim — хотел(а) кое-что спросить)",
+  isteyecektim:"я хотел(а) попросить (bir tavsiye isteyecektim — хотел(а) попросить совета)",
+  iyidir:"хороший, достойный (о человеке)",
+  iyileşir:"поправится",
+  izledim:"я смотрел(а)",
+  izledin:"ты смотрел(а) (izledin mi — смотрел(а) ли ты?)",
+  izlemedim:"я не смотрел(а)",
+  iç:"выпей (çay iç — выпей чаю)",
+  içelim:"давай выпьем (çay içelim mi — выпьем чаю?)",
+  içerim:"я выпью",
+  kapalı:"закрыт; выключен (telefon kapalı — телефон выключен)",
+  kapatmam:"я положу трубку (kapatmam gerek — мне пора заканчивать)",
+  kapsama:"покрытие (kapsama alanı — зона сети)",
+  kapının:"двери (kapının önünde — у двери)",
+  kazandı:"выиграл(а) (maçı kim kazandı — кто выиграл матч?)",
+  konuşamam:"не могу говорить",
+  konuşuruz:"поговорим (sonra konuşuruz — поговорим позже)",
+  maaşımı:"мою зарплату",
+  maç:"матч",
+  maçtı:"был матч (çok güzel maçtı — отличный был матч)",
+  maçı:"матч (maçı izledin mi — смотрел(а) матч?)",
+  menemen:"менемен — яичница с помидорами и перцем",
+  müşteri:"клиент, покупатель",
+  namazdayım:"я на намазе",
+  neyse:"ладно, неважно",
+  numaram:"мой номер",
+  numaraya:"на номер (aradığınız numaraya — на номер, который вы набрали)",
+  okulda:"в школе",
+  olacak:"будет (hava nasıl olacak — какая будет погода?)",
+  oynadı:"играл(а) (güzel oynadı — хорошо сыграл)",
+  pazar:"рынок, базар (ещё: воскресенье)",
+  pazara:"на рынок",
+  pazartesi:"понедельник",
+  ricam:"моя просьба (bir ricam var — у меня просьба)",
+  sabah:"утро; утром",
+  salı:"вторник",
+  selim:"Селим — мужское имя",
+  sende:"у тебя (numaram sende olsun — пусть мой номер будет у тебя)",
+  seni:"тебя",
+  sormak:"спросить",
+  soğan:"лук",
+  söyle:"скажи, говори",
+  söyler:"говорит (söyler misin — не скажешь ли?)",
+  takım:"команда",
+  ulaşılamıyor:"недоступен (букв.: до него не дозвониться)",
+  ve:"и",
+  vereceğim:"я верну, отдам",
+  verirsin:"ты вернёшь, дашь (ne zaman geri verirsin — когда вернёшь?)",
+  veya:"или",
+  yanında:"рядом, у (hastanenin yanında — рядом с больницей)",
+  yaptım:"я сделал(а), приготовил(а)",
+  yapılır:"делается (nasıl yapılır — как это делается?)",
+  yağacak:"пойдёт, будет идти (yağmur yağacak — будет дождь)",
+  yedim:"я поел(а), съел(а)",
+  yedin:"ты поел(а), съел(а)",
+  yemedim:"я не ел(а)",
+  yemeğe:"поесть, на обед (gel yemeğe — приходи поесть)",
+  yoğunum:"я занят(а), загружен(а)",
+  çocuklar:"дети",
+  çıkalım:"давай выйдем",
+  ödünç:"в долг (ödünç vermek — одолжить)",
+  önce:"сначала",
+  önünde:"перед (kapının önünde — перед дверью)",
+  üzüldüm:"я расстроился, мне жаль",
+  ıslanırım:"я промокну",
+  şükür:"слава Богу (çok şükür — слава Богу)"
+});   // слова чатов (личные звонки)
 function wordGloss(raw){
   const k = nphr(raw); if(!k) return null;
   const lemma = PHRASE_FORMS.get(k) || (PHRASE_DICT[raw] ? raw : Object.keys(PHRASE_DICT).find(l => nphr(l) === k));
