@@ -992,15 +992,16 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.context().close();
     ok(r.some(([u, w]) => u === 'https://api.tatoeba.org/v1/audios/1048317/file' && w === 'CVTR (Tatoeba)') && !r.some(([u]) => u.includes('/999/')), JSON.stringify(r));   // без лицензии — не берём (файл 403)
   });
-  await test('«Носитель» для фразы без записи — слова по очереди живыми записями, видео само не открывается (лимит YouGlish)', async () => {
+  await test('«Носитель» для фразы без записи — КАЖДОЕ слово по очереди: запись носителя, а у слова без записи — синтез; видео само не открывается (просьба 16:00: «озвучивается только первое слово»)', async () => {
     const q = await openInApp();
     await tap(q, 'tab-phrases');
-    const r = await q.evaluate(async () => { item = { target:'Hesap lütfen biraz', gid:'ph-basic', meaning:'' }; nativeCache.set(clean(item.target), []);
-      nativeCache.set(clean('hesap'), [{ url:'https://x/hesap.wav', who:'A' }]); nativeCache.set(clean('lütfen'), [{ url:'https://x/lutfen.wav', who:'B' }]); nativeCache.set(clean('biraz'), []);
-      window.__played = []; playNative(); await new Promise(z => setTimeout(z, 900));
-      return [window.__played.map(s => s.split('/').pop()), document.getElementById('nativeStatus').textContent, document.getElementById('sheet').hidden]; });
+    const r = await q.evaluate(async () => { trVoice = trVoice || { name:'t', lang:'tr-TR' }; item = { target:'Hesap lütfen biraz yok', gid:'ph-basic', meaning:'' }; nativeCache.set(clean(item.target), []);
+      nativeCache.set(clean('hesap'), [{ url:'https://x/hesap.wav', who:'A' }]); nativeCache.set(clean('lütfen'), []); nativeCache.set(clean('biraz'), [{ url:'https://x/biraz.wav', who:'B' }]); nativeCache.set(clean('yok'), []);
+      window.__played = []; window.__spoken = []; window.__log = []; playNative(); await new Promise(z => setTimeout(z, 1500));
+      return [window.__played.map(s => s.split('/').pop()), window.__spoken, window.__log.filter(x => x === 'rec' || x === 'synth'), document.getElementById('nativeStatus').textContent, document.getElementById('sheet').hidden]; });
     await q.context().close();
-    eq(r[0], ['hesap.wav', 'lutfen.wav']); ok(/по словам: hesap · lütfen · \(biraz — нет\)/.test(r[1]), r[1]); eq(r[2], true);
+    eq(r[0], ['hesap.wav', 'biraz.wav']); eq(r[1], ['lütfen', 'yok']); eq(r[2], ['rec', 'synth', 'rec', 'synth'], 'порядок слов сохранён');
+    ok(/hesap · lütfen \(синтез\) · biraz · yok \(синтез\)/.test(r[3]), r[3]); eq(r[4], true);
   });
   await test('в программе нет ссылок, уводящих из приложения (translate.google, youglish.com/pronounce, target=_blank)', async () => {
     const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8');
@@ -1242,12 +1243,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       out.rendered = document.getElementById('target').innerText;
       { const rs = [...document.querySelectorAll('#target .wd')].map(e => e.getBoundingClientRect()); out.gap = Math.min(...rs.slice(1).map((r, i) => Math.abs(r.top - rs[i].top) < 2 ? r.left - rs[i].right : 99)); }
       nativeCache.set('size', [{ url:'https://x/size.wav', who:'Z' }]);
-      const tap = async i => { document.querySelectorAll('#target .wd')[i].click(); await new Promise(z => setTimeout(z, 1700)); return document.getElementById('partner').textContent; };
+      const tap = async i => { document.querySelectorAll('#target .wd')[i].click(); await new Promise(z => setTimeout(z, 1700)); return document.getElementById('wordPop').textContent; };
       out.form = await tap(1); out.spokenForm = window.__spoken.slice();                              // форма: перевод формы + словарная форма; записи нет — синтез с пометкой
       out.rec = await tap(0); out.played = window.__played.slice(); out.spokenAfterRec = window.__spoken.length;   // есть запись носителя — играет она, не синтез
       out.on = document.querySelector('#target .wd.on').textContent;
       out.verb = await tap(2);
       autofit(); out.over = document.getElementById('card').scrollHeight - document.getElementById('card').clientHeight;
+      out.partnerKept = document.getElementById('partner').textContent;   // транскрипция на месте — перевод слова её не заменяет (иначе фраза «скачет»)
       setId = 'novoice'; show(OLD_PHRASES, 'Kahvaltı dahil mi?'); out.restored = document.getElementById('partner').textContent;
       out.mi = await tap(2); out.dahil = await tap(1);
       // все слова всех фраз — с переводом вручную (машинного перевода здесь нет)
@@ -1261,8 +1263,44 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.form, '«odanızı» — ваш номер (кого? что?) · oda: комната, номер синтез'); eq(r.spokenForm, ['odanızı']);
     eq(r.rec, '«Size» — вам носитель'); eq(r.played, ['https://x/size.wav']); eq(r.spokenAfterRec, 1); eq(r.on, 'Size');
     eq(r.verb, '«göstereyim» — давайте покажу · göstermek: показывать синтез'); eq(r.over <= 1, true);
-    eq(r.restored, '[кахвалты дахиль ми]'); eq(r.mi, '«mi» — вопросительная частица — делает фразу вопросом синтез'); eq(r.dahil, '«dahil» — включено (kahvaltı dahil mi — завтрак включён?) синтез');
+    eq(r.partnerKept, '[сизе оданызы гёстерейим]'); eq(r.restored, '[кахвалты дахиль ми]'); eq(r.mi, '«mi» — вопросительная частица — делает фразу вопросом синтез'); eq(r.dahil, '«dahil» — включено (kahvaltı dahil mi — завтрак включён?) синтез');
     ok(r.tot > 1000, 'слов во фразах: ' + r.tot); eq(r.miss, []); eq(r.wordMode, 0); eq(errs, []);
+  });
+  await test('нажатие на слово не двигает раскладку (просьба 16:00: «длина фразы не меняется, фраза не скачет»): рамки фразы, перевода, транскрипции и микрофона и размер шрифта те же на 3 размерах, подсказка внутри экрана', async () => {
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      const q = await openPage(browser); await q.setViewportSize({ width:w, height:h });
+      const r = await q.evaluate(async () => { setMode('phrases'); setId = 'hotel'; trVoice = { name:'T', lang:'tr-TR' }; trVoices = [trVoice]; const bad = [];
+        const rect = id => { const r = document.getElementById(id).getBoundingClientRect(); return [r.x, r.y, r.width, r.height].map(Math.round).join(','); };
+        const snap = () => [rect('target'), rect('meaning'), rect('partner'), rect('speak'), getComputedStyle(document.getElementById('target')).fontSize, getComputedStyle(document.documentElement).getPropertyValue('--fit')].join('|');
+        const items = PHRASE_SETS.find(g => g.id === 'hotel').items.concat(PHRASE_SETS.find(g => g.id === 'pharmacy' || g.id === 'shop' || g.id === 'main').items).slice(0, 14);
+        let taps = 0, pops = 0;
+        for(const x of items){ const pp = pickPhrase; pickPhrase = () => ({ target:x.tr, translit:x.tl, meaning:x.ru, tip:x.focus, gid:'ph-x' }); next(); pickPhrase = pp; await new Promise(z => setTimeout(z, 60));
+          const base = snap();
+          for(const sp of document.querySelectorAll('#target .wd')){ sp.click(); await new Promise(z => setTimeout(z, 40)); taps++;
+            const pop = document.getElementById('wordPop'), pr = pop.getBoundingClientRect(); if(!pop.hidden) pops++;
+            if(snap() !== base) bad.push([x.tr, sp.textContent, base, snap()]);
+            if(pop.hidden || pr.left < 0 || pr.right > innerWidth + .5 || pr.top < 0 || pr.bottom > innerHeight + .5) bad.push([x.tr, sp.textContent, 'подсказка вне экрана', [pr.left, pr.top, pr.right, pr.bottom].map(Math.round)]); } }
+        return { bad:bad.slice(0, 3), taps, pops }; });
+      const errs = q.errors; await q.context().close();
+      eq(r.bad, [], `${w}×${h}:`); ok(r.taps > 30, 'нажатий: ' + r.taps); eq(errs, []);
+    }
+  });
+  await test('нажатие на слово — везде, где есть турецкий текст: «Память» (знакомство и ответ), реплика собеседника и раскрытая карточка ответа в «Городе»; кнопка вокруг слова не срабатывает', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    const r = await q.evaluate(async () => { trVoice = null; const out = {}; const pop = () => { const p = document.getElementById('wordPop'); return p.hidden ? '' : p.textContent; };
+      const now = Date.now(); saveCards([{ ...newMemCard('Hesap lütfen.', '', 'Счёт, пожалуйста.', 'prod', now), due:now - 1, seen:true }]); mem = null; setMode('memory'); memNext(); memReveal();
+      document.querySelector('#target .wd').click(); await new Promise(z => setTimeout(z, 80)); out.mem = pop(); setMode('city'); out.hid = pop();
+      return out; });
+    ok(/«Hesap» — /.test(r.mem), 'Память: ' + r.mem); eq(r.hid, '', 'при смене раздела подсказка скрыта');
+    await q.click('#tab-city'); await q.evaluate(() => cityStart('taxi')); await q.waitForTimeout(80);
+    const c = await q.evaluate(async () => { const pop = () => { const p = document.getElementById('wordPop'); return p.hidden ? '' : p.textContent; }; const out = {};
+      const w = document.querySelector('#ctTr .wd'); out.npcWord = w && w.textContent; const pat = ct.patience;
+      w.click(); await new Promise(z => setTimeout(z, 60)); out.npcPop = pop(); out.ruHidden = document.getElementById('ctRu').hidden; out.pat = ct.patience === pat;
+      document.querySelector('#ctOpts .ct-opt-main').click(); await new Promise(z => setTimeout(z, 40));
+      const cw = document.querySelector('#ctOpts .ct-say .wd'); out.cardWord = cw && cw.textContent; cw.click(); await new Promise(z => setTimeout(z, 60)); out.cardPop = pop(); out.stillOpen = !!document.querySelector('#ctOpts .ct-opt.on');
+      return out; });
+    ok(c.npcWord && /^«/.test(c.npcPop), 'реплика: ' + JSON.stringify(c)); eq([c.ruHidden, c.pat], [true, true], 'нажатие на слово — не перевод реплики и не трата терпения');
+    ok(c.cardWord && /«/.test(c.cardPop) && c.stillOpen, 'карточка ответа: ' + JSON.stringify(c)); eq(q.errors, []); await q.context().close();
   });
   console.log('«Город» (Mahalle): разговоры с последствиями');
   const openCity = async (opts) => { const q = await openPage(browser, opts); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-city'); await q.waitForTimeout(100); return q; };
@@ -1271,6 +1309,21 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       opts: [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent), score: (document.querySelector('#ctResult .score b') || {}).textContent })); };
   const ctNext = async q => { await q.click('#ctNext'); await q.waitForTimeout(60); };
   const ctPick = async (q, i) => { await q.click(`#ctOpts .ct-opt-main[data-i="${i}"]`); await q.waitForTimeout(40); return q.evaluate(() => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)); };
+  await test('центр поля: ни одна надпись внутри кольца не обрезана («Bakkal — лавка …», «Nezaket · ве…») — все три вкладки на 3 размерах (просьба 16:00)', async () => {
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      const q = await openCity(); await q.setViewportSize({ width:w, height:h }); await q.waitForTimeout(100);
+      const bad = await q.evaluate(async () => { const out = [];
+        for(const t of ['tasks', 'people', 'skills']){ if(t === 'people') { city.met = Object.assign(city.met || {}, { sofor:1, bakkal_emre:1, komsu:1, eczaci:1 }); city.rel.bakkal_emre = 4; cityRender(); } cityInnerTab(t); await new Promise(z => setTimeout(z, 80));
+          const inner = document.getElementById('ctInner'), ir = inner.getBoundingClientRect();
+          for(const e of inner.querySelectorAll('*')){ if(!e.offsetParent) continue; const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+            const hid = o => o === 'hidden' || o === 'clip';   // список людей прокручивается (overflow:auto) — так задумано, остальное обрезаться не должно
+            const clipped = (e.scrollWidth > e.clientWidth + 1 && hid(cs.overflowX)) || (e.scrollHeight > e.clientHeight + 1 && hid(cs.overflowY)) || cs.textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth;
+            const outside = r.right > ir.right + 1 || r.bottom > ir.bottom + 1 || r.left < ir.left - 1;
+            if(clipped || outside) out.push([t, e.id || e.className || e.tagName, e.textContent.slice(0, 30)]); } }
+        return out.slice(0, 5); });
+      await q.context().close(); eq(bad, [], `${w}×${h}:`);
+    }
+  });
   await test('Город: выбор ответа карточками — что сказать, видно сразу по-русски; выбранная раскрывается (турецкий + чтение), говорите её; выбор меняет исход; перевод первой реплики бесплатно', async () => {
     const q = await openCity();
     const home = await q.evaluate(() => [document.querySelectorAll('.ct-task:not(.done)').length, document.getElementById('ctDay').textContent, city.money, city.min]);

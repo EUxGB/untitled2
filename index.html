@@ -642,18 +642,18 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-itabs{display:flex; gap:4px} .ct-itab{min-height:30px; padding:0 9px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); font:600 11.5px var(--body)}
 .ct-itab[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
 .ct-chars{display:flex; flex-direction:column; gap:3px; min-height:0; overflow:auto}
-.ct-char{display:flex; align-items:center; gap:7px; min-height:34px; padding:2px 4px; border:0; background:none; color:var(--ink); text-align:left; border-radius:8px; font-size:max(11px, calc(12px * var(--fit)))}
+.ct-char{display:flex; align-items:center; gap:7px; min-height:44px; padding:2px 4px; border:0; background:none; color:var(--ink); text-align:left; border-radius:8px; font-size:max(11px, calc(12px * var(--fit)))}
 .ct-char:hover{background:var(--surface)} .ct-char i{flex:none; width:24px; height:24px; border-radius:50%; background:var(--accent); color:var(--on-accent); display:grid; place-items:center; font:700 12px var(--display); font-style:normal}
 .ct-char.lv0 i{background:var(--line); color:var(--ink)} .ct-char.lv2 i{background:var(--ink)}
-.ct-char b{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0} .ct-char-lvl{margin-left:auto; color:var(--muted); font-size:.9em; flex:none}
-.ct-skills{display:flex; flex-direction:column; gap:4px} .ct-skill{display:grid; grid-template-columns:minmax(0, 1.1fr) minmax(40px, 1fr) auto; align-items:center; gap:6px; font-size:max(11px, calc(12px * var(--fit)))} .ct-skill > span:first-child{color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ct-char b{font-weight:700; min-width:0; overflow-wrap:anywhere; line-height:1.15} .ct-char-lvl{margin-left:auto; color:var(--muted); font-size:.9em; flex:none}
+.ct-skills{display:flex; flex-direction:column; gap:6px} .ct-skill{display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:center; gap:2px 6px; font-size:max(11px, calc(12px * var(--fit)))} .ct-skill > span:first-child{grid-column:1 / -1; color:var(--muted); line-height:1.2}
 .ct-skill .bar{height:5px; border-radius:3px; background:var(--line); overflow:hidden} .ct-skill .bar i{display:block; height:100%; background:var(--accent)} .ct-skill b{min-width:1.2em; text-align:right}
 .pv-tile-btn{cursor:pointer; text-align:left; font:inherit; color:inherit} .pv-tile-btn:hover{border-color:var(--accent)}
 .ct-day{margin:0; font:700 max(13px, calc(15px * var(--fit)))/1.2 var(--display); text-align:left}
 .ct-tasks{display:flex; flex-direction:column; gap:3px; margin:0; padding:0; list-style:none; min-height:0; overflow:hidden}
-.ct-task{display:flex; align-items:baseline; gap:6px; text-align:left; font-size:max(11px, calc(12px * var(--fit))); line-height:1.25; color:var(--ink); min-width:0}
-.ct-task b{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0} .ct-task span{color:var(--muted); flex:none; font-size:.92em}
-.ct-task i{flex:none; width:8px; height:8px; border-radius:50%; background:var(--accent); transform:translateY(-1px)} .ct-task.closed i{background:var(--muted)}
+.ct-task{display:block; text-align:left; font-size:max(11px, calc(12px * var(--fit))); line-height:1.25; color:var(--ink); min-width:0; overflow-wrap:anywhere}
+.ct-task b{font-weight:700} .ct-task span{color:var(--muted); font-size:.92em; white-space:nowrap} .ct-task span::before{content:"· "}
+.ct-task i{display:inline-block; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--accent); transform:translateY(-1px)} .ct-task.closed i{background:var(--muted)}
 .ct-task.done{color:var(--muted)} .ct-task.done.ok i{background:var(--ok)} .ct-task.done.near i{background:var(--near)} .ct-task.done.bad i{background:var(--bad)}
 .ct-dice{display:flex; align-items:center; gap:10px; margin-top:auto}
 .ct-roll{flex:none; width:56px; height:56px; padding:0; border:0; border-radius:14px; background:none; cursor:pointer; display:grid; place-items:center}
@@ -678,6 +678,8 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-scene .main-row{margin-top:auto}
 #ctLive{min-height:1.2em; text-align:left; font-size:15px}
 .wd{cursor:pointer; border-radius:4px; transition:color .15s} .wd.on{color:var(--accent)}
+.wordpop{position:fixed; z-index:60; max-width:min(300px, calc(100vw - 24px)); padding:8px 12px; border-radius:12px; background:var(--ink); color:var(--bg); font:500 14px/1.35 var(--body); box-shadow:0 6px 20px rgba(0,0,0,.25); text-align:left; pointer-events:auto}
+.wordpop[hidden]{display:none} .wordpop b{font-family:var(--display); color:inherit} .wordpop .wd-lemma, .wordpop .wd-src{color:color-mix(in srgb, var(--bg) 70%, transparent)} .wordpop .wd-src{font-size:11px}
 .wd-line{display:inline-block; text-align:center; line-height:1.35} .wd-line b{font-family:var(--display); color:var(--ink)} .wd-lemma{color:var(--muted)} .wd-src{font-size:11px; color:var(--muted)}
 @media (prefers-reduced-motion: reduce){ .wd{transition:none} }
 .ct-opts{display:flex; flex-direction:column; gap:6px}
@@ -992,6 +994,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 </div>
 
 <!-- окно внутри приложения: видео и перевод открываются здесь, без перехода на другие сайты -->
+<div class="wordpop" id="wordPop" role="status" aria-live="polite" hidden></div>
 <div class="modal sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="modal-box sheet-box">
     <div class="sheet-head"><h3 id="sheetTitle"></h3><button class="qbtn" id="sheetClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
@@ -2325,7 +2328,7 @@ function memRender(){
   memSetButtons(mem.phase, side);
   const left = memPlan(), info = `<small class="mem-left">Повторить: ${left.due.length} · новых на сегодня: ${left.fresh.length}</small>`;
   if(mem.phase === "study"){
-    t.textContent = c.tr; $("partner").textContent = c.tl ? `[${c.tl}]` : ""; $("meaning").textContent = c.ru;
+    t.innerHTML = wordsHtml(c.tr); $("partner").textContent = c.tl ? `[${c.tl}]` : ""; $("meaning").textContent = c.ru;
     $("tip").textContent = "Сначала знакомство, потом вспоминание: попытка вспомнить укрепляет память сильнее, чем повторное чтение.";
     setResult("info", "Новая фраза. Послушайте и повторите вслух, затем «Запомнил» — через минуту вспомните её без подсказки.", info);
     memPlay(c.tr);
@@ -2344,7 +2347,7 @@ function memRender(){
     }
     setResult("info", side === "rec" ? "Послушайте («Носитель» — ещё раз) и вспомните перевод. Потом «Показать»." : "Скажите по-турецки — «Сказать». Не выходит — «Буквы»: первые буквы слов.", info);
   } else if(mem.phase === "answer"){
-    t.innerHTML = esc(c.tr); $("partner").textContent = c.tl ? `[${c.tl}]` : "";
+    t.innerHTML = wordsHtml(c.tr); $("partner").textContent = c.tl ? `[${c.tl}]` : "";
     $("meaning").textContent = c.ru || "Перевожу…";
     if(!c.ru) ruMeaning(c.tr).then(r => { if(r && mem && mem.card === c){ c.ru = r; $("meaning").textContent = r; } });   // выверенный перевод, Викисловарь или машинный с пометкой «≈»
     $("tip").textContent = "";
@@ -2789,23 +2792,27 @@ function playNative(){
   a.pause(); a.src = recs[i].url;
   a.play().catch(()=> { st.textContent = "Не удалось воспроизвести запись. Нажмите ещё раз — будет следующий носитель."; });
 }
-// Слова фразы — живыми записями по очереди. Проверено CI: у слов фраз тренажёра записи есть у ~половины
+// Слова фразы — по очереди, КАЖДОЕ (просьба: «озвучивается только первое слово»): запись носителя слова (Commons; затем остальные базы,
+// не дольше 1,5 с), а у слова без записи — синтез, чтобы слова не пропадали. Каждое слово играет playReference (запись → синтез, страховка по времени).
 async function playWordByWord(text){
-  const st = $("nativeStatus"), a = $("nativeAudio"), target = item && item.target;
+  const st = $("nativeStatus"), target = item && item.target;
   const words = normPhrase(text).split(" ").filter(Boolean);
   if(words.length < 2){ st.textContent = "Записи носителя нет. Живая речь — «Примеры»: фразы носителей с этим словом."; return; }
   st.textContent = "Записи всей фразы нет — ищу записи слов…";
-  // отдельные слова — только Commons (Lingua Libre/Wiktionary): быстрее; на живом сайте поиск со всеми базами шёл дольше 4 с
-  const found = await Promise.all(words.map(w => findRecordings(w, { commonsOnly:true }).then(r => r && r[0]).catch(() => null)));
+  const wordRec = async w => {
+    try { const c = await findRecordings(w, { commonsOnly:true }); if(c && c.length) return c[0]; } catch(e){}
+    try { const r = await Promise.race([findRecordings(w), new Promise(z => setTimeout(() => z(null), 1500))]); if(r && r.length) return r[0]; } catch(e){}
+    return null;
+  };
+  const found = await Promise.all(words.map(wordRec));
   if(!item || item.target !== target) return;
-  const have = words.map((w, i) => ({ w, rec: found[i] })), urls = have.filter(x => x.rec).map(x => x.rec.url);
-  if(!urls.length){ st.textContent = "Записей ни фразы, ни её слов нет. Живая речь — «Примеры»: фразы носителей с этими словами."; return; }
-  st.textContent = "Носители по словам: " + have.map(x => x.rec ? x.w : `(${x.w} — нет)`).join(" · ");
-  speechSynthesis && speechSynthesis.cancel();
+  const real = found.filter(Boolean).length;
+  st.textContent = (real ? "Носители по словам: " : "Записей слов нет — читает синтез: ") + words.map((w, i) => found[i] ? w : `${w} (синтез)`).join(" · ");
   let k = 0;
-  const playNext = () => { if(k >= urls.length || !item || item.target !== target){ a.onended = null; return; }
-    a.src = urls[k++]; a.onended = () => setTimeout(playNext, 250); a.play().catch(() => { a.onended = null; }); };
-  a.pause(); playNext();
+  const next = () => { if(k >= words.length || !item || item.target !== target) return;
+    const i = k++; if(found[i]) nativeCache.set(clean(words[i]), [found[i]]);
+    playReference(words[i], () => setTimeout(next, 200)); };
+  next();
 }
 let nativePending = null;
 function prefetchNative(){
@@ -4590,7 +4597,7 @@ function cityBoard(){
     ctEl("ctDiceHint").textContent = city.roll ? `Выпало ${city.roll}` : city.min >= DAY_END ? "21:00 — пора домой" : "Нажмите кубик"; }
   ctEl("ctIntro").textContent = city.roll ? `Нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`
     : city.days || city.visited.length ? `Отношения: ${Object.entries(city.rel).filter(([, v]) => v).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} ${v > 0 ? "+" : ""}${v}`).join(", ") || "пока ни с кем"}`
-    : "Вы переехали в стамбульский квартал. Нажмите кубик, ходите по клеткам, говорите с людьми голосом — они отвечают и реагируют. Ошибки стоят денег и времени.";
+    : "Говорите с людьми: ошибки стоят денег и времени.";
 }
 // Вкладки внутри кольца: дела дня · люди (персонажи с уровнем отношений) · умения (способности)
 let cityTab = (() => { try { return ["tasks", "people", "skills"].includes(localStorage.getItem("soyle-city-tab")) ? localStorage.getItem("soyle-city-tab") : "tasks"; } catch(e){ return "tasks"; } })();
@@ -4818,7 +4825,7 @@ const mastery = tr => (city.mastery || {})[tr] || 0;
 function ctLineHtml(m){
   const line = m.say[0], lvl = ct.peeked ? 0 : mastery(line);
   const mask = line.split(" ").map(w => { const core = w.replace(/[^\p{L}']/gu, ""); return core ? w[0] + "···" : w; }).join(" ");
-  if(lvl <= 1) return `<b class="ct-say" lang="tr" translate="no">${esc(line)}</b>${lvl === 0 ? `<small class="ct-read">[${esc(trToCyr(line.replace(/['’]/g, "")))}]</small>` : ""}`;
+  if(lvl <= 1) return `<b class="ct-say" lang="tr" translate="no">${wordsHtml(line)}</b>${lvl === 0 ? `<small class="ct-read">[${esc(trToCyr(line.replace(/['’]/g, "")))}]</small>` : ""}`;
   if(lvl === 2) return `<b class="ct-say mask" lang="tr" translate="no">${esc(mask)}</b><small class="ct-read">Вспомните сами. Нажмите ещё раз — открыть.</small>`;
   return `<small class="ct-read">Скажите по памяти. Нажмите ещё раз — открыть.</small>`;
 }
@@ -5058,6 +5065,9 @@ ctEl("ctShow").onclick = cityPhone;
 ctEl("ctNext").onclick = cityNextNode;
 ctEl("ctReplay").onclick = cityReplay;
 ctEl("ctTr").onclick = cityReveal;
+// слова реплики собеседника нажимаются (перевод слова — подсказка поверх экрана): реплика пишется в ctTr в десятке мест через textContent —
+// наблюдатель оборачивает слова сам, текст не меняется (npcSay и тесты читают textContent)
+new MutationObserver(() => { const t = ctEl("ctTr"); if(t.textContent.trim() && !t.querySelector(".wd")) t.innerHTML = wordsHtml(t.textContent); wordPopHide(); }).observe(ctEl("ctTr"), { childList:true });
 ctEl("ctBack").onclick = () => { if(!ct) return; cityLeave(); ct = null; cityRender(); };
 ctEl("ctRoll").onclick = cityRoll;
 ctEl("ctTabTasks").onclick = () => { cityInnerTab("tasks"); scheduleFit(); }; ctEl("ctTabPeople").onclick = () => { cityInnerTab("people"); scheduleFit(); }; ctEl("ctTabSkills").onclick = () => { cityInnerTab("skills"); scheduleFit(); };
@@ -5176,23 +5186,41 @@ function wordGloss(raw){
 // Слова — внутри одного строчного контейнера .wds: #target — flex-контейнер, а flex выбрасывает пробелы между соседними
 // элементами-словами (на экране было «Odatemizlenmedi»); один дочерний элемент — пробелы и переносы как у обычного текста.
 function wordsHtml(text){ return `<span class="wds">${text.split(/(\s+)/).map(tok => /\S/.test(tok) ? `<span class="wd" data-w="${esc(tok)}">${esc(tok)}</span>` : tok).join("")}</span>`; }
-let wdTok = 0;
-async function wordTap(raw){
+let wdTok = 0, wdTimer = 0;
+// Перевод слова — всплывающая подсказка поверх экрана (fixed): раскладку она не двигает (жалоба: «фраза скачет» — строка перевода
+// меняла высоту, и вся карточка пересчитывалась) и работает везде, где есть турецкий текст: Фразы, Память, Город, чат.
+function wordPopHide(){ const pop = $("wordPop"); if(pop){ pop.hidden = true; } clearTimeout(wdTimer); document.querySelectorAll(".wd.on").forEach(e => e.classList.remove("on")); }
+function wordPopShow(el, html){
+  const pop = $("wordPop"); pop.innerHTML = html; pop.hidden = false;
+  const r = el.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight, vw = innerWidth, vh = innerHeight;
+  const left = Math.max(12, Math.min(vw - w - 12, r.left + r.width / 2 - w / 2));
+  let top = r.bottom + 6; if(top + h > vh - 8) top = Math.max(8, r.top - h - 6);
+  pop.style.left = left + "px"; pop.style.top = top + "px";
+  clearTimeout(wdTimer); wdTimer = setTimeout(wordPopHide, 7000);
+}
+async function wordTap(raw, el){
   const word = raw.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, ""), key = nphr(word); if(!key) return;
-  const it = item, tok = ++wdTok, g = wordGloss(word);
-  $("target").querySelectorAll(".wd").forEach(s => s.classList.toggle("on", nphr(s.dataset.w) === key));
-  const show = src => { if(item !== it) return;
+  const it = item, tok = ++wdTok, g = wordGloss(word), box = el.closest(".wds") || el.parentElement;
+  document.querySelectorAll(".wd.on").forEach(s => s.classList.remove("on"));
+  box.querySelectorAll(".wd").forEach(s => s.classList.toggle("on", nphr(s.dataset.w) === key));
+  const show = src => { if(!el.isConnected) return;
     const line = g ? `<b lang="tr" translate="no">«${esc(word)}»</b> — ${esc(g.ctx)}${g.lemma ? ` <span class="wd-lemma">· <span lang="tr" translate="no">${esc(g.lemma)}</span>: ${esc(g.ru)}</span>` : ""}`
       : `<b lang="tr" translate="no">«${esc(word)}»</b> — отдельного перевода нет; смысл — в переводе фразы.`;
-    $("partner").innerHTML = `<span class="wd-line">${line}${src ? ` <span class="wd-src">${src}</span>` : ""}</span>`; scheduleFit(); };
+    wordPopShow(el, `<span class="wd-line">${line}${src ? ` <span class="wd-src">${src}</span>` : ""}</span>`); };
   show("");
   // звук: запись носителя этого слова (Common Voice, Tatoeba, Commons — не дольше 1,5 с), иначе синтез с пометкой
   let recs = null; try { recs = await Promise.race([findRecordings(word), new Promise(z => setTimeout(() => z(null), 1500))]); } catch(e){}
-  if(tok !== wdTok || item !== it) return;
+  if(tok !== wdTok || item !== it || !el.isConnected) return;
   if(recs && recs.length){ const a = $("nativeAudio"); speechSynthesis && speechSynthesis.cancel(); a.src = recs[0].url; a.play().catch(() => sayText(word)); show("носитель"); }
   else { sayText(word); show(trVoice ? "синтез" : ""); }
 }
-$("target").addEventListener("click", e => { const s = e.target.closest(".wd"); if(s && mode === "phrases" && item && !item.word) wordTap(s.dataset.w); });
+// захват на document: слово внутри кнопки (реплика в игре, карточка ответа) не запускает действие кнопки — только перевод
+document.addEventListener("click", e => {
+  const s = e.target.closest && e.target.closest(".wd");
+  if(!s){ if(!e.target.closest("#wordPop")) wordPopHide(); return; }
+  e.preventDefault(); e.stopPropagation(); wordTap(s.dataset.w, s);
+}, true);
+document.addEventListener("keydown", e => { if(e.key === "Escape") wordPopHide(); });
 const MODES = ["city","memory","phrases","listen","free","progress"];
 const TRAIN = ["phrases","listen","free"];           // раздел «Тренировка» объединяет прежние четыре вкладки
 let lastTrain = (() => { try { const v = localStorage.getItem("soyle-train"); return TRAIN.includes(v) ? v : "phrases"; } catch(e){ return "phrases"; } })();
@@ -5410,7 +5438,7 @@ function setMode(m){
   cardLoading = false;
   closeSheet();
   if(blitz && m !== "listen") endBlitz(true);
-  mode = m;
+  mode = m; wordPopHide();
   if(mode === "city" && m !== "city" && typeof cityLeave === "function") cityLeave();
   $("tab-city").setAttribute("aria-pressed", m==="city");
   $("tab-memory").setAttribute("aria-pressed", m==="memory");
