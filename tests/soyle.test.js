@@ -1517,6 +1517,23 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       cityStart('taxi'); out.face = !!document.querySelector('#ctInitial svg.avatar'); const f = document.getElementById('ctReplay').getBoundingClientRect(); out.faceSize = [Math.round(f.width), Math.round(f.height)]; return out; });
     eq([r.all, r.uniq, r.emoji, r.row, r.dm, r.face], [true, true, false, true, true, true]); eq(r.faceSize, [44, 44]); eq(q.errors, []); await q.context().close();
   });
+  await test('биографии (просьба 09:16): у каждого из 18 персонажей есть своя мини-биография (40–400 знаков, без эмодзи, все разные), она видна в окне человека и помещается на 3 размерах', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
+    const r = await q.evaluate(() => { const ids = Object.keys(CHARS), bad = [];
+      for(const c of ids){ const b = CHARS[c].bio; if(typeof b !== 'string' || b.length < 40 || b.length > 400) bad.push(c + ': длина ' + (b && b.length)); else if(/\p{Extended_Pictographic}/u.test(b)) bad.push(c + ': эмодзи'); }
+      return { n:ids.length, bad, uniq:new Set(ids.map(c => CHARS[c].bio)).size }; });
+    eq(r.bad, []); eq(r.uniq, r.n);
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h });
+      const m = await q.evaluate(() => { city.met = { bakkal:1 }; cityRender(); document.getElementById('ctTabPeople').click(); document.querySelector('#ctChars .ct-char[data-char="bakkal"]').click();
+        const mod = document.getElementById('modal'); return { t:mod.textContent.includes(CHARS.bakkal.bio.slice(0, 30)) }; });
+      await q.waitForTimeout(600);
+      m.fits = await q.evaluate(() => { const rc = document.querySelector('#modal .modal-box').getBoundingClientRect(); return { top:Math.round(rc.top), bottom:Math.round(rc.bottom), h:innerHeight }; });
+      ok(m.t, 'биографии нет в окне ' + w); ok(m.fits.top >= 0 && m.fits.bottom <= m.fits.h + 1, 'окно не помещается ' + w + '×' + h + ' ' + JSON.stringify(m.fits));
+      await q.evaluate(() => { const b = document.getElementById('modalClose') || document.querySelector('#modal button'); b && b.click(); });
+    }
+    eq(q.errors, []); await q.context().close();
+  });
   await test('чат: окно со всеми 8 темами помещается на 3 размерах (кнопки ≥ 44 px, ничего не обрезано), «Закрыть» на месте; «Занять денег» (+200 ₺, долг до зарплаты) и «Погода» (зонт) меняют состояние игры', async () => {
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
       const q = await openCity(); await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { window.__busy = ''; city.rel = { bakkal:6 }; city.met = { bakkal:1 }; city.contacts = { bakkal:1 }; cityRender(); document.getElementById('ctTabPeople').click(); document.querySelector('#ctChars .ct-char[data-char="bakkal"]').click(); });
