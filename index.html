@@ -681,7 +681,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .avatar{display:block; width:100%; height:100%; border-radius:50%}
 .ct-face:has(.avatar){background:none; padding:0; overflow:hidden} .ct-face .avatar{width:44px; height:44px}
 .ct-char i:has(.avatar){background:none !important; overflow:hidden; width:34px; height:34px} .ct-char i .avatar{width:34px; height:34px}
-.dm-box .modal-ic .avatar{width:84px; height:84px; margin:0 auto}
+.dm-box .modal-ic .avatar, #modal .modal-ic .avatar{width:84px; height:84px; margin:0 auto}
 .dm-box{max-height:92dvh; overflow:auto}
 .dm-tr{font:700 18px/1.3 var(--display); color:var(--ink) !important} .dm-ru{font-size:14px}
 .dm-topics{display:grid; grid-template-columns:1fr 1fr; gap:8px} .dm-topic{min-height:44px; padding:6px 10px; font-size:14px; line-height:1.2; display:flex; flex-direction:column; justify-content:center; gap:1px} .dm-topic small{font-size:11px; color:var(--muted); font-weight:500}
@@ -2067,7 +2067,7 @@ const modalQueue = []; let modalOpen = false;
 function showModal(o){
   if(modalOpen){ modalQueue.push(o); return; }
   modalOpen = true;
-  $("modalIc").textContent = o.ic || "Aferin!";
+  if(o.icHtml) $("modalIc").innerHTML = o.icHtml; else $("modalIc").textContent = o.ic || "Aferin!";
   $("modalMedal").innerHTML = o.medal ? medalHtml(o.medal, true, true) : ""; $("modalMedal").hidden = !o.medal;
   $("modalTitle").textContent = o.title || ""; $("modalText").textContent = o.text || "";
   $("modalStats").innerHTML = (o.stats || []).map(([l, v]) => `<div class="ms"><b>${esc(String(v))}</b><span>${esc(l)}</span></div>`).join("");
@@ -4887,6 +4887,42 @@ const AVATARS = {
   usta_can:    { skin:"#E8C09A", hair:"#3A2A1E", style:"short", shirt:"#222B33", apron:"#F0EEE6" },
   kapici_ibrahim:{ skin:"#D49C70", hair:"#8A8A8A", style:"bald", mus:2, flatcap:"#4B5B4B", shirt:"#6B6B3E" },
 };
+// Люди без имени (симитчи, охранник, кассир…): тоже портрет, не буква; ключ — scene.who
+const ROLE_AV = {
+  "Шофёр":"role_taxi", "Симитчи":"role_simit", "Водитель долмуша":"role_dolmus", "Киоскёр":"role_kiosk", "Пекарь":"role_baker", "Кассир":"role_cashier", "Кассирша":"role_cashierf",
+  "Охранник":"role_guard", "Охранник метро":"role_guard2", "Охранник PTT":"role_guard3", "Дедушка на скамейке":"role_dede", "Завсегдатай":"role_regular", "Прохожий":"role_walker",
+  "Прохожий у bakkal":"role_walker2", "Кассир пристани":"role_ferry", "Женщина на остановке":"role_woman", "Гость у двери":"role_guest", "Полицейский":"role_police", "Тётушки с балкона":"role_aunt",
+  "Su Dünyası":"role_water", "Знакомый":"role_friend", "Свой человек":"role_close", "В толпе у метро":"role_crowd", "Болельщики":"role_fan", "Свадебный кортеж":"role_wed"
+};
+Object.assign(AVATARS, {
+  role_taxi:{ skin:"#DDB08A", hair:"#2B2220", style:"short", mus:1, cap:"#C9A227", shirt:"#2B3A42" },
+  role_simit:{ skin:"#E3B48B", hair:"#3A2A1E", style:"short", stubble:1, flatcap:"#B5472E", shirt:"#F0EEE6", apron:"#C98A2E" },
+  role_dolmus:{ skin:"#D49C70", hair:"#241B16", style:"short", mus:2, shirt:"#34506B", cap:"#34506B" },
+  role_kiosk:{ skin:"#EBC7A6", hair:"#14100E", style:"quiff", glasses:1, shirt:"#6B8A9A" },
+  role_baker:{ skin:"#E8C09A", hair:"#8A8A8A", style:"bald", mus:1, chef:1, shirt:"#F4F4F0", apron:"#F0EEE6" },
+  role_cashier:{ skin:"#E3B48B", hair:"#2A211C", style:"short", shirt:"#C62F35" },
+  role_cashierf:{ skin:"#EBC7A6", hair:"#5A3A2A", style:"bun", shirt:"#C62F35", f:1 },
+  role_guard:{ skin:"#D7A57C", hair:"#1F1A18", style:"short", mus:1, cap:"#14262B", shirt:"#14262B" },
+  role_guard2:{ skin:"#DDB08A", hair:"#3A2A1E", style:"short", cap:"#0F5C5A", shirt:"#0F5C5A", stubble:1 },
+  role_guard3:{ skin:"#E6BC96", hair:"#6B6B6B", style:"short", mus:2, cap:"#B5472E", shirt:"#B5472E" },
+  role_dede:{ skin:"#E0B08A", hair:"#E8E8E8", style:"bald", mus:2, glasses:1, flatcap:"#7A6A58", shirt:"#7A6A58" },
+  role_regular:{ skin:"#D49C70", hair:"#4A4A4A", style:"short", mus:1, shirt:"#8A6B3E" },
+  role_walker:{ skin:"#E8C09A", hair:"#2A1D17", style:"quiff", shirt:"#4B6B5B" },
+  role_walker2:{ skin:"#DDB08A", hair:"#14100E", style:"short", shades:1, shirt:"#5B4B6B" },
+  role_ferry:{ skin:"#E6BC96", hair:"#3A2A1E", style:"short", cap:"#1F3A5B", shirt:"#1F3A5B", glasses:1 },
+  role_woman:{ skin:"#E6BF9C", hair:"#6B4E3D", style:"scarf", scarf:"#4B7D8E", shirt:"#4B7D8E", f:1 },
+  role_guest:{ skin:"#E3B48B", hair:"#2B2220", style:"quiff", stubble:1, shirt:"#7A7A7A" },
+  role_police:{ skin:"#DDB08A", hair:"#1F1A18", style:"short", cap:"#1F3A5B", shirt:"#1F3A5B", mus:1 },
+  role_aunt:{ skin:"#E6BF9C", hair:"#8A6B8E", style:"scarf", scarf:"#C98A2E", shirt:"#8E4B6B", f:1, glasses:1 },
+  role_water:{ skin:"#E8C09A", hair:"#3A2A1E", style:"short", shirt:"#2E7DAE", cap:"#2E7DAE" },
+  role_friend:{ skin:"#E3B48B", hair:"#3A2A1E", style:"quiff", shirt:"#6B8A5B" },
+  role_close:{ skin:"#E6BF9C", hair:"#6B4E3D", style:"short", shirt:"#C98A2E" },
+  role_crowd:{ skin:"#D49C70", hair:"#1F1A18", style:"quiff", shades:1, shirt:"#222B33" },
+  role_fan:{ skin:"#E8C09A", hair:"#241B16", style:"short", mus:1, shirt:"#C62F35", cap:"#C9A227" },
+  role_wed:{ skin:"#E6BF9C", hair:"#2A1D17", style:"bun", shirt:"#F4F6F4", f:1 },
+  role_none:{ skin:"#D9DEDC", hair:"#9AA6A4", style:"short", shirt:"#9AA6A4" }
+});
+const sceneAvatar = sc => charAvatar(ROLE_AV[sc && sc.who] || "role_none");
 function charAvatar(id, cls){
   const a = AVATARS[id]; if(!a) return "";
   const sk = a.skin, h = a.hair, o = [];
@@ -4965,7 +5001,7 @@ dmEl("dmModal").addEventListener("keydown", e => { if(e.key === "Escape") dmClos
 function dmCallbackCheck(){
   const cb = city.callback; if(!cb || ct || city.min < cb.at) return false;
   city.callback = null; citySave(); const ch = CHARS[cb.char]; if(!ch || city.min >= DAY_END) return false;
-  showModal({ ic:ch.initial, title:`${ch.name} перезванивает`, text:`${ch.name} ${ch.f ? "освободилась и звонит вам сама" : "освободился и звонит вам сам"}.`, primary:{ label:"Ответить", fn:() => dmCall(cb.char) }, secondary:{ label:"Не брать" } });
+  showModal({ icHtml:charAvatar(cb.char), ic:ch.initial, title:`${ch.name} перезванивает`, text:`${ch.name} ${ch.f ? "освободилась и звонит вам сама" : "освободился и звонит вам сам"}.`, primary:{ label:"Ответить", fn:() => dmCall(cb.char) }, secondary:{ label:"Не брать" } });
   return true;
 }
 function cityContactCheck(char){     // → строка для итогового окна сцены («Новый контакт: …») или ""; номер даётся один раз, при достаточном доверии
@@ -4978,7 +5014,7 @@ function openChar(id){
   const v = city.rel[id] || 0, lv = relLevel(v);
   const where = Object.keys(city.played).filter(sid => SCENES[sid] && (SCENES[sid].char === id || (SCENES[sid].pool || []).includes(id))).map(sid => SCENES[sid].title);   // где бывает этот человек
   const need = contactAt(id) - v, next = lv === 2 ? "Вы для него свой." : `До «${REL_NAME[lv + 1]}» ещё ${(lv === 0 ? 3 : 6) - v}.`;
-  showModal({ ic:ch.initial, title:ch.name, text:`${ch.trait} ${where.length ? "Встречали: " + where.join(", ") + "." : "Пока не встречали."} Отношения: ${v > 0 ? "+" + v : v}${lv ? " — " + REL_NAME[lv] : ""}. ${next} Недоступно пока: номера нет — ${ch.f ? "она даст" : "он даст"} его, когда доверится вам (ещё ${Math.max(1, need)}).`, primary:{ label:"Понятно", fn:cityRender } });
+  showModal({ icHtml:charAvatar(id), ic:ch.initial, title:ch.name, text:`${ch.trait} ${where.length ? "Встречали: " + where.join(", ") + "." : "Пока не встречали."} Отношения: ${v > 0 ? "+" + v : v}${lv ? " — " + REL_NAME[lv] : ""}. ${next} Недоступно пока: номера нет — ${ch.f ? "она даст" : "он даст"} его, когда доверится вам (ещё ${Math.max(1, need)}).`, primary:{ label:"Понятно", fn:cityRender } });
 }
 function openCityStats(){
   const total = Object.keys(SCENES).filter(id => !SCENES[id].event).length, played = Object.keys(city.played).filter(id => SCENES[id] && !SCENES[id].event).length;
@@ -5151,7 +5187,7 @@ function cityNode(id, replyHtml){
   const tr = ctEl("ctTr"), ru = ctEl("ctRu");
   const greet = skillLvl("nezaket") >= 2 && n.greetAlt;                                   // вас уже знают — здороваются первыми
   tr.textContent = greet ? n.greetAlt : ctNpc(n); tr.classList.add("veil"); ru.hidden = true; ru.textContent = greet && n.greetAltRu ? n.greetAltRu : ctRu(n);
-  ctEl("ctInitial").innerHTML = charAvatar(ct.char) || esc(CHARS[ct.char] ? CHARS[ct.char].initial : ct.scene.initial);
+  ctEl("ctInitial").innerHTML = charAvatar(ct.char) || sceneAvatar(ct.scene);
   ctEl("ctLive").textContent = "";
   if(n.pay){
     if(city.money < n.pay.price && ct.char === "bakkal" && (city.rel.bakkal || 0) >= 6){   // свой человек: остаток — в долг, спишется с зарплаты

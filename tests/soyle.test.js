@@ -1457,6 +1457,16 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       cityRender(); return out; });
     eq(r.n, 18); eq(r.bad, []); eq(q.errors, []); await q.context().close();
   });
+  await test('вместо буквы — портрет (просьба 07:30): у каждой сцены на лице собеседника SVG-портрет (у людей без имени — свой по роли), окно «Бакал Хасан» в «Людях» тоже с портретом, не с буквой', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
+    const r = await q.evaluate(() => { const bad = [], seen = new Set();
+      for(const sid of Object.keys(SCENES)){ const sc = SCENES[sid]; if(sc.phone || sc.dm) continue; city.min = 19 * 60; cityStart(sid); if(!ct){ bad.push(sid + ': не началась'); continue; }
+        const el = document.getElementById('ctInitial'); if(!el.querySelector('svg.avatar')) bad.push(sid + ': нет портрета (' + el.textContent + ')'); if(el.textContent.trim()) bad.push(sid + ': в портрете есть текст'); seen.add(el.innerHTML); ct = null; }
+      cityRender(); city.met = { bakkal:1 }; cityRender(); document.getElementById('ctTabPeople').click(); document.querySelector('#ctChars .ct-char[data-char="bakkal"]').click();
+      const dm = document.getElementById('dmIc'), mod = document.getElementById('modalIc'); return { bad, kinds:seen.size, modal:mod && !document.getElementById('modal').hidden ? mod.innerHTML : 'closed', dm:dm ? dm.innerHTML.slice(0, 40) : '' }; });
+    eq(r.bad, []); ok(r.kinds >= 20, 'разных портретов мало: ' + r.kinds);
+    ok(!/^<svg/.test(r.modal) ? r.modal === 'closed' || !/^\s*[A-Z]\s*$/.test(r.modal) : true, r.modal.slice(0, 60)); eq(q.errors, []); await q.context().close();
+  });
   await test('портреты (просьба 17:02): у каждого из персонажей свой рисунок (все разные), он в списке «Люди», в окне звонка и на лице собеседника в сцене', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
     const r = await q.evaluate(async () => { const ids = Object.keys(CHARS), svgs = ids.map(c => charAvatar(c)); const out = { all:ids.every(c => AVATARS[c]), uniq:new Set(svgs).size === ids.length, emoji:svgs.some(x => /\p{Extended_Pictographic}/u.test(x)) };

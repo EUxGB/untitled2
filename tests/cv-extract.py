@@ -12,6 +12,9 @@ phrases = re.findall(r'\{ tr:"([^"]+)", tl:', src)
 if os.path.exists('tests/voiced-phrases.json'):
     vp = json.load(open('tests/voiced-phrases.json', encoding='utf-8'))
     phrases += [x['tr'] for lst in vp.values() for x in lst if x.get('cv')]
+# реплики «Города» (tests/city-phrases-dump.js → tests/city-phrases.json): короткие бытовые фразы часто есть в Common Voice целиком
+if os.path.exists('tests/city-phrases.json'):
+    phrases += json.load(open('tests/city-phrases.json', encoding='utf-8'))
 def norm(t):
     t = t.replace('I', 'ı').replace('İ', 'i').lower()
     return re.sub(r'\s+', ' ', re.sub(r"[^\w\s]", ' ', t)).strip()
