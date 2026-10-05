@@ -785,6 +785,8 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .gm-warn{margin:0; font-size:13px; color:var(--near)}
 .gm-fb{padding:10px 12px; border-radius:12px; font-size:14px; line-height:1.45; color:var(--ink)} .gm-fb.ok{background:var(--ok-soft)} .gm-fb.bad{background:var(--near-soft)}
 .gm-fb .wm{margin-top:8px}
+.gm-cue-btn{align-self:flex-start; min-height:44px; padding:6px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--accent); font:600 13px var(--ui); cursor:pointer}
+.gm-cue{background:#F3E8CF; color:#14262B; border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.4} .gm-cue p{margin:0 0 6px} .gm-cue p:last-child{margin:0} .gm-cue b{font-weight:700} .gm-steps{opacity:.92}
 .gm-done{display:flex; flex-direction:column; gap:10px} .gm-score{font:700 34px var(--display); color:var(--ink)}
 .wm{display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start}
 .wm-c{display:inline-flex; flex-direction:column; align-items:center; text-align:center; padding:3px 7px; border-radius:8px; background:color-mix(in srgb, currentColor 12%, transparent); max-width:132px}
@@ -1038,7 +1040,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
           <li><b>Память</b> — всё, что сказали в «Городе» и тренировке, возвращается по расписанию FSRS: сначала вспомнить, потом ответ.</li>
           <li><b>Тренировка</b> — трудный звук (ö, ü, ı, ç, ş) в слове выделен цветом; разбор ошибок после «Сказать» показывает, какой звук спутан. Трудный звук выделен красным.</li>
           <li><b>Тренировка → Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «слова» — слова темы с примером.</li>
-          <li><b>Тренировка → Грамматика</b> — 20 коротких правил (падежи, времена, «быть», вопрос, словообразование) с примерами из ваших фраз и упражнениями. Нажмите на любое турецкое слово: под переводом — разбор по частям (корень + окончания) и кнопка «Правило».</li>
+          <li><b>Тренировка → Грамматика</b> — 22 коротких урока: сначала «С чего начать» (порядок слов, сборка фразы из блоков), затем падежи, времена, «быть», вопрос, словообразование) с примерами из ваших фраз и упражнениями. Нажмите на любое турецкое слово: под переводом — разбор по частям (корень + окончания) и кнопка «Правило».</li>
           <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Примеры</b> — фразы носителей с этим словом: перевод и живая запись; там же видео (YouGlish, до 20 поисков в день).</li>
           <li><b>Сравнить</b> — если вы ещё не говорили это слово: образец, вы, оценка, затем образец и ваша запись подряд; если уже сказали — образец и ваша запись.</li>
           <li><b>На слух</b> — звучит одна из двух похожих фраз, выберите какая. <b>Блиц</b> — сколько различите за 60 секунд.</li>
@@ -2192,7 +2194,7 @@ const BADGES = [
   { id:"strong",  ic:"21д",   tier:3, t:"Прочная память", d:"20 фраз держатся в памяти 3+ недели",  v:() => memStats().strong, n:20 },
   { id:"gram3",   ic:"-ı",    tier:1, t:"Окончания",      d:"Освоить 3 правила грамматики",         v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:3 },
   { id:"gram10",  ic:"-lar",  tier:2, t:"Грамматист",     d:"Освоить 10 правил грамматики",         v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:10 },
-  { id:"gramall", ic:"20",    tier:3, t:"Знаток окончаний", d:"Освоить все 20 правил грамматики",   v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:20 },
+  { id:"gramall", ic:"22",    tier:3, t:"Знаток окончаний", d:"Освоить все 22 урока грамматики",   v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:22 },
   { id:"level5",  ic:"6",     tier:3, t:"Стамбулец",      d:"Достичь 6-го уровня",                  v:g => levelOf(g.xp), n:6 },
   { id:"lesson10",ic:"×10",   tier:3, t:"Прилежный",      d:"Пройти 10 уроков",                     v:g => g.lessons, n:10 },
   { id:"hafta",   ic:"7g",    tier:2, t:"Hafta",          d:"Прожить неделю в квартале",            v:() => typeof city !== "undefined" ? city.days : 0, n:7 },
@@ -5014,7 +5016,7 @@ function openChar(id){
   const v = city.rel[id] || 0, lv = relLevel(v);
   const where = Object.keys(city.played).filter(sid => SCENES[sid] && (SCENES[sid].char === id || (SCENES[sid].pool || []).includes(id))).map(sid => SCENES[sid].title);   // где бывает этот человек
   const need = contactAt(id) - v, next = lv === 2 ? "Вы для него свой." : `До «${REL_NAME[lv + 1]}» ещё ${(lv === 0 ? 3 : 6) - v}.`;
-  showModal({ icHtml:charAvatar(id), ic:ch.initial, title:ch.name, text:`${ch.trait} ${where.length ? "Встречали: " + where.join(", ") + "." : "Пока не встречали."} Отношения: ${v > 0 ? "+" + v : v}${lv ? " — " + REL_NAME[lv] : ""}. ${next} Недоступно пока: номера нет — ${ch.f ? "она даст" : "он даст"} его, когда доверится вам (ещё ${Math.max(1, need)}).`, primary:{ label:"Понятно", fn:cityRender } });
+  showModal({ icHtml:charAvatar(id), ic:ch.initial, title:ch.name, text:`${ch.bio ? ch.bio + " " : ""}${ch.trait} ${where.length ? "Встречали: " + where.join(", ") + "." : "Пока не встречали."} Отношения: ${v > 0 ? "+" + v : v}${lv ? " — " + REL_NAME[lv] : ""}. ${next} Недоступно пока: номера нет — ${ch.f ? "она даст" : "он даст"} его, когда доверится вам (ещё ${Math.max(1, need)}).`, primary:{ label:"Понятно", fn:cityRender } });
 }
 function openCityStats(){
   const total = Object.keys(SCENES).filter(id => !SCENES[id].event).length, played = Object.keys(city.played).filter(id => SCENES[id] && !SCENES[id].event).length;
@@ -6569,12 +6571,49 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => { if(e.key === "Escape") wordPopHide(); });
 // <GRAMMAR-RULES> правила и упражнения; {слово} — турецкое (жирным), остальное — по-русски
 const GRAMMAR = [
+{ id:"steps", grp:"С чего начать", begin:true, blocks:true, t:"С чего начать: фраза за 5 шагов", lead:"Что хочу сказать → глагол → слова → окончания → порядок",
+  txt:["Не пытайтесь «перевести» фразу целиком. Соберите её из блоков — каждый раз по одним и тем же пяти шагам. Пример: «Я иду домой».",
+       "Шаг 1. Решите, что вы хотите сказать, и разложите мысль на вопросы: кто? что делает? куда? когда? Здесь: я — иду — домой.",
+       "Шаг 2. Найдите глагол и возьмите его из словаря: {gitmek} — идти. Отбросьте {-mek} — остался корень {git-}.",
+       "Шаг 3. Достройте глагол: корень + время + лицо. Сейчас: {-(ı)yor}; я: {-um}. {git-} перед гласной смягчается: {gid-}. Получилось: {gid} + {iyor} + {um} = {gidiyorum}.",
+       "Шаг 4. Остальным словам дайте окончание по вопросу: куда? — {-a/-e}; где? — {-da/-de}; что (конкретное)? — {-ı}; чем? — {-la/-le}. Чтобы выбрать гласную окончания, найдите ПОСЛЕДНЮЮ гласную слова: в {ev} это «e» → {eve}.",
+       "Шаг 5. Расставьте блоки по порядку (его вы изучите в следующем уроке): {Ben eve gidiyorum}. Слово «я» ({ben}) можно опустить — лицо уже слышно в {-um}: {Eve gidiyorum}."],
+  tbl:{ head:["Что хочу сказать","Вопрос","Блок","Что делаю с блоком"], rows:[
+    ["я","кто?","{ben}","можно опустить"],
+    ["домой","куда?","{ev}","{-e} → {eve} (последняя гласная «e»)"],
+    ["иду","что делаю?","{git-}","{-iyor} + {-um} → {gidiyorum}"],
+    ["в комнате","где?","{oda}","{-da} → {odada} (последняя «a»)"] ] },
+  ex:[
+    { q:"Куда? («домой»): {ev} + окончание", o:["eve","evi","evde","evden"], a:0, w:"Вопрос «куда?» — окончание {-a/-e}. Последняя гласная «e» → {eve}." },
+    { q:"Корень глагола {gitmek} (идти)", o:["git-","gitm-","gitmek-","itme-"], a:0, w:"Отбросьте {-mek}: остаётся {git-}." },
+    { q:"Я иду (сейчас): {git-} + время + лицо", o:["gidiyorum","gitiyorum","gidiyorsun","gidiyoruz"], a:0, w:"{git-} → {gid-} перед гласной, {-iyor} — «сейчас», {-um} — «я»: {gidiyorum}." },
+    { q:"Где? («в комнате»): {oda} + окончание", o:["odada","odade","odata","odadan"], a:0, w:"Вопрос «где?» — {-da/-de}. Последняя гласная «a» → {-da}: {odada}." },
+    { q:"Что? (конкретный «билет»): {bilet} + окончание", o:["bileti","bilete","biletı","biletu"], a:0, w:"Вин. падеж — 4 варианта. Последняя гласная «e» → «i»: {bileti}." },
+    { q:"С чего начинать, когда хотите сказать фразу?", o:["Найти глагол и решить, что хочу сказать","Перевести слова по очереди","Выучить все окончания","Поставить все слова в словарной форме"], a:0, w:"Сначала смысл (кто, что делает, куда, когда), потом глагол. Окончания и порядок — после." } ] },
+{ id:"order", grp:"С чего начать", begin:true, blocks:true, t:"Порядок слов: глагол в конце", lead:"Кто · когда · где · что · глагол — и глагол всегда последний",
+  txt:["В турецком глагол стоит в самом конце фразы. Остальные блоки идут перед ним в таком порядке: кто → когда → где/куда → что → глагол.",
+       "Пример: {Ben} (я) · {yarın} (завтра) · {evde} (дома) · {çay} (чай) · {içiyorum} (пью) — {Ben yarın evde çay içiyorum}. Если блока нет — он просто пропускается.",
+       "Определение стоит перед словом, которое описывает: {güzel oda} — красивая комната, {iki bilet} — два билета.",
+       "Вопрос с {mı/mi}: частица стоит после слова, о котором спрашиваете, чаще после глагола: {Eve gidiyor musunuz?} — вы идёте домой?",
+       "Отрицание — внутри глагола ({gitmiyorum} — не иду), для имён — слово {değil} в конце: {Bu pahalı değil}."],
+  tbl:{ head:["Блок","Вопрос","Пример"], rows:[
+    ["1. Кто","кто?","{Ben}, {Anne}, {Ali}"],
+    ["2. Когда","когда?","{yarın}, {bugün}, {akşam}"],
+    ["3. Где / куда","где? куда?","{evde}, {eve}, {Taksim'e}"],
+    ["4. Что","что? кого?","{çay}, {yemeği}, {seni}"],
+    ["5. Глагол","что делает?","{içiyorum}, {gidiyor}, {anlıyorum}"] ] },
+  ex:[
+    { q:"Верный порядок: «Мама готовит на кухне»", o:["Anne mutfakta yemek yapıyor","Anne yapıyor mutfakta yemek","Yapıyor anne yemek mutfakta","Mutfakta yapıyor yemek anne"], a:0, w:"Глагол ({yapıyor}) — в самом конце: кто → где → что → глагол." },
+    { q:"Верный порядок: «Я завтра еду на Таксим»", o:["Ben yarın Taksim'e gidiyorum","Ben gidiyorum yarın Taksim'e","Yarın gidiyorum ben Taksim'e","Taksim'e ben gidiyorum yarın"], a:0, w:"{Ben} · {yarın} (когда) · {Taksim'e} (куда) · {gidiyorum} (глагол последний)." },
+    { q:"Где в турецкой фразе стоит глагол? «Я хочу чай»", o:["Ben çay istiyorum","Ben istiyorum çay","İstiyorum ben çay","Çay istiyorum ben"], a:0, w:"Глагол {istiyorum} — последним." },
+    { q:"Вопрос: «Вы идёте домой?» — где частица {mı/mi}?", o:["Eve gidiyor musunuz?","Eve mi gidiyorsunuz?","Mı eve gidiyorsunuz?","Eve gidiyorsunuz mi?"], a:0, w:"Частица — после глагола: {gidiyor musunuz?}. (Если спрашиваете именно про «домой» — {Eve mi gidiyorsunuz?}, это другой акцент.)" },
+    { q:"Верный порядок: «Али сегодня остаётся дома»", o:["Ali bugün evde kalıyor","Ali kalıyor bugün evde","Bugün kalıyor Ali evde","Ali evde bugün kalıyor"], a:0, w:"Кто → когда → где → глагол: {Ali} · {bugün} · {evde} · {kalıyor}." } ] },
 { id:"harmony", grp:"Основа", t:"Гармония гласных", lead:"Окончание подстраивается под последнюю гласную слова",
   txt:["В турецком смысл даёт окончание, а его гласная зависит от последней гласной корня. Поэтому одно и то же окончание выглядит по-разному: {evde} (дома), но {okulda} (в школе).",
        "Двухвариантные окончания (a / e): {-lar/-ler}, {-da/-de}, {-dan/-den}, {-a/-e}. После a, ı, o, u ставится «a», после e, i, ö, ü ставится «e».",
        "Четырёхвариантные (ı / i / u / ü): {-ı}, {-ım}, {-dı}. После a, ı — «ı»; после e, i — «i»; после o, u — «u»; после ö, ü — «ü».",
-       "Согласные: после глухих (ç, f, h, k, p, s, ş, t) начало окончания глохнет: {-da} → {-ta}, {-dan} → {-tan}, {-dı} → {-tı}: {sokakta}, {yaptım}. А последние p, ç, t, k перед гласной часто звонкие: {kitap} → {kitabı}, {git-} → {gidiyor}, {ayak} → {ayağı}."],
-  tbl:{ head:["Последняя гласная","2 варианта","4 варианта","Пример"], rows:[
+       "Согласные, правило 1. Если слово кончается на глухую (ç, f, h, k, p, s, ş, t), окончание с «d» превращается в «t»: {-da} → {-ta}, {-dan} → {-tan}, {-dı} → {-tı}. Например: {sokak} + {-da} = {sokakta} (на улице), {yap-} + {-dı} = {yaptı} (сделал).",
+       "Согласные, правило 2. Слова на p, ç, t, k перед окончанием с гласной меняют последнюю букву: p → b, ç → c, t → d, k → ğ. Например: {kitap} → {kitabı} (книгу), {ağaç} → {ağacı} (дерево), {git-} → {gidiyor} (идёт), {ayak} → {ayağı} (ногу). У многих слов так не бывает, это надо запоминать на примерах."],  tbl:{ head:["Последняя гласная","2 варианта","4 варианта","Пример"], rows:[
     ["a","a","ı","{araba} — {arabalar}, {arabayı}"],["ı","a","ı","{kapı} — {kapılar}, {kapıyı}"],
     ["o","a","u","{doktor} — {doktorlar}, {doktoru}"],["u","a","u","{okul} — {okullar}, {okulu}"],
     ["e","e","i","{ev} — {evler}, {evi}"],["i","e","i","{kedi} — {kediler}, {kediyi}"],
@@ -6899,7 +6938,7 @@ function morphBlock(m){
 }
 const gramRule = id => GRAMMAR.find(r => r.id === id);
 const gmFmt = s => esc(String(s)).replace(/\{([^}]+)\}/g, '<b class="tr" lang="tr" translate="no">$1</b>');
-const GRAM_GROUPS = ["Основа", "Существительные", "Предложение", "Глаголы", "Слова из слов"];
+const GRAM_GROUPS = ["С чего начать", "Основа", "Существительные", "Предложение", "Глаголы", "Слова из слов"];
 let gstate = (() => { try { const o = JSON.parse(localStorage.getItem("soyle-gram")); return o && typeof o === "object" ? o : {}; } catch(e){ return {}; } })();
 function gramNormalize(){ if(!gstate || typeof gstate !== "object") gstate = {}; if(!gstate.r || typeof gstate.r !== "object") gstate.r = {};
   for(const k of Object.keys(gstate.r)){ const s = gstate.r[k]; if(!s || typeof s !== "object") { delete gstate.r[k]; continue; } s.n = +s.n || 0; s.ok = +s.ok || 0; s.last = Array.isArray(s.last) ? s.last.slice(-12).map(x => x ? 1 : 0) : []; } }
@@ -6931,7 +6970,31 @@ function gramMakeBuild(r){
   return { type:"build", dyn:true, m, order:gshuf(m.parts.map((_, i) => i)), got:[], bad:false,
     q:`Соберите слово по частям: ${m.parts.map(p => p.root ? (p.gloss || "корень") : p.n).join(" + ")}`, w:gmFmt(`{${m.word}}: ${morphMeaning(m)}.`) };
 }
+// Упражнение «соберите фразу из блоков» (просьба 07:48: новичку нужно видеть порядок: кто · когда · где · что · глагол)
+const GM_SENT = [
+  { ru:"Я иду домой", b:[["Ben","кто"],["eve","куда"],["gidiyorum","глагол"]] },
+  { ru:"Я завтра еду на Таксим", b:[["Ben","кто"],["yarın","когда"],["Taksim'e","куда"],["gidiyorum","глагол"]] },
+  { ru:"Я хочу чай", b:[["Ben","кто"],["çay","что"],["istiyorum","глагол"]] },
+  { ru:"Мы едем на автобусе", b:[["Biz","кто"],["otobüsle","на чём"],["gidiyoruz","глагол"]] },
+  { ru:"Мама готовит на кухне", b:[["Anne","кто"],["mutfakta","где"],["yemek","что"],["yapıyor","глагол"]] },
+  { ru:"Али сегодня остаётся дома", b:[["Ali","кто"],["bugün","когда"],["evde","где"],["kalıyor","глагол"]] },
+  { ru:"Я тебя понимаю", b:[["Ben","кто"],["seni","кого"],["anlıyorum","глагол"]] },
+  { ru:"Вы ждёте здесь", b:[["Siz","кто"],["burada","где"],["bekliyorsunuz","глагол"]] },
+  { ru:"Вечером я встречаюсь с другом", b:[["Ben","кто"],["akşam","когда"],["arkadaşımla","с кем"],["buluşuyorum","глагол"]] },
+  { ru:"Дети играют в парке", b:[["Çocuklar","кто"],["parkta","где"],["oynuyor","глагол"]] },
+  { ru:"Ахмет каждое утро читает газету", b:[["Ahmet","кто"],["her sabah","когда"],["gazete","что"],["okuyor","глагол"]] },
+  { ru:"Я сейчас вам звоню", b:[["Ben","кто"],["şimdi","когда"],["sizi","кого"],["arıyorum","глагол"]] }
+];
+function gramMakeBlocks(skip){
+  let k = 0, sn; do { sn = GM_SENT[Math.floor(grnd() * GM_SENT.length)]; } while(skip && skip.includes(sn.ru) && k++ < 20);
+  const parts = sn.b.map(([t, role]) => ({ t, root:true, role })), word = sn.b.map(x => x[0]).join(" ") + ".";
+  return { type:"build", dyn:true, blocks:true, ruKey:sn.ru, m:{ word, parts, blocks:true }, order:gshuf(parts.map((_, i) => i)), got:[], bad:false,
+    q:`Соберите фразу из блоков: «${sn.ru}». Порядок: кто · когда · где · что · глагол (глагол — последним).`, w:gmFmt(`{${word}}`) + " " + sn.b.map(x => x[1]).join(" · ") + "." };
+}
+const blocksHtml = m => `<span class="wm" translate="no">${m.parts.map(p => `<span class="wm-c"><b lang="tr">${esc(p.t)}</b><i>${esc(p.role || "")}</i></span>`).join("")}</span>`;
 function gramBuildQuiz(r){
+  if(r.blocks){ const hand0 = gshuf(r.ex).slice(0, 4).map(x => ({ type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) })); hand0.forEach(x => { x.order = gshuf(x.o.map((_, i) => i)); });
+    const bl = []; for(let i = 0; i < 3; i++) bl.push(gramMakeBlocks(bl.map(x => x.ruKey))); bl.forEach(x => { x.q = gmFmt(x.q); x.html = true; }); return gshuf([...hand0, ...bl]); }
   const dynN = gramWordsFor(r.id).length ? 3 : 0, hand = gshuf(r.ex).slice(0, dynN ? 5 : 6).map(x => ({ type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) }));
   hand.forEach(x => { x.order = gshuf(x.o.map((_, i) => i)); });
   const p1 = gramMakeParse(r); let p2 = null; for(let k = 0; k < 8 && p1 && !(p2 && p2.q !== p1.q); k++) p2 = gramMakeParse(r);
@@ -6943,6 +7006,7 @@ function gramPhrases(r){
   const items = PHRASE_SETS.flatMap(g => g.items).filter(p => !p.rare && p.tr && p.ru);
   const inflected = tr => tr.split(/\s+/).map(morphOf).filter(Boolean);
   const isQ = w => /^m[ıiuü](y[ıiuü]m|s[ıiuü]n([ıiuü]z)?)?[?.,!]*$/i.test(w);
+  if(r.begin){ const seenB = new Set(); return items.filter(p => { const w = p.tr.replace(/[.!?]+$/, "").split(/\s+/); const last = morphOf(w[w.length - 1]); return w.length >= 2 && w.length <= 4 && last && last.parts[0].verb; }).sort((a, b) => a.tr.length - b.tr.length).filter(p => !seenB.has(p.tr) && seenB.add(p.tr)).slice(0, 4); }
   const test = r.id === "question" ? tr => tr.split(/\s+/).some(isQ)
     : r.id === "qwords" ? tr => /(^|\s)(ne|kim|nere\S*|nasıl|kaç\S*|hangi\S*|neden)(\s|$|[?.,!])/i.test(tr)
     : r.id === "harmony" ? tr => inflected(tr).some(m => m.parts.length > 2)
@@ -6962,7 +7026,7 @@ let gram = { view:"list", rule:null, qs:[], i:0, ok:0, done:false };
 const gmEl = () => $("gramView");
 function gramListHtml(){
   const m = gramMasteredCount(), next = GRAMMAR.find(r => !gramMastered(r.id));
-  let h = `<div class="gm-head"><h2>Грамматика</h2><p class="gm-sub">${GRAMMAR.length} правил, освоено ${m}. Читайте по порядку: каждое — коротко, с примерами из ваших фраз и упражнениями. Правило считается освоенным, когда верно не меньше 80% последних ответов.</p></div>`;
+  let h = `<div class="gm-head"><h2>Грамматика</h2><p class="gm-sub">${GRAMMAR.length} уроков, освоено ${m}. <b>Новичок? Начните с первых двух: «С чего начать» — как собрать фразу из блоков.</b> Дальше — по порядку: каждый урок короткий, с примерами из ваших фраз, подсказкой и упражнениями. Урок считается освоенным, когда верно не меньше 80% последних ответов.</p></div>`;
   GRAM_GROUPS.forEach(g => { const rs = GRAMMAR.filter(r => r.grp === g); if(!rs.length) return;
     h += `<section class="gm-group" aria-label="${esc(g)}"><h3>${esc(g)}</h3>` + rs.map(r => { const s = gstate.r[r.id], done = gramMastered(r.id);
       return `<button class="gm-row${done ? " done" : ""}${next && next.id === r.id ? " next" : ""}" data-act="rule" data-rule="${r.id}"><span class="gm-ttl">${gmFmt(r.t)}</span><span class="gm-lead">${gmFmt(r.lead)}</span><span class="gm-st">${done ? "освоено" : s && s.n ? `верно ${s.ok} из ${s.n}` : next && next.id === r.id ? "начните с этого" : "не начато"}</span></button>`; }).join("") + `</section>`; });
@@ -6986,15 +7050,16 @@ function gramQuizRender(){
   }
   const segs = gram.qs.map((x, k) => `<i${x.res === undefined ? (k === gram.i ? ' class="cur"' : "") : x.res ? ' class="ok"' : ' class="bad"'}></i>`).join("");
   let body = `<p class="gm-q" id="gmQ">${q.html ? q.q : esc(q.q)}</p>`;
+  { const cue = GM_CUE[gram.rule]; if(cue) body += `<button class="gm-cue-btn" data-act="cue" aria-expanded="${q.cue ? "true" : "false"}">${q.cue ? "Скрыть подсказку" : "Подсказка: как выбрать"}</button>` + (q.cue ? `<div class="gm-cue" role="note"><p>${gmFmt(cue)}</p>${q.cue === 2 || /\(ı\)|\/|-/.test(cue) ? `<div class="gm-steps">${GM_STEPS.map(t => `<p>${gmFmt(t)}</p>`).join("")}</div>` : ""}</div>` : ""); }
   if(q.type === "mc") body += `<div class="gm-opts" role="group" aria-labelledby="gmQ">${q.order.map(i => `<button class="gm-opt${q.chosen === i ? (q.res ? " ok" : " bad") : q.chosen !== undefined && i === q.a ? " ok" : ""}" data-act="opt" data-i="${i}" ${q.chosen !== undefined ? "disabled" : ""} ${q.lang === "tr" ? 'lang="tr" translate="no"' : ""}>${esc(q.o[i])}</button>`).join("")}</div>`;
   else {
     const built = q.got.map(i => `<span class="gm-cell" lang="tr" translate="no">${esc(q.m.parts[i].root ? q.m.parts[i].t : "-" + q.m.parts[i].t)}</span>`).join("");
-    body += `<div class="gm-built" aria-live="polite">${built || '<span class="gm-ph0">нажимайте части по порядку</span>'}</div><div class="gm-chips" role="group" aria-label="Части слова">${q.order.map(i => { const used = q.got.includes(i), p = q.m.parts[i];
+    body += `<div class="gm-built" aria-live="polite">${built || `<span class="gm-ph0">нажимайте ${q.blocks ? "блоки" : "части"} по порядку</span>`}</div><div class="gm-chips" role="group" aria-label="Части слова">${q.order.map(i => { const used = q.got.includes(i), p = q.m.parts[i];
       return `<button class="gm-chip${used ? " used" : ""}" data-act="chip" data-i="${i}" ${used || q.res !== undefined ? "disabled" : ""} lang="tr" translate="no">${esc(p.root ? p.t : "-" + p.t)}</button>`; }).join("")}</div>`;
-    if(q.warn && q.res === undefined) body += `<p class="gm-warn" role="status">Не та часть. Порядок такой: сначала корень, потом окончания по очереди.</p>`;
+    if(q.warn && q.res === undefined) body += `<p class="gm-warn" role="status">${q.blocks ? "Не тот блок. Порядок такой: кто · когда · где · что · глагол (глагол — последним)." : "Не та часть. Порядок такой: сначала корень, потом окончания по очереди."}</p>`;
     if(q.got.length) body += `<button class="gm-undo" data-act="undo" ${q.res !== undefined ? "disabled" : ""}>Убрать последнюю</button>`;
   }
-  const fb = q.res === undefined ? "" : `<div class="gm-fb ${q.res ? "ok" : "bad"}" role="status"><b>${q.res ? "Верно." : "Неверно."}</b> ${q.w}${q.mo ? morphHtml(q.mo) : q.m ? morphHtml(q.m) : ""}</div>`;
+  const fb = q.res === undefined ? "" : `<div class="gm-fb ${q.res ? "ok" : "bad"}" role="status"><b>${q.res ? "Верно." : "Неверно."}</b> ${q.w}${q.mo ? morphHtml(q.mo) : q.blocks ? blocksHtml(q.m) : q.m ? morphHtml(q.m) : ""}</div>`;
   el.innerHTML = gmBack("К правилу") + `<div class="gm-bar"><span class="gm-count">${esc(gramRule(gram.rule).t.replace(/\{|\}/g, ""))} · ${gram.i + 1} из ${gram.qs.length}</span></div><div class="gm-segs" aria-hidden="true">${segs}</div>` + body + fb
     + `<div class="gm-actions"><button class="btn native gm-next" data-act="next" ${q.res === undefined ? "disabled" : ""}>${gram.i + 1 === gram.qs.length ? "Итог" : "Дальше"}</button></div>`;
 }
@@ -7011,6 +7076,7 @@ function gramClick(e){
   if(act === "rule"){ gram = { view:"rule", rule:b.dataset.rule, qs:[], i:0, ok:0, done:false }; gramRender(); }
   else if(act === "quiz"){ closeSheet(); if(mode !== "grammar") setMode("grammar"); gram = { view:"quiz", rule:b.dataset.rule, qs:gramBuildQuiz(gramRule(b.dataset.rule)), i:0, ok:0, done:false }; gramRender(); }
   else if(act === "back"){ if(gram.view === "quiz") gram = { view:"rule", rule:gram.rule, qs:[], i:0, ok:0, done:false }; else gram = { view:"list", rule:null, qs:[], i:0, ok:0, done:false }; gramRender(); }
+  else if(act === "cue"){ const q = gram.qs[gram.i]; if(q){ q.cue = !q.cue; gramQuizRender(); } }
   else if(act === "opt"){ const q = gram.qs[gram.i]; if(q.chosen !== undefined) return; q.chosen = +b.dataset.i; gramResolve(q.chosen === q.a); }
   else if(act === "chip"){ const q = gram.qs[gram.i]; if(q.res !== undefined) return; const i = +b.dataset.i, want = q.m.parts[q.got.length];
     if(q.m.parts[i].t === want.t && (q.m.parts[i].root || false) === (want.root || false)){ q.got.push(i); q.warn = false; if(q.got.length === q.m.parts.length) gramResolve(!q.bad); else gramQuizRender(); }
@@ -7024,6 +7090,36 @@ document.addEventListener("click", e => { if(e.target.closest && e.target.closes
 $("wordPop").addEventListener("click", e => { const b = e.target.closest("[data-gr]"); if(b){ wordPopHide(); gramSheet(b.dataset.gr); } });
 $("sheetBody").addEventListener("click", e => { const b = e.target.closest("[data-act='quiz']"); if(b) gramClick(e); });
 document.addEventListener("keydown", e => { if(e.key === "Escape" && mode === "grammar" && $("sheet").hidden && !modalOpen && gram.view !== "list"){ const bk = gmEl().querySelector('[data-act="back"]'); if(bk) bk.click(); } });
+
+// Подсказка «как выбрать» в упражнении (просьба 07:40: «двухвариантные, четырёхвариантные и другие — дополни, когда используются в упражнении, у меня ступор»)
+const GM_STEPS = ["Как выбрать окончание — три шага:",
+  "1. Найдите ПОСЛЕДНЮЮ гласную слова.",
+  "2. Выберите гласную окончания. Два варианта (a / e): после a, ı, o, u — «a»; после e, i, ö, ü — «e». Четыре варианта (ı / i / u / ü): a, ı → «ı»; e, i → «i»; o, u → «u»; ö, ü → «ü».",
+  "3. Проверьте края: слово на глухую (ç f h k p s ş t) — «d» в окончании становится «t»; слово на гласную, а окончание с гласной — между ними {y} (после «его» — {n})."];
+const GM_CUE = {
+  steps:"Начните не с перевода слов, а с вопросов: кто? что делает? куда? когда? Потом: глагол из словаря → корень → время → лицо; остальным словам — окончание по вопросу (куда? {-a/-e}, где? {-da/-de}, что? {-ı}); в конце расставьте блоки, глагол последним.",
+  order:"Порядок блоков: кто · когда · где/куда · что · глагол. Глагол — всегда последним. Нет блока — пропустите его.",
+  harmony:"Смотрите только на последнюю гласную слова. {okul}: последняя «u» → окончание на «u/a»: {okulu}, {okulda}. {ev}: «e» → {evi}, {evde}.",
+  qwords:"Это вопросительные слова: они стоят перед глаголом, а «ли» не нужно. {ne} — что, {nerede} — где, {nereye} — куда, {kaç} — сколько, {ne zaman} — когда, {kim} — кто.",
+  plural:"{-lar} после a, ı, o, u; {-ler} после e, i, ö, ü. {araba} → {arabalar}, {ev} → {evler}. После числа — единственное: {üç kedi}.",
+  poss:"Мой {-(ı)m}, твой {-(ı)n}, его {-(s)ı}, наш {-(ı)mız}, ваш {-(ı)nız}. Слово на гласную — без лишней гласной: {oda} → {odam}, {odanız}; на согласную — с гласной: {pasaport} → {pasaportum}. Гласную ищите по таблице.",
+  acc_dat:"Что? {-(y)ı/i/u/ü} (4 варианта). Куда? Кому? {-(y)a/e} (2 варианта). {kart} → {kartı}, {Taksim} → {Taksim'e}. После гласной — {y}: {araba} → {arabayı}, {arabaya}. Неконкретное — без окончания: {Çay istiyorum}.",
+  cases_buffer:"Две гласные подряд не стоят: между ними {y}. Окончание «его» ({-sı}) и слова {o, bu, şu} требуют {n}: {oda-sı-n-da}, {o-n-a}, {bu-n-u}.",
+  loc_abl:"Где? {-da/-de}. Откуда? {-dan/-den}. После глухой (ç f h k p s ş t) — {-ta/-te}, {-tan/-ten}: {sokak} → {sokakta}, {sokaktan}. Гласная — 2 варианта: после a ı o u — «a», после e i ö ü — «e».",
+  gen_ins:"Чей? {-(n)ın/in/un/ün} (4 варианта): {Ali'nin}. С чем? Чем? {-(y)la/-(y)le} (2 варианта): {kartla}, {otobüsle}, {benimle}. Гласную ищите по таблице.",
+  cop:"Я {-(y)ım/im/um/üm}, ты {-sın/sin/sun/sün}, мы {-(y)ız/iz/uz/üz}, вы {-sınız/siniz/sunuz/sünüz} — 4 варианта по последней гласной слова. «Он, она» — без окончания. Не: {değil}. Был: {-(y)dı}.",
+  question:"{mı / mi / mu / mü}: смотрите на последнюю гласную слова перед частицей (a ı → {mı}; e i → {mi}; o u → {mu}; ö ü → {mü}). Частица пишется отдельно; потом окончание лица: {iyi misiniz?}.",
+  inf:"Глагол в словаре: корень + {-mak/-mek} (2 варианта по последней гласной корня: a ı o u → {-mak}; e i ö ü → {-mek}). {gel-} → {gelmek}, {yap-} → {yapmak}. Хочу: {-mek istiyorum}.",
+  prog:"Корень + {-(ı)yor} (4 варианта по последней гласной) + лицо. {gel-} → {geliyor}, {oku-} → {okuyor}. Корень на «a/e» меняет гласную: {bekle} → {bekliyor}. {git-} → {gidiyor}. Лицо после {-yor}: {-um, -sun, -uz, -sunuz} (по гармонии).",
+  person:"После прошедшего {-dı}: {-m, -n, -k, -nız}. После {-yor, -ecek, -r}: {-um/-ım, -sun/-sın, -uz/-ız, -sunuz/-sınız}. «Он» — без окончания. Гласную — по последней гласной слова.",
+  past:"Корень + {-dı/di/du/dü} (4 варианта по последней гласной корня) + лицо {-m, -n, -k, -nız}. После глухой (ç f h k p s ş t) — {t}: {yap-tı-m}, {git-ti-m}. Не: {-ma/-me} перед {-dı}.",
+  fut:"Корень + {-acak/-ecek} (2 варианта; после гласной {y}) + лицо. {gel-} → {gelecek}, {oku-} → {okuyacak}. Перед {-im, -iz} буква k становится ğ: {gideceğim}; перед {-sin, -siniz} — нет.",
+  neg_can:"Не: {-ma/-me} (2 варианта) сразу после корня. Могу: {-(y)abil/-(y)ebil}. Не могу: {-(y)ama/-(y)eme}. Перед {-yor} отрицание: {-mı/-mi/-mu/-mü}. Последняя гласная корня выбирает a или e.",
+  aor:"Корень + {-r} (после гласной), {-ar/-er} (после согласной; 2 варианта) или {-ır/-ir/-ur/-ür} (4 варианта; многосложные и 13 исключений: al, bil, bul, dur, gel, gör, kal, ol, öl, san, var, ver, vur) + лицо. {öde-r}, {bak-ar}, {gel-ir}.",
+  imp_opt:"Ты: корень. Вы: {-(y)ın/in/un/ün}. Давайте мы: {-(y)alım/-(y)elim}. Давайте я: {-(y)ayım/-(y)eyim}. Пусть: {-sın/sin/sun/sün}. Гласную выбирайте по последней гласной корня (2 или 4 варианта).",
+  deriv_verb:"Они присоединяются к корню по гармонии: {-ıl} (4 варианта; после «l» — {-ın}), {-t}, {-(y)ınca/ince} (4), {-sa/-se} (2), {-an/-en} (2). Последняя гласная корня выбирает гласную окончания.",
+  deriv:"{-lı/-li/-lu/-lü} (4), {-sız/siz/suz/süz} (4), {-cı/ci/cu/cü; после глухой -çı…} (4), {-lık/lik/luk/lük} (4), {-ça/-çe} (2), {-ki}, {-ıncı…} (4). Гласную — по последней гласной слова."
+};
 // <GRAMMAR-RULES-END>
 const MODES = ["city","memory","phrases","listen","free","grammar","progress"];
 const TRAIN = ["phrases","listen","free","grammar"];           // раздел «Тренировка» объединяет прежние четыре вкладки
