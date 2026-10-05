@@ -1001,10 +1001,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await tap(q, 'tab-phrases');
     const r = await q.evaluate(async () => { trVoice = trVoice || { name:'t', lang:'tr-TR' }; item = { target:'Hesap lütfen biraz yok', gid:'ph-basic', meaning:'' }; nativeCache.set(clean(item.target), []);
       nativeCache.set(clean('hesap'), [{ url:'https://x/hesap.wav', who:'A' }]); nativeCache.set(clean('lütfen'), []); nativeCache.set(clean('biraz'), [{ url:'https://x/biraz.wav', who:'B' }]); nativeCache.set(clean('yok'), []);
-      window.__played = []; window.__spoken = []; window.__log = []; playNative(); await new Promise(z => setTimeout(z, 1500));
+      window.__played = []; window.__spoken = []; window.__log = []; playNative();
+      for(let t = 0; t < 120 && window.__log.filter(x => x === 'rec' || x === 'synth').length < 4; t++) await new Promise(z => setTimeout(z, 100));   // CI медленнее: ждём все 4 слова, а не фиксированные 1,5 с
       return [window.__played.map(s => s.split('/').pop()), window.__spoken, window.__log.filter(x => x === 'rec' || x === 'synth'), document.getElementById('nativeStatus').textContent, document.getElementById('sheet').hidden]; });
     await q.context().close();
-    eq(r[0], ['hesap.wav', 'biraz.wav']); eq(r[1], ['lütfen', 'yok']); eq(r[2], ['rec', 'synth', 'rec', 'synth'], 'порядок слов сохранён');
+    eq(r[0], ['hesap.wav', 'biraz.wav'], 'играли ' + JSON.stringify(r)); eq(r[1], ['lütfen', 'yok']); eq(r[2], ['rec', 'synth', 'rec', 'synth'], 'порядок слов сохранён');
     ok(/hesap · lütfen \(синтез\) · biraz · yok \(синтез\)/.test(r[3]), r[3]); eq(r[4], true);
   });
   await test('в программе нет ссылок, уводящих из приложения (translate.google, youglish.com/pronounce, target=_blank)', async () => {
