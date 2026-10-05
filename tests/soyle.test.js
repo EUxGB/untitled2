@@ -998,6 +998,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('«Носитель» для фразы без записи — КАЖДОЕ слово по очереди: запись носителя, а у слова без записи — синтез; видео само не открывается (просьба 16:00: «озвучивается только первое слово»)', async () => {
     const q = await openInApp();
+    await q.route('https://x/**', r => r.fulfill({ status:200, contentType:'audio/wav', body:Buffer.alloc(64) }));   // фальшивые адреса записей отдаются сразу: иначе ошибка загрузки (abort) приходит в разное время и включает запасной синтез — тест был нестабильным
     await tap(q, 'tab-phrases');
     const r = await q.evaluate(async () => { trVoice = trVoice || { name:'t', lang:'tr-TR' }; item = { target:'Hesap lütfen biraz yok', gid:'ph-basic', meaning:'' }; nativeCache.set(clean(item.target), []);
       nativeCache.set(clean('hesap'), [{ url:'https://x/hesap.wav', who:'A' }]); nativeCache.set(clean('lütfen'), []); nativeCache.set(clean('biraz'), [{ url:'https://x/biraz.wav', who:'B' }]); nativeCache.set(clean('yok'), []);
@@ -1307,7 +1308,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(c.npcWord && /^«/.test(c.npcPop), 'реплика: ' + JSON.stringify(c)); eq([c.ruHidden, c.pat], [true, true], 'нажатие на слово — не перевод реплики и не трата терпения');
     ok(c.cardWord && /«/.test(c.cardPop) && c.stillOpen, 'карточка ответа: ' + JSON.stringify(c)); eq(q.errors, []); await q.context().close();
   });
-  console.log('Грамматика: разбор слов по частям и 22 урока');
+  console.log('Грамматика: разбор слов по частям и 27 уроков');
   await test('разбор слов: части дают слово, у корня и каждого окончания есть значение, правила существуют', async () => {
     const q = await openPage(browser);
     const r = await q.evaluate(() => { const bad = []; let n = 0;
@@ -1318,15 +1319,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return { n, bad:bad.slice(0, 10), noName:Object.keys(SUF).filter(t => !SUF[t].n || !SUF[t].f || !SUF[t].rule) }; });
     ok(r.n >= 600, 'слов в разборе: ' + r.n); eq(r.bad, []); eq(r.noName, []); eq(q.errors, []); await q.context().close();
   });
-  await test('правила: 22 штуки, у каждого название, текст, таблица, ≥5 упражнений, один верный ответ, нет повторов; примеры из фраз; медали', async () => {
+  await test('правила: 27 штук, у каждого название, текст, таблица, ≥5 упражнений, один верный ответ, нет повторов; примеры из фраз; медали', async () => {
     const q = await openPage(browser);
     const r = await q.evaluate(() => { const ids = GRAMMAR.map(g => g.id);
       return { n:GRAMMAR.length, uniq:new Set(ids).size, bad:GRAMMAR.filter(g => !(g.t && g.lead && GRAM_GROUPS.includes(g.grp) && g.txt.length >= 2 && g.tbl && g.tbl.rows.length >= 3 && g.ex.length >= 5
           && g.ex.every(x => x.q && x.w && x.o.length >= 2 && x.a >= 0 && x.a < x.o.length && new Set(x.o).size === x.o.length))).map(g => g.id),
         noPhrases:GRAMMAR.filter(g => !gramPhrases(g).length).map(g => g.id), badge:BADGES.find(b => b.id === 'gramall').n,
         // у каждого правила, где есть окончания, хватает слов для упражнений «что значит» и «соберите»
-        dyn:GRAMMAR.filter(g => g.id !== 'harmony' && g.id !== 'qwords' && !g.begin).filter(g => !gramMakeParse(g) || !gramMakeBuild(g)).map(g => g.id) }; });
-    eq([r.n, r.uniq], [22, 22]); eq(r.bad, []); eq(r.noPhrases, []); eq(r.dyn, []); eq(r.badge, 22, 'медаль «все правила» = число правил'); eq(q.errors, []); await q.context().close();
+        dyn:GRAMMAR.filter(g => g.id !== 'harmony' && g.id !== 'qwords' && !g.begin && !g.micro).filter(g => !gramMakeParse(g) || !gramMakeBuild(g)).map(g => g.id) }; });
+    eq([r.n, r.uniq], [27, 27]); eq(r.bad, []); eq(r.noPhrases, []); eq(r.dyn, []); eq(r.badge, 27, 'медаль «все правила» = число правил'); eq(q.errors, []); await q.context().close();
   });
   await test('подсказка слова: разбор по частям (корень + окончания), кнопки правил открывают окно; слово без перевода получает значение по частям', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
@@ -1345,13 +1346,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq([r.sheet, r.popHidden, r.sheetHasTable], [true, true, true]); ok(/Притяжательные/.test(r.sheetTitle), r.sheetTitle);
     eq([r.mode, r.sheetClosed, r.view, r.rule], ['grammar', true, 'quiz', 'poss']); eq(q.errors, []); await q.context().close();
   });
-  await test('«Грамматика»: четвёртая вкладка тренировки, 22 урока списком, подвкладки и страницы без горизонтальной прокрутки на 3 размерах', async () => {
+  await test('«Грамматика»: четвёртая вкладка тренировки, 27 уроков списком, подвкладки и страницы без горизонтальной прокрутки на 3 размерах', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
       await q.setViewportSize({ width:w, height:h }); await q.click('#tab-train'); await tap(q, 'tab-grammar'); await q.waitForTimeout(60);
       const r = await q.evaluate(() => ({ rows:document.querySelectorAll('#gramView .gm-row').length, mode, tab:document.getElementById('tab-grammar').getAttribute('aria-pressed'),
         sub:[document.getElementById('subtabs').scrollWidth, document.getElementById('subtabs').clientWidth], page:document.documentElement.scrollWidth <= innerWidth, hash:location.hash }));
-      if(r.rows !== 22 || r.mode !== 'grammar' || r.tab !== 'true' || r.hash !== '#grammar') bad.push(`${w}: ${JSON.stringify(r)}`);
+      if(r.rows !== 27 || r.mode !== 'grammar' || r.tab !== 'true' || r.hash !== '#grammar') bad.push(`${w}: ${JSON.stringify(r)}`);
       if(r.sub[0] > r.sub[1]) bad.push(`${w}: подвкладки не помещаются ${r.sub}`); if(!r.page) bad.push(`${w}: страница шире экрана`);
       const bits = await q.evaluate(async () => { const out = [];
         for(const g of GRAMMAR){ gram = { view:'rule', rule:g.id, qs:[], i:0, ok:0, done:false }; gramRender(); const el = document.getElementById('gramView');
@@ -1396,7 +1397,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.reload(); await q.waitForTimeout(150); const after = await q.evaluate(() => ({ m:gramMastered('poss'), n:gstate.r.poss.n }));
     eq([after.m, after.n], [true, 8]); eq(q.errors, []); await q.context().close();
   });
-  await test('подсказка «как выбрать» (просьба 07:40): у каждого из 22 уроков есть подсказка, в упражнении кнопка ≥ 44px раскрывает её, текст помещается на 3 размерах, ответ после подсказки засчитывается', async () => {
+  await test('подсказка «как выбрать» (просьба 07:40): у каждого из 27 уроков есть подсказка, в упражнении кнопка ≥ 44px раскрывает её, текст помещается на 3 размерах, ответ после подсказки засчитывается', async () => {
     const q = await openPage(browser); const bad = [];
     await q.evaluate(() => { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); });
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
@@ -1417,13 +1418,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return !!document.querySelector('#gramView .gm-fb.ok'); });
     ok(ans, 'верный ответ после подсказки не засчитан'); eq(q.errors, []); await q.context().close();
   });
-  await test('«С чего начать» (просьба 07:48): два вводных урока идут первыми, в упражнениях есть «соберите фразу из блоков» (глагол последним), неверный блок — подсказка, верный порядок — засчитано, после ответа видно роли блоков', async () => {
+  await test('«С чего начать» (просьба 07:48, переработано 09:16): пять микроуроков идут первыми, в упражнениях есть «соберите фразу из блоков» (глагол последним), неверный блок — подсказка, верный порядок — засчитано, после ответа видно роли блоков', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
     await q.evaluate(() => { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
     const first = await q.evaluate(() => ({ ids:[...document.querySelectorAll('#gramView .gm-row')].slice(0, 2).map(b => b.dataset.rule), grp:document.querySelector('#gramView .gm-group h3').textContent, next:document.querySelector('#gramView .gm-row.next').dataset.rule, sub:document.querySelector('.gm-sub').textContent.includes('Новичок') }));
-    eq(first, { ids:['steps', 'order'], grp:'С чего начать', next:'steps', sub:true });
+    eq(first, { ids:['cubes', 'want'], grp:'С чего начать', next:'cubes', sub:true });
     const r = await q.evaluate(() => { const out = { bad:[], blocks:0 };
-      for(const id of ['steps', 'order']){ const g = gramRule(id); for(let k = 0; k < 6; k++){ const qs = gramBuildQuiz(g); const bl = qs.filter(x => x.blocks);
+      for(const id of ['build', 'steps', 'order']){ const g = gramRule(id); for(let k = 0; k < 6; k++){ const qs = gramBuildQuiz(g); const bl = qs.filter(x => x.blocks);
           if(bl.length !== 3 || new Set(bl.map(x => x.ruKey)).size !== 3) out.bad.push(id + ': блоков ' + bl.length);
           bl.forEach(x => { out.blocks++; const last = x.m.parts[x.m.parts.length - 1]; if(last.role !== 'глагол') out.bad.push(x.m.word + ': глагол не последний'); if(new Set(x.m.parts.map(p => p.t)).size !== x.m.parts.length) out.bad.push(x.m.word + ': повтор блока'); }); } }
       return out; });
@@ -1454,21 +1455,52 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return { n2, n1, cls:document.querySelector('#gramView .gm-fb').className }; });
     eq([good.n2, good.n1], [2, 1]); ok(/gm-fb ok/.test(good.cls), good.cls); eq(q.errors, []); await q.context().close();
   });
-  await test('«Грамматика»: правило проходится до конца ботом (все 22 урока, все вопросы), без ошибок JS; Escape ведёт на уровень выше', async () => {
+  await test('«Грамматика»: правило проходится до конца ботом (все 27 уроков, все вопросы), без ошибок JS; Escape ведёт на уровень выше', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
     await q.evaluate(() => { { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); } }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
     const r = await q.evaluate(async () => { const bad = [];
       for(const g of GRAMMAR){ document.querySelector(`[data-rule="${g.id}"]`).click(); document.querySelector('.gm-go').click();
         let steps = 0; while(!gram.done && steps++ < 20){ const x = gram.qs[gram.i];
           if(x.type === 'mc') document.querySelector(`#gramView [data-act="opt"][data-i="${x.a}"]`).click();
+          else if(x.type === 'tap') document.querySelector(`#gramView [data-act="let"][data-i="${x.a}"]`).click();
           else x.m.parts.forEach(p => { [...document.querySelectorAll('#gramView .gm-chip')].find(b => !b.disabled && b.textContent === (p.root ? p.t : '-' + p.t)).click(); });
           if(!document.querySelector('#gramView .gm-fb.ok')) bad.push(g.id + ' ' + gram.i + ': не засчитано');
           document.querySelector('#gramView .gm-next').click(); }
         if(!gram.done || gram.ok !== gram.qs.length) bad.push(g.id + ': итог ' + gram.ok + '/' + gram.qs.length);
         document.querySelector('#gramView [data-act="back"]').click(); document.querySelector('#gramView [data-act="back"]') ? 0 : 0; if(gram.view === 'rule') document.querySelector('#gramView [data-act="back"]').click(); }
       return { bad, mastered:gramMasteredCount(), view:gram.view }; });
-    eq(r.bad, []); eq([r.mastered, r.view], [22, 'list']);
+    eq(r.bad, []); eq([r.mastered, r.view], [27, 'list']);
     await q.click('[data-rule="plural"]'); await q.keyboard.press('Escape'); eq(await q.evaluate(() => gram.view), 'list'); eq(q.errors, []); await q.context().close();
+  });
+  await test('микроуроки для новичка (просьба 09:16 и 12:09): 5 уроков первыми, без записей «-(ı)yor», последняя гласная подсвечена, глухие/звонкие согласные различимы, упражнение «нажмите на гласную», образец в первой сборке фразы', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    await q.evaluate(() => { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    const r = await q.evaluate(() => { const ids = ['cubes', 'want', 'vowel', 'where', 'build'], out = { bad:[] };
+      out.first = GRAMMAR.slice(0, 5).map(g => g.id); out.old = ['steps', 'order'].map(i => gramRule(i).grp);
+      for(const id of ids){ const g = gramRule(id), all = [g.t, g.lead, ...g.txt, ...g.ex.flatMap(e => [e.q, e.w, ...e.o]), GM_CUE[id]].join(' ');
+        if(/\(ı\)|\(y\)|\(s\)/.test(all)) out.bad.push(id + ': скобочная запись'); if(g.txt.length < 6) out.bad.push(id + ': мало шагов ' + g.txt.length); if(/\p{Extended_Pictographic}/u.test(all)) out.bad.push(id + ': эмодзи'); }
+      const h = w => { const d = document.createElement('div'); d.innerHTML = hlWord(w); return { lv:[...d.querySelectorAll('.lv')].map(e => e.textContent), vl:[...d.querySelectorAll('.vl')].map(e => e.textContent), vd:[...d.querySelectorAll('.vd')].map(e => e.textContent) }; };
+      out.okul = h('okul'); out.park = h('park'); out.araba = h('araba'); out.sokak = h('şehir');
+      gram = { view:'rule', rule:'vowel', qs:[], i:0, ok:0, done:false }; gramRender(); out.hl = document.querySelectorAll('#gramView .hw .lv').length; out.vl = document.querySelectorAll('#gramView .hw .vl').length;
+      const lv = getComputedStyle(document.querySelector('#gramView .hw .lv')), vl = getComputedStyle(document.querySelector('#gramView .hw .vl')); out.styles = [lv.backgroundColor !== 'rgba(0, 0, 0, 0)', vl.textDecorationLine.includes('underline')];
+      return out; });
+    eq(r.first, ['cubes', 'want', 'vowel', 'where', 'build']); eq(r.old, ['Памятка', 'Памятка']); eq(r.bad, []);
+    eq(r.okul.vd, ['l']); eq(r.okul.lv, ['u']); eq(r.okul.vl, ['k']); eq(r.park.lv, ['a']); eq(r.park.vl, ['p', 'k']); eq(r.araba.lv, ['a']); eq(r.sokak.lv, ['i']); eq(r.sokak.vl, ['ş', 'h']);
+    ok(r.hl >= 5 && r.vl >= 1, 'подсветка в уроке: ' + r.hl + '/' + r.vl); eq(r.styles, [true, true]);
+    // упражнение «нажмите на последнюю гласную»: 3 вопроса, неверная буква — ошибка, верная — засчитано; после ответа слово подсвечено
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){ await q.setViewportSize({ width:w, height:h });
+      const t = await q.evaluate(() => { gram = { view:'quiz', rule:'vowel', qs:gramBuildQuiz(gramRule('vowel')), i:0, ok:0, done:false }; const taps = gram.qs.filter(x => x.type === 'tap').length, out = { taps, n:gram.qs.length, bad:[] };
+        for(let k = 0; k < gram.qs.length; k++){ gram.i = k; gramRender(); const x = gram.qs[k], el = document.getElementById('gramView');
+          if(x.type === 'tap'){ const bs = [...el.querySelectorAll('.gm-let')]; if(bs.some(b => b.getBoundingClientRect().height < 44 || b.getBoundingClientRect().width < 44)) out.bad.push(x.word + ': кнопка меньше 44px');
+            if(el.scrollWidth > el.clientWidth + 1) out.bad.push(x.word + ': шире экрана'); const wrong = bs.findIndex((b, i) => i !== x.a); bs[k % 2 ? x.a : wrong].click();
+            const fb = el.querySelector('.gm-fb'); if(!fb || !el.querySelector('.gm-hl .lv')) out.bad.push(x.word + ': нет ответа/подсветки'); else if(fb.classList.contains('ok') !== (k % 2 === 1)) out.bad.push(x.word + ': неверный итог'); } }
+        return out; });
+      eq(t.taps, 3); eq(t.n, 6); eq(t.bad, [], w + '×' + h); }
+    // первая сборка с образцом: ровно одна из трёх, образец исчезает после ответа
+    const b = await q.evaluate(() => { const qs = gramBuildQuiz(gramRule('build')), bl = qs.filter(x => x.blocks), smp = bl.filter(x => x.sample).length;
+      gram = { view:'quiz', rule:'build', qs:[bl.find(x => x.sample)], i:0, ok:0, done:false }; gramRender(); const el = document.getElementById('gramView'), before = !!el.querySelector('.gm-sample'), chips = el.querySelectorAll('.gm-sample .wm-c').length;
+      const x = gram.qs[0]; x.m.parts.forEach(p => [...el.querySelectorAll('.gm-chip')].find(c => !c.disabled && c.textContent === p.t).click()); return { smp, bl:bl.length, before, chips, after:!!el.querySelector('.gm-sample') }; });
+    eq([b.smp, b.bl, b.before, b.after], [1, 3, true, false]); ok(b.chips >= 3, 'в образце блоков: ' + b.chips); eq(q.errors, []); await q.context().close();
   });
   console.log('«Город» (Mahalle): разговоры с последствиями');
   const openCity = async (opts) => { const q = await openPage(browser, opts); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-city'); await q.waitForTimeout(100); return q; };
