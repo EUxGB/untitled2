@@ -777,10 +777,10 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .gm-opt:hover:not(:disabled){border-color:var(--accent)}
 .gm-opt.ok{background:var(--ok-soft); border-color:var(--ok); color:var(--ok)} .gm-opt.bad{background:var(--near-soft); border-color:var(--near); color:var(--near)}
 .gm-opt:disabled{opacity:1}
-.gm-built{min-height:52px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px; border:1px dashed var(--line); border-radius:12px}
-.gm-cell{background:var(--accent-soft); border-radius:8px; padding:6px 10px; font:700 18px var(--display); color:var(--accent-ink)} .gm-ph0{color:var(--muted); font-size:13px}
+.gm-built{min-height:52px; display:flex; flex-wrap:wrap; align-content:flex-start; gap:6px; align-items:center; padding:8px; border:1px dashed var(--line); border-radius:12px}
+.gm-cell{flex:0 0 auto; max-width:100%; overflow-wrap:anywhere; line-height:1.25; background:var(--accent-soft); border-radius:8px; padding:6px 10px; font:700 18px var(--display); color:var(--accent-ink)} .gm-ph0{color:var(--muted); font-size:13px}
 .gm-chips{display:flex; flex-wrap:wrap; gap:8px}
-.gm-chip{min-height:44px; padding:6px 14px; border-radius:12px; border:1px solid var(--accent); background:var(--surface); color:var(--accent-ink); font:700 18px var(--display)} .gm-chip.used{opacity:.35}
+.gm-chip{max-width:100%; overflow-wrap:anywhere; min-height:44px; padding:6px 14px; border-radius:12px; border:1px solid var(--accent); background:var(--surface); color:var(--accent-ink); font:700 18px var(--display)} .gm-chip.used{opacity:.35}
 .gm-undo{align-self:flex-start; min-height:44px; background:none; border:0; color:var(--accent-ink); font:600 14px var(--body)}
 .gm-warn{margin:0; font-size:13px; color:var(--near)}
 .gm-word{display:flex; flex-wrap:nowrap; gap:clamp(2px, 1.2vw, 8px); justify-content:center; margin:6px 0}   /* буквы слова — всегда ОДНА строка (жалоба 10-06 22:04: telefon переносился); ширина кнопки делится поровну, --n — число букв */
@@ -3801,7 +3801,7 @@ const SCENES = {
           { key:["teşekkür", "sağ ol", "eline sağlık", "elinize sağlık"], say:["Çok sağ olun, elinize sağlık."], ru:"Большое спасибо, здоровья вашим рукам.", go:"bye" } ] } ] },
       bye:{ npc:"Afiyet olsun. Yine bekleriz.", ru:"На здоровье. Ждём снова.", again:"Yine bekleriz!", againRu:"Ждём снова!",
         moves:[
-          { key:["elinize", "eline sağlık", "ellerinize"], say:["Elinize sağlık, çok güzeldi."], ru:"Здоровья вашим рукам, было очень вкусно.", go:"done" },
+          { key:["elinize", "eline sağlık", "ellerinize"], say:["Elinize sağlık, çok güzeldi."], ru:"Здоровья вашим рукам, было очень хорошо (çok güzeldi — буквально «очень красиво», о еде — «вкусно»).", go:"done" },
           { key:["teşekkür", "sağ ol", "görüşürüz"], say:["Teşekkürler, görüşürüz."], ru:"Спасибо, увидимся.", go:"done" },
         ] },
       done:{ end:{ kind:"ok", text:"Чай в тонком стакане, вид на пролив. «Elinize sağlık» — так благодарят того, кто приготовил.", fx:{} } },
@@ -3881,7 +3881,7 @@ const SCENES = {
         ] },
       tea:{ npc:"Börek de var, ye ye!", ru:"Ещё и бёрек есть, ешь-ешь!", again:"Ye biraz!", againRu:"Поешь немного!",
         moves:[
-          { key:["ellerinize", "elinize sağlık", "çok güzel"], say:["Ellerinize sağlık, çok güzel."], ru:"Здоровья вашим рукам, очень вкусно.", go:"ask" },
+          { key:["ellerinize", "elinize sağlık", "çok güzel"], say:["Ellerinize sağlık, çok güzel."], ru:"Здоровья вашим рукам, очень хорошо (çok güzel — буквально «очень красиво, очень хорошо»; о еде так говорят вместо «вкусно»).", go:"ask" },
           { key:["tokum", "teşekkür", "yeter"], say:["Tokum, teşekkürler."], ru:"Я сыт, спасибо.", go:"ask" },
         ] },
       ask:{ npc:"Evli misin? Nerelisin?", ru:"Женат? Откуда ты?", again:"Nerelisin?", againRu:"Откуда ты?",
@@ -6736,6 +6736,7 @@ const GRAMMAR = [
 { id:"order", grp:"Памятка", begin:true, lv:3, blocks:true, t:"Памятка: порядок слов", lead:"Кто · когда · где · что · глагол — глагол обычно в конце",
   txt:["В турецком глагол обычно стоит в конце фразы. Остальные блоки идут перед ним в таком порядке: кто → когда → где/куда → что → глагол.",
        "Пример: {Ben} (я) · {yarın} (завтра) · {evde} (дома) · {çay} (чай) · {içiyorum} (пью) — {Ben yarın evde çay içiyorum}. Если блока нет — он просто пропускается.",
+       "Слова для упражнений ниже: {Anne} — мама, {mutfakta} — на кухне, {yemek} — еда, {yapıyor} — делает (готовить еду — {yemek yapmak}), {Ali} — Али, {bugün} — сегодня, {evde} — дома, {kalıyor} — остаётся, {istiyorum} — хочу, {çay} — чай, {gidiyorum} — иду, {Taksim'e} — на Таксим.",
        "Определение стоит перед словом, которое описывает: {güzel oda} — красивая комната, {iki bilet} — два билета.",
        "Вопрос «…ли?» делается частицей {mı/mi/mu/mü}. Она пишется отдельным словом и ставится сразу после того слова, о котором вы спрашиваете. Разница в смысле: {Eve gidiyor musunuz?} — «Вы идёте домой?» (спрашиваем, идёте ли вы вообще; частица после глагола). {Eve mi gidiyorsunuz?} — «Вы идёте ДОМОЙ (а не куда-то ещё)?» (спрашиваем именно про «домой»; частица после {eve}). Обычный вопрос — первый, частица в конце, после глагола.",
        "Какая гласная в частице? Смотрим на последнюю гласную слова перед ней: {a, ı} → {mı}; {e, i} → {mi}; {o, u} → {mu}; {ö, ü} → {mü}. В {gidiyor} последняя гласная {o}, поэтому {mu}. В {eve} последняя гласная {e}, поэтому {mi}.",

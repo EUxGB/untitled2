@@ -1536,7 +1536,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('упражнения микроуроков спрашивают только то, что объяснено: каждое турецкое слово из вопроса и верного ответа есть в тексте/таблице этого или прежнего микроурока (жалоба 10-06: konuşmak в уроке 2)', async () => {
     const r = await p.evaluate(() => {
       const lat = s => (String(s).replace(/\[\[|\]\]/g, '').match(/[A-Za-zÇĞİÖŞÜçğıöşü']+/g) || []).map(w => w.toLowerCase().replace(/'.*$/, '')), bad = [], known = new Set();
-      for(const r of GRAMMAR.filter(g => g.micro || g.nophr)){
+      for(const r of GRAMMAR.filter(g => g.micro || g.nophr || g.begin)){
         lat(JSON.stringify([r.txt, r.tbl, r.tap, r.lead, r.t])).forEach(w => known.add(w)); lat(JSON.stringify([r.txt, r.tbl]).replace(/([A-Za-zçğıöşü])-(?=[A-Za-zçğıöşü])/g, '$1')).forEach(w => known.add(w));
         r.ex.forEach((e, i) => [e.q, e.o[e.a]].forEach(s => lat(s).forEach(w => { if(w.length > 1 && !known.has(w) && !/^(ist|alm|iyor|um|sun|ak|ek|okulde)$/.test(w)) bad.push(r.id + '#' + (i + 1) + ': ' + w); })));
       }
@@ -1570,6 +1570,25 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(found.filter(f => !all.has(f) && !/ (altı|içi|üstü|önü|arkası|yanı)$/.test(f)), [], 'формы, которых нет в расчёте');
     const z = require('child_process').spawnSync('python3', ['-I', '/tmp/claude-0/zy/zyq.py', ...found.flatMap(f => f.split(' ')[1]).filter((v, i, a) => a.indexOf(v) === i)], { encoding:'utf8', timeout:240000 });
     if(z.status === 0 && /->/.test(z.stdout)) eq(z.stdout.split('\n').filter(l => /->/.test(l) && /НЕТ РАЗБОРА/.test(l)), [], 'Zemberek не разбирает форму');
+  });
+  await test('«соберите фразу из блоков» (22:45): ни одно слово не налезает на соседние на 320, 360, 390, 412 px — ни в выборе слов, ни в собранной строке, ни в разборе после ответа (все фразы GM_SENT)', async () => {
+    const q = await openPage(browser); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    const bad = [];
+    for(const w of [320, 360, 390, 412]){
+      await q.setViewportSize({ width:w, height:700 });
+      const r = await q.evaluate(() => { const out = [];
+        const over = (sel, name) => { const els = [...document.querySelectorAll(sel)].filter(e => e.getBoundingClientRect().width); for(let i = 0; i < els.length; i++){ const a = els[i].getBoundingClientRect(); if(a.right > innerWidth + 1 || a.left < -1) out.push(name + ' выходит за экран: ' + els[i].textContent.slice(0, 30));
+            if(els[i].scrollWidth > els[i].clientWidth + 1) out.push(name + ' текст шире рамки: ' + els[i].textContent.slice(0, 30));
+            for(let j = i + 1; j < els.length; j++){ const b = els[j].getBoundingClientRect(); if(a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) out.push(name + ' налезают: ' + els[i].textContent.slice(0, 20) + ' / ' + els[j].textContent.slice(0, 20)); } } };
+        for(const sn of GM_SENT){ const m = { ruKey:sn.ru, parts:sn.b.map(x => ({ t:x[0], role:x[1], root:true })) };
+          const qz = gramMakeBlocks([], 3); Object.assign(qz, { ruKey:sn.ru, m, got:[], order:m.parts.map((_, i) => i), blocks:true, q:gmFmt('Соберите: ' + sn.ru), html:true, w:'x' });
+          gram = { view:'quiz', rule:'build', qs:[qz], i:0, ok:0, done:false }; gramRender(); over('#gramView .gm-chip', 'выбор');
+          qz.got = m.parts.map((_, i) => i); gramRender(); over('#gramView .gm-cell', 'строка');
+          qz.res = true; gramRender(); over('#gramView .wm-c', 'разбор'); }
+        return out; });
+      r.forEach(x => bad.push(w + ': ' + x));
+    }
+    eq(bad.slice(0, 20), []); eq(q.errors, []); await q.context().close();
   });
   await test('«нажмите на последнюю гласную»: буквы любого слова из списка (и слова на 10 букв) стоят в ОДНУ строку на 320, 360, 390, 412 px, не шире экрана, кнопка не уже 24 px (WCAG 2.5.8), слова не длиннее 10 букв (жалоба 10-06 22:04: telefon переносился)', async () => {
     const q = await openPage(browser); await q.click('#tab-train'); await tap(q, 'tab-grammar');
