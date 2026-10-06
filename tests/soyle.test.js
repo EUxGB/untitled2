@@ -1509,7 +1509,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await p.evaluate(() => {
       const all = JSON.stringify(GRAMMAR), by = id => GRAMMAR.find(g => g.id === id), bad = [];
       if(/всегда (самый )?последн|глагол всегда/i.test(all)) bad.push('«всегда последний» остался');
-      if(by('order').ex.some(e => (e.o || []).includes('Eve mi gidiyorsunuz?'))) bad.push('order: два верных ответа про mi');
+      if(by('order').ex.some(e => /обычный вопрос/.test(e.q) && (e.o || []).includes('Eve mi gidiyorsunuz?'))) bad.push('order: два верных ответа про mi');
       if(/Перед ним ещё окончание лица/.test(all)) bad.push('cop: «перед ним»');
       if(!/ydi-m/.test(JSON.stringify(by('cop').txt))) bad.push('cop: нет evde-ydi-m');
       if(/через минуту/.test(JSON.stringify(by('loc_abl')))) bad.push('loc_abl: через минуту');
@@ -1589,6 +1589,14 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       r.forEach(x => bad.push(w + ': ' + x));
     }
     eq(bad.slice(0, 20), []); eq(q.errors, []); await q.context().close();
+  });
+  await test('упражнения грамматики (23:19): в каждом уроке не меньше 10, у каждого 2–4 разных варианта и один верный индекс, вопросы не повторяются, а каждое новое упражнение проходит показ (верный ответ засчитывается, неверный — нет)', async () => {
+    const r = await p.evaluate(() => { const bad = [];
+      for(const g of GRAMMAR){ if(g.ex.length < 10) bad.push(g.id + ': упражнений ' + g.ex.length); const qs = new Set();
+        g.ex.forEach((e, i) => { const n = g.id + '#' + (i + 1); if(!e.q || !e.w) bad.push(n + ': нет вопроса или пояснения'); if(e.o.length < 2 || e.o.length > 4 || new Set(e.o).size !== e.o.length) bad.push(n + ': варианты');
+          if(!(e.a >= 0 && e.a < 4)) bad.push(n + ': индекс'); if(qs.has(e.q)) bad.push(n + ': повтор вопроса'); qs.add(e.q); if(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u.test(JSON.stringify(e))) bad.push(n + ': эмодзи'); }); }
+      return bad; });
+    eq(r, []);
   });
   await test('«нажмите на последнюю гласную»: буквы любого слова из списка (и слова на 10 букв) стоят в ОДНУ строку на 320, 360, 390, 412 px, не шире экрана, кнопка не уже 24 px (WCAG 2.5.8), слова не длиннее 10 букв (жалоба 10-06 22:04: telefon переносился)', async () => {
     const q = await openPage(browser); await q.click('#tab-train'); await tap(q, 'tab-grammar');
