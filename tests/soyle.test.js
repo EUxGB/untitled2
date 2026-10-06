@@ -1480,12 +1480,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       for(const id of ids){ const g = gramRule(id), all = [g.t, g.lead, ...g.txt, ...g.ex.flatMap(e => [e.q, e.w, ...e.o]), GM_CUE[id]].join(' ');
         if(/\(ı\)|\(y\)|\(s\)/.test(all)) out.bad.push(id + ': скобочная запись'); if(g.txt.length < 6) out.bad.push(id + ': мало шагов ' + g.txt.length); if(/\p{Extended_Pictographic}/u.test(all)) out.bad.push(id + ': эмодзи'); }
       const h = w => { const d = document.createElement('div'); d.innerHTML = hlWord(w); return { lv:[...d.querySelectorAll('.lv')].map(e => e.textContent), vl:[...d.querySelectorAll('.vl')].map(e => e.textContent), vd:[...d.querySelectorAll('.vd')].map(e => e.textContent) }; };
+      out.tapA = Object.entries({ okul:2, ev:0, oda:2, göl:1, kapı:3, araba:4, kedi:3, bilet:3, telefon:5, pasaport:5, şehir:3, çanta:4, gün:1 }).filter(([w, i]) => gramMakeTap(w).a !== i).map(([w]) => w);   // независимый оракул: номер последней гласной задан вручную
+      out.tapAll = gramRule('vowel').tap.filter(w => { const v = [...w].map((c, i) => 'aeıioöuü'.includes(c) ? i : -1).filter(i => i >= 0); return gramMakeTap(w).a !== v[v.length - 1]; });
+      out.bilet = h('bilet'); out.sokak2 = h('kitap');
       out.okul = h('okul'); out.park = h('park'); out.araba = h('araba'); out.sokak = h('şehir');
       gram = { view:'rule', rule:'vowel', qs:[], i:0, ok:0, done:false }; gramRender(); out.hl = document.querySelectorAll('#gramView .hw .lv').length; out.vl = document.querySelectorAll('#gramView .hw .vl').length;
       const lv = getComputedStyle(document.querySelector('#gramView .hw .lv')), vl = getComputedStyle(document.querySelector('#gramView .hw .vl')); out.styles = [lv.backgroundColor !== 'rgba(0, 0, 0, 0)', vl.textDecorationLine.includes('underline')];
       return out; });
     eq(r.first, ['cubes', 'want', 'vowel', 'where', 'build']); eq(r.old, ['Памятка', 'Памятка']); eq(r.bad, []);
-    eq(r.okul.vd, ['l']); eq(r.okul.lv, ['u']); eq(r.okul.vl, ['k']); eq(r.park.lv, ['a']); eq(r.park.vl, ['p', 'k']); eq(r.araba.lv, ['a']); eq(r.sokak.lv, ['i']); eq(r.sokak.vl, ['ş', 'h']);
+    eq(r.tapA, [], 'ответ «последняя гласная» неверен'); eq(r.tapAll, []); eq(r.bilet.vl, ['t']); eq(r.bilet.lv, ['e']); eq(r.sokak2.vl, ['k', 't', 'p']); eq(r.okul.vd, ['l']); eq(r.okul.lv, ['u']); eq(r.okul.vl, ['k']); eq(r.park.lv, ['a']); eq(r.park.vl, ['p', 'k']); eq(r.araba.lv, ['a']); eq(r.sokak.lv, ['i']); eq(r.sokak.vl, ['ş', 'h']);
     ok(r.hl >= 5 && r.vl >= 1, 'подсветка в уроке: ' + r.hl + '/' + r.vl); eq(r.styles, [true, true]);
     // упражнение «нажмите на последнюю гласную»: 3 вопроса, неверная буква — ошибка, верная — засчитано; после ответа слово подсвечено
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){ await q.setViewportSize({ width:w, height:h });
@@ -1501,6 +1504,49 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       gram = { view:'quiz', rule:'build', qs:[bl.find(x => x.sample)], i:0, ok:0, done:false }; gramRender(); const el = document.getElementById('gramView'), before = !!el.querySelector('.gm-sample'), chips = el.querySelectorAll('.gm-sample .wm-c').length;
       const x = gram.qs[0]; x.m.parts.forEach(p => [...el.querySelectorAll('.gm-chip')].find(c => !c.disabled && c.textContent === p.t).click()); return { smp, bl:bl.length, before, chips, after:!!el.querySelector('.gm-sample') }; });
     eq([b.smp, b.bl, b.before, b.after], [1, 3, true, false]); ok(b.chips >= 3, 'в образце блоков: ' + b.chips); eq(q.errors, []); await q.context().close();
+  });
+  await test('грамматика после проверки 10-06: нет «глагол всегда последний», у «Порядка слов» один верный ответ, смягчение «git» — не общее правило, «Быть» — лицо после -ydi, birazdan не «через», Rusyalı без апострофа, разбор слова без двух верных ответов', async () => {
+    const r = await p.evaluate(() => {
+      const all = JSON.stringify(GRAMMAR), by = id => GRAMMAR.find(g => g.id === id), bad = [];
+      if(/всегда (самый )?последн|глагол всегда/i.test(all)) bad.push('«всегда последний» остался');
+      if(by('order').ex.some(e => (e.o || []).includes('Eve mi gidiyorsunuz?'))) bad.push('order: два верных ответа про mi');
+      if(/Перед ним ещё окончание лица/.test(all)) bad.push('cop: «перед ним»');
+      if(!/ydi-m/.test(JSON.stringify(by('cop').txt))) bad.push('cop: нет evde-ydi-m');
+      if(/через минуту/.test(JSON.stringify(by('loc_abl')))) bad.push('loc_abl: через минуту');
+      if(/p, ç, t, k мягчают/.test(all)) bad.push('prog: общее смягчение');
+      if(/Rusya'/.test(JSON.stringify(by('deriv')))) bad.push("deriv: Rusya'lı");
+      if(!/глагол/.test(by('cubes').lead)) bad.push('cubes: заголовок не про глагол');
+      if(/который не меняется|он не меняется\./.test(JSON.stringify(by('cubes')))) bad.push('cubes: корень «не меняется»');
+      if(!JSON.stringify(by('vowel').txt).includes('saat')) bad.push('vowel: нет оговорки про saat');
+      const pairs = [['acc','poss3s'],['poss3s','acc'],['gen','poss2s'],['poss2s','gen']];
+      for(const rid of ['acc_dat','poss','gen_ins']) for(let k = 0; k < 150; k++){
+        const q = gramMakeParse(by(rid)); if(!q) continue;
+        const right = q.o[q.a];
+        for(const [a, b] of pairs) if(SUF[a].n === right && q.o.includes(SUF[b].n)) bad.push(rid + ': ' + q.q + ' → ' + a + '/' + b);
+      }
+      return bad;
+    });
+    eq(r, []);
+    ok(!fs.readFileSync(FILE.replace('file://', ''), 'utf8').includes("Rusya'lıyım"), "реплики города: Rusyalıyım без апострофа");
+  });
+  await test('код-ревью 10-06: Escape при открытом окне закрывает ТОЛЬКО окно (упражнение грамматики остаётся), а реплика собеседника с записью не зависает, если запись не стартует или её перехватили', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
+    await q.evaluate(() => { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    const e = await q.evaluate(() => { gram = { view:'quiz', rule:'cubes', qs:gramBuildQuiz(gramRule('cubes')), i:0, ok:0, done:false }; gramRender(); showModal({ title:'Тест', text:'окно' }); return { modal:modalOpen, view:gram.view }; });
+    eq(e, { modal:true, view:'quiz' }); await q.keyboard.press('Escape');
+    eq(await q.evaluate(() => ({ modal:modalOpen, view:gram.view })), { modal:false, view:'quiz' }, 'Escape закрыл окно и вышел из упражнения');
+    await q.keyboard.press('Escape'); eq(await q.evaluate(() => gram.view), 'rule', 'второй Escape ведёт на уровень выше');
+    // реплика с настоящей записью: play() молчит (ни playing, ни ended) — через ~4 с запасной синтез и onDone
+    const r = await q.evaluate(async () => { window.__realNative = true; await cvReady; CV_INDEX = Object.assign({}, CV_INDEX, { 'Hesap lütfen.':[{ file:'t1.mp3' }] });
+      /* под file:// индекс Common Voice не грузится — подкладываем запись */ trVoice = trVoice || { name:'t', lang:'tr-TR' };
+      HTMLMediaElement.prototype.play = function(){ return new Promise(() => {}); };          // запись «грузится вечно»: ни playing, ни ended, ни error
+      Object.defineProperty($('nativeAudio'), 'src', { configurable:true, get(){ return ''; }, set(v){} });   // иначе file:// сразу даёт error и запасной путь включается сам
+      const text = 'Hesap lütfen.'; const has = localNative(text).length > 0; let done = false; npcSay(text, () => { done = true; });
+      await new Promise(z => setTimeout(z, 5500)); const d1 = done;
+      // перехват: вторая запись на том же <audio> не должна «съедать» окончание первой реплики
+      done = false; npcSay(text, () => { done = true; }); await new Promise(z => setTimeout(z, 200)); playNativeOr(localNative('Hesap lütfen.'), () => {}); await new Promise(z => setTimeout(z, 600)); const d2 = done;
+      return { has, d1, d2 }; });
+    ok(r.has, 'нет записи «Hesap lütfen.» в audio/cv'); ok(r.d1, 'реплика с записью зависла (нет запасного пути за 5,5 с)'); ok(r.d2, 'реплику затёрла другая запись на общем <audio>'); eq(q.errors, []); await q.context().close();
   });
   console.log('«Город» (Mahalle): разговоры с последствиями');
   const openCity = async (opts) => { const q = await openPage(browser, opts); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-city'); await q.waitForTimeout(100); return q; };
@@ -1526,8 +1572,9 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         const sc = SCENES[sid]; for(const c of sc.pool){ if(!CHARS[c]) { out.bad.push(sid + ': нет ' + c); continue; }
           window.__char = c; city.min = (c === 'bakkal_emre' ? 19 : 10) * 60; cityStart(sid); if(!ct || ct.char !== c){ out.bad.push(sid + ' ' + c + ': не выбран (' + (ct && ct.char) + ')'); if(ct) ct = null; continue; }
           const g = document.getElementById('ctGoal').textContent, w = document.getElementById('ctWho').textContent; if(w !== CHARS[c].name) out.bad.push(sid + ': имя ' + w);
-          const nm = ctNm(sc.fail ? sc.fail.text : ''); const d = CHARS[sc.pool[0]].name.split(/[ ,-]/)[0];
+          const nm = ctNm(sc.fail ? sc.fail.text : ''); const d = CHARS[sc.pool[0]].name.split(/[ ,]/).pop();   // имя «главного» — последнее слово («Бакал Хасан» → Хасан); первое слово — должность
           if(c !== sc.pool[0] && CHARS[c].short && typeof nm === 'string' && nm.includes(d)) out.bad.push(sid + ' ' + c + ': в итоге осталось имя ' + d);
+          if(c !== sc.pool[0] && CHARS[c].short && ctNm(g).includes(d)) out.bad.push(sid + ' ' + c + ': в цели осталось имя ' + d);
           ct = null; } }
       cityRender(); return out; });
     eq(r.n, 18); eq(r.bad, []); eq(q.errors, []); await q.context().close();
