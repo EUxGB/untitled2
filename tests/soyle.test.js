@@ -1324,7 +1324,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await q.evaluate(() => { const ids = GRAMMAR.map(g => g.id);
       return { n:GRAMMAR.length, uniq:new Set(ids).size, bad:GRAMMAR.filter(g => !(g.t && g.lead && GRAM_GROUPS.includes(g.grp) && g.txt.length >= 2 && g.tbl && g.tbl.rows.length >= 3 && g.ex.length >= 5
           && g.ex.every(x => x.q && x.w && x.o.length >= 2 && x.a >= 0 && x.a < x.o.length && new Set(x.o).size === x.o.length))).map(g => g.id),
-        noPhrases:GRAMMAR.filter(g => !gramPhrases(g).length).map(g => g.id), badge:BADGES.find(b => b.id === 'gramall').n,
+        noPhrases:GRAMMAR.filter(g => !g.micro && !g.begin && !gramPhrases(g).length).map(g => g.id), badge:BADGES.find(b => b.id === 'gramall').n,
         // у каждого правила, где есть окончания, хватает слов для упражнений «что значит» и «соберите»
         dyn:GRAMMAR.filter(g => g.id !== 'harmony' && g.id !== 'qwords' && !g.begin && !g.micro).filter(g => !gramMakeParse(g) || !gramMakeBuild(g)).map(g => g.id) }; });
     eq([r.n, r.uniq], [27, 27]); eq(r.bad, []); eq(r.noPhrases, []); eq(r.dyn, []); eq(r.badge, 27, 'медаль «все правила» = число правил'); eq(q.errors, []); await q.context().close();
@@ -1532,6 +1532,28 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     });
     eq(r, []);
     ok(!fs.readFileSync(FILE.replace('file://', ''), 'utf8').includes("Rusya'lıyım"), "реплики города: Rusyalıyım без апострофа");
+  });
+  await test('упражнения микроуроков спрашивают только то, что объяснено: каждое турецкое слово из вопроса и верного ответа есть в тексте/таблице этого или прежнего микроурока (жалоба 10-06: konuşmak в уроке 2)', async () => {
+    const r = await p.evaluate(() => {
+      const lat = s => (String(s).replace(/\[\[|\]\]/g, '').match(/[A-Za-zÇĞİÖŞÜçğıöşü']+/g) || []).map(w => w.toLowerCase().replace(/'.*$/, '')), bad = [], known = new Set();
+      for(const r of GRAMMAR.filter(g => g.micro)){
+        lat(JSON.stringify([r.txt, r.tbl, r.tap, r.lead, r.t])).forEach(w => known.add(w)); lat(JSON.stringify([r.txt, r.tbl]).replace(/([A-Za-zçğıöşü])-(?=[A-Za-zçğıöşü])/g, '$1')).forEach(w => known.add(w));
+        r.ex.forEach((e, i) => [e.q, e.o[e.a]].forEach(s => lat(s).forEach(w => { if(w.length > 1 && !known.has(w) && !/^(ist|alm|iyor|um|sun|ak|ek|okulde)$/.test(w)) bad.push(r.id + '#' + (i + 1) + ': ' + w); })));
+      }
+      // блоки: у каждого слова есть значение
+      GM_SENT.forEach(sn => sn.b.forEach(x => { if(!x[2]) bad.push('GM_SENT без значения: ' + x[0]); }));
+      return bad;
+    });
+    eq(r, []);
+  });
+  await test('«Из ваших фраз» не показывается во вводных уроках и «Памятке» (там одни и те же фразы повторялись); в блоке фраз значения слов', async () => {
+    const r = await p.evaluate(() => {
+      const sets = {}; ['cubes','want','vowel','where','build','steps','order'].forEach(id => { sets[id] = gramPhrases(GRAMMAR.find(g => g.id === id)).map(x => x.tr).join('|'); });
+      const q = gramMakeBlocks(null, 1).q;
+      return { sets, q, lv1: Array.from({ length: 60 }, () => gramMakeBlocks(null, 1).ruKey).every(k => GM_SENT.find(x => x.ru === k).lv === 1) };
+    });
+    Object.keys(r.sets).forEach(id => eq(r.sets[id], '', 'у вводного урока «' + id + '» нет блока «Из ваших фраз» (одни и те же фразы во всех уроках)'));
+    ok(/Слова: /.test(r.q) && /—/.test(r.q), 'в вопросе есть значения слов'); ok(r.lv1, 'уровень 1 — только простые фразы');
   });
   await test('код-ревью 10-06: Escape при открытом окне закрывает ТОЛЬКО окно (упражнение грамматики остаётся), а реплика собеседника с записью не зависает, если запись не стартует или её перехватили', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
