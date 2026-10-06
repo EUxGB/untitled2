@@ -6622,6 +6622,7 @@ const GRAMMAR = [
        "Как получить корень, то есть главный кубик из урока 1? Очень просто: уберите {-mek} или {-mak}. Было {gitmek} — осталось {git}. Было {almak} — осталось {al}.",
        "Запомните цепочку: русская фраза → «что делаю?» → глагол в словаре → корень.",
        "Три глагола, которые пригодятся сразу: {gitmek} — идти, ехать; {istemek} — хотеть; {almak} — брать, покупать. Корни: {git}, {iste}, {al}.",
+       "Осторожно: если корень кончается на {a} или {e}, эта гласная исчезает перед {iyor}: {iste} + {iyor} + {um} = {istiyorum}, {anla} + {iyor} + {um} = {anlıyorum}. Пока просто запомните: так пишется.",
        "Совет: в русской фразе найдите слово, которое отвечает на вопрос «что делает?». «Я покупаю билет» — покупаю. «Мы хотим воды» — хотим. Это и есть ваш глагол."],
   tbl:{ head:["Хочу сказать","Что делаю?","Глагол в словаре","Корень"], rows:[
     ["Я иду домой","иду","{gitmek}","{git}"],
@@ -6672,7 +6673,7 @@ const GRAMMAR = [
        "Как выбрать {a} или {e}? Помните урок 3: смотрим на последнюю гласную. В слове [[ev]] она {e} — мягкая, значит берём {e}: {eve}, {evde}, {evden}. В слове [[okul]] она {u} — твёрдая, значит берём {a}: {okula}, {okulda}, {okuldan}.",
        "Лайфхак для речи: сначала поставьте вопрос. Хотите сказать «я иду в школу»? Спросите себя: КУДА? Кубик для «куда» — {-a} или {-e} (по последней гласной). Берём {okula}.",
        "Про глухие согласные (урок 3): у «где» и «откуда» после глухой вместо {d} будет {t}: [[park]] → {parkta}, {parktan}. У «куда» буквы {d} нет, поэтому ничего не меняется: {parka}. Осторожно: у некоторых слов на p, ç, t, k меняется ещё и последняя буква ({kitap} → {kitaba}); такие слова запоминают по одному.",
-       "Пока берите слова на согласную: {ev, okul, otel, göl, pazar, park}. Слова на гласную ({oda} → {odaya}) требуют ещё одной буквы — это отдельный урок."],
+       "Пока берите слова на согласную: {ev, okul, otel, göl, pazar, park}. Слова на гласную ({oda} → {odaya}) требуют ещё одной буквы — это урок «Соединительные -y- и -n-»."],
   tbl:{ head:["Слово","КУДА? (-a/-e)","ГДЕ? (-da/-de)","ОТКУДА? (-dan/-den)"], rows:[
     ["{ev} — дом","{eve}","{evde}","{evden}"],
     ["{okul} — школа","{okula}","{okulda}","{okuldan}"],
@@ -6691,7 +6692,7 @@ const GRAMMAR = [
 { id:"build", grp:"С чего начать", micro:true, blocks:true, sample:true, t:"5. Собираем фразу из блоков", lead:"Кто · когда · где · что · глагол — обычный порядок, глагол в конце",
   txt:["Теперь соберём настоящую фразу из всего, что вы узнали. В русском порядок свободный: «Я иду домой» или «Домой иду я». В турецком есть обычный порядок — как очередь в магазине. С него и начинают.",
        "Очередь такая: 1) КТО, 2) КОГДА, 3) ГДЕ или КУДА, 4) ЧТО, 5) ГЛАГОЛ. Глагол обычно самый последний: он «закрывает дверь» фразы. В живой речи слова иногда переставляют ради акцента, но новичку надёжнее держать очередь.",
-       "Пример: «Я иду домой». КТО — {Ben}. КОГДА — нет, пропускаем. КУДА — {eve} (урок 4). ЧТО — нет, пропускаем. ГЛАГОЛ — {gidiyorum} (урок 1: корень {git} (перед гласной {t} → {d}) + «сейчас» {iyor} + «я» {um}). Получилось: {Ben eve gidiyorum}.",
+       "Пример: «Я иду домой». КТО — {Ben}. КОГДА — нет, пропускаем. КУДА — {eve} (урок 4). ЧТО — нет, пропускаем. ГЛАГОЛ — {gidiyorum} (урок 1: корень {git} (у этого глагола перед гласной {t} → {d}) + «сейчас» {iyor} + «я» {um}). Получилось: {Ben eve gidiyorum}.",
        "Блок можно пропустить. Нет «когда» — идём к следующему. Слово «я» ({ben}) можно убрать совсем — оно уже живёт в кубике {um}: {Eve gidiyorum}.",
        "Ещё пример: «Али сегодня остаётся дома». {Ali} (кто) · {bugün} (когда) · {evde} (где) · {kalıyor} (глагол). Вместе: {Ali bugün evde kalıyor}.",
        "В упражнениях вы нажимаете на блоки по порядку. Одна из фраз — с образцом: правильная сборка уже показана над блоками, вам остаётся её повторить. Остальные — сами. Если ошиблись, подсказка напомнит порядок."],
@@ -6699,7 +6700,7 @@ const GRAMMAR = [
     ["1. Кто","кто?","{Ben}, {Anne}, {Ali}"],
     ["2. Когда","когда?","{yarın}, {bugün}, {akşam}"],
     ["3. Где / куда","где? куда?","{evde}, {eve}, {Taksim'e}"],
-    ["4. Что","что? кого?","{çay}, {yemeği}, {seni}"],
+    ["4. Что","что? кого?","{çay}, {bilet}, {kitap}"],
     ["5. Глагол","что делает?","{içiyorum}, {gidiyor}, {anlıyorum}"] ] },
   ex:[
     { q:"По очереди из урока: «Мама готовит на кухне»", o:["Anne mutfakta yemek yapıyor","Anne yapıyor mutfakta yemek","Yapıyor anne yemek mutfakta","Mutfakta yapıyor yemek anne"], a:0, w:"Глагол ({yapıyor}) — в самом конце: кто → где → что → глагол." },
@@ -6736,7 +6737,7 @@ const GRAMMAR = [
     ["1. Кто","кто?","{Ben}, {Anne}, {Ali}"],
     ["2. Когда","когда?","{yarın}, {bugün}, {akşam}"],
     ["3. Где / куда","где? куда?","{evde}, {eve}, {Taksim'e}"],
-    ["4. Что","что? кого?","{çay}, {yemeği}, {seni}"],
+    ["4. Что","что? кого?","{çay}, {bilet}, {kitap}"],
     ["5. Глагол","что делает?","{içiyorum}, {gidiyor}, {anlıyorum}"] ] },
   ex:[
     { q:"По очереди из урока: «Мама готовит на кухне»", o:["Anne mutfakta yemek yapıyor","Anne yapıyor mutfakta yemek","Yapıyor anne yemek mutfakta","Mutfakta yapıyor yemek anne"], a:0, w:"Глагол ({yapıyor}) — в самом конце: кто → где → что → глагол." },
@@ -6828,11 +6829,12 @@ const GRAMMAR = [
     { q:"Позвони мне:", o:["Beni ara","Bana ara","Benim ara","Bende ara"], a:0, w:"Глагол {ara-} («звонить, искать») берёт винительный: {beni ara}." } ] },
 
 { id:"cases_buffer", grp:"Существительные", t:"Соединительные -y- и -n-", lead:"Склейка между словом и падежным окончанием: -y- и -n-",
-  txt:["Если слово кончается на гласную и падежное окончание начинается с гласной, между ними вставляется {-y-} (у «мой, твой» гласная окончания просто пропадает: {oda-m}): {oda-y-a} — в комнату, {kedi-y-i} — кота, {araba-y-ı} — машину.",
+  txt:["Если слово кончается на гласную и падежное окончание начинается с гласной, между ними вставляется {-y-}: {oda-y-a} — в комнату, {kedi-y-i} — кота, {araba-y-ı} — машину. Два исключения: родительный падеж после гласной берёт {-n-} ({oda-nın}, {hastane-nin}), а {-la/-le} («чем?») — {-y-} ({metro-y-la}).",
        "После окончания «его, её» ({-sı}) и у местоимений {o, bu, şu} перед падежным окончанием вставляется {-n-}: {oda-sı-n-da} — в его комнате; {o-n-a} — ему; {bu-n-u} — это (вин. падеж); {şu-n-a} — вот этому.",
        "Эти буквы — не отдельные слова: просто «склейка». Увидев {-ya, -yı, -nda, -na}, ищите её между частями."],
   tbl:{ head:["Склейка","Где","Пример"], rows:[
     ["{-y-}","между двумя гласными","{oda-y-a}, {para-y-ı}, {taksimetre-y-i}"],
+    ["{-n-}","родительный после гласной","{oda-nın}, {hastane-nin}"],
     ["{-n-}","после «его, её» ({-ı/-i/-sı/-si}) + падеж","{iskele-si-n-e} — к его причалу, {yeri-n-de} — на его месте"],
     ["{-n-}","у {o, bu, şu}","{o-n-a}, {bu-n-u}, {şu-n-a}"]] },
   ex:[
@@ -6874,11 +6876,11 @@ const GRAMMAR = [
   txt:["В настоящем времени глагола «быть» нет. К существительному или прилагательному прибавляется окончание лица: {iyi-yim} — я в порядке, {hasta-yım} — я болен, {memnun-um} — я рад, {nasıl-sın?} — как ты?, {iyi-siniz} — вы в порядке.",
        "Для «он, она, это» окончания обычно нет: {Bu güzel} — это красиво. Книжное окончание {-dır/-dir} («является») в живой речи почти не встречается; вы услышите его в устойчивых словах вроде {Hayırdır?} — Что случилось?",
        "Отрицание — слово {değil} + окончание лица: {iyi değilim} — мне нехорошо, {Bu pahalı değil} — это не дорого.",
-       "Прошедшее — {-ydı/-ydi} (после согласной {-dı/-di}): {harikaydı} — было отлично. К этому окончанию в самом конце добавляется окончание лица: {evde-ydi-m} — я был дома, {evde-ydi-k} — мы были дома."],
+       "Прошедшее — {-ydı/-ydi/-ydu/-ydü} (после согласной {-dı/-di/-du/-dü}, после глухой {-tı/-ti/-tu/-tü}): {harikaydı} — было отлично, {yorgundu} — был усталым, {maçtı} — был матч. К этому окончанию в самом конце добавляется окончание лица: {evde-ydi-m} — я был дома, {evde-ydi-k} — мы были дома."],
   tbl:{ head:["Лицо","Окончание","Пример"], rows:[
     ["я","{-(y)ım/-(y)im/-(y)um/-(y)üm}","{iyi-yim}, {hasta-yım}, {memnun-um}"],["ты","{-sın/-sin/-sun/-sün}","{iyi-sin}, {nasıl-sın}"],
     ["он, она, это","—","{Bu güzel}"],["мы","{-(y)ız/-(y)iz…}","{iyi-yiz}"],["вы","{-sınız/-siniz…}","{iyi-siniz}, {daire-de-siniz} — вы в квартире"],
-    ["был(а)","{-ydı/-ydi}","{ev-de-ydi-m} — я был дома"]] },
+    ["был(а)","{-(y)dı/-(y)di/-(y)du/-(y)dü}","{ev-de-ydi-m} — я был дома"]] },
   ex:[
     { q:"Я в порядке: {iyi} + …", o:["iyiyim","iyisin","iyiyiz","iyiydi"], a:0, w:"Я — {-(y)im}: после гласной {iyi-yim}." },
     { q:"Вы в Стамбуле: {İstanbul'da} + …", o:["İstanbul'dasınız","İstanbul'dasın","İstanbul'dayım","İstanbul'dayız"], a:0, w:"«Вы» — {-sınız}: {İstanbul'dasınız}." },
@@ -7033,8 +7035,8 @@ const GRAMMAR = [
 
 { id:"deriv", grp:"Слова из слов", t:"-lı, -sız, -cı, -lık, -ça, -ki, -ıncı", lead:"Окончания, которые делают из слова новое слово",
   txt:["{-lı/-li/-lu/-lü} — «с чем-то» или «из места»: {şekerli} — с сахаром, {tavuklu} — с курицей, {Rusyalı} — россиянин. {-sız/-siz} — «без»: {şekersiz} — без сахара.",
-       "{-cı/-ci/-çı/-çi} — «тот, кто занимается»: {nöbetçi} — дежурный. {-lık/-lik/-luk/-lük} — «на срок, для»: {gecelik} — на ночь, {iki kişilik masa} — стол на двоих.",
-       "{-ça/-çe} (после звонких {-ca/-ce}) — «по-» и язык: {Türkçe} — турецкий, по-турецки; {İngilizce}, {Rusça}. {-ki} — «тот, что…»: {dünkü maç} — вчерашний матч.",
+       "{-cı/-ci/-cu/-cü} (после глухих {-çı/-çi/-çu/-çü}) — «тот, кто занимается»: {nöbetçi} — дежурный, {yolcu} — пассажир. {-lık/-lik/-luk/-lük} — «на срок, для»: {gecelik} — на ночь, {iki kişilik masa} — стол на двоих.",
+       "{-ça/-çe} после глухих ({Türkçe}, {Rusça}), {-ca/-ce} после гласных и звонких ({İngilizce}) — «по-» и язык: {Türkçe} — турецкий, по-турецки; {İngilizce}, {Rusça}. {-ki} — «тот, что…»: {dünkü maç} — вчерашний матч.",
        "{-ıncı/-inci/-uncu/-üncü} — порядковые числа: {beşinci} — пятый, {üçüncü} — третий, {kaçıncı} — который по счёту."],
   tbl:{ head:["Окончание","Значение","Пример"], rows:[
     ["{-lı/-li/-lu/-lü}","с, из","{şeker-li}, {tavuk-lu}, {Rusya-lı}"],["{-sız/-siz}","без","{şeker-siz}"],["{-cı/-ci/-çı/-çi}","занимающийся","{nöbet-çi}"],
@@ -7093,14 +7095,14 @@ const gwordsCache = {};
 function gramWordsFor(id){ return gwordsCache[id] || (gwordsCache[id] = Object.keys(MORPH).filter(w => MORPH[w].split(" ").slice(1).some(p => (SUF[p.split("=")[1]] || {}).rule === id) || (id === "question" && MORPH[w].split(" ")[0].split("=")[1] === "q"))); }
 const sufFamily = n => String(n).split(/[\s,:(/]/)[0];
 // слова с одинаковым написанием окончаний: оба ответа верны, поэтому вместе в вопросе не стоят
-const GM_AMB = [["poss3s","acc"],["poss2s","gen","imp2p"],["cop2s","v2s","imp3s"],["cop1s","v1s","poss1s"],["cop1p","v1p"],["cop2p","v2p"]];
+const GM_AMB = [["poss3s","acc"],["poss2s","gen","imp2p","poss1s","poss1p","poss2p"],["cop2s","v2s","imp3s"],["cop1s","v1s","poss1s"],["cop1p","v1p"],["cop2p","v2p"],["cpast","past"],["neg","negaor"],["li","ins","abl"]];
 function gramMakeParse(r){
   const ws = gramWordsFor(r.id); if(!ws.length) return null;
   for(let k = 0; k < 30; k++){
     const m = morphOf(ws[Math.floor(grnd() * ws.length)]); if(!m) continue;
     const cand = m.parts.filter(p => (!p.root || p.lemma === "q") && p.rule === r.id && p.n); if(!cand.length) continue;
     const p = cand[Math.floor(grnd() * cand.length)], fam = sufFamily(p.n), seenN = new Set([p.n]), wrong = [];
-    const pk = Object.keys(SUF).find(k => SUF[k].n === p.n), amb = GM_AMB.find(g => g.includes(pk)) || [];
+    const pk = Object.keys(SUF).find(k => SUF[k].n === p.n), amb = GM_AMB.filter(g => g.includes(pk)).flat();
     for(const [sk, s] of gshuf(Object.entries(SUF))){ if(wrong.length >= 3) break; if(!s.n || seenN.has(s.n) || sufFamily(s.n) === fam || amb.includes(sk)) continue; seenN.add(s.n); wrong.push(s.n); }
     if(wrong.length < 3) continue;
     const o = gshuf([p.n, ...wrong]);
@@ -7202,7 +7204,7 @@ function gramQuizRender(){
   }
   const segs = gram.qs.map((x, k) => `<i${x.res === undefined ? (k === gram.i ? ' class="cur"' : "") : x.res ? ' class="ok"' : ' class="bad"'}></i>`).join("");
   let body = `<p class="gm-q" id="gmQ">${q.html ? q.q : esc(q.q)}</p>`;
-  { const cue = GM_CUE[gram.rule]; if(cue) body += `<button class="gm-cue-btn" data-act="cue" aria-expanded="${q.cue ? "true" : "false"}">${q.cue ? "Скрыть подсказку" : "Подсказка: как выбрать"}</button>` + (q.cue ? `<div class="gm-cue" role="note"><p>${gmFmt(cue)}</p>${!gramRule(gram.rule).micro && (q.cue === 2 || /\(ı\)|\/|-/.test(cue)) ? `<div class="gm-steps">${GM_STEPS.map(t => `<p>${gmFmt(t)}</p>`).join("")}</div>` : ""}</div>` : ""); }
+  { const cue = GM_CUE[gram.rule]; if(cue) body += `<button class="gm-cue-btn" data-act="cue" aria-expanded="${q.cue ? "true" : "false"}">${q.cue ? "Скрыть подсказку" : "Подсказка: как выбрать"}</button>` + (q.cue ? `<div class="gm-cue" role="note"><p>${gmFmt(cue)}</p>${!gramRule(gram.rule).micro && !gramRule(gram.rule).blocks && (q.cue === 2 || /\(ı\)|\/|-/.test(cue)) ? `<div class="gm-steps">${GM_STEPS.map(t => `<p>${gmFmt(t)}</p>`).join("")}</div>` : ""}</div>` : ""); }
   if(q.sample && q.res === undefined) body += `<div class="gm-sample" role="note"><b>Образец:</b> так выглядит правильная сборка. Повторите её, нажимая блоки по порядку.${blocksHtml(q.m)}</div>`;
   if(q.type === "tap") body += `<div class="gm-word" role="group" aria-labelledby="gmQ">${[...q.word].map((c, i) => `<button class="gm-let${q.chosen === i ? (q.res ? " ok" : " bad") : q.chosen !== undefined && i === q.a ? " ok" : ""}" data-act="let" data-i="${i}" ${q.chosen !== undefined ? "disabled" : ""} lang="tr" translate="no" aria-label="буква ${esc(c)}">${esc(c)}</button>`).join("")}</div>`
     + (q.res !== undefined ? `<p class="gm-hl">${hlWord(q.word)}</p>` : "");
@@ -7252,7 +7254,7 @@ document.addEventListener("keydown", e => { if(e.key === "Escape" && !e.defaultP
 const GM_STEPS = ["Как выбрать окончание — три шага:",
   "1. Найдите ПОСЛЕДНЮЮ гласную слова.",
   "2. Выберите гласную окончания. Два варианта (a / e): после a, ı, o, u — «a»; после e, i, ö, ü — «e». Четыре варианта (ı / i / u / ü): a, ı → «ı»; e, i → «i»; o, u → «u»; ö, ü → «ü».",
-  "3. Проверьте края: слово на глухую (ç f h k p s ş t) — «d» в окончании становится «t»; слово на гласную + падежное окончание с гласной — между ними {y} (после «его» — {n})."];
+  "3. Проверьте края: слово на глухую (ç f h k p s ş t) — «d» в окончании становится «t»; слово на гласную: перед винительным и дательным — {y}, перед родительным — {n}; после «его» — тоже {n}."];
 const GM_CUE = {
   cubes:"Слово — кубики: ЧТО (корень) + КОГДА ({iyor} — сейчас) + КТО ({um} — я, {sun} — ты). {gel} + {iyor} + {um} = {geliyorum}. Меняете последний кубик — меняется «кто».",
   want:"Спросите себя: что я делаю? Это глагол. В словаре он кончается на {-mek} или {-mak}. Уберите этот конец — получите корень: {gitmek} → {git}, {almak} → {al}.",
@@ -7266,7 +7268,7 @@ const GM_CUE = {
   plural:"{-lar} после a, ı, o, u; {-ler} после e, i, ö, ü. {araba} → {arabalar}, {ev} → {evler}. После числа — единственное: {üç kedi}.",
   poss:"Мой {-(ı)m}, твой {-(ı)n}, его {-(s)ı}, наш {-(ı)mız}, ваш {-(ı)nız}. Слово на гласную — без лишней гласной: {oda} → {odam}, {odanız}; на согласную — с гласной: {pasaport} → {pasaportum}. Гласную ищите по таблице.",
   acc_dat:"Что? {-(y)ı/i/u/ü} (4 варианта). Куда? Кому? {-(y)a/e} (2 варианта). {kart} → {kartı}, {Taksim} → {Taksim'e}. После гласной — {y}: {araba} → {arabayı}, {arabaya}. Неконкретное — без окончания: {Çay istiyorum}.",
-  cases_buffer:"Слово на гласную + падежное окончание с гласной: между ними {y}. Окончание «его» ({-sı}) и слова {o, bu, şu} требуют {n}: {oda-sı-n-da}, {o-n-a}, {bu-n-u}.",
+  cases_buffer:"Слово на гласную + винительный или дательный: между ними {y} ({oda-y-a}); {-la/-le} — тоже {y} ({metro-yla}); родительный после гласной — {n} ({hastane-nin}). Окончание «его» ({-sı}) и слова {o, bu, şu} требуют {n}: {oda-sı-n-da}, {o-n-a}, {bu-n-u}.",
   loc_abl:"Где? {-da/-de}. Откуда? {-dan/-den}. После глухой (ç f h k p s ş t) — {-ta/-te}, {-tan/-ten}: {sokak} → {sokakta}, {sokaktan}. Гласная — 2 варианта: после a ı o u — «a», после e i ö ü — «e».",
   gen_ins:"Чей? {-(n)ın/in/un/ün} (4 варианта): {Ali'nin}. С чем? Чем? {-(y)la/-(y)le} (2 варианта): {kartla}, {otobüsle}, {benimle}. Гласную ищите по таблице.",
   cop:"Я {-(y)ım/im/um/üm}, ты {-sın/sin/sun/sün}, мы {-(y)ız/iz/uz/üz}, вы {-sınız/siniz/sunuz/sünüz} — 4 варианта по последней гласной слова. «Он, она» — без окончания. Не: {değil}. Был: {-(y)dı}.",
@@ -7275,7 +7277,7 @@ const GM_CUE = {
   prog:"Корень + {-(ı)yor} (4 варианта по последней гласной) + лицо. {gel-} → {geliyor}, {oku-} → {okuyor}. Корень на «a/e» меняет гласную: {bekle} → {bekliyor}. {git-} → {gidiyor}. Лицо после {-yor}: {-um, -sun, -uz, -sunuz} (по гармонии).",
   person:"После прошедшего {-dı}: {-m, -n, -k, -nız}. После {-yor, -ecek, -r}: {-um/-ım, -sun/-sın, -uz/-ız, -sunuz/-sınız}. «Он» — без окончания. Гласную — по последней гласной слова.",
   past:"Корень + {-dı/di/du/dü} (4 варианта по последней гласной корня) + лицо {-m, -n, -k, -nız}. После глухой (ç f h k p s ş t) — {t}: {yap-tı-m}, {git-ti-m}. Не: {-ma/-me} перед {-dı}.",
-  fut:"Корень + {-acak/-ecek} (2 варианта; после гласной {y}) + лицо. {gel-} → {gelecek}, {oku-} → {okuyacak}. Перед {-im, -iz} буква k становится ğ: {gideceğim}; перед {-sin, -siniz} — нет.",
+  fut:"Корень + {-acak/-ecek} (2 варианта; после гласной {y}) + лицо. {gel-} → {gelecek}, {oku-} → {okuyacak}. Перед {-im/-ım, -iz/-ız} буква k становится ğ: {gideceğim}, {alacağım}; перед {-sin, -siniz} — нет.",
   neg_can:"Не: {-ma/-me} (2 варианта) сразу после корня. Могу: {-(y)abil/-(y)ebil}. Не могу: {-(y)ama/-(y)eme}. Перед {-yor} отрицание: {-mı/-mi/-mu/-mü}. Последняя гласная корня выбирает a или e.",
   aor:"Корень + {-r} (после гласной), {-ar/-er} (после согласной; 2 варианта) или {-ır/-ir/-ur/-ür} (4 варианта; многосложные и 13 исключений: al, bil, bul, dur, gel, gör, kal, ol, öl, san, var, ver, vur) + лицо. {öde-r}, {bak-ar}, {gel-ir}.",
   imp_opt:"Ты: корень. Вы: {-(y)ın/in/un/ün}. Давайте мы: {-(y)alım/-(y)elim}. Давайте я: {-(y)ayım/-(y)eyim}. Пусть: {-sın/sin/sun/sün}. Гласную выбирайте по последней гласной корня (2 или 4 варианта).",

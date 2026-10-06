@@ -1518,8 +1518,12 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       if(!/глагол/.test(by('cubes').lead)) bad.push('cubes: заголовок не про глагол');
       if(/который не меняется|он не меняется\./.test(JSON.stringify(by('cubes')))) bad.push('cubes: корень «не меняется»');
       if(!JSON.stringify(by('vowel').txt).includes('saat')) bad.push('vowel: нет оговорки про saat');
-      const pairs = [['acc','poss3s'],['poss3s','acc'],['gen','poss2s'],['poss2s','gen']];
-      for(const rid of ['acc_dat','poss','gen_ins']) for(let k = 0; k < 150; k++){
+      if(!/hastane-nin/.test(JSON.stringify(by('cases_buffer')))) bad.push('cases_buffer: нет исключения родительного');
+      if(!/-ydu/.test(JSON.stringify(by('cop').txt))) bad.push('cop: нет -ydu/-ydü');
+      if(/после звонких \{-ca/.test(JSON.stringify(by('deriv')))) bad.push('deriv: -ca только после звонких');
+      if(/между ними \{y\} \(после/.test(GM_STEPS.join(' '))) bad.push('GM_STEPS: y для родительного');
+      const pairs = [['acc','poss3s'],['poss3s','acc'],['gen','poss2s'],['poss2s','gen'],['cpast','past'],['past','cpast'],['gen','poss1s'],['gen','poss1p'],['gen','poss2p']];
+      for(const rid of ['acc_dat','poss','gen_ins','cop','past']) for(let k = 0; k < 150; k++){
         const q = gramMakeParse(by(rid)); if(!q) continue;
         const right = q.o[q.a];
         for(const [a, b] of pairs) if(SUF[a].n === right && q.o.includes(SUF[b].n)) bad.push(rid + ': ' + q.q + ' → ' + a + '/' + b);
