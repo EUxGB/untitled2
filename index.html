@@ -4848,7 +4848,7 @@ function cityBoard(){
   const left = plan.filter(id => !cityDoneId(id)).length;
   ctEl("ctDay").textContent = allDone ? "Все дела сделаны — домой." : `Дела на сегодня — ${left} из ${plan.length}`;
   ctEl("ctTasks").innerHTML = plan.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id), i = cellOfScene(id), op = cityOpenNow(id), dist = i < 0 ? 0 : boardDist(city.pos, i);
-    const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? "вы здесь" : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
+    const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? (s.phone ? "звоните отсюда" : "дело здесь") : s.phone ? `звонок · ${BOARD[i].ru}, ${dist} ${plural(dist, "клетка", "клетки", "клеток")}` : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
     return `<li class="ct-task${d ? " done " + d.kind : !op.open ? " closed" : ""}" data-scene="${id}"><i aria-hidden="true"></i><b>${esc(s.title)}</b><span>${where}</span></li>`; }).join("");
   cityInnerTab(cityTab); ctEl("ctChars").innerHTML = cityCharsHtml(); ctEl("ctSkills").innerHTML = citySkillsHtml();
   ctEl("ctChars").querySelectorAll(".ct-char").forEach(b => b.onclick = () => openChar(b.dataset.char));

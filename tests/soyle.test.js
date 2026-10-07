@@ -1832,6 +1832,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       await q.context().close(); eq(bad, [], `${w}×${h}:`);
     }
   });
+  await test('Город (08:08): у телефонного дела подпись «звоните отсюда» (дома) или «звонок · …», а не «вы здесь»', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => { city.plan = ['su', 'bakkal']; city.done = []; city.pos = 0; cityRender(); const tx = id => document.querySelector('.ct-task[data-scene="' + id + '"] span').textContent;
+      const homeI = cellOfScene('su'); city.pos = homeI === 0 ? 1 : 0; cityRender(); const away = tx('su'); city.pos = homeI; cityRender(); return { here: tx('su'), away, homeI, bakkalHere: city.pos === cellOfScene('bakkal') ? 'same' : tx('bakkal') }; });
+    eq(r.here, 'звоните отсюда'); ok(/^звонок · /.test(r.away), 'издалека: ' + r.away); ok(!/вы здесь/.test(r.here + r.away + r.bakkalHere), 'нет «вы здесь»');
+    await q.context().close();
+  });
   await test('Город: выбор ответа карточками — что сказать, видно сразу по-русски; выбранная раскрывается (турецкий + чтение), говорите её; выбор меняет исход; перевод первой реплики бесплатно', async () => {
     const q = await openCity();
     const home = await q.evaluate(() => [document.querySelectorAll('.ct-task:not(.done)').length, document.getElementById('ctDay').textContent, city.money, city.min]);
