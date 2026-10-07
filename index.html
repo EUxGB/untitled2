@@ -765,7 +765,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .gm-h3{margin:8px 0 0; font:700 15px var(--body); color:var(--ink); text-transform:none; letter-spacing:0}
 .gm-ph{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
 .gm-ph li{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:8px 12px; display:flex; flex-direction:column; gap:2px}
-.gm-tr{font:700 18px/1.35 var(--display); color:var(--ink)} .gm-ru{font-size:13px; color:var(--ink-2)}
+.gm-tr{font:700 18px/1.35 var(--display); color:var(--ink)} .gm-ru{font-size:13px; color:var(--ink-2)} .gm-bk{display:block; font-size:12px; color:var(--ink-2); margin-top:2px; overflow-wrap:anywhere}
 .gm-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:4px} .gm-actions .btn{min-height:44px}
 .gm-bar{display:flex; justify-content:space-between} .gm-count{font-size:13px; color:var(--muted)}
 .gm-segs{display:flex; gap:4px} .gm-segs i{flex:1; height:6px; border-radius:3px; background:var(--line)}
@@ -7126,9 +7126,9 @@ const GRAMMAR = [
     { q:"Приложите (дайте прочитать): {oku} + …", o:["okutun","okuyun","okusun","okudun"], a:0, w:"{oku-t-un} — побудительный залог {-t} + «вы» {-un}." } ] },
 
 { id:"deriv", grp:"Слова из слов", t:"-lı, -sız, -cı, -lık, -ça, -ki, -ıncı", lead:"Окончания, которые делают из слова новое слово",
-  txt:["{-lı/-li/-lu/-lü} — «с чем-то» ({şekerli} — с сахаром, {tavuklu} — с курицей) или «родом из» ({Rusyalı} — россиянин, родом из России). {-sız/-siz/-suz/-süz} — «без» (4 варианта по последней гласной): {şekersiz} — без сахара, {ekmeksiz} — без хлеба.",
+  txt:["{-lı/-li/-lu/-lü} — «с чем-то» ({şekerli} — с сахаром, {tavuklu} — с курицей) или «родом из» ({Rusyalı} — россиянин, родом из России). {-sız/-siz/-suz/-süz} — «без» (4 варианта по последней гласной): {şekersiz} — без сахара, {ekmeksiz} — без хлеба. Так же из {ses} (звук) получается {sessiz} — тихий, беззвучный: {Sessiz olun} — «будьте тише». Из {nere} (где) — {nereli} — родом откуда: {Sen nerelisin?} = {nere-li-sin} — «откуда ты родом?» (после {-li} стоит окончание «ты» из урока «Быть»). Из {gürültü} (шум) — {gürültülü} — шумный: {gürültülüydü} = {gürültü-lü-ydü} — «был шумный» ({-ydü} — «был», тоже из урока «Быть»).",
        "{-cı/-ci/-cu/-cü} (после глухих {-çı/-çi/-çu/-çü}) — «тот, кто занимается»: {nöbetçi} — дежурный, {yolcu} — пассажир. {-lık/-lik/-luk/-lük} — «рассчитанный на, для»: {gecelik} — на ночь, {iki kişilik masa} — стол на двоих.",
-       "{-ça/-çe} после глухих ({Türkçe}, {Rusça}), {-ca/-ce} после гласных и звонких ({İngilizce}) — «по-» и язык: {Türkçe} — турецкий, по-турецки: {Türkçe konuşuyorum} — говорю по-турецки; {İngilizce} — английский, {Rusça} — русский. {-ki} ставят после слов места (уже с окончанием «где?») и времени: {ev-de-ki} — тот, что дома (в доме), {dün-kü} — вчерашний ({dünkü maç} — вчерашний матч). Само {-ki} не меняется; только в словах {dünkü} и {bugünkü} оно {-kü}, их запоминают.",
+       "{-ça/-çe} после глухих ({Türkçe}, {Rusça}), {-ca/-ce} после гласных и звонких ({İngilizce}) — «по-» и язык: {Türkçe} — турецкий, по-турецки: {Türkçe konuşuyorum} — говорю по-турецки; {İngilizce} — английский, {Rusça} — русский. {-ki} ставят после слов места (уже с окончанием «где?») и времени: {ev-de-ki} — тот, что дома (в доме), {dün-kü} — вчерашний ({dünkü maç} — вчерашний матч). Само {-ki} не меняется; только в словах {dünkü} и {bugünkü} оно {-kü}, их запоминают. Если перед {-ki} стоит {-da/-de} («где?»), получается «тот, что находится там»: {sıra-da-ki} — тот, кто стоит в очереди; {Sıradaki kim?} — «кто следующий?» (буквально: «кто тот, что в очереди?»).",
        "{-ıncı/-inci/-uncu/-üncü} — порядковые числа: {beşinci} — пятый, {üçüncü} — третий, {kaçıncı} — который по счёту. После гласной — {-ncı/-nci/-ncu/-ncü}: {ikinci} — второй, {altıncı} — шестой."],
   tbl:{ head:["Окончание","Значение","Пример"], rows:[
     ["{-lı/-li/-lu/-lü}","с, из","{şeker-li}, {tavuk-lu}, {Rusya-lı}"],["{-sız/-siz/-suz/-süz}","без","{şeker-siz}, {ekmek-siz}"],["{-cı/-ci/-cu/-cü} (после глухих {-çı/-çi/-çu/-çü})","занимающийся","{nöbet-çi}, {yol-cu}"],
@@ -7271,11 +7271,16 @@ function gramPhrases(r){
   const seen = new Set();
   return items.filter(p => test(p.tr)).sort((a, b) => a.tr.length - b.tr.length || a.tr.localeCompare(b.tr)).filter(p => !seen.has(p.tr) && seen.add(p.tr)).slice(0, 4);
 }
+function gramBreak(tr, r){
+  const out = [];
+  tr.split(/\s+/).forEach(w => { const m = morphOf(w); if(m && m.parts.length > 1 && m.parts.some(q => q.rule === r.id)) out.push(`${esc(m.word.replace(/[.,!?]+$/, ""))} = ${m.parts.map(q => esc(q.t.toLowerCase())).join("-")}`); });
+  return out.length ? `<span class="gm-bk" lang="tr" translate="no">${out.join("; ")}</span>` : "";
+}
 function gramRuleHtml(r, inSheet){
   let h = `<p class="gm-lead2">${gmFmt(r.lead)}</p>` + r.txt.map(t => `<p class="gm-p">${gmFmt(t)}</p>`).join("");
   if(r.tbl) h += `<div class="gm-tw"><table class="gm-t"><thead><tr>${r.tbl.head.map(c => `<th scope="col">${gmFmt(c)}</th>`).join("")}</tr></thead><tbody>${r.tbl.rows.map(row => `<tr>${row.map(c => `<td>${gmFmt(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
   const ph = gramPhrases(r);
-  if(ph.length) h += `<h3 class="gm-h3">Из ваших фраз</h3><p class="gm-hint">Нажмите на слово — увидите его разбор по частям.</p><ul class="gm-ph">${ph.map(p => `<li><span class="gm-tr" lang="tr" translate="no">${wordsHtml(p.tr)}</span><span class="gm-ru">${esc(p.ru)}</span></li>`).join("")}</ul>`;
+  if(ph.length) h += `<h3 class="gm-h3">Из ваших фраз</h3><p class="gm-hint">Нажмите на слово — увидите его разбор по частям.</p><ul class="gm-ph">${ph.map(p => `<li><span class="gm-tr" lang="tr" translate="no">${wordsHtml(p.tr)}</span><span class="gm-ru">${esc(p.ru)}</span>${gramBreak(p.tr, r)}</li>`).join("")}</ul>`;
   return h + `<div class="gm-actions"><button class="btn native gm-go" data-act="quiz" data-rule="${r.id}">Упражнения</button></div>`;
 }
 // ---- раздел «Грамматика» ----

@@ -1624,6 +1624,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const miss = want.filter(f => !r.lesson.includes(f)); eq(miss, [], 'нет в тексте');
     const bad = ['kitapa', 'ağaça', 'çocuka', 'yataka', 'hesapa', 'parga', 'ada ']; eq(bad.filter(b => new RegExp('\\{' + b.trim() + '\\}').test(r.lesson)), [], 'неверные формы в тексте');
   });
+  await test('«Из ваших фраз» (21:39): у каждой фразы урока словообразования есть разбор «слово = части», а формы этих фраз объяснены в тексте урока', async () => {
+    const r = await p.evaluate(() => { const g = GRAMMAR.find(x => x.id === 'deriv'), html = gramRuleHtml(g), ph = gramPhrases(g).map(x => x.tr); return { html, ph, lesson: JSON.stringify([g.txt, g.tbl]) }; });
+    ok(r.ph.length >= 3, 'фраз мало: ' + r.ph.length);
+    eq((r.html.match(/class="gm-bk"/g) || []).length, r.ph.length, 'разбор есть у каждой фразы');
+    for(const f of ['sıra-da-ki', 'nere-li-sin', 'gürültü-lü-ydü', 'Sessiz olun']) ok(r.lesson.includes(f), 'в уроке нет разбора: ' + f);
+    for(const f of ['sıradaki = sıra-da-ki', 'nerelisin = nere-li-sin', 'gürültülüydü = gürültü-lü-ydü']) ok(r.html.toLowerCase().includes(f), 'нет разбора под фразой: ' + f);
+  });
   await test('«нажмите на последнюю гласную»: буквы любого слова из списка (и слова на 10 букв) стоят в ОДНУ строку на 320, 360, 390, 412 px, не шире экрана, кнопка не уже 24 px (WCAG 2.5.8), слова не длиннее 10 букв (жалоба 10-06 22:04: telefon переносился)', async () => {
     const q = await openPage(browser); await q.click('#tab-train'); await tap(q, 'tab-grammar');
     const bad = [];
