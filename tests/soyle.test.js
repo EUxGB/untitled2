@@ -939,8 +939,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       if(u.includes('q="çay lütfen"')) return r.fulfill({ json:{ data:[] } });
       return r.fulfill({ json:{ data: u.includes('has_audio=yes') ? [
         { id:1, text:'Bir çay lütfen.', audios:[{ id:77, author:'futurk', license:'CC BY 4.0' }], translations:[{ text:'Один чай, пожалуйста.', lang:'rus' }] },
-        { id:2, text:'Çay içer misin?', audios:[{ id:78, author:'x', license:'' }] } ] : [
-        { id:2, text:'Çay içer misin?', audios:[], translations:[[{ text:'Будешь чай?', lang:'rus' }]] },
+        { id:2, text:'Çay içer misin lütfen?', audios:[{ id:78, author:'x', license:'' }] } ] : [
+        { id:2, text:'Çay içer misin lütfen?', audios:[], translations:[[{ text:'Будешь чай?', lang:'rus' }]] },
         { id:3, text:'Çay sıcak.', audios:[], translations:[] } ] } }); });
     await q.evaluate(() => openExamples('Çay lütfen'));
     await q.waitForSelector('#exList li', { timeout:5000 });
@@ -950,7 +950,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.context().close();
     ok(/примеры со словом «lütfen»/.test(r[0]) && /с записью носителя: 1/.test(r[0]), r[0]);
     eq(r[1][0], ['Bir çay lütfen.', 'Один чай, пожалуйста.', true]);                 // с записью — первой; без лицензии — без кнопки
-    eq(r[1].find(x => x[0] === 'Çay içer misin?'), ['Çay içer misin?', 'Будешь чай?', false]);
+    eq(r[1].find(x => x[0] === 'Çay içer misin lütfen?'), ['Çay içer misin lütfen?', 'Будешь чай?', false]);
     eq(played, ['https://api.tatoeba.org/v1/audios/77/file']); eq(pages.length, 0);
   });
   await test('«Видео» бережёт лимит YouGlish: один поиск на нажатие, часть фразы — только по кнопке', async () => {
@@ -1854,8 +1854,27 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q = await openCity();
     const r = await q.evaluate(() => { city.plan = ['su', 'bakkal']; city.done = []; city.pos = 0; cityRender(); const tx = id => document.querySelector('.ct-task[data-scene="' + id + '"] span').textContent;
       const homeI = cellOfScene('su'); city.pos = homeI === 0 ? 1 : 0; cityRender(); const away = tx('su'); city.pos = homeI; cityRender(); return { here: tx('su'), away, homeI, bakkalHere: city.pos === cellOfScene('bakkal') ? 'same' : tx('bakkal') }; });
-    eq(r.here, 'звоните отсюда'); ok(/^звонок · /.test(r.away), 'издалека: ' + r.away); ok(!/вы здесь/.test(r.here + r.away + r.bakkalHere), 'нет «вы здесь»');
+    eq(r.here, 'нажмите, чтобы позвонить'); ok(/^звонок · /.test(r.away), 'издалека: ' + r.away); ok(!/вы здесь/.test(r.here + r.away + r.bakkalHere), 'нет «вы здесь»');
     await q.context().close();
+  });
+  await test('Город (21:56): дело на клетке, где вы стоите, запускается нажатием на строку (раньше «звоните отсюда» не нажималось); у кнопок «Taksi çağır»/«Eve dön» есть перевод; симитчи объяснён', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => { city.plan = ['su', 'bakkal']; city.done = []; city.pos = cellOfScene('su'); city.roll = null; cityRender();
+      const li = document.querySelector('.ct-task[data-scene="su"]'), go = li.classList.contains('go'), role = li.getAttribute('role'); li.click();
+      return { go, role, started: !!ct && ct.id === 'su', taxi: document.querySelector('#ctTaxi small').textContent, home: document.querySelector('#ctHomeBtn small').textContent,
+        place: document.getElementById('ctPlace').textContent, simit: BOARD.find(b => b.id === 'simitci').title + '|' + BOARD.find(b => b.id === 'simitci').ru }; });
+    eq([r.go, r.role, r.started], [true, 'button', true], 'строка дела не запускает сцену');
+    eq([r.taxi, r.home], ['вызвать такси', 'вернуться домой']); ok(/продавец симита/.test(r.simit), r.simit);
+    await q.context().close();
+  });
+  await test('«Примеры» (22:10): для слова «yastık» Tatoeba-основа не приносит «yasta/yasa» (траур, закон) — остаются предложения с самим словом в любой форме', async () => {
+    const r = await p.evaluate(() => ['Yastayım.', 'Yasa açık.', 'Tom yasta.', 'Biz yastayız.', 'Yastığı yok.', 'Bir yastık lütfen.'].filter(s => exampleHas(s, 'yastık')).concat(['İstiyorum.', 'Kitabı aldım.'].filter((s, i) => exampleHas(s, ['istemek', 'kitap'][i]))));
+    eq(r, ['Yastığı yok.', 'Bir yastık lütfen.', 'İstiyorum.', 'Kitabı aldım.']);
+  });
+  await test('«Память» (22:03): сохранённые карточки со старым «çok güzel» про еду заменяются на «çok lezzetli»', async () => {
+    const q = await openPage(browser, { storage:{ 'soyle-srs': JSON.stringify([{ tr:'Ellerinize sağlık, çok güzel.', ru:'x', side:'rec', state:2, step:null, s:3, d:5, due:0, last:0, reps:2, seen:true }]) } });
+    const r = await q.evaluate(() => loadCards().map(c => c.tr)); await q.context().close();
+    eq(r, ['Ellerinize sağlık, çok lezzetli.']);
   });
   await test('Город: выбор ответа карточками — что сказать, видно сразу по-русски; выбранная раскрывается (турецкий + чтение), говорите её; выбор меняет исход; перевод первой реплики бесплатно', async () => {
     const q = await openCity();

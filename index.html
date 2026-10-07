@@ -661,7 +661,8 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-roll:not(:disabled):hover .die{transform:translateY(-1px)} .ct-roll:disabled{cursor:default} .ct-roll:disabled .die{stroke:var(--muted); filter:none} .ct-roll:disabled .die circle{fill:var(--ink)}
 .ct-roll.rolling .die{animation:dieShake .14s ease-in-out infinite alternate} @keyframes dieShake{from{transform:rotate(-14deg) translateY(-2px)} to{transform:rotate(12deg) translateY(2px)}}
 .ct-dice-hint{font-size:12px; color:var(--muted); line-height:1.25}
-.ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px}
+.ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-decoration:none; line-height:1.15} .ct-homebtns .linkbtn span{text-decoration:underline} .ct-homebtns .linkbtn small{font-size:11px; color:var(--muted)} .ct-homebtns #ctHomeBtn{align-items:flex-end}
+.ct-task.go{cursor:pointer; min-height:44px; display:flex; align-items:center; flex-wrap:wrap; gap:0 4px; padding:2px 8px; border:1.5px solid var(--accent); border-radius:10px; background:var(--surface)} .ct-task.go span{color:var(--accent); font-weight:700}
 #ctDayEnd{width:100%; min-height:44px}
 .ct-intro{text-align:left; margin:0; font-size:11.5px; line-height:1.3; color:var(--muted)}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
@@ -921,7 +922,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
             <ul class="ct-tasks" id="ctTasks"></ul>
             <div class="ct-chars" id="ctChars" hidden></div>
             <div class="ct-skills" id="ctSkills" hidden></div>
-            <div class="ct-homebtns"><button class="linkbtn" id="ctTaxi">Taksi çağır</button><button class="linkbtn" id="ctHomeBtn">Eve dön</button></div>
+            <div class="ct-homebtns"><button class="linkbtn" id="ctTaxi"><span lang="tr" translate="no">Taksi çağır</span><small>вызвать такси</small></button><button class="linkbtn" id="ctHomeBtn"><span lang="tr" translate="no">Eve dön</span><small>вернуться домой</small></button></div>
             <p class="hint ct-intro" id="ctIntro"></p>
           </div>
         </div>
@@ -2421,7 +2422,7 @@ function memRender(){
   t.classList.add("phrase"); t.classList.remove("mem-hide");
   $("partner").hidden = false; $("partner").textContent = ""; $("nativeStatus").textContent = "";
   memSetButtons(mem.phase, side);
-  const left = memPlan(), info = `<small class="mem-left">Повторить: ${left.due.length} · новых на сегодня: ${left.fresh.length}</small>`;
+  const left = memPlan(), info = `<small class="mem-left">Повторить: ${left.due.length} · новых на сегодня: ${left.fresh.length}. Число может расти: новые и забытые фразы возвращаются через 1–10 минут.</small>`;
   if(mem.phase === "study"){
     t.innerHTML = wordsHtml(c.tr); $("partner").textContent = c.tl ? `[${c.tl}]` : ""; $("meaning").textContent = c.ru;
     $("tip").textContent = "Сначала знакомство, потом вспоминание: попытка вспомнить укрепляет память сильнее, чем повторное чтение.";
@@ -2570,7 +2571,10 @@ function updateMemTab(){
   const mine = new Set(loadList("soyle-mine").map(m => nphr(m.tr)));
   let changed = false;
   const set = (c, ru) => { if(ru && c.ru !== ru){ c.ru = ru; changed = true; } };
+  const RENAMED = { "Ellerinize sağlık, çok güzel.":"Ellerinize sağlık, çok lezzetli.", "Elinize sağlık, çok güzeldi.":"Elinize sağlık, çok lezzetliydi." };   // «güzel» про еду заменено (2026-10-07)
+  const have = new Set(all.map(c => c.tr));
   const out = all.filter(c => {
+    if(RENAMED[c.tr]){ const nt = RENAMED[c.tr]; if(have.has(nt)){ changed = true; return false; } c.tr = nt; c.tl = typeof trToCyr === "function" ? trToCyr(nt) : c.tl; have.add(nt); changed = true; }
     if(c.tr === "Bu Türkçe ne demek?"){ c.tr = "Bunun Türkçesi ne?"; c.tl = "бунун тюркчеси нэ"; changed = true; }   // так не говорят — исправлено
     const ph = phrases.get(c.tr); if(ph){ set(c, ph.ru); return true; }           // фраза тренажёра — перевод из текущего списка (исправления доходят)
     const k = nphr(c.tr); if(k.includes(" ")) return true;                        // свои фразы и живые — как есть
@@ -3346,7 +3350,7 @@ const BOARD = [
   { id:"bakkal",    kind:"place", title:"Bakkal",            short:"Bakkal",  ru:"лавка",      ic:"b-bakkal",    dat:"Bakkala",        gen:"лавки", scenes:["bakkal", "mama"] },
   { id:"q3",        kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
   { id:"durak",     kind:"place", title:"Остановка долмуша", short:"Durak",   ru:"долмуш",  ic:"b-durak",     dat:"Durağa",         gen:"остановки", scenes:["dolmus"] },
-  { id:"simitci",   kind:"place", title:"Симитчи",           short:"Simit",   ru:"симитчи",    ic:"b-simit",     dat:"Simitçiye",      gen:"симитчи", scenes:["simit"] },
+  { id:"simitci",   kind:"place", title:"Симитчи (продавец симита)",           short:"Simit",   ru:"лоток симита",    ic:"b-simit",     dat:"Simitçiye",      gen:"симитчи", scenes:["simit"] },
   { id:"metro",     kind:"place", title:"Метро",             short:"Metro",   ru:"метро",      ic:"b-metro",     dat:"Metroya",        gen:"метро", scenes:["metro", "istanbulkart"] },
   { id:"q7",        kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
   { id:"taksi",     kind:"place", title:"Стоянка такси",     short:"Taksi",   ru:"такси",      ic:"b-taksi",     dat:"Taksi durağına", gen:"стоянки", scenes:["taxi"] },
@@ -4827,7 +4831,7 @@ function cityRes(){
 function cityRender(){
   const home = !ct;
   ctEl("ctHome").hidden = !home; ctEl("ctScene").hidden = home;
-  ctEl("ctPlace").textContent = home ? `Mahalle · ${DOW_RU[cityDow()]}, день ${city.day}` : ct.scene.place;
+  ctEl("ctPlace").textContent = home ? `Mahalle (квартал города) · ${DOW_RU[cityDow()]}, день ${city.day}` : ct.scene.place;
   cityRes();
   if(home) cityBoard();
   scheduleFit();
@@ -4849,7 +4853,9 @@ function cityBoard(){
   ctEl("ctDay").textContent = allDone ? "Все дела сделаны — домой." : `Дела на сегодня — ${left} из ${plan.length}`;
   ctEl("ctTasks").innerHTML = plan.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id), i = cellOfScene(id), op = cityOpenNow(id), dist = i < 0 ? 0 : boardDist(city.pos, i);
     const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? (s.phone ? "звоните отсюда" : "дело здесь") : s.phone ? `звонок · ${BOARD[i].ru}, ${dist} ${plural(dist, "клетка", "клетки", "клеток")}` : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
-    return `<li class="ct-task${d ? " done " + d.kind : !op.open ? " closed" : ""}" data-scene="${id}"><i aria-hidden="true"></i><b>${esc(s.title)}</b><span>${where}</span></li>`; }).join("");
+    const go = !d && op.open && i >= 0 && i === city.pos && !ct && !city.roll, w2 = go ? (s.phone ? "нажмите, чтобы позвонить" : "нажмите, чтобы начать") : where;
+    return `<li class="ct-task${d ? " done " + d.kind : !op.open ? " closed" : ""}${go ? " go" : ""}" data-scene="${id}"${go ? ' role="button" tabindex="0"' : ""}><i aria-hidden="true"></i><b>${esc(s.title)}</b><span>${w2}</span></li>`; }).join("");
+  ctEl("ctTasks").querySelectorAll(".ct-task.go").forEach(li => { const run = () => cityStart(li.dataset.scene); li.onclick = run; li.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); run(); } }; });
   cityInnerTab(cityTab); ctEl("ctChars").innerHTML = cityCharsHtml(); ctEl("ctSkills").innerHTML = citySkillsHtml();
   ctEl("ctChars").querySelectorAll(".ct-char").forEach(b => b.onclick = () => openChar(b.dataset.char));
   ctEl("ctDice").hidden = allDone; ctEl("ctHomeBtn").hidden = allDone; ctEl("ctTaxi").hidden = allDone || !!city.roll || city.min >= DAY_END;   // после 21:00 такси некуда — день кончился
@@ -7570,6 +7576,12 @@ $("freeTranslate").onclick = () => openTranslate(lastHeard);
 // «Примеры» — вместо платного лимита YouGlish (бесплатно 20 поисков в день, пользователь платить не будет):
 // фразы из Tatoeba с этим словом, перевод на русский и живые записи носителей (лицензированные) — без дневного лимита.
 // Видео YouGlish осталось как дополнительная кнопка в этом окне.
+// есть ли в предложении слово w (в любой форме): общее начало без последней буквы (yastık → yastığı), у глагола на -mek/-mak — основа без последней буквы (istemek → istiyorum)
+function exampleHas(sentence, w){
+  w = normPhrase(w); const verb = /(mek|mak)$/.test(w) && w.length > 5;
+  const p = verb ? Math.max(3, w.length - 4) : w.length <= 4 ? w.length : w.length - 1;
+  return normPhrase(sentence).split(" ").some(t => t.startsWith(w.slice(0, p)));
+}
 async function tatoebaExamples(text){
   const words = normPhrase(text).split(" ").filter(Boolean);
   const q = words.length > 1 ? `"${normPhrase(text)}"` : words[0];
@@ -7581,7 +7593,8 @@ async function tatoebaExamples(text){
     if(e){ if(!e.ru) e.ru = ru; if(!e.audio && lic[0]){ e.audio = tatoebaAudio(lic[0].id); e.who = lic[0].author; } return; }
     byId.set(x.id, { tr:x.text, ru, audio: lic[0] ? tatoebaAudio(lic[0].id) : "", who: lic[0] ? lic[0].author : "" });
   });
-  const out = [...byId.values()];
+  let out = [...byId.values()];
+  if(words.length === 1) out = out.filter(x => exampleHas(x.tr, words[0]));      // Tatoeba ищет по основе: «yastık» приносил «yasta», «yasa» (траур, закон) — оставляем только это слово в любой форме
   out.sort((p, r) => (!!r.audio - !!p.audio) || (!!r.ru - !!p.ru) || p.tr.length - r.tr.length);
   return { list: out.slice(0, 12), query: q, words };
 }
