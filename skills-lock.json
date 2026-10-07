@@ -31,6 +31,24 @@
       "skillPath": "skills/productivity/game-design/SKILL.md",
       "computedHash": "79c2695ba9d1721fd05dab6833775ae43cfb6fce92357ef31c8341166fc5b5da"
     },
+    "naming-and-branding": {
+      "source": "refoundai/lenny-skills",
+      "sourceType": "github",
+      "skillPath": "skills/naming-and-branding/SKILL.md",
+      "computedHash": "fc4ebde35f7d4fb1e3e1590f34fa722c67ad21a50e49d5adbb7cf68bf1385476"
+    },
+    "obviously-awesome": {
+      "source": "wondelai/skills",
+      "sourceType": "github",
+      "skillPath": "obviously-awesome/SKILL.md",
+      "computedHash": "202d49e9f9654df91bafd2b83a94b259ce9097b3b06f21350e92cdf719f8c1d1"
+    },
+    "product-name": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-marketing-growth/skills/product-name/SKILL.md",
+      "computedHash": "37cca037c08948af87728d31b676c2192029fa8ca0a4dd62584ad0839dee55a7"
+    },
     "requesting-code-review": {
       "source": "obra/superpowers",
       "sourceType": "github",
