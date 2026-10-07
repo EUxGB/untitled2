@@ -795,6 +795,8 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .gm-sample{padding:8px 10px; border-radius:12px; background:var(--near-soft); color:var(--ink); font-size:14px; line-height:1.4; display:flex; flex-direction:column; gap:6px}
 .gm-fb{padding:10px 12px; border-radius:12px; font-size:14px; line-height:1.45; color:var(--ink)} .gm-fb.ok{background:var(--ok-soft)} .gm-fb.bad{background:var(--near-soft)}
 .gm-fb .wm{margin-top:8px}
+.gm-snd{display:inline-flex; align-items:center; gap:3px; font-weight:700; color:var(--accent); border-bottom:1.5px dotted var(--accent); cursor:pointer; padding:0 1px; line-height:1.3} .gm-snd .ic{width:.75em; height:.75em; flex:none} .gm-snd:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px} .gm-snd.on{background:var(--accent-soft, rgba(15,92,90,.12)); border-radius:4px}
+.gm-listen{align-self:flex-start; min-height:48px; display:inline-flex; align-items:center; gap:8px}
 .gm-cue-btn{align-self:flex-start; min-height:44px; padding:6px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--accent); font:600 13px var(--body); cursor:pointer}
 .gm-cue{background:#F3E8CF; color:#14262B; border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.4} .gm-cue p{margin:0 0 6px} .gm-cue p:last-child{margin:0} .gm-cue b{font-weight:700} .gm-steps{opacity:.92}
 .gm-done{display:flex; flex-direction:column; gap:10px} .gm-score{font:700 34px var(--display); color:var(--ink)}
@@ -1050,7 +1052,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
           <li><b>Память</b> — всё, что сказали в «Городе» и тренировке, возвращается по расписанию FSRS: сначала вспомнить, потом ответ.</li>
           <li><b>Тренировка</b> — трудный звук (ö, ü, ı, ç, ş) в слове выделен цветом; разбор ошибок после «Сказать» показывает, какой звук спутан. Трудный звук выделен красным.</li>
           <li><b>Тренировка → Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «слова» — слова темы с примером.</li>
-          <li><b>Тренировка → Грамматика</b> — 30 коротких уроков: сначала пять «С чего начать» (слово из кубиков, глагол, последняя гласная, куда/где/откуда, сборка фразы из блоков), затем падежи, времена, «быть», вопрос, словообразование, с примерами из ваших фраз и упражнениями. Нажмите на любое турецкое слово: под переводом — разбор по частям (корень + окончания) и кнопка «Правило».</li>
+          <li><b>Тренировка → Грамматика</b> — 31 короткий урок: сначала пять «С чего начать» (слово из кубиков, глагол, последняя гласная, куда/где/откуда, сборка фразы из блоков), затем падежи, времена, «быть», вопрос, словообразование, с примерами из ваших фраз и упражнениями. Нажмите на любое турецкое слово: под переводом — разбор по частям (корень + окончания) и кнопка «Правило».</li>
           <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Примеры</b> — фразы носителей с этим словом: перевод и живая запись; там же видео (YouGlish, до 20 поисков в день).</li>
           <li><b>Сравнить</b> — если вы ещё не говорили это слово: образец, вы, оценка, затем образец и ваша запись подряд; если уже сказали — образец и ваша запись.</li>
           <li><b>На слух</b> — звучит одна из двух похожих фраз, выберите какая. <b>Блиц</b> — сколько различите за 60 секунд.</li>
@@ -2204,7 +2206,7 @@ const BADGES = [
   { id:"strong",  ic:"21д",   tier:3, t:"Прочная память", d:"20 фраз держатся в памяти 3+ недели",  v:() => memStats().strong, n:20 },
   { id:"gram3",   ic:"-ı",    tier:1, t:"Окончания",      d:"Освоить 3 правила грамматики",         v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:3 },
   { id:"gram10",  ic:"-lar",  tier:2, t:"Грамматист",     d:"Освоить 10 правил грамматики",         v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:10 },
-  { id:"gramall", ic:"30",    tier:3, t:"Знаток окончаний", d:"Освоить все 30 уроков грамматики",   v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:30 },
+  { id:"gramall", ic:"31",    tier:3, t:"Знаток окончаний", d:"Освоить все 31 урок грамматики",   v:() => typeof gramMasteredCount === "function" ? gramMasteredCount() : 0, n:31 },
   { id:"level5",  ic:"6",     tier:3, t:"Стамбулец",      d:"Достичь 6-го уровня",                  v:g => levelOf(g.xp), n:6 },
   { id:"lesson10",ic:"×10",   tier:3, t:"Прилежный",      d:"Пройти 10 уроков",                     v:g => g.lessons, n:10 },
   { id:"hafta",   ic:"7g",    tier:2, t:"Hafta",          d:"Прожить неделю в квартале",            v:() => typeof city !== "undefined" ? city.days : 0, n:7 },
@@ -5566,6 +5568,7 @@ const FORM_GLOSS = {
   üşümüyor:"не мёрзнет (üşümüyor musun — тебе не холодно?)", kilitledin:"ты запер", açar:"открывает (açar mısınız — откройте, пожалуйста)",
 };
 const FUNC_GLOSS = {
+  cam:"стекло; окно", çam:"сосна", jilet:"лезвие для бритья (не «жилет»)", kız:"девочка; дочь", kır:"поле, степь за городом", kir:"грязь", göz:"глаз", dağ:"гора", ağaç:"дерево", anne:"мама", kâğıt:"бумага", ay:"месяц; луна", uyku:"сон",   // 2026-10-07: слова урока «Звуки»
   kart:"карта (банковская, проездная)",
   tahlil:"анализ (медицинский)", fenerbahçe:"Фенербахче — футбольный клуб Стамбула", orta:"средний; середина",   // 07:52 (ревью): вторые варианты заходов
   selam:"привет (selam vermek — поздороваться)", çöp:"мусор", hiçbir:"никакой (hiçbir şey — ничего)", dolmuş:"долмуш — маршрутка", kepekli:"отрубной, с отрубями", normal:"обычный", maske:"маска", açık:"некрепкий (о чае); открытый; светлый", paket:"пакет, пачка; с собой (paket olsun — заверните с собой)", tek:"один, единственный (tek kişilik — на одного)", kusura:"обида (kusura bakmayın — извините, не обижайтесь)", misafir:"гость", üst:"верхний (üst kat — верхний этаж)", benim:"мой, моё (benim değil — не моё)", herhalde:"наверное", imza:"подпись", yine:"опять, снова", kutu:"коробка, банка", birer:"по одному", balıklı:"с рыбой, рыбный", tavuklu:"с курицей", yavru:"детёныш; котёнок", yetişkin:"взрослый", hem:"и; притом (hem de — да ещё и)", iri:"крупный", şımarık:"избалованный", pamuk:"Памук — «хлопок», частая кличка кота", hayırlı:"благой, добрый (hayırlı işler — удачной работы)", eyvallah:"спасибо, благодарю (разговорное)", komşu:"сосед, соседка",   // 07:52: вариативность «Корм для кота» и сцены «зайти»
@@ -6760,6 +6763,37 @@ const GRAMMAR = [
     { q:"По очереди из урока: «Я хочу чай»", o:["Ben çay istiyorum","Ben istiyorum çay","İstiyorum ben çay","Çay istiyorum ben"], a:0, w:"Глагол {istiyorum} — последним." },
     { q:"Вопрос: «Вы идёте домой?» (обычный вопрос, без акцента на слове «домой»). Где и какая частица?", o:["Eve gidiyor musunuz?","Eve gidiyor mısınız?","Mı eve gidiyorsunuz?","Eve gidiyorsunuz mi?"], a:0, w:"Частица — после глагола, а гласная — по последней гласной слова перед ней: {gidiyor} → «o» → {mu}: {gidiyor musunuz?}. (Если спрашиваете именно про «домой» — {Eve mi gidiyorsunuz?}, это другой акцент.)" },
     { q:"По очереди из урока: «Али сегодня остаётся дома»", o:["Ali bugün evde kalıyor","Ali kalıyor bugün evde","Bugün kalıyor Ali evde","Ali evde bugün kalıyor"], a:0, w:"Кто → когда → где → глагол: {Ali} · {bugün} · {evde} · {kalıyor}." } ] },
+{ id:"sounds", grp:"Произношение", nophr:true, sounds:true, t:"Звуки: буквы и сочетания", lead:"Как читать c, ç, ş, ı, ö, ü, ğ, конечное r — с озвучкой",
+  txt:["Турецкий читается так, как пишется: каждая буква — всегда один и тот же звук. Нажимайте на слова с треугольником — они прозвучат голосом носителя; если записи нет, зазвучит синтезатор, и на экране появится подпись «синтез».",
+       "Сначала — буквы, которые русскому уху незнакомы или читаются иначе. Все они в таблице ниже; послушайте каждое слово.",
+       "Три непривычные гласные. {ı} — это «ы», губы не округляйте: {{kız}} (девочка) — «кыз». {ö} — «ё» без «й»: сложите губы, как для «о», и скажите «э»: {{göz}} (глаз) — «гёз». {ü} — «ю» без «й»: сложите губы, как для «у», и скажите «и»: {{gül}} (роза) — «гюль», {{gün}} (день) — «гюн».",
+       "Пары, которые легко спутать. {c} — «дж», а {ç} — «ч»: {{cam}} (стекло) и {{çam}} (сосна). {ş} — «ш», а {s} — «с»: {{şu}} (тот) и {{su}} (вода). {ı} и {i}: {{kır}} (поле) — «кыр», {{kir}} (грязь) — «кир». Послушайте каждую пару по очереди.",
+       "Буква {ğ} («мягкое г») — не звук. Она делает долгой гласную перед ней: {{dağ}} (гора) — «даа», {{ağaç}} (дерево) — «аач». После {e} и {i} её слышно как лёгкое «й» или просто как долгую гласную: {{değil}} (не) — «дейиль», а в быстрой речи почти «диль». Слов, которые начинаются с {ğ}, нет: она всегда стоит после гласной.",
+       "Буква {h} читается всегда, не глотайте её: {{hava}} (воздух, погода) — «хава», {{hasta}} (больной) — «хаста». Буква {e} — всегда «э», никогда «е»: {{ev}} (дом) — «эв». Буква {y} — всегда «й»: {{yok}} (нет) — «йок».",
+       "Буква {r} — быстрый удар кончиком языка, без раската. В конце слова она звучит глухо, почти как «ш»: пишем {{hazır}} (готов) — слышим что-то вроде «хазыш»; пишем {{var}} (есть) — слышим «вар» с шипящим концом. Это глухое {r}, а не буква {ş}: в письме и в словаре всё равно {r}. Поэтому на слух {er} и {eş} легко спутать — смысл фразы подскажет, какое слово.",
+       "Двойная буква — долгий звук, обе буквы слышны: {{anne}} (мама) — «аннэ» с двумя «н», {{elli}} (пятьдесят) — «эльли», {{saat}} (час) — «саат». Крышка над гласной ({â}) — это тоже «а», только мягче и чуть дольше: {{hâlâ}} (всё ещё), {{kâğıt}} (бумага).",
+       "Буква {j} редкая, из заимствованных слов, и читается «ж»: {{jilet}} (лезвие для бритья; не «жилет»). Гласная + {y} даёт «ай, уй»: {{ay}} (месяц) — «ай», {{uyku}} (сон) — «уйку». Ударение чаще падает на последний слог: {{hazır}} — ха-ЗЫР; исключения есть, их запоминают."],
+  tbl:{ head:["Буква","Как читать","Пример (нажмите)"], rows:[["{c}", "«дж»", "{{cam}} — «джам»"], ["{ç}", "«ч»", "{{çay}} — «чай»"], ["{ş}", "«ш»", "{{şu}} — «шу»"], ["{j}", "«ж»", "{{jilet}} — «жилет»"], ["{ı}", "«ы»", "{{kız}} — «кыз»"], ["{i}", "«и»", "{{kim}} — «ким»"], ["{ö}", "«ё» без «й»", "{{göz}} — «гёз»"], ["{ü}", "«ю» без «й»", "{{gül}} — «гюль»"], ["{ğ}", "не звук: долгая гласная", "{{dağ}} — «даа»"], ["{h}", "«х», всегда", "{{hava}} — «хава»"], ["{e}", "«э»", "{{ev}} — «эв»"], ["{y}", "«й»", "{{yok}} — «йок»"], ["{r}", "удар языком; в конце слова глухо", "{{hazır}} — «хазыр»"]] },
+  ex:[
+    { q:"Как читается буква {c}?", o:["«дж»", "«ц»", "«к»", "«ч»"], a:0, w:"{c} — «дж»: {{cam}} — «джам». «Ч» — это {ç}." },
+    { q:"Как читается буква {ç}?", o:["«ч»", "«ц»", "«дж»", "«ш»"], a:0, w:"{ç} — «ч»: {{çay}} — «чай». «Дж» — это {c}." },
+    { q:"Как читается буква {ş}?", o:["«ш»", "«с»", "«щ»", "«ч»"], a:0, w:"{ş} — «ш»: {{şu}} — «шу». Обычная {s} — «с»: {{su}}." },
+    { q:"Как читается буква {j}?", o:["«ж»", "«й»", "«дж»", "«г»"], a:0, w:"{j} — «ж»: {{jilet}}. Буква редкая, из заимствованных слов." },
+    { q:"Как читается буква {ı} (без точки)?", o:["«ы»", "«и»", "«й»", "«у»"], a:0, w:"{ı} — «ы»: {{kız}} — «кыз». С точкой, {i}, — «и»: {{kim}}." },
+    { q:"Как читается буква {ö}?", o:["«ё» без «й»", "«о»", "«ю» без «й»", "«э»"], a:0, w:"{ö} — «ё» без «й»: губы как для «о», скажите «э»: {{göz}} — «гёз»." },
+    { q:"Как читается буква {ü}?", o:["«ю» без «й»", "«у»", "«ё» без «й»", "«и»"], a:0, w:"{ü} — «ю» без «й»: губы как для «у», скажите «и»: {{gül}} — «гюль»." },
+    { q:"Как читается слово {dağ} (гора)?", o:["«даа»", "«даг»", "«дах»", "«дав»"], a:0, w:"{ğ} — не звук, он делает гласную долгой: {{dağ}} — «даа»." },
+    { q:"Буква {h} в слове {hava}:", o:["читается всегда: «хава»", "не читается: «ава»", "читается как «г»", "читается как «ч»"], a:0, w:"{h} всегда читается, не глотайте её: {{hava}} — «хава», {{hasta}} — «хаста»." },
+    { q:"Как читается слово {ev} (дом)?", o:["«эв»", "«ев»", "«йев»", "«ив»"], a:0, w:"{e} — всегда «э»: {{ev}} — «эв», никогда «ев»." },
+    { q:"Как читается {y} в слове {yok} (нет)?", o:["«й»", "«у»", "«ы»", "«и»"], a:0, w:"{y} — всегда «й»: {{yok}} — «йок»." },
+    { q:"В слове {hazır} последняя буква {r} на слух:", o:["глухая, почти «ш»", "громкая раскатистая «р»", "«л»", "не слышна"], a:0, w:"В конце слова {r} звучит глухо, почти как «ш»: {{hazır}}, {{var}}. Пишется всё равно {r}." },
+    { q:"Слово {anne} (мама): сколько звуков «н» слышно?", o:["два: долгий звук", "один", "ни одного", "три"], a:0, w:"Двойная буква — долгий звук, обе буквы слышны: {{anne}} — «аннэ»." },
+    { q:"Какая буква читается «ч»?", o:["ç", "c", "ş", "j"], a:0, w:"«Ч» — {ç}: {{çay}}. {c} — «дж», {ş} — «ш», {j} — «ж».", lang:"tr" },
+    { q:"Послушайте. Какое слово прозвучало? Следите за первым звуком: {c} или {ç}.", o:["cam", "çam", "çay", "şu"], a:0, w:"Прозвучало слово {{cam}}.", lang:"tr", snd:"cam" },
+    { q:"Послушайте. Какое слово прозвучало? Следите за первым звуком: {ş} или {s}.", o:["şu", "su", "çay", "cam"], a:0, w:"Прозвучало слово {{şu}}.", lang:"tr", snd:"şu" },
+    { q:"Послушайте. Какое слово прозвучало? Следите за гласной: {ı} или {i}.", o:["kır", "kir", "kız", "göz"], a:0, w:"Прозвучало слово {{kır}}.", lang:"tr", snd:"kır" },
+    { q:"Послушайте. Какое слово прозвучало? Следите за гласной: {ü} или {ö}.", o:["gül", "göz", "kız", "gün"], a:0, w:"Прозвучало слово {{gül}}.", lang:"tr", snd:"gül" },
+    { q:"Послушайте. Какое слово прозвучало? Следите за долготой гласной и буквой {ğ}.", o:["dağ", "ağaç", "değil", "hava"], a:0, w:"Прозвучало слово {{dağ}}.", lang:"tr", snd:"dağ" } ] },
 { id:"harmony", grp:"Основа", t:"Гармония гласных", lead:"Окончание подстраивается под последнюю гласную слова",
   txt:["В турецком смысл даёт окончание, а его гласная зависит от последней гласной корня. Поэтому одно и то же окончание выглядит по-разному: {evde} (дома), но {okulda} (в школе).",
        "Двухвариантные окончания (a / e): {-lar/-ler}, {-da/-de}, {-dan/-den}, {-a/-e}. После a, ı, o, u ставится «a», после e, i, ö, ü ставится «e».",
@@ -7181,8 +7215,8 @@ const gramRule = id => GRAMMAR.find(r => r.id === id);
 const GM_VOW = "aeıioöuü", GM_VOICELESS = "çfhkpsşt";
 function hlWord(w){ const a = [...w]; let li = -1; a.forEach((c, i) => { if(GM_VOW.includes(c)) li = i; });
   return `<span class="hw" lang="tr" translate="no" aria-label="${esc(w)}">` + a.map((c, i) => i === li ? `<span class="lv">${esc(c)}</span>` : GM_VOICELESS.includes(c) ? `<span class="vl">${esc(c)}</span>` : GM_VOW.includes(c) ? `<span class="v">${esc(c)}</span>` : `<span class="vd">${esc(c)}</span>`).join("") + `</span>`; }
-const gmFmt = s => esc(String(s)).replace(/\[\[([^\]]+)\]\]/g, (m, w) => hlWord(w)).replace(/\{([^}]+)\}/g, '<b class="tr" lang="tr" translate="no">$1</b>');
-const GRAM_GROUPS = ["С чего начать", "Основа", "Существительные", "Предложение", "Глаголы", "Слова из слов", "Памятка"];
+const gmFmt = s => esc(String(s)).replace(/\{\{([^}]+)\}\}/g, (m, w) => `<span class="wd gm-snd" data-w="${w}" role="button" tabindex="0" lang="tr" translate="no"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>${w}</span>`).replace(/\[\[([^\]]+)\]\]/g, (m, w) => hlWord(w)).replace(/\{([^}]+)\}/g, '<b class="tr" lang="tr" translate="no">$1</b>');
+const GRAM_GROUPS = ["С чего начать", "Произношение", "Основа", "Существительные", "Предложение", "Глаголы", "Слова из слов", "Памятка"];
 let gstate = (() => { try { const o = JSON.parse(localStorage.getItem("soyle-gram")); return o && typeof o === "object" ? o : {}; } catch(e){ return {}; } })();
 function gramNormalize(){ if(!gstate || typeof gstate !== "object") gstate = {}; if(!gstate.r || typeof gstate.r !== "object") gstate.r = {};
   for(const k of Object.keys(gstate.r)){ const s = gstate.r[k]; if(!s || typeof s !== "object") { delete gstate.r[k]; continue; } s.n = +s.n || 0; s.ok = +s.ok || 0; s.last = Array.isArray(s.last) ? s.last.slice(-12).map(x => x ? 1 : 0) : []; } }
@@ -7251,6 +7285,8 @@ function gramMakeTap(word){
     w:gmFmt(`{${word}}: гласные — ${vs.join(", ")}. Последняя — {${a[li]}}, она ${hard ? "твёрдая → окончание берём с {a} (например, {-da})" : "мягкая → окончание берём с {e} (например, {-de})"}.`) + (lastC && !GM_VOW.includes(a[a.length - 1]) ? gmFmt(` Слово кончается на {${a[a.length - 1]}} — ${GM_VOICELESS.includes(a[a.length - 1]) ? "глухая: {d} в окончании станет {t}" : "звонкая: {d} остаётся"}.`) : "") };
 }
 function gramBuildQuiz(r){
+  if(r.sounds){ const mk = x => { const o = { type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:x.lang || "ru", w:gmFmt(x.w), snd:x.snd || "" }; o.order = gshuf(x.o.map((_, i) => i)); return o; };
+    return gshuf([...gshuf(r.ex.filter(x => x.snd)).slice(0, 3), ...gshuf(r.ex.filter(x => !x.snd)).slice(0, 5)].map(mk)); }
   if(r.tap){ const mc = x => { const o = { type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) }; o.order = gshuf(x.o.map((_, i) => i)); return o; };
     return gshuf([...gshuf(r.ex).slice(0, 3).map(mc), ...gshuf(r.tap).slice(0, 3).map(gramMakeTap)]); }
   if(r.blocks){ const hand0 = gshuf(r.ex).slice(0, 4).map(x => ({ type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) })); hand0.forEach(x => { x.order = gshuf(x.o.map((_, i) => i)); });
@@ -7318,7 +7354,8 @@ function gramQuizRender(){
   }
   const segs = gram.qs.map((x, k) => `<i${x.res === undefined ? (k === gram.i ? ' class="cur"' : "") : x.res ? ' class="ok"' : ' class="bad"'}></i>`).join("");
   let body = `<p class="gm-q" id="gmQ">${q.html ? q.q : esc(q.q)}</p>`;
-  { const cue = GM_CUE[gram.rule]; if(cue) body += `<button class="gm-cue-btn" data-act="cue" aria-expanded="${q.cue ? "true" : "false"}">${q.cue ? "Скрыть подсказку" : "Подсказка: как выбрать"}</button>` + (q.cue ? `<div class="gm-cue" role="note"><p>${gmFmt(cue)}</p>${!gramRule(gram.rule).micro && !gramRule(gram.rule).blocks && (q.cue === 2 || /\(ı\)|\/|-/.test(cue)) ? `<div class="gm-steps">${GM_STEPS.map(t => `<p>${gmFmt(t)}</p>`).join("")}</div>` : ""}</div>` : ""); }
+  { const cue = GM_CUE[gram.rule]; if(cue) body += `<button class="gm-cue-btn" data-act="cue" aria-expanded="${q.cue ? "true" : "false"}">${q.cue ? "Скрыть подсказку" : "Подсказка: как выбрать"}</button>` + (q.cue ? `<div class="gm-cue" role="note"><p>${gmFmt(cue)}</p>${!gramRule(gram.rule).micro && !gramRule(gram.rule).blocks && !gramRule(gram.rule).sounds && (q.cue === 2 || /\(ı\)|\/|-/.test(cue)) ? `<div class="gm-steps">${GM_STEPS.map(t => `<p>${gmFmt(t)}</p>`).join("")}</div>` : ""}</div>` : ""); }
+  if(q.snd) body += `<button class="btn native gm-listen" data-act="snd" data-w="${esc(q.snd)}"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl">Послушать слово</span></button>`;
   if(q.sample && q.res === undefined) body += `<div class="gm-sample" role="note"><b>Образец:</b> так выглядит правильная сборка. Повторите её, нажимая блоки по порядку.${blocksHtml(q.m)}</div>`;
   if(q.type === "tap") body += `<div class="gm-word" style="--n:${[...q.word].length}" role="group" aria-labelledby="gmQ">${[...q.word].map((c, i) => `<button class="gm-let${q.chosen === i ? (q.res ? " ok" : " bad") : q.chosen !== undefined && i === q.a ? " ok" : ""}" data-act="let" data-i="${i}" ${q.chosen !== undefined ? "disabled" : ""} lang="tr" translate="no" aria-label="буква ${esc(c)}">${esc(c)}</button>`).join("")}</div>`
     + (q.res !== undefined ? `<p class="gm-hl">${hlWord(q.word)}</p>` : "");
@@ -7343,11 +7380,21 @@ function gramRecord(id, ok){
 }
 function gramResolve(ok){ const q = gram.qs[gram.i]; q.res = ok; if(ok) gram.ok++; gramRecord(gram.rule, ok); gramQuizRender(); scheduleFit(); const fb = gmEl().querySelector(".gm-fb"); if(fb && fb.scrollIntoView) fb.scrollIntoView({ block:"nearest" }); }
 const gmFocus = sel => { const el = gmEl().querySelector(sel); if(el && !el.disabled) el.focus({ preventScroll:true }); };   // после перерисовки фокус не должен падать в начало страницы
+// звук слова в упражнении «послушайте»: запись носителя (не дольше 1,5 с), иначе синтез; слово на экране НЕ показываем — это и есть ответ
+let gmPlayTok = 0;
+async function gmPlay(word){
+  const tok = ++gmPlayTok; let recs = null;
+  try { recs = await Promise.race([findRecordings(word), new Promise(z => setTimeout(() => z(null), 1500))]); } catch(e){}
+  if(tok !== gmPlayTok) return;
+  if(recs && recs.length){ const a = $("nativeAudio"); speechSynthesis && speechSynthesis.cancel(); a.src = recs[0].url; a.play().catch(() => sayText(word)); }
+  else sayText(word);
+}
 function gramClick(e){
   const b = e.target.closest("[data-act]"); if(!b || b.disabled) return; const act = b.dataset.act;
   if(act === "rule"){ gram = { view:"rule", rule:b.dataset.rule, qs:[], i:0, ok:0, done:false }; gramRender(); }
   else if(act === "quiz"){ closeSheet(); if(mode !== "grammar") setMode("grammar"); gram = { view:"quiz", rule:b.dataset.rule, qs:gramBuildQuiz(gramRule(b.dataset.rule)), i:0, ok:0, done:false }; gramRender(); }
   else if(act === "back"){ if(gram.view === "quiz") gram = { view:"rule", rule:gram.rule, qs:[], i:0, ok:0, done:false }; else gram = { view:"list", rule:null, qs:[], i:0, ok:0, done:false }; gramRender(); }
+  else if(act === "snd"){ gmPlay(b.dataset.w); }
   else if(act === "cue"){ const q = gram.qs[gram.i]; if(q){ q.cue = !q.cue; gramQuizRender(); gmFocus('[data-act="cue"]'); } }
   else if(act === "let"){ const q = gram.qs[gram.i]; if(q.chosen !== undefined) return; q.chosen = +b.dataset.i; gramResolve(q.chosen === q.a); gmFocus(".gm-next"); }
   else if(act === "opt"){ const q = gram.qs[gram.i]; if(q.chosen !== undefined) return; q.chosen = +b.dataset.i; gramResolve(q.chosen === q.a); gmFocus(".gm-next"); }
@@ -7360,6 +7407,7 @@ function gramClick(e){
 function gramEnter(){ gram = { view:"list", rule:null, qs:[], i:0, ok:0, done:false }; gramRender(); }
 function gramSheet(id){ const r = gramRule(id); if(!r) return; openSheet(shortGloss(r.t) || r.t, gramRuleHtml(r, true)); }
 document.addEventListener("click", e => { if(e.target.closest && e.target.closest("#gramView")) gramClick(e); });
+document.addEventListener("keydown", e => { const t = e.target; if((e.key === "Enter" || e.key === " ") && t && t.matches && t.matches(".wd[role='button']")){ e.preventDefault(); t.click(); } });
 $("wordPop").addEventListener("click", e => { const b = e.target.closest("[data-gr]"); if(b){ wordPopHide(); gramSheet(b.dataset.gr); } });
 $("sheetBody").addEventListener("click", e => { const b = e.target.closest("[data-act='quiz']"); if(b) gramClick(e); });
 document.addEventListener("keydown", e => { if(e.key === "Escape" && !e.defaultPrevented && mode === "grammar" && $("sheet").hidden && !modalOpen && gram.view !== "list"){ const bk = gmEl().querySelector('[data-act="back"]'); if(bk) bk.click(); } });
@@ -7386,6 +7434,7 @@ const GM_CUE = {
   cases_buffer:"Слово на гласную + винительный или дательный: между ними {y} ({oda-y-a}); {-la/-le} — тоже {y} ({metro-yla}); родительный после гласной — {n} ({hastane-nin}). Окончание «его» ({-sı}) и слова {o, bu, şu} требуют {n}: {oda-sı-n-da}, {o-n-a}, {bu-n-u}.",
   place_n:"Три шага: 1) предмет в родительном: {masa} → {masanın}. 2) слово-часть ({üst, alt, iç, ön, arka, yan}) + «его» ({-ı/-i/-u/-ü} по последней гласной; после гласной {-sı}): {alt} → {altı}. 3) кубик: где? {-nda/-nde}, куда? {-na/-ne}, откуда? {-ndan/-nden} (между «его» и кубиком — {n}): {altında}.",
   nums:"Составное число — от большего к меньшему, раздельно: {yüz yirmi beş}; «сто» и «тысяча» без «один». Время: число + кубик «где?» ({-te/-ta} после глухой: {üçte}; иначе {-da/-de}). Порядковое: число + {-ıncı/-inci/-uncu/-üncü}: {beşinci}.",
+  sounds:"Запомните: {c} — «дж», {ç} — «ч», {ş} — «ш», {ı} — «ы», {ö} — «ё», {ü} — «ю». Буква {ğ} звука не даёт, она растягивает гласную. {h} читается всегда, {e} — всегда «э». Конечное {r} звучит глухо, почти «ш».",
   soft:"Окончание с гласной ({-a/-e}, {-ı/-i/-u/-ü}) → {p, ç, t, k} на конце смягчаются: {kitap} → {kitaba}. С согласной ({-ta}, {-tan}, {-la}) — без изменений. Односложные чаще не меняются: {park} → {parka}.",
   loc_abl:"Где? {-da/-de}. Откуда? {-dan/-den}. После глухой (ç f h k p s ş t) — {-ta/-te}, {-tan/-ten}: {sokak} → {sokakta}, {sokaktan}. Гласная — 2 варианта: после a ı o u — «a», после e i ö ü — «e».",
   gen_ins:"Чей? {-(n)ın/in/un/ün} (4 варианта): {Ali'nin}. С чем? Чем? {-(y)la/-(y)le} (2 варианта): {kartla}, {otobüsle}, {benimle}. Гласную ищите по таблице.",
