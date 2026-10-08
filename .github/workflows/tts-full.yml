@@ -21,7 +21,7 @@ jobs:
       - run: node tests/tts-texts.js
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
-      - run: sudo apt-get install -y -qq ffmpeg && pip install -q piper-tts==1.2.0 faster-whisper huggingface_hub
+      - run: sudo apt-get install -y -qq ffmpeg && pip install -q piper-tts==1.2.0 faster-whisper huggingface_hub num2words
       - name: Ветка tts-audio (если есть)
         run: git clone -q --depth 1 -b tts-audio "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" tts-audio || (mkdir tts-audio && cd tts-audio && git init -q && git checkout -q -b tts-audio)
       - name: Озвучить недостающее и проверить Whisper

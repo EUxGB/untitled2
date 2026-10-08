@@ -19,6 +19,9 @@ if man.get("voice") != VOICE_TAG: man = {"voice": VOICE_TAG, "items": {}}
 rep_path = os.path.join(out, "tts-report.json")
 report = json.load(open(rep_path, encoding="utf-8")) if os.path.exists(rep_path) else {"bad": {}, "doubt": {}}
 report.setdefault("bad", {}); report.setdefault("doubt", {})
+# v2 (2026-10-08): числа Whisper пишет цифрами («180 lira») — переводим в слова; одиночные слова Whisper без контекста часто «слышит» чужое
+# («Altyazı M.K.», «abone olmayı unutmayın») — их не выбрасываем, только помечаем сомнительными. Прежние «выброшенные» — перепроверить.
+if report.get("ver") != 2: report = {"ver": 2, "bad": {}, "doubt": {}}
 
 def fname(key): return hashlib.sha1((VOICE_TAG + "\n" + key).encode("utf-8")).hexdigest()[:16] + ".mp3"
 
@@ -57,8 +60,13 @@ except Exception as e:
 tmp = "/tmp/tts-wav"; os.makedirs(tmp, exist_ok=True)
 
 # проверка распознаванием
+try:
+    from num2words import num2words
+    def digits(s): return re.sub(r"\d+", lambda m: " " + num2words(int(m.group()), lang="tr") + " ", s)
+except Exception:
+    def digits(s): return s
 def norm(s):
-    s = s.replace("I", "ı").replace("İ", "i").lower(); s = unicodedata.normalize("NFC", s)
+    s = digits(s).replace("I", "ı").replace("İ", "i").lower(); s = unicodedata.normalize("NFC", s)
     s = re.sub(r"[^\w\s]", "", s); return re.sub(r"\s+", " ", s).strip()
 def lev(a, b):
     d = list(range(len(b) + 1))
@@ -67,7 +75,7 @@ def lev(a, b):
         for j, cb in enumerate(b, 1): p, d[j] = d[j], min(d[j] + 1, d[j - 1] + 1, p + (ca != cb))
     return d[len(b)]
 def acc(ref, hyp):
-    r, h = norm(ref), norm(hyp); return max(0.0, 1 - lev(r, h) / max(1, len(r)))
+    r, h = norm(ref).replace(" ", ""), norm(hyp).replace(" ", ""); return max(0.0, 1 - lev(r, h) / max(1, len(r)))   # без пробелов: num2words пишет «yüzseksen»
 from faster_whisper import WhisperModel
 def hear(m, wav):
     segs, _ = m.transcribe(wav, language="tr", beam_size=5, condition_on_previous_text=False)
@@ -94,7 +102,7 @@ for c0 in range(0, len(todo), 150):
     if doubt and big is None: big = WhisperModel("large-v3", device="cpu", compute_type="int8")
     for k, wav in doubt:
         h = hear(big, wav); a = acc(keys[k], h)
-        if a >= 0.5:
+        if a >= 0.5 or " " not in keys[k].strip():           # одиночное слово — не выбрасываем (см. v2 выше), только помечаем
             man["items"][k] = fname(k)
             if a < 0.8: report["doubt"][k] = {"text": keys[k], "heard": h, "acc": round(a, 2)}
             else: report["doubt"].pop(k, None)
