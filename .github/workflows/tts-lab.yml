@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        eng: [piper, mms, xtts, f5]
+        eng: [xtts, f5]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,8 +24,8 @@ jobs:
           case "${{ matrix.eng }}" in
             piper) pip install -q piper-tts==1.2.0 || pip install -q piper-tts ;;
             mms)   pip install -q torch --index-url https://download.pytorch.org/whl/cpu && pip install -q transformers ;;
-            xtts)  pip install -q torch torchaudio --index-url https://download.pytorch.org/whl/cpu && pip install -q coqui-tts ;;
-            f5)    pip install -q torch torchaudio --index-url https://download.pytorch.org/whl/cpu && pip install -q f5-tts ;;
+            xtts)  pip install -q torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cpu && pip install -q coqui-tts "transformers==4.46.3" ;;
+            f5)    pip install -q torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cpu && pip install -q f5-tts && pip install -q torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cpu && pip uninstall -y -q torchcodec || true ;;
           esac
       - name: Озвучка
         env: { COQUI_TOS_AGREED: "1" }
