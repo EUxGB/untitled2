@@ -1,0 +1,296 @@
+{
+ "f5_turkish": [
+  {
+   "text": "hazır",
+   "heard": "Hazır",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "değil",
+   "heard": "Değil.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "ağaç",
+   "heard": "AŞÇI",
+   "acc": 0.25,
+   "exact": false
+  },
+  {
+   "text": "göz",
+   "heard": "Altyazı M.K.",
+   "acc": 0,
+   "exact": false
+  },
+  {
+   "text": "gül",
+   "heard": "Gül",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Var mı?",
+   "heard": "Var mı?",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Hesap lütfen.",
+   "heard": "Altyazı M.K.",
+   "acc": 0,
+   "exact": false
+  },
+  {
+   "text": "Kahvaltı hazır!",
+   "heard": "Kahvaltıdır.",
+   "acc": 0.714,
+   "exact": false
+  },
+  {
+   "text": "Ellerinize sağlık, çok lezzetli.",
+   "heard": "İyilerinize sağlık zettirin.",
+   "acc": 0.533,
+   "exact": false
+  }
+ ],
+ "mms": [
+  {
+   "text": "hazır",
+   "heard": "Hazır",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "değil",
+   "heard": "Dilerim.",
+   "acc": 0.2,
+   "exact": false
+  },
+  {
+   "text": "ağaç",
+   "heard": "az",
+   "acc": 0.25,
+   "exact": false
+  },
+  {
+   "text": "göz",
+   "heard": "Gül.",
+   "acc": 0.333,
+   "exact": false
+  },
+  {
+   "text": "gül",
+   "heard": "GÜRÜP",
+   "acc": 0,
+   "exact": false
+  },
+  {
+   "text": "Var mı?",
+   "heard": "Doğar mı?",
+   "acc": 0.5,
+   "exact": false
+  },
+  {
+   "text": "Hesap lütfen.",
+   "heard": "Hesap Lütfey",
+   "acc": 0.917,
+   "exact": false
+  },
+  {
+   "text": "Kahvaltı hazır!",
+   "heard": "Kahvaltı hazır.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Ellerinize sağlık, çok lezzetli.",
+   "heard": "Ellerinize sağlık çok lezzeti.",
+   "acc": 0.967,
+   "exact": false
+  }
+ ],
+ "piper_tr_TR-dfki-medium": [
+  {
+   "text": "hazır",
+   "heard": "Hazır.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "değil",
+   "heard": "Değil.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "ağaç",
+   "heard": "AĞAÇ",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "göz",
+   "heard": "GÖZ",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "gül",
+   "heard": "Gül",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Var mı?",
+   "heard": "Var mı?",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Hesap lütfen.",
+   "heard": "Hesap lütfen.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Kahvaltı hazır!",
+   "heard": "Kahvaltı hazır.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Ellerinize sağlık, çok lezzetli.",
+   "heard": "Ellerinize sağlık, çok lezzetli.",
+   "acc": 1.0,
+   "exact": true
+  }
+ ],
+ "xtts_builtin": [
+  {
+   "text": "hazır",
+   "heard": "Hazır.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "değil",
+   "heard": "DİN",
+   "acc": 0.4,
+   "exact": false
+  },
+  {
+   "text": "ağaç",
+   "heard": "Ağaçı",
+   "acc": 0.75,
+   "exact": false
+  },
+  {
+   "text": "göz",
+   "heard": "Göz",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "gül",
+   "heard": "Dürlü",
+   "acc": 0,
+   "exact": false
+  },
+  {
+   "text": "Var mı?",
+   "heard": "Var mı?",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Hesap lütfen.",
+   "heard": "Hesap lütfen.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Kahvaltı hazır!",
+   "heard": "Kahvaltı hazır.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Ellerinize sağlık, çok lezzetli.",
+   "heard": "Ellerinize sağlık, çok lezzetli.",
+   "acc": 1.0,
+   "exact": true
+  }
+ ],
+ "xtts_cv_voice": [
+  {
+   "text": "hazır",
+   "heard": "Hazır.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "değil",
+   "heard": "Değil.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "ağaç",
+   "heard": "Ağaç",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "göz",
+   "heard": "Göz.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "gül",
+   "heard": "Gönüllü.",
+   "acc": 0,
+   "exact": false
+  },
+  {
+   "text": "Var mı?",
+   "heard": "Var mı?",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Hesap lütfen.",
+   "heard": "Hesap lütfenme.",
+   "acc": 0.833,
+   "exact": false
+  },
+  {
+   "text": "Kahvaltı hazır!",
+   "heard": "Kahvaltı hazır.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Ellerinize sağlık, çok lezzetli.",
+   "heard": "Ellerinize sağlık, çok lezzetli.",
+   "acc": 1.0,
+   "exact": true
+  }
+ ],
+ "native": [
+  {
+   "text": "Hesap lütfen.",
+   "heard": "Hesap lütfen.",
+   "acc": 1.0,
+   "exact": true
+  },
+  {
+   "text": "Kahvaltı hazır!",
+   "heard": "Kahvaltı hazır.",
+   "acc": 1.0,
+   "exact": true
+  }
+ ]
+}
