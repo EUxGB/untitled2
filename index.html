@@ -5207,6 +5207,28 @@ function ctAltIdx(nid, len){
   return a[nid];
 }
 const relDiscount = price => Math.floor(price * 0.9 / 5) * 5;
+// Озвучка Piper (спек docs/superpowers/specs/2026-10-08-piper-tts-design.md): ключ текста и список ВСЕГО, что сайт может произнести.
+// Список читает генератор в CI (tests/tts-texts.js → озвучка недостающего); тест сверяет его с данными сайта.
+const ttsKey = t => String(t || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("tr-TR");
+function ttsInventory(){
+  const out = new Map(), add = t => { if(Array.isArray(t)) return t.forEach(add); if(typeof t !== "string") return; t = t.trim().replace(/\s+/g, " ");
+      if(!/\p{L}/u.test(t)) return; const k = ttsKey(t); if(!out.has(k)) out.set(k, t); },
+    words = t => { if(typeof t !== "string") return; t.split(/\s+/).forEach(w => add(w.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, ""))); },
+    both = t => { if(Array.isArray(t)) return t.forEach(both); add(t); words(t); };
+  [...PHRASE_SETS.flatMap(g => g.items), ...OLD_PHRASES].forEach(x => both(x.tr));
+  add(Object.keys(PHRASE_DICT)); Object.values(PHRASE_DICT).forEach(v => words(v[1])); add(Object.values(WORD_SEEDS).flat().map(x => x[0]));
+  SMALLTALK.forEach(x => both(x.tr)); (typeof SMALLTALK_MOVES !== "undefined" ? SMALLTALK_MOVES : []).forEach(m => both(m.say || m.tr));
+  const node = n => { if(!n || typeof n !== "object") return; both(n.npc); both(n.again); both(n.greetAlt); Object.values(n.npcBy || {}).forEach(both); Object.values(n.againBy || {}).forEach(both);
+    [...(n.moves || []), ...(n.extra || [])].forEach(m => m && both(m.say)); (n.variants || []).forEach(node); (n.alt || []).forEach(node);
+    if(n.pay) both(n.pay.short); if(n.none) both(n.none.npc); if(n.done) both(n.done.say); };
+  Object.values(SCENES).forEach(sc => Object.values(sc.nodes || {}).forEach(node));
+  const cap = s => s.charAt(0).toLocaleUpperCase("tr-TR") + s.slice(1);
+  BOARD.forEach(b => { if(b.dat) both(`${b.dat} lütfen.`); });
+  for(let d = 0; d <= BOARD.length; d++){ const base = 100 + 10 * d; [base, relDiscount(base)].forEach(p => { both(`Geldik. ${cap(trNumWords(p))} lira.`); both(`Eksik. ${cap(trNumWords(p))} lira.`); }); }
+  Object.keys(SHOP_LINES).forEach(it => { both(SHOP_LINES[it][0]); both(`${cap(it)}, tamam. Başka?`); });
+  GRAMMAR.forEach(g => { (JSON.stringify([g.txt, g.tbl, g.ex]).match(/\{\{([^}]+)\}\}/g) || []).forEach(x => add(x.slice(2, -2))); g.ex.forEach(x => add(x.snd)); });
+  return [...out.values()];
+}
 function cityNode(id, replyHtml){
   const n0 = ctNodeFor(id); if(!n0) return;
   if(n0.pass) return cityNode(n0.pass, replyHtml);                                                      // сквозной вариант: шага «иногда» сегодня нет

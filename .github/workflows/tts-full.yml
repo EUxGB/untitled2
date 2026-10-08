@@ -1,0 +1,35 @@
+name: Озвучка Piper — полная (разовая) и проверка Whisper
+# Запуск: push в ветку tts-work (или вручную). Результат — ветка tts-audio: mp3 + manifest.json + tts-report.json.
+on:
+  push:
+    branches: [tts-work]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: { group: tts-audio, cancel-in-progress: false }
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium || (sleep 20 && npx playwright install --with-deps chromium)
+        timeout-minutes: 12
+      - run: node tests/tts-texts.js
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: sudo apt-get install -y -qq ffmpeg && pip install -q piper-tts==1.2.0 faster-whisper huggingface_hub
+      - name: Ветка tts-audio (если есть)
+        run: git clone -q --depth 1 -b tts-audio "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" tts-audio || (mkdir tts-audio && cd tts-audio && git init -q && git checkout -q -b tts-audio)
+      - name: Озвучить недостающее и проверить Whisper
+        run: python3 tests/tts-build.py tests/tts-texts.json tts-audio
+      - name: Сохранить ветку tts-audio
+        if: always()
+        shell: bash
+        run: |
+          cd tts-audio && git config user.name "github-actions" && git config user.email "github-actions@users.noreply.github.com"
+          git add -A && (git commit -qm "Озвучка Piper: $(python3 -c "import json;print(len(json.load(open('manifest.json'))['items']))" 2>/dev/null) файлов" || true)
+          git push -q "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:tts-audio
