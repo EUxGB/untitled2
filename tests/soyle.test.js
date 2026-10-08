@@ -1654,23 +1654,21 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.bad, []); ok(r.btn && r.spokenQuiz >= 1, 'кнопка «Послушать слово» не играет'); ok(!r.qText.includes(r.word), 'в вопросе названо слово ' + r.word); ok(!r.visibleBefore, 'ответ виден до выбора');
     ok(/Верно/.test(r.fb) && r.ok === 1, r.fb); ok(r.h >= 44, 'кнопка ниже 44px: ' + r.h); eq(q.errors, []); await q.context().close();
   });
-  await test('озвучка Piper, шаг 1 (2026-10-08): список всего, что сайт может произнести — фразы, слова фраз и реплик, словари, реплики и числа города, такси, лавка, слова уроков; без повторов', async () => {
+  await test('озвучка Piper, шаг 1 (2026-10-08; 2026-10-09: только фразы и реплики): список всего, что сайт может произнести фразой — фразы, реплики и числа города, такси, лавка; одиночных слов нет (их говорит телефон); без повторов', async () => {
     const r = await p.evaluate(() => {
       if(typeof ttsInventory !== 'function') return { none:true };
       const inv = ttsInventory(), keys = new Set(inv.map(ttsKey)), has = t => keys.has(ttsKey(t)), miss = [];
       const need = (src, list) => list.forEach(t => { if(t && !has(t)) miss.push(src + ': ' + t); });
       need('фраза', [...PHRASE_SETS.flatMap(g => g.items), ...OLD_PHRASES].map(x => x.tr));
-      need('слово фразы', [...PHRASE_SETS.flatMap(g => g.items), ...OLD_PHRASES].flatMap(x => x.tr.split(/\s+/)).map(w => w.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, '')));
-      need('словарь', [...Object.keys(PHRASE_DICT), ...Object.values(WORD_SEEDS).flat().map(x => x[0])]);
+      const single = inv.filter(t => !/\s/.test(t) && !/[.!?…]$/.test(t));
       need('такси', [`Geldik. ${trNumWords(110).replace(/^./, c => c.toLocaleUpperCase('tr-TR'))} lira.`, `Eksik. ${trNumWords(240).replace(/^./, c => c.toLocaleUpperCase('tr-TR'))} lira.`, `Geldik. ${trNumWords(relDiscount(240)).replace(/^./, c => c.toLocaleUpperCase('tr-TR'))} lira.`, ...BOARD.filter(b => b.dat).map(b => `${b.dat} lütfen.`)]);
       need('лавка', Object.keys(SHOP_LINES).flatMap(it => [SHOP_LINES[it][0], `${it[0].toLocaleUpperCase('tr-TR') + it.slice(1)}, tamam. Başka?`]));
-      need('урок', GRAMMAR.flatMap(g => JSON.stringify([g.txt, g.tbl, g.ex]).match(/\{\{([^}]+)\}\}/g) || []).map(s => s.slice(2, -2)).concat(GRAMMAR.flatMap(g => g.ex.filter(x => x.snd).map(x => x.snd))));
       need('светская', SMALLTALK.map(x => x.tr));
-      return { n:inv.length, uniq:keys.size, miss:[...new Set(miss)].slice(0, 20), nmiss:miss.length, empty:inv.filter(t => !/\p{L}/u.test(t)).length };
+      return { n:inv.length, uniq:keys.size, miss:[...new Set(miss)].slice(0, 20), nmiss:miss.length, empty:inv.filter(t => !/\p{L}/u.test(t)).length, single:single.slice(0, 5) };
     });
     ok(!r.none, 'нет ttsInventory'); const city = JSON.parse(fs.readFileSync(path.join(__dirname, 'city-phrases.json'), 'utf8'));
     const r2 = await p.evaluate(list => { const keys = new Set(ttsInventory().map(ttsKey)); return list.filter(t => !keys.has(ttsKey(t))).slice(0, 10); }, city);
-    eq(r.miss, [], 'нет в списке (' + r.nmiss + ')'); eq(r2, [], 'реплики города (city-phrases.json) не в списке'); eq(r.n, r.uniq, 'повторы'); eq(r.empty, 0); ok(r.n > 2000, 'текстов мало: ' + r.n);
+    eq(r.miss, [], 'нет в списке (' + r.nmiss + ')'); eq(r2, [], 'реплики города (city-phrases.json) не в списке'); eq(r.n, r.uniq, 'повторы'); eq(r.empty, 0); eq(r.single, [], 'одиночные слова в списке озвучки'); ok(r.n > 1000, 'текстов мало: ' + r.n);
   });
   await test('озвучка Piper, шаг 4: есть файл в манифесте — играет он (слово, «Синтез» обычный и медленный, собеседник в городе со скоростью Kulak, образец без записи носителя); нет файла — голос телефона', async () => {
     const q = await openPage(browser);
@@ -1689,7 +1687,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       out.canSpeak = canSpeak();
       return out; });
     const errs = q.errors; await q.context().close();
-    eq(r.word, [['tts/bbb.mp3'], []], 'слово'); eq(r.missing, [[], ['yok böyle']], 'нет файла — телефон');
+    eq(r.word, [[], ['Hesap']], 'одиночное слово — голос телефона (решение 2026-10-09), даже если файл есть'); eq(r.missing, [[], ['yok böyle']], 'нет файла — телефон');
     eq(r.synth[0], ['tts/aaa.mp3'], '«Синтез»'); eq(r.synth[1], 1); eq(r.slow[0], ['tts/aaa.mp3']); ok(Math.abs(r.slow[1] - 0.7) < 1e-6, 'медленно: ' + r.slow[1]);
     eq(r.ref, [['tts/aaa.mp3'], [], 1], 'образец без записи носителя'); eq(r.npc, [['tts/ccc.mp3'], true], 'собеседник'); eq(r.npcDone, 1); ok(r.canSpeak, 'без голоса телефона — можно говорить файлами'); eq(errs, []);
   });

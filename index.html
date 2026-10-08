@@ -5225,7 +5225,10 @@ function ttsKey(t){ return String(t || "").trim().replace(/\s+/g, " ").toLocaleL
 var TTS = { man:null, tried:false };
 function ttsLoad(){ if(TTS.tried) return; TTS.tried = true;
   fetch("tts/manifest.json", { cache:"no-cache" }).then(r => r.ok ? r.json() : null).then(m => { if(m && m.items) TTS.man = m.items; }).catch(() => {}); }
-function ttsUrl(text){ const f = TTS && TTS.man && TTS.man[ttsKey(text)]; return f ? "tts/" + f : null; }
+// Решение пользователя 2026-10-09 01:00: одиночные слова (нажатие на слово, словарь) — голосом телефона, Piper — фразы и реплики
+// (Whisper не узнавал 215 одиночных слов; на слух не проверено). Фраза = есть пробел или знак конца предложения («Buyurun.»).
+function ttsPhrase(t){ t = String(t || "").trim(); return /\s/.test(t) || /[.!?…]$/.test(t); }
+function ttsUrl(text){ if(!ttsPhrase(text)) return null; const f = TTS && TTS.man && TTS.man[ttsKey(text)]; return f ? "tts/" + f : null; }
 function canSpeak(){ return !!trVoice || !!(TTS && TTS.man); }
 // Сказать турецкий текст: файл Piper (скорость rate, с сохранением высоты), иначе synth() — прежний голос телефона.
 // В тестах — журнал window.__ttsSeen (все тексты, которые сайт пытался озвучить).
@@ -5237,7 +5240,7 @@ function ttsPlay(text, synth, onDone, rate, onStart){
 }
 function ttsInventory(){
   const out = new Map(), add = t => { if(Array.isArray(t)) return t.forEach(add); if(typeof t !== "string") return; t = t.trim().replace(/\s+/g, " ");
-      if(!/\p{L}/u.test(t)) return; const k = ttsKey(t); if(!out.has(k)) out.set(k, t); },
+      if(!/\p{L}/u.test(t) || !ttsPhrase(t)) return; const k = ttsKey(t); if(!out.has(k)) out.set(k, t); },
     words = t => { if(typeof t !== "string") return; t.split(/\s+/).forEach(w => add(w.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, ""))); },
     both = t => { if(Array.isArray(t)) return t.forEach(both); add(t); words(t); };
   [...PHRASE_SETS.flatMap(g => g.items), ...OLD_PHRASES].forEach(x => both(x.tr));
