@@ -31,6 +31,12 @@
       "skillPath": "skills/productivity/game-design/SKILL.md",
       "computedHash": "79c2695ba9d1721fd05dab6833775ae43cfb6fce92357ef31c8341166fc5b5da"
     },
+    "interview-script": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-discovery/skills/interview-script/SKILL.md",
+      "computedHash": "867f90ce30998d6a3120f689dcccbd56d38204da679a0c7f35a3b60d5fcc5bfb"
+    },
     "naming-and-branding": {
       "source": "refoundai/lenny-skills",
       "sourceType": "github",
