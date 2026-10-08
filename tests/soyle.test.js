@@ -667,9 +667,22 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const found = [...new Set(src.match(/[\p{Extended_Pictographic}✓✔★⇄▶⏹⏱]/gu) || [])];
     eq(found, []);
   });
-  await test('название в заголовке — «Söyle» с настоящей ö (не «Soyle»)', async () => {
-    const t = await p.evaluate(() => document.querySelector('h1').textContent);
-    eq(t, 'Söyle');
+  await test('название — Simit (решение 2026-10-08 12:55; 2026-10-09 01:13 «söyle неактуально в названии»): заголовок, вкладка, ярлык, манифест; для поисковиков — описание, адрес-канон, Open Graph, JSON-LD, robots.txt и sitemap.xml', async () => {
+    const r = await p.evaluate(() => ({ h1:document.querySelector('h1').textContent, title:document.title, apple:document.querySelector('meta[name="apple-mobile-web-app-title"]').content,
+      desc:(document.querySelector('meta[name="description"]') || {}).content || '', canon:(document.querySelector('link[rel="canonical"]') || {}).href || '',
+      og:[...document.querySelectorAll('meta[property^="og:"]')].map(m => m.getAttribute('property')),
+      ld:[...document.querySelectorAll('script[type="application/ld+json"]')].map(s => { try { return JSON.parse(s.textContent); } catch(e){ return 'ошибка JSON'; } }).flat(),
+      visible:document.body.innerText.includes('Söyle') }));
+    const man = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'manifest.json'), 'utf8'));
+    eq([r.h1, r.apple, man.short_name], ['Simit', 'Simit', 'Simit']); ok(/Simit/.test(r.title) && !/Söyle/.test(r.title + man.name), r.title + ' / ' + man.name);
+    ok(r.title.length >= 30 && r.title.length <= 60, 'длина title ' + r.title.length); ok(r.desc.length >= 120 && r.desc.length <= 165, 'длина description ' + r.desc.length);
+    eq(r.canon, 'https://www.simitci.ru/'); for(const k of ['og:title', 'og:description', 'og:url', 'og:image', 'og:type', 'og:locale']) ok(r.og.includes(k), 'нет ' + k);
+    ok(r.ld.some(x => x['@type'] === 'WebSite' && x.name === 'Simit' && x.url === 'https://www.simitci.ru/'), 'JSON-LD WebSite');
+    ok(r.ld.some(x => x['@type'] === 'WebApplication' && x.offers && x.offers.price === '0' && !x.aggregateRating), 'JSON-LD WebApplication (без выдуманных оценок)');
+    ok(!r.visible, 'на экране осталось «Söyle»');
+    const robots = fs.readFileSync(path.join(__dirname, '..', 'robots.txt'), 'utf8'), sm = fs.readFileSync(path.join(__dirname, '..', 'sitemap.xml'), 'utf8');
+    ok(/Sitemap: https:\/\/www\.simitci\.ru\/sitemap\.xml/.test(robots) && !/Disallow: \/\s*$/m.test(robots), 'robots.txt'); ok(sm.includes('<loc>https://www.simitci.ru/</loc>'), 'sitemap.xml');
+    const yml = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'tests.yml'), 'utf8'); ok(/cp -r index\.html[^\n]*robots\.txt[^\n]*sitemap\.xml/.test(yml), 'публикация не копирует robots.txt и sitemap.xml');
   });
   await test('смена надписи не стирает иконку: «Сказать», «Записать себя», блиц', async () => {
     const r = await p.evaluate(() => { const s = document.getElementById('speak'); setLbl(s, 'Слушаю…'); const a = [s.querySelectorAll('svg').length, s.getAttribute('aria-label')]; setLbl(s, 'Сказать');

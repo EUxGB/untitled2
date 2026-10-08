@@ -386,6 +386,13 @@ Literata/Commissioner убраны. Две главные — `preload`. Пуб�
   Сайт: `ttsPlay(text, synth, onDone, rate, onStart)` — файл Piper (`playFileOr`, скорость Kulak через `playbackRate`), иначе прежний голос телефона; заменены `sayText`, кнопка «Синтез» (`say`),
   запасной синтез `playReference`, `npcSay`. В тестах — журнал `window.__ttsSeen`; тест города: всё, что сцены говорят, есть в `ttsInventory`. Лицензия голоса — CC BY-NC-SA 4.0 (строка `#ttsCredit` в «Как пользоваться»).
   Новая фраза/реплика озвучивается сама при следующей публикации; до этого — голос телефона.
+- **Имя Simit на сайте и поисковики (2026-10-09 01:13: «söyle неактуально в названии», «проиндексировать в поисковике»)**: по спеку ветки `skills/naming-positioning`
+  (видимые имена и манифест — Simit, ключи `soyle-*`, `app:"soyle"` резервной копии и имена шрифтов `Soyle Serif/Sans` НЕ трогать — сломают сохранения и эталон вида).
+  Заголовок `<h1>` Simit, `<title>` «Тренажёр турецкого произношения и разговора | Simit» (запрос первым, бренд в конце — `seo-audit/references/title-tags.md`),
+  `meta description` (151 знак), `canonical` https://www.simitci.ru/, Open Graph, JSON-LD `WebSite` + `WebApplication` (бесплатно, БЕЗ выдуманных оценок — навык `schema`:
+  «accuracy first»), `robots.txt` + `sitemap.xml` (публикация копирует их, `tests.yml`). Навыки: `seo-audit` и `schema` (coreyhaines31/marketingskills, 5,4 млн установок у
+  репозитория, MIT) — `.agents/skills/`. Индексация: Google Search Console и Яндекс Вебмастер — подтверждение владения делает пользователь (мета-тег или TXT в DNS Timeweb).
+  Тест «название — Simit…» (проверен: на прежнем коде падает).
 - Подсказки скрыты, показываются кнопкой «?». Статистика по наборам.
 - Запись своего голоса всегда включена; на Android — автоматический обход (кнопка «Записать себя»).
 - Доступность WCAG 2.1 AA, тёмная тема, зоны нажатия ≥ 44 px.

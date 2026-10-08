@@ -77,7 +77,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Собрать сайт (только файлы приложения)
         run: |
-          mkdir _site && cp -r index.html manifest.json icon-*.png fonts audio _site/
+          mkdir _site && cp -r index.html manifest.json robots.txt sitemap.xml icon-*.png fonts audio _site/
           # озвучка Piper из ветки tts-audio (нет ветки — сайт говорит голосом телефона)
           if git clone -q --depth 1 -b tts-audio "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" /tmp/tta; then
             mkdir -p _site/tts && cp /tmp/tta/manifest.json /tmp/tta/*.mp3 _site/tts/ && echo "озвучка: $(ls _site/tts/*.mp3 | wc -l) файлов"

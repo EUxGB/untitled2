@@ -8,12 +8,22 @@
 <meta name="theme-color" content="#0E1719" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Söyle">
+<meta name="apple-mobile-web-app-title" content="Simit">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Söyle — тренажёр произношения</title>
+<title>Тренажёр турецкого произношения и разговора | Simit</title>
+<meta name="description" content="Говорите по-турецки вслух: игра-квартал Стамбула, где дела в магазине, банке и такси решаются фразой. Оценка произношения, записи носителей, бесплатно.">
+<link rel="canonical" href="https://www.simitci.ru/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Simit">
+<meta property="og:title" content="Тренажёр турецкого произношения и разговора | Simit">
+<meta property="og:description" content="Говорите по-турецки вслух: игра-квартал Стамбула, где дела в магазине, банке и такси решаются фразой. Оценка произношения, записи носителей, бесплатно.">
+<meta property="og:url" content="https://www.simitci.ru/">
+<meta property="og:image" content="https://www.simitci.ru/icon-512.png">
+<meta property="og:locale" content="ru_RU">
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebSite", "name": "Simit", "url": "https://www.simitci.ru/", "inLanguage": "ru"}, {"@context": "https://schema.org", "@type": "WebApplication", "name": "Simit", "url": "https://www.simitci.ru/", "description": "Говорите по-турецки вслух: игра-квартал Стамбула, где дела в магазине, банке и такси решаются фразой. Оценка произношения, записи носителей, бесплатно.", "applicationCategory": "EducationalApplication", "operatingSystem": "Web", "inLanguage": "ru", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "RUB"}}]</script>
 <!-- шрифты лежат рядом с приложением (fonts/), а не на Google Fonts: вид не зависит от доступа к чужому серверу -->
 <link rel="preload" href="fonts/LiberationSerif-Bold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/DejaVuSans.woff2" as="font" type="font/woff2" crossorigin>
@@ -870,7 +880,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 </svg>
 <div class="app">
   <header class="topbar">
-    <h1 translate="no">Söyle</h1>
+    <h1 translate="no">Simit</h1>
     <button class="tb-stats" id="tbProgress" aria-label="Прогресс: дни подряд, уровень, цель дня">
       <span class="tb-item"><svg class="ic tulip" aria-hidden="true"><use href="#i-flame"/></svg><b id="tbStreak">0</b></span>
       <span class="tb-sep" aria-hidden="true"></span>
@@ -3271,8 +3281,8 @@ function bkParse(text){
   text = (text || "").trim();
   let obj;
   try { obj = text.startsWith("SOYLE1:") ? JSON.parse(b64dec(text.slice(7).replace(/\s+/g, ""))) : JSON.parse(text); }
-  catch(e){ throw new Error("Это не код и не файл резервной копии Söyle."); }
-  if(!obj || obj.app !== "soyle" || obj.v !== 1 || typeof obj.data !== "object") throw new Error("Это не резервная копия Söyle или она из другой версии.");
+  catch(e){ throw new Error("Это не код и не файл резервной копии Simit."); }
+  if(!obj || obj.app !== "soyle" || obj.v !== 1 || typeof obj.data !== "object") throw new Error("Это не резервная копия Simit или она из другой версии.");
   const keys = Object.keys(obj.data).filter(k => k.startsWith("soyle-") && !BK_DEVICE_KEYS.includes(k) && typeof obj.data[k] === "string");
   if(!keys.length) throw new Error("В копии нет данных.");
   try { keys.forEach(k => { if(["soyle-game","soyle-stats","soyle-mine","soyle-srs"].includes(k)) JSON.parse(obj.data[k]); }); }

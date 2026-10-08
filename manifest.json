@@ -1,7 +1,7 @@
 {
-  "name": "Söyle — турецкое произношение",
-  "short_name": "Söyle",
-  "description": "Тренажёр турецкого произношения для русскоговорящих",
+  "name": "Simit — разговорный турецкий",
+  "short_name": "Simit",
+  "description": "Тренажёр турецкого произношения и разговора для русскоговорящих: игра-квартал, оценка произношения, записи носителей",
   "lang": "ru",
   "start_url": "./index.html",
   "scope": "./",
@@ -10,8 +10,21 @@
   "background_color": "#EEF2F0",
   "theme_color": "#EEF2F0",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
