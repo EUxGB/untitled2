@@ -1,0 +1,3276 @@
+{
+ "bad": {
+  "ki": {
+   "text": "ki",
+   "heard": "Değil mi?",
+   "acc": 0.0
+  },
+  "ol": {
+   "text": "ol",
+   "heard": "Halk",
+   "acc": 0.0
+  },
+  "mı": {
+   "text": "mı",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "bu": {
+   "text": "Bu",
+   "heard": "Vur.",
+   "acc": 0.0
+  },
+  "mü": {
+   "text": "mü",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "de": {
+   "text": "de",
+   "heard": "Lütfen abone olmayı ve videoyu beğenmeyi unutmayın.",
+   "acc": 0.0
+  },
+  "olun": {
+   "text": "olun",
+   "heard": "Uydul.",
+   "acc": 0.0
+  },
+  "sana": {
+   "text": "sana",
+   "heard": "Taner",
+   "acc": 0.25
+  },
+  "evde": {
+   "text": "evde",
+   "heard": "Öğüldü.",
+   "acc": 0.0
+  },
+  "oda": {
+   "text": "oda",
+   "heard": "Rıdar",
+   "acc": 0.0
+  },
+  "miyim": {
+   "text": "miyim",
+   "heard": "BİM",
+   "acc": 0.4
+  },
+  "misin": {
+   "text": "misin",
+   "heard": "Değilsin.",
+   "acc": 0.2
+  },
+  "odama": {
+   "text": "odama",
+   "heard": "Uydar mı?",
+   "acc": 0.0
+  },
+  "duş": {
+   "text": "duş",
+   "heard": "Büş",
+   "acc": 0.33
+  },
+  "alacağım": {
+   "text": "alacağım",
+   "heard": "Hadi cevap.",
+   "acc": 0.0
+  },
+  "kapıyı": {
+   "text": "Kapıyı",
+   "heard": "Kopir.",
+   "acc": 0.33
+  },
+  "mısınız": {
+   "text": "mısınız",
+   "heard": "Mısırlısı",
+   "acc": 0.43
+  },
+  "mi": {
+   "text": "mi",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "kimse": {
+   "text": "kimse",
+   "heard": "15.",
+   "acc": 0.0
+  },
+  "ama": {
+   "text": "Ama",
+   "heard": "Amin.",
+   "acc": 0.33
+  },
+  "bugün": {
+   "text": "bugün",
+   "heard": "Bu gel.",
+   "acc": 0.4
+  },
+  "memnun": {
+   "text": "memnun",
+   "heard": "Bemniler.",
+   "acc": 0.17
+  },
+  "değil": {
+   "text": "değil",
+   "heard": "B",
+   "acc": 0.0
+  },
+  "önemli": {
+   "text": "önemli",
+   "heard": "Bir namli.",
+   "acc": 0.17
+  },
+  "yarın": {
+   "text": "Yarın",
+   "heard": "İlerin.",
+   "acc": 0.2
+  },
+  "kal": {
+   "text": "kal",
+   "heard": "Kaldı.",
+   "acc": 0.33
+  },
+  "da": {
+   "text": "da",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "hesap": {
+   "text": "Hesap",
+   "heard": "İSAK",
+   "acc": 0.4
+  },
+  "olsun": {
+   "text": "olsun",
+   "heard": "Hoşçakalın.",
+   "acc": 0.0
+  },
+  "su": {
+   "text": "su",
+   "heard": "Süt",
+   "acc": 0.0
+  },
+  "kahve": {
+   "text": "Kahve",
+   "heard": "Ah be!",
+   "acc": 0.4
+  },
+  "yemek": {
+   "text": "Yemek",
+   "heard": "Kim neydi?",
+   "acc": 0.0
+  },
+  "aç": {
+   "text": "aç",
+   "heard": "Ayşe",
+   "acc": 0.0
+  },
+  "yiyelim": {
+   "text": "yiyelim",
+   "heard": "Yılın.",
+   "acc": 0.29
+  },
+  "içmem": {
+   "text": "içmem",
+   "heard": "İsmail",
+   "acc": 0.2
+  },
+  "veganım.": {
+   "text": "Veganım.",
+   "heard": "Peygamber",
+   "acc": 0.14
+  },
+  "veganım": {
+   "text": "Veganım",
+   "heard": "Peygamberim.",
+   "acc": 0.0
+  },
+  "barmen": {
+   "text": "Barmen",
+   "heard": "Bay bay.",
+   "acc": 0.17
+  },
+  "hey": {
+   "text": "Hey",
+   "heard": "P",
+   "acc": 0.0
+  },
+  "taksi": {
+   "text": "taksi",
+   "heard": "Kaldı seri.",
+   "acc": 0.0
+  },
+  "nereye": {
+   "text": "Nereye",
+   "heard": "Bebeği.",
+   "acc": 0.33
+  },
+  "nedir": {
+   "text": "nedir",
+   "heard": "Diyedir.",
+   "acc": 0.4
+  },
+  "sağa": {
+   "text": "Sağa",
+   "heard": "Sağ ol.",
+   "acc": 0.25
+  },
+  "inmek": {
+   "text": "İnmek",
+   "heard": "İnleyin.",
+   "acc": 0.2
+  },
+  "nasıl": {
+   "text": "nasıl",
+   "heard": "Bu da sır.",
+   "acc": 0.0
+  },
+  "kaçta": {
+   "text": "kaçta",
+   "heard": "Eçti.",
+   "acc": 0.4
+  },
+  "kalkıyor": {
+   "text": "kalkıyor",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "sürer": {
+   "text": "sürer",
+   "heard": "Töre.",
+   "acc": 0.4
+  },
+  "onu": {
+   "text": "Onu",
+   "heard": "Önüp.",
+   "acc": 0.0
+  },
+  "şu": {
+   "text": "Şu",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "an": {
+   "text": "an",
+   "heard": "Hal.",
+   "acc": 0.0
+  },
+  "otobüsü": {
+   "text": "Otobüsü",
+   "heard": "Otur bir süre.",
+   "acc": 0.0
+  },
+  "uygun": {
+   "text": "uygun",
+   "heard": "Duygulan.",
+   "acc": 0.4
+  },
+  "küçük": {
+   "text": "küçük",
+   "heard": "BİÇİR",
+   "acc": 0.2
+  },
+  "bunun": {
+   "text": "Bunun",
+   "heard": "Buyurun.",
+   "acc": 0.4
+  },
+  "kim": {
+   "text": "kim",
+   "heard": "GİN",
+   "acc": 0.33
+  },
+  "para": {
+   "text": "para",
+   "heard": "Bırak.",
+   "acc": 0.25
+  },
+  "alerjim": {
+   "text": "Alerjim",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "galiba": {
+   "text": "galiba",
+   "heard": "Eyvah!",
+   "acc": 0.0
+  },
+  "mu": {
+   "text": "mu",
+   "heard": "BİLGİLİK",
+   "acc": 0.0
+  },
+  "ağrın": {
+   "text": "Ağrın",
+   "heard": "Halin.",
+   "acc": 0.2
+  },
+  "ateşin": {
+   "text": "Ateşin",
+   "heard": "Hadi işin.",
+   "acc": 0.17
+  },
+  "mıydı": {
+   "text": "mıydı",
+   "heard": "BİDE",
+   "acc": 0.2
+  },
+  "siz": {
+   "text": "Siz",
+   "heard": "Tezgah.",
+   "acc": 0.0
+  },
+  "mısın": {
+   "text": "mısın",
+   "heard": "Bissel.",
+   "acc": 0.0
+  },
+  "sağlığım": {
+   "text": "Sağlığım",
+   "heard": "Talih'im.",
+   "acc": 0.38
+  },
+  "ederim": {
+   "text": "ederim",
+   "heard": "Bir derin.",
+   "acc": 0.17
+  },
+  "musun": {
+   "text": "musun",
+   "heard": "Gülsün.",
+   "acc": 0.2
+  },
+  "soruyu": {
+   "text": "Soruyu",
+   "heard": "Sürüyor.",
+   "acc": 0.33
+  },
+  "kimlik": {
+   "text": "Kimlik",
+   "heard": "giyinmedik.",
+   "acc": 0.0
+  },
+  "tekrar": {
+   "text": "Tekrar",
+   "heard": "DQR",
+   "acc": 0.17
+  },
+  "deneyelim": {
+   "text": "deneyelim",
+   "heard": "Ben iyiyim.",
+   "acc": 0.44
+  },
+  "akşam": {
+   "text": "akşam",
+   "heard": "Hoşçakalın.",
+   "acc": 0.0
+  },
+  "sever": {
+   "text": "sever",
+   "heard": "Sevgiler.",
+   "acc": 0.4
+  },
+  "polis": {
+   "text": "Polis",
+   "heard": "Bu iliz.",
+   "acc": 0.0
+  },
+  "edin": {
+   "text": "edin",
+   "heard": "İzlediğiniz için teşekkür ederim.",
+   "acc": 0.0
+  },
+  "acil": {
+   "text": "Acil",
+   "heard": "Ödül.",
+   "acc": 0.25
+  },
+  "yangın": {
+   "text": "Yangın",
+   "heard": "DENGBİN",
+   "acc": 0.33
+  },
+  "köşe": {
+   "text": "köşe",
+   "heard": "Büşşe",
+   "acc": 0.25
+  },
+  "köşesi": {
+   "text": "köşesi",
+   "heard": "Büşey Seri",
+   "acc": 0.0
+  },
+  "kış": {
+   "text": "kış",
+   "heard": "Bir.",
+   "acc": 0.0
+  },
+  "iki": {
+   "text": "İki",
+   "heard": "İlginç.",
+   "acc": 0.0
+  },
+  "gece": {
+   "text": "gece",
+   "heard": "T.C.",
+   "acc": 0.25
+  },
+  "dahil": {
+   "text": "dahil",
+   "heard": "Dayı.",
+   "acc": 0.4
+  },
+  "çağırır": {
+   "text": "çağırır",
+   "heard": "Çağla ölür.",
+   "acc": 0.14
+  },
+  "her": {
+   "text": "her",
+   "heard": "Köl.",
+   "acc": 0.0
+  },
+  "tavsiye": {
+   "text": "tavsiye",
+   "heard": "Ağzıya.",
+   "acc": 0.29
+  },
+  "acı": {
+   "text": "Acı",
+   "heard": "Hacır.",
+   "acc": 0.33
+  },
+  "et": {
+   "text": "Et",
+   "heard": "Heyt!",
+   "acc": 0.0
+  },
+  "lezzetliydi": {
+   "text": "lezzetliydi",
+   "heard": "EZTİDE",
+   "acc": 0.45
+  },
+  "metro": {
+   "text": "Metro",
+   "heard": "Ve çoğu.",
+   "acc": 0.0
+  },
+  "son": {
+   "text": "Son",
+   "heard": "Tamam.",
+   "acc": 0.0
+  },
+  "midem": {
+   "text": "Midem",
+   "heard": "Bid'an.",
+   "acc": 0.4
+  },
+  "ağrı": {
+   "text": "Ağrı",
+   "heard": "Böyle.",
+   "acc": 0.0
+  },
+  "kere": {
+   "text": "kere",
+   "heard": "Öyle.",
+   "acc": 0.25
+  },
+  "en": {
+   "text": "En",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "yakın": {
+   "text": "yakın",
+   "heard": "Bir gün.",
+   "acc": 0.0
+  },
+  "ekmek": {
+   "text": "ekmek",
+   "heard": "etlik.",
+   "acc": 0.4
+  },
+  "köpek": {
+   "text": "köpek",
+   "heard": "GÜLTEK",
+   "acc": 0.2
+  },
+  "şemsiye": {
+   "text": "şemsiye",
+   "heard": "Kendisi.",
+   "acc": 0.29
+  },
+  "yol": {
+   "text": "yol",
+   "heard": "Gülüyor.",
+   "acc": 0.0
+  },
+  "ucuz": {
+   "text": "ucuz",
+   "heard": "Bu cüs.",
+   "acc": 0.0
+  },
+  "pasaport": {
+   "text": "pasaport",
+   "heard": "WhatsApp Hort",
+   "acc": 0.25
+  },
+  "kişi": {
+   "text": "kişi",
+   "heard": "İşçilik",
+   "acc": 0.0
+  },
+  "yer": {
+   "text": "yer",
+   "heard": "Geri.",
+   "acc": 0.33
+  },
+  "el": {
+   "text": "el",
+   "heard": "Değil.",
+   "acc": 0.0
+  },
+  "kuru": {
+   "text": "kuru",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "hikâye": {
+   "text": "hikâye",
+   "heard": "İyi köye.",
+   "acc": 0.33
+  },
+  "banyo": {
+   "text": "banyo",
+   "heard": "O'nil.",
+   "acc": 0.2
+  },
+  "tren": {
+   "text": "tren",
+   "heard": "Diyan",
+   "acc": 0.0
+  },
+  "renk": {
+   "text": "renk",
+   "heard": "Beyin.",
+   "acc": 0.0
+  },
+  "karın": {
+   "text": "karın",
+   "heard": "Görün.",
+   "acc": 0.4
+  },
+  "sağlık": {
+   "text": "sağlık",
+   "heard": "Sağlıcakla.",
+   "acc": 0.33
+  },
+  "ev": {
+   "text": "ev",
+   "heard": "Değil mi?",
+   "acc": 0.0
+  },
+  "isim": {
+   "text": "isim",
+   "heard": "Yiğitsin.",
+   "acc": 0.0
+  },
+  "ad": {
+   "text": "ad",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "yaş": {
+   "text": "yaş",
+   "heard": "Güneş",
+   "acc": 0.0
+  },
+  "vegan": {
+   "text": "vegan",
+   "heard": "Peydan",
+   "acc": 0.4
+  },
+  "gelmek": {
+   "text": "gelmek",
+   "heard": "Ben neyim?",
+   "acc": 0.0
+  },
+  "bilmek": {
+   "text": "bilmek",
+   "heard": "Bir inek.",
+   "acc": 0.33
+  },
+  "kapı": {
+   "text": "kapı",
+   "heard": "Kı kı.",
+   "acc": 0.25
+  },
+  "ucuzu": {
+   "text": "ucuzu",
+   "heard": "Bu cüz'u.",
+   "acc": 0.4
+  },
+  "eline": {
+   "text": "eline",
+   "heard": "İzlediğiniz için teşekkür ederim.",
+   "acc": 0.0
+  },
+  "az": {
+   "text": "az",
+   "heard": "Hazır.",
+   "acc": 0.0
+  },
+  "açık": {
+   "text": "açık",
+   "heard": "bir tip.",
+   "acc": 0.0
+  },
+  "okul": {
+   "text": "okul",
+   "heard": "Hukur",
+   "acc": 0.25
+  },
+  "sabun": {
+   "text": "sabun",
+   "heard": "Sağolun.",
+   "acc": 0.4
+  },
+  "priz": {
+   "text": "priz",
+   "heard": "Peace.",
+   "acc": 0.0
+  },
+  "ışık": {
+   "text": "ışık",
+   "heard": "Beşik",
+   "acc": 0.25
+  },
+  "bavul": {
+   "text": "bavul",
+   "heard": "Bulur.",
+   "acc": 0.4
+  },
+  "kira": {
+   "text": "kira",
+   "heard": "Yiğit Ağ",
+   "acc": 0.0
+  },
+  "daire": {
+   "text": "daire",
+   "heard": "Değil de.",
+   "acc": 0.0
+  },
+  "selam": {
+   "text": "selam",
+   "heard": "Teyla",
+   "acc": 0.4
+  },
+  "tuz": {
+   "text": "tuz",
+   "heard": "Pus.",
+   "acc": 0.33
+  },
+  "kaşık": {
+   "text": "kaşık",
+   "heard": "Hoşçakalın.",
+   "acc": 0.0
+  },
+  "tabak": {
+   "text": "tabak",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "biber": {
+   "text": "biber",
+   "heard": "Bildar",
+   "acc": 0.4
+  },
+  "soğan": {
+   "text": "soğan",
+   "heard": "Zorlan.",
+   "acc": 0.4
+  },
+  "limon": {
+   "text": "limon",
+   "heard": "Gün mor.",
+   "acc": 0.0
+  },
+  "sol": {
+   "text": "sol",
+   "heard": "Soğur.",
+   "acc": 0.0
+  },
+  "köprü": {
+   "text": "köprü",
+   "heard": "Döpül.",
+   "acc": 0.4
+  },
+  "gişe": {
+   "text": "gişe",
+   "heard": "Bir şey.",
+   "acc": 0.0
+  },
+  "kasap": {
+   "text": "kasap",
+   "heard": "Vesat.",
+   "acc": 0.4
+  },
+  "ayakkabı": {
+   "text": "ayakkabı",
+   "heard": "Altyazı M.K.",
+   "acc": 0.12
+  },
+  "hediye": {
+   "text": "hediye",
+   "heard": "İyi dilek.",
+   "acc": 0.0
+  },
+  "iade": {
+   "text": "iade",
+   "heard": "7.",
+   "acc": 0.0
+  },
+  "ilaç": {
+   "text": "ilaç",
+   "heard": "Yaş",
+   "acc": 0.25
+  },
+  "ishal": {
+   "text": "ishal",
+   "heard": "Bir sonraki videoda görüşmek üzere.",
+   "acc": 0.0
+  },
+  "kan": {
+   "text": "kan",
+   "heard": "Doğan.",
+   "acc": 0.0
+  },
+  "tahlil": {
+   "text": "tahlil",
+   "heard": "Tarihi",
+   "acc": 0.33
+  },
+  "hap": {
+   "text": "hap",
+   "heard": "Böyle.",
+   "acc": 0.0
+  },
+  "merhem": {
+   "text": "merhem",
+   "heard": "Bayha",
+   "acc": 0.17
+  },
+  "yara": {
+   "text": "yara",
+   "heard": "1-",
+   "acc": 0.0
+  },
+  "sırt": {
+   "text": "sırt",
+   "heard": "Selet.",
+   "acc": 0.25
+  },
+  "kol": {
+   "text": "kol",
+   "heard": "Korktu.",
+   "acc": 0.0
+  },
+  "ayak": {
+   "text": "ayak",
+   "heard": "Hoşçakalın.",
+   "acc": 0.0
+  },
+  "aile": {
+   "text": "aile",
+   "heard": "değilir.",
+   "acc": 0.0
+  },
+  "dil": {
+   "text": "dil",
+   "heard": "1.",
+   "acc": 0.0
+  },
+  "mutlu": {
+   "text": "mutlu",
+   "heard": "Mutlu ol.",
+   "acc": 0.4
+  },
+  "şehir": {
+   "text": "şehir",
+   "heard": "",
+   "acc": 0.0
+  },
+  "yıl": {
+   "text": "yıl",
+   "heard": "1.",
+   "acc": 0.0
+  },
+  "sabah": {
+   "text": "sabah",
+   "heard": "Sağolun.",
+   "acc": 0.0
+  },
+  "kötü": {
+   "text": "kötü",
+   "heard": "Bütür",
+   "acc": 0.25
+  },
+  "kayıp": {
+   "text": "kayıp",
+   "heard": "Duyup",
+   "acc": 0.4
+  },
+  "itfaiye": {
+   "text": "itfaiye",
+   "heard": "İzlediğiniz için teşekkür ederim.",
+   "acc": 0.0
+  },
+  "sene": {
+   "text": "sene",
+   "heard": "Zeynep",
+   "acc": 0.25
+  },
+  "yazın": {
+   "text": "yazın",
+   "heard": "Gözden.",
+   "acc": 0.2
+  },
+  "akmıyor": {
+   "text": "akmıyor",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "üst": {
+   "text": "üst",
+   "heard": "Üz.",
+   "acc": 0.33
+  },
+  "gelmedi": {
+   "text": "gelmedi",
+   "heard": "Geğenliğidir.",
+   "acc": 0.0
+  },
+  "ara": {
+   "text": "ara",
+   "heard": "öyle.",
+   "acc": 0.0
+  },
+  "yükseldi": {
+   "text": "yükseldi",
+   "heard": "İpsal edip",
+   "acc": 0.12
+  },
+  "mıydın": {
+   "text": "mıydın",
+   "heard": "BİDDİN",
+   "acc": 0.33
+  },
+  "öyle": {
+   "text": "öyle",
+   "heard": "Bilet.",
+   "acc": 0.25
+  },
+  "hı hı.": {
+   "text": "Hı hı.",
+   "heard": "Dövü.",
+   "acc": 0.0
+  },
+  "hı": {
+   "text": "Hı",
+   "heard": "B",
+   "acc": 0.0
+  },
+  "gideceğiz": {
+   "text": "gideceğiz",
+   "heard": "İdc's",
+   "acc": 0.33
+  },
+  "nereye.": {
+   "text": "Nereye.",
+   "heard": "Dede",
+   "acc": 0.33
+  },
+  "abi": {
+   "text": "Abi",
+   "heard": "Halbi.",
+   "acc": 0.33
+  },
+  "kadıköy'e": {
+   "text": "Kadıköy'e",
+   "heard": "Ödük köye.",
+   "acc": 0.38
+  },
+  "yere": {
+   "text": "yere",
+   "heard": "Yeğli",
+   "acc": 0.25
+  },
+  "o": {
+   "text": "O",
+   "heard": "Öl.",
+   "acc": 0.0
+  },
+  "kalsın": {
+   "text": "kalsın",
+   "heard": "Hudson",
+   "acc": 0.33
+  },
+  "altmış": {
+   "text": "altmış",
+   "heard": "60",
+   "acc": 0.0
+  },
+  "yüz altmış, komşu.": {
+   "text": "Yüz altmış, komşu.",
+   "heard": "160 komşu",
+   "acc": 0.38
+  },
+  "eksik. yüz seksen lira.": {
+   "text": "Eksik. Yüz seksen lira.",
+   "heard": "180 lira.",
+   "acc": 0.24
+  },
+  "eksik": {
+   "text": "Eksik",
+   "heard": "Lezzetli.",
+   "acc": 0.0
+  },
+  "gel": {
+   "text": "gel",
+   "heard": "Ve el.",
+   "acc": 0.0
+  },
+  "on": {
+   "text": "On",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "vereyim": {
+   "text": "vereyim",
+   "heard": "Berin",
+   "acc": 0.43
+  },
+  "beşinci": {
+   "text": "Beşinci",
+   "heard": "5.",
+   "acc": 0.0
+  },
+  "gelirim": {
+   "text": "gelirim",
+   "heard": "Bildirin.",
+   "acc": 0.43
+  },
+  "on beş lira.": {
+   "text": "On beş lira.",
+   "heard": "15 lira.",
+   "acc": 0.45
+  },
+  "üsküdar'a": {
+   "text": "Üsküdar'a",
+   "heard": "Bismillahirrahmanirrahim.",
+   "acc": 0.0
+  },
+  "öne": {
+   "text": "öne",
+   "heard": "Kör ne?",
+   "acc": 0.0
+  },
+  "yirmi beş lira.": {
+   "text": "Yirmi beş lira.",
+   "heard": "25 lira.",
+   "acc": 0.36
+  },
+  "otuz": {
+   "text": "Otuz",
+   "heard": "Ödüz",
+   "acc": 0.25
+  },
+  "elli": {
+   "text": "Elli",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "kartı": {
+   "text": "Kartı",
+   "heard": "Halte",
+   "acc": 0.4
+  },
+  "kırk beş lira.": {
+   "text": "Kırk beş lira.",
+   "heard": "45 lira",
+   "acc": 0.38
+  },
+  "kırk": {
+   "text": "Kırk",
+   "heard": "PÜLP",
+   "acc": 0.0
+  },
+  "okutun.": {
+   "text": "Okutun.",
+   "heard": "O kurtuldu.",
+   "acc": 0.17
+  },
+  "seksen beş lira.": {
+   "text": "Seksen beş lira.",
+   "heard": "85 lira.",
+   "acc": 0.33
+  },
+  "kahvesi": {
+   "text": "kahvesi",
+   "heard": "Afiyet olsun.",
+   "acc": 0.0
+  },
+  "şeker?": {
+   "text": "Şeker?",
+   "heard": "ŞEGYAŞ",
+   "acc": 0.2
+  },
+  "ikram!": {
+   "text": "İkram!",
+   "heard": "Hiç ha.",
+   "acc": 0.0
+  },
+  "yüz yirmi lira.": {
+   "text": "Yüz yirmi lira.",
+   "heard": "120 lira",
+   "acc": 0.36
+  },
+  "altmış lira.": {
+   "text": "Altmış lira.",
+   "heard": "60 lira.",
+   "acc": 0.45
+  },
+  "ağrısı": {
+   "text": "ağrısı",
+   "heard": "Böylesi.",
+   "acc": 0.0
+  },
+  "gitmem": {
+   "text": "gitmem",
+   "heard": "İtlan",
+   "acc": 0.33
+  },
+  "parol": {
+   "text": "Parol",
+   "heard": "Buyrun.",
+   "acc": 0.0
+  },
+  "aaa": {
+   "text": "Aaa",
+   "heard": "",
+   "acc": 0.0
+  },
+  "evli": {
+   "text": "Evli",
+   "heard": "Terbili.",
+   "acc": 0.0
+  },
+  "rusyalıyım": {
+   "text": "Rusyalıyım",
+   "heard": "Güzelim.",
+   "acc": 0.2
+  },
+  "alo": {
+   "text": "Alo",
+   "heard": "Haylor.",
+   "acc": 0.0
+  },
+  "adres?": {
+   "text": "Adres?",
+   "heard": "HADİOS",
+   "acc": 0.4
+  },
+  "seksen lira.": {
+   "text": "Seksen lira.",
+   "heard": "80 lira",
+   "acc": 0.45
+  },
+  "yüz altmış lira.": {
+   "text": "Yüz altmış lira.",
+   "heard": "160 lira.",
+   "acc": 0.33
+  },
+  "kimi": {
+   "text": "Kimi",
+   "heard": "Yine",
+   "acc": 0.25
+  },
+  "adı": {
+   "text": "Adı",
+   "heard": "Ödül.",
+   "acc": 0.0
+  },
+  "tek": {
+   "text": "Tek",
+   "heard": "Teşekkür ederim.",
+   "acc": 0.0
+  },
+  "olayım": {
+   "text": "olayım",
+   "heard": "Güleyim.",
+   "acc": 0.33
+  },
+  "almadım": {
+   "text": "Almadım",
+   "heard": "Altyazı M.K.",
+   "acc": 0.29
+  },
+  "gelsem": {
+   "text": "gelsem",
+   "heard": "Eaysan.",
+   "acc": 0.17
+  },
+  "sakalı": {
+   "text": "sakalı",
+   "heard": "Tak ölü.",
+   "acc": 0.33
+  },
+  "alalım": {
+   "text": "alalım",
+   "heard": "Haydi adamım.",
+   "acc": 0.0
+  },
+  "vapuru": {
+   "text": "vapuru",
+   "heard": "Okurum.",
+   "acc": 0.33
+  },
+  "kaça": {
+   "text": "kaça",
+   "heard": "Ötçe.",
+   "acc": 0.25
+  },
+  "gibi": {
+   "text": "gibi",
+   "heard": "İyi de...",
+   "acc": 0.0
+  },
+  "vermeye": {
+   "text": "vermeye",
+   "heard": "Gal mi?",
+   "acc": 0.0
+  },
+  "önüne": {
+   "text": "önüne",
+   "heard": "Hemen'e.",
+   "acc": 0.2
+  },
+  "kızıyor": {
+   "text": "kızıyor",
+   "heard": "Bize York",
+   "acc": 0.29
+  },
+  "seyrek": {
+   "text": "seyrek",
+   "heard": "Teyit ettim.",
+   "acc": 0.0
+  },
+  "kediye": {
+   "text": "kediye",
+   "heard": "7.",
+   "acc": 0.0
+  },
+  "almayayım": {
+   "text": "almayayım",
+   "heard": "Al ve yiyin.",
+   "acc": 0.22
+  },
+  "ekmek?": {
+   "text": "Ekmek?",
+   "heard": "iletmeyiz.",
+   "acc": 0.0
+  },
+  "kepekli": {
+   "text": "kepekli",
+   "heard": "Kıdıkçı.",
+   "acc": 0.29
+  },
+  "normal": {
+   "text": "Normal",
+   "heard": "Bournemouth",
+   "acc": 0.0
+  },
+  "şeyim": {
+   "text": "şeyim",
+   "heard": "Çiğ",
+   "acc": 0.2
+  },
+  "paket": {
+   "text": "Paket",
+   "heard": "Fakir.",
+   "acc": 0.4
+  },
+  "sayaç": {
+   "text": "Sayaç",
+   "heard": "Tayyip",
+   "acc": 0.2
+  },
+  "girin": {
+   "text": "girin",
+   "heard": "İyi din",
+   "acc": 0.2
+  },
+  "alır": {
+   "text": "alır",
+   "heard": "Delir.",
+   "acc": 0.25
+  },
+  "param": {
+   "text": "Param",
+   "heard": "Böreğim.",
+   "acc": 0.0
+  },
+  "karnı": {
+   "text": "karnı",
+   "heard": "Haline",
+   "acc": 0.2
+  },
+  "alırsın": {
+   "text": "alırsın",
+   "heard": "Hayırlı işler.",
+   "acc": 0.0
+  },
+  "verin": {
+   "text": "verin",
+   "heard": "Beydin",
+   "acc": 0.4
+  },
+  "birer": {
+   "text": "Birer",
+   "heard": "Bilyar",
+   "acc": 0.4
+  },
+  "ikisinden": {
+   "text": "ikisinden",
+   "heard": "Gitsinler.",
+   "acc": 0.44
+  },
+  "tavuklu": {
+   "text": "Tavuklu",
+   "heard": "Tavuk Kulak",
+   "acc": 0.29
+  },
+  "balıklı": {
+   "text": "balıklı",
+   "heard": "O lüktü.",
+   "acc": 0.29
+  },
+  "şeyi": {
+   "text": "şeyi",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "hem": {
+   "text": "hem",
+   "heard": "PEN",
+   "acc": 0.33
+  },
+  "iri": {
+   "text": "iri",
+   "heard": "İzlediğiniz için teşekkür ederim.",
+   "acc": 0.0
+  },
+  "orta": {
+   "text": "Orta",
+   "heard": "Oldu tak.",
+   "acc": 0.0
+  },
+  "deneyelim.": {
+   "text": "Deneyelim.",
+   "heard": "Ben değilim.",
+   "acc": 0.44
+  },
+  "iyisini": {
+   "text": "iyisini",
+   "heard": "İzlediğiniz için teşekkür ederim.",
+   "acc": 0.0
+  },
+  "yüz on lira.": {
+   "text": "Yüz on lira.",
+   "heard": "110 lira.",
+   "acc": 0.45
+  },
+  "yüz elli lira.": {
+   "text": "Yüz elli lira.",
+   "heard": "150 Lira",
+   "acc": 0.38
+  },
+  "iki tane yüz seksen.": {
+   "text": "İki tane yüz seksen.",
+   "heard": "2 tane 180.",
+   "acc": 0.32
+  },
+  "yüz seksen, eksik.": {
+   "text": "Yüz seksen, eksik.",
+   "heard": "180 eksik.",
+   "acc": 0.38
+  },
+  "miyav! miyav?": {
+   "text": "Miyav! Miyav?",
+   "heard": "Bir yavru, bir yavru.",
+   "acc": 0.09
+  },
+  "miyaaav?": {
+   "text": "Miyaaav?",
+   "heard": "Ya!",
+   "acc": 0.29
+  },
+  "miyaaav": {
+   "text": "Miyaaav",
+   "heard": "Ya.",
+   "acc": 0.29
+  },
+  "pisi": {
+   "text": "pisi",
+   "heard": "Hisset.",
+   "acc": 0.0
+  },
+  "git": {
+   "text": "Git",
+   "heard": "Yiğit",
+   "acc": 0.0
+  },
+  "çay? gel, gel!": {
+   "text": "Çay? Gel, gel!",
+   "heard": "Çay ve elgar",
+   "acc": 0.45
+  },
+  "hırrr! hav hav!": {
+   "text": "Hırrr! Hav hav!",
+   "heard": "Örür. Hop hop.",
+   "acc": 0.46
+  },
+  "hırrr": {
+   "text": "Hırrr",
+   "heard": "Bölüm",
+   "acc": 0.0
+  },
+  "hav": {
+   "text": "Hav",
+   "heard": "Kıvrı",
+   "acc": 0.0
+  },
+  "hırrrr!": {
+   "text": "Hırrrr!",
+   "heard": "Ölür.",
+   "acc": 0.17
+  },
+  "hırrrr": {
+   "text": "Hırrrr",
+   "heard": "Öl.",
+   "acc": 0.0
+  },
+  "git!": {
+   "text": "Git!",
+   "heard": "Yiğit",
+   "acc": 0.0
+  },
+  "dokunma": {
+   "text": "dokunma",
+   "heard": "Bukumlu.",
+   "acc": 0.29
+  },
+  "açın": {
+   "text": "açın",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "otuz beş lira.": {
+   "text": "Otuz beş lira.",
+   "heard": "35 lira",
+   "acc": 0.38
+  },
+  "içerim": {
+   "text": "içerim",
+   "heard": "Şehrin.",
+   "acc": 0.33
+  },
+  "aa": {
+   "text": "Aa",
+   "heard": "Altyazı M.K.",
+   "acc": 0.0
+  },
+  "al": {
+   "text": "al",
+   "heard": "Lütfen abone olmayı ve videoyu beğenmeyi unutmayın.",
+   "acc": 0.0
+  },
+  "menemen": {
+   "text": "Menemen",
+   "heard": "Beynime",
+   "acc": 0.43
+  },
+  "yemedim": {
+   "text": "yemedim",
+   "heard": "Yön edin.",
+   "acc": 0.43
+  },
+  "yemeğe": {
+   "text": "yemeğe",
+   "heard": "Yüley.",
+   "acc": 0.33
+  },
+  "ailen": {
+   "text": "Ailen",
+   "heard": "Taylan",
+   "acc": 0.4
+  },
+  "üzüldüm": {
+   "text": "Üzüldüm",
+   "heard": "Güzeldin.",
+   "acc": 0.43
+  },
+  "beşte": {
+   "text": "beşte",
+   "heard": "5.",
+   "acc": 0.0
+  },
+  "ricam": {
+   "text": "ricam",
+   "heard": "Diyeceğim.",
+   "acc": 0.0
+  },
+  "vereceğim": {
+   "text": "vereceğim",
+   "heard": "Peredliyim.",
+   "acc": 0.44
+  },
+  "salı": {
+   "text": "Salı",
+   "heard": "Talih",
+   "acc": 0.25
+  },
+  "eve": {
+   "text": "Eve",
+   "heard": "Tövbe.",
+   "acc": 0.0
+  },
+  "durağına": {
+   "text": "durağına",
+   "heard": "Bu ruyuna.",
+   "acc": 0.38
+  },
+  "ptt'ye": {
+   "text": "PTT'ye",
+   "heard": "BTT",
+   "acc": 0.4
+  },
+  "kahvehaneye": {
+   "text": "Kahvehaneye",
+   "heard": "Hafıhani",
+   "acc": 0.36
+  },
+  "teyzeye": {
+   "text": "teyzeye",
+   "heard": "İzleyin.",
+   "acc": 0.14
+  },
+  "eksik. yüz on lira.": {
+   "text": "Eksik. Yüz on lira.",
+   "heard": "110 lira.",
+   "acc": 0.29
+  },
+  "eksik. doksan beş lira.": {
+   "text": "Eksik. Doksan beş lira.",
+   "heard": "Lisik.  95 lira.",
+   "acc": 0.43
+  },
+  "eksik. yüz yirmi lira.": {
+   "text": "Eksik. Yüz yirmi lira.",
+   "heard": "120 Lira",
+   "acc": 0.25
+  },
+  "eksik. yüz beş lira.": {
+   "text": "Eksik. Yüz beş lira.",
+   "heard": "105 Lira",
+   "acc": 0.28
+  },
+  "eksik. yüz otuz lira.": {
+   "text": "Eksik. Yüz otuz lira.",
+   "heard": "130 Lira",
+   "acc": 0.26
+  },
+  "eksik. yüz on beş lira.": {
+   "text": "Eksik. Yüz on beş lira.",
+   "heard": "115 lira.",
+   "acc": 0.24
+  },
+  "geldik. yüz yirmi beş lira.": {
+   "text": "Geldik. Yüz yirmi beş lira.",
+   "heard": "Geldik. 125 lira.",
+   "acc": 0.48
+  },
+  "eksik. yüz yirmi beş lira.": {
+   "text": "Eksik. Yüz yirmi beş lira.",
+   "heard": "Eksik.  125 lira.",
+   "acc": 0.46
+  },
+  "eksik. yüz elli lira.": {
+   "text": "Eksik. Yüz elli lira.",
+   "heard": "150 Lira",
+   "acc": 0.26
+  },
+  "eksik. yüz otuz beş lira.": {
+   "text": "Eksik. Yüz otuz beş lira.",
+   "heard": "Besik 135 lira.",
+   "acc": 0.39
+  },
+  "eksik. yüz altmış lira.": {
+   "text": "Eksik. Yüz altmış lira.",
+   "heard": "160 lira.",
+   "acc": 0.24
+  },
+  "eksik. yüz yetmiş lira.": {
+   "text": "Eksik. Yüz yetmiş lira.",
+   "heard": "Lisik 170 lira.",
+   "acc": 0.43
+  },
+  "eksik. yüz doksan lira.": {
+   "text": "Eksik. Yüz doksan lira.",
+   "heard": "Esir 190 lira.",
+   "acc": 0.43
+  },
+  "eksik. iki yüz on lira.": {
+   "text": "Eksik. İki yüz on lira.",
+   "heard": "Eski 210 lira.",
+   "acc": 0.48
+  },
+  "geldik. yüz seksen beş lira.": {
+   "text": "Geldik. Yüz seksen beş lira.",
+   "heard": "Eldik 185 lira.",
+   "acc": 0.42
+  },
+  "eksik. yüz seksen beş lira.": {
+   "text": "Eksik. Yüz seksen beş lira.",
+   "heard": "Eksik 185 lira.",
+   "acc": 0.44
+  },
+  "geldik. iki yüz yirmi lira.": {
+   "text": "Geldik. İki yüz yirmi lira.",
+   "heard": "Geldik. 220 lira.",
+   "acc": 0.48
+  },
+  "eksik. iki yüz yirmi lira.": {
+   "text": "Eksik. İki yüz yirmi lira.",
+   "heard": "Basit 220 lira.",
+   "acc": 0.33
+  },
+  "geldik. yüz doksan beş lira.": {
+   "text": "Geldik. Yüz doksan beş lira.",
+   "heard": "Geldik. 195 lira.",
+   "acc": 0.46
+  },
+  "eksik. yüz doksan beş lira.": {
+   "text": "Eksik. Yüz doksan beş lira.",
+   "heard": "195 lira.",
+   "acc": 0.2
+  },
+  "geldik. iki yüz otuz lira.": {
+   "text": "Geldik. İki yüz otuz lira.",
+   "heard": "Eldik 230 lira.",
+   "acc": 0.46
+  },
+  "eksik. iki yüz otuz lira.": {
+   "text": "Eksik. İki yüz otuz lira.",
+   "heard": "Basit 230 lira.",
+   "acc": 0.35
+  },
+  "eksik. iki yüz beş lira.": {
+   "text": "Eksik. İki yüz beş lira.",
+   "heard": "205 Lira",
+   "acc": 0.23
+  },
+  "eksik. iki yüz kırk lira.": {
+   "text": "Eksik. İki yüz kırk lira.",
+   "heard": "Eksik 240 lira.",
+   "acc": 0.48
+  },
+  "geldik. iki yüz on beş lira.": {
+   "text": "Geldik. İki yüz on beş lira.",
+   "heard": "Geldik. 215 lira.",
+   "acc": 0.46
+  },
+  "eksik. iki yüz on beş lira.": {
+   "text": "Eksik. İki yüz on beş lira.",
+   "heard": "Basit. 215 lira.",
+   "acc": 0.32
+  },
+  "eksik. iki yüz elli lira.": {
+   "text": "Eksik. İki yüz elli lira.",
+   "heard": "250 TL",
+   "acc": 0.09
+  },
+  "geldik. iki yüz yirmi beş lira.": {
+   "text": "Geldik. İki yüz yirmi beş lira.",
+   "heard": "Geldik. 225 lira.",
+   "acc": 0.41
+  },
+  "eksik. iki yüz yirmi beş lira.": {
+   "text": "Eksik. İki yüz yirmi beş lira.",
+   "heard": "Değişik 225 lira.",
+   "acc": 0.32
+  },
+  "geldik. iki yüz altmış lira.": {
+   "text": "Geldik. İki yüz altmış lira.",
+   "heard": "Geldik.  260 lira.",
+   "acc": 0.46
+  },
+  "eksik. iki yüz altmış lira.": {
+   "text": "Eksik. İki yüz altmış lira.",
+   "heard": "Değişik 260 lira.",
+   "acc": 0.36
+  },
+  "geldik. iki yüz yetmiş lira.": {
+   "text": "Geldik. İki yüz yetmiş lira.",
+   "heard": "Geldik. 270 lira.",
+   "acc": 0.46
+  },
+  "eksik. iki yüz yetmiş lira.": {
+   "text": "Eksik. İki yüz yetmiş lira.",
+   "heard": "Lisik 270 lira.",
+   "acc": 0.36
+  },
+  "geldik. iki yüz seksen lira.": {
+   "text": "Geldik. İki yüz seksen lira.",
+   "heard": "Geldik. 280 lira.",
+   "acc": 0.46
+  },
+  "eksik. iki yüz seksen lira.": {
+   "text": "Eksik. İki yüz seksen lira.",
+   "heard": "Kaysik 280 lira",
+   "acc": 0.36
+  },
+  "geldik. iki yüz doksan lira.": {
+   "text": "Geldik. İki yüz doksan lira.",
+   "heard": "Geldik. 290 lira.",
+   "acc": 0.46
+  },
+  "eksik. iki yüz doksan lira.": {
+   "text": "Eksik. İki yüz doksan lira.",
+   "heard": "Esik 290 lira",
+   "acc": 0.4
+  },
+  "geldik. iki yüz yetmiş beş lira.": {
+   "text": "Geldik. İki yüz yetmiş beş lira.",
+   "heard": "Geldik. 275 lira.",
+   "acc": 0.4
+  },
+  "eksik. iki yüz yetmiş beş lira.": {
+   "text": "Eksik. İki yüz yetmiş beş lira.",
+   "heard": "275 lira",
+   "acc": 0.17
+  },
+  "geldik. üç yüz yirmi lira.": {
+   "text": "Geldik. Üç yüz yirmi lira.",
+   "heard": "Eldik 320 lira.",
+   "acc": 0.46
+  },
+  "eksik. üç yüz yirmi lira.": {
+   "text": "Eksik. Üç yüz yirmi lira.",
+   "heard": "Tehsil 320 lira.",
+   "acc": 0.35
+  },
+  "eksik. iki yüz seksen beş lira.": {
+   "text": "Eksik. İki yüz seksen beş lira.",
+   "heard": "Değilsi ki 285 lira.",
+   "acc": 0.34
+  },
+  "geldik. iki yüz doksan beş lira.": {
+   "text": "Geldik. İki yüz doksan beş lira.",
+   "heard": "Geldik. 295 lira.",
+   "acc": 0.4
+  },
+  "eksik. iki yüz doksan beş lira.": {
+   "text": "Eksik. İki yüz doksan beş lira.",
+   "heard": "Eksik 295 lira.",
+   "acc": 0.38
+  },
+  "eksik. üç yüz kırk lira.": {
+   "text": "Eksik. Üç yüz kırk lira.",
+   "heard": "Esit 340 lira.",
+   "acc": 0.41
+  },
+  "eksik. üç yüz beş lira.": {
+   "text": "Eksik. Üç yüz beş lira.",
+   "heard": "Lisik 305 lira.",
+   "acc": 0.43
+  },
+  "eksik. üç yüz elli lira.": {
+   "text": "Eksik. Üç yüz elli lira.",
+   "heard": "Esik 350 lira",
+   "acc": 0.45
+  },
+  "geldik. üç yüz on beş lira.": {
+   "text": "Geldik. Üç yüz on beş lira.",
+   "heard": "Geldik. 315 lira.",
+   "acc": 0.48
+  },
+  "eksik. üç yüz on beş lira.": {
+   "text": "Eksik. Üç yüz on beş lira.",
+   "heard": "315 lira.",
+   "acc": 0.21
+  },
+  "geldik. üç yüz altmış lira.": {
+   "text": "Geldik. Üç yüz altmış lira.",
+   "heard": "Geldik. 360 lira.",
+   "acc": 0.48
+  },
+  "eksik. üç yüz altmış lira.": {
+   "text": "Eksik. Üç yüz altmış lira.",
+   "heard": "Esik 360 lira.",
+   "acc": 0.42
+  },
+  "geldik. üç yüz yetmiş lira.": {
+   "text": "Geldik. Üç yüz yetmiş lira.",
+   "heard": "Geldik. 370 lira.",
+   "acc": 0.48
+  },
+  "eksik. üç yüz yetmiş lira.": {
+   "text": "Eksik. Üç yüz yetmiş lira.",
+   "heard": "Tesik 370 lira",
+   "acc": 0.38
+  },
+  "eksik. üç yüz seksen lira.": {
+   "text": "Eksik. Üç yüz seksen lira.",
+   "heard": "Lesik 380 lira.",
+   "acc": 0.38
+  },
+  "kız": {
+   "text": "kız",
+   "heard": "Görüzüm.",
+   "acc": 0.0
+  },
+  "kır": {
+   "text": "kır",
+   "heard": "GÜL",
+   "acc": 0.0
+  },
+  "kâğıt": {
+   "text": "kâğıt",
+   "heard": "Evet.",
+   "acc": 0.2
+  }
+ },
+ "doubt": {
+  "evet, lütfen.": {
+   "text": "Evet, lütfen.",
+   "heard": "Avet Lütvan",
+   "acc": 0.73
+  },
+  "evet": {
+   "text": "Evet",
+   "heard": "Hüvet",
+   "acc": 0.5
+  },
+  "olur": {
+   "text": "olur",
+   "heard": "Uyur.",
+   "acc": 0.5
+  },
+  "gerek": {
+   "text": "gerek",
+   "heard": "Belek",
+   "acc": 0.6
+  },
+  "daha": {
+   "text": "Daha",
+   "heard": "Da.",
+   "acc": 0.5
+  },
+  "ver": {
+   "text": "ver",
+   "heard": "Var.",
+   "acc": 0.67
+  },
+  "odada": {
+   "text": "odada",
+   "heard": "O da da.",
+   "acc": 0.6
+  },
+  "nerede": {
+   "text": "nerede",
+   "heard": "Nereydi?",
+   "acc": 0.67
+  },
+  "tuvalet": {
+   "text": "Tuvalet",
+   "heard": "Bu alet.",
+   "acc": 0.71
+  },
+  "lavabo nerede?": {
+   "text": "Lavabo nerede?",
+   "heard": "Avobon nerede?",
+   "acc": 0.77
+  },
+  "lavabo": {
+   "text": "Lavabo",
+   "heard": "Dalabı.",
+   "acc": 0.5
+  },
+  "size": {
+   "text": "Size",
+   "heard": "Sizet",
+   "acc": 0.75
+  },
+  "tutun": {
+   "text": "tutun",
+   "heard": "Buton",
+   "acc": 0.6
+  },
+  "akşamlar": {
+   "text": "akşamlar",
+   "heard": "Paşamlar.",
+   "acc": 0.75
+  },
+  "peki": {
+   "text": "Peki",
+   "heard": "Vekil",
+   "acc": 0.5
+  },
+  "özür": {
+   "text": "özür",
+   "heard": "Üzül",
+   "acc": 0.5
+  },
+  "sonra": {
+   "text": "Sonra",
+   "heard": "Son raf.",
+   "acc": 0.6
+  },
+  "güle": {
+   "text": "güle",
+   "heard": "Gülge",
+   "acc": 0.75
+  },
+  "bakalım": {
+   "text": "bakalım",
+   "heard": "Bakıldım.",
+   "acc": 0.71
+  },
+  "verelim": {
+   "text": "verelim",
+   "heard": "Börelim.",
+   "acc": 0.71
+  },
+  "içer": {
+   "text": "içer",
+   "heard": "Çev.",
+   "acc": 0.5
+  },
+  "bira": {
+   "text": "Bira",
+   "heard": "Birer",
+   "acc": 0.5
+  },
+  "görünüyor": {
+   "text": "görünüyor",
+   "heard": "Ürünüyor.",
+   "acc": 0.78
+  },
+  "tadı": {
+   "text": "Tadı",
+   "heard": "Töde.",
+   "acc": 0.5
+  },
+  "için": {
+   "text": "için",
+   "heard": "Çin",
+   "acc": 0.75
+  },
+  "peyniri": {
+   "text": "Peyniri",
+   "heard": "Hey neri?",
+   "acc": 0.57
+  },
+  "öderim": {
+   "text": "öderim",
+   "heard": "Ödeyelim.",
+   "acc": 0.5
+  },
+  "kalkalım": {
+   "text": "Kalkalım",
+   "heard": "Atladım.",
+   "acc": 0.5
+  },
+  "barmen nerede?": {
+   "text": "Barmen nerede?",
+   "heard": "Barmen ne dedi?",
+   "acc": 0.77
+  },
+  "dönün": {
+   "text": "dönün",
+   "heard": "Denin.",
+   "acc": 0.6
+  },
+  "vapur": {
+   "text": "Vapur",
+   "heard": "Hopur.",
+   "acc": 0.6
+  },
+  "orası": {
+   "text": "Orası",
+   "heard": "Burası.",
+   "acc": 0.6
+  },
+  "geliyorum": {
+   "text": "geliyorum",
+   "heard": "Biliyorum.",
+   "acc": 0.78
+  },
+  "durdurun": {
+   "text": "durdurun",
+   "heard": "Buldurum",
+   "acc": 0.62
+  },
+  "treni": {
+   "text": "Treni",
+   "heard": "Deni.",
+   "acc": 0.6
+  },
+  "trene": {
+   "text": "trene",
+   "heard": "Dene.",
+   "acc": 0.6
+  },
+  "yirmi beş lira değil mi?": {
+   "text": "Yirmi beş lira değil mi?",
+   "heard": "25 lira değil mi?",
+   "acc": 0.61
+  },
+  "yirmi": {
+   "text": "Yirmi",
+   "heard": "İrni",
+   "acc": 0.6
+  },
+  "lira": {
+   "text": "lira",
+   "heard": "VİRA",
+   "acc": 0.75
+  },
+  "paran": {
+   "text": "paran",
+   "heard": "Varın.",
+   "acc": 0.6
+  },
+  "biz": {
+   "text": "biz",
+   "heard": "BİS",
+   "acc": 0.67
+  },
+  "faturamı": {
+   "text": "Faturamı",
+   "heard": "Baturama.",
+   "acc": 0.75
+  },
+  "alerjim var.": {
+   "text": "Alerjim var.",
+   "heard": "alacım var.",
+   "acc": 0.64
+  },
+  "soğuk": {
+   "text": "soğuk",
+   "heard": "Suluk",
+   "acc": 0.6
+  },
+  "neresi": {
+   "text": "Neresi",
+   "heard": "Birisi.",
+   "acc": 0.5
+  },
+  "acıyor": {
+   "text": "acıyor",
+   "heard": "Hıcıyor.",
+   "acc": 0.67
+  },
+  "ağrın var mı?": {
+   "text": "Ağrın var mı?",
+   "heard": "Harun var mı?",
+   "acc": 0.75
+  },
+  "başın": {
+   "text": "Başın",
+   "heard": "Boşan.",
+   "acc": 0.6
+  },
+  "ateşin var mı?": {
+   "text": "Ateşin var mı?",
+   "heard": "Ateşin Marma",
+   "acc": 0.77
+  },
+  "ateşi": {
+   "text": "Ateşi",
+   "heard": "Hadeşi.",
+   "acc": 0.6
+  },
+  "iyiyim": {
+   "text": "iyiyim",
+   "heard": "Yiyin.",
+   "acc": 0.67
+  },
+  "geçmiş": {
+   "text": "Geçmiş",
+   "heard": "Beşmiş",
+   "acc": 0.67
+  },
+  "çağırsın": {
+   "text": "çağırsın",
+   "heard": "Çalışsın.",
+   "acc": 0.75
+  },
+  "doktora": {
+   "text": "Doktora",
+   "heard": "BOKTURA",
+   "acc": 0.71
+  },
+  "alıyorum": {
+   "text": "alıyorum",
+   "heard": "Ölüyorum.",
+   "acc": 0.75
+  },
+  "yorgunum": {
+   "text": "yorgunum",
+   "heard": "Orgun",
+   "acc": 0.62
+  },
+  "üşümüyor": {
+   "text": "Üşümüyor",
+   "heard": "Üşümüyorum.",
+   "acc": 0.75
+  },
+  "pardon": {
+   "text": "Pardon",
+   "heard": "Ardom",
+   "acc": 0.67
+  },
+  "hiç": {
+   "text": "Hiç",
+   "heard": "İç",
+   "acc": 0.67
+  },
+  "pek": {
+   "text": "pek",
+   "heard": "Peki.",
+   "acc": 0.67
+  },
+  "emin": {
+   "text": "emin",
+   "heard": "Ümil",
+   "acc": 0.5
+  },
+  "kimlik lütfen.": {
+   "text": "Kimlik lütfen.",
+   "heard": "İNLİK YUTAN",
+   "acc": 0.54
+  },
+  "hava": {
+   "text": "Hava",
+   "heard": "Havva.",
+   "acc": 0.75
+  },
+  "kimle": {
+   "text": "Kimle",
+   "heard": "Kinye",
+   "acc": 0.6
+  },
+  "japonca": {
+   "text": "Japonca",
+   "heard": "Körponca",
+   "acc": 0.57
+  },
+  "duyan": {
+   "text": "duyan",
+   "heard": "BÜYAN",
+   "acc": 0.6
+  },
+  "kimliğiniz": {
+   "text": "Kimliğiniz",
+   "heard": "Yeniliğiniz.",
+   "acc": 0.6
+  },
+  "kardeşim": {
+   "text": "kardeşim",
+   "heard": "PARDESİN",
+   "acc": 0.62
+  },
+  "gecelik": {
+   "text": "Gecelik",
+   "heard": "Eceli",
+   "acc": 0.71
+  },
+  "asansör": {
+   "text": "Asansör",
+   "heard": "Sansür",
+   "acc": 0.71
+  },
+  "bavulumu": {
+   "text": "Bavulumu",
+   "heard": "Avlu",
+   "acc": 0.5
+  },
+  "temizlenmedi": {
+   "text": "temizlenmedi",
+   "heard": "Temiz lan dedi.",
+   "acc": 0.67
+  },
+  "hesapta": {
+   "text": "Hesapta",
+   "heard": "Hesap tak.",
+   "acc": 0.71
+  },
+  "hata": {
+   "text": "hata",
+   "heard": "Hatta.",
+   "acc": 0.75
+  },
+  "rica": {
+   "text": "Rica",
+   "heard": "Birca",
+   "acc": 0.5
+  },
+  "kişilik": {
+   "text": "kişilik",
+   "heard": "İşçilik",
+   "acc": 0.71
+  },
+  "menüyü": {
+   "text": "Menüyü",
+   "heard": "Menü",
+   "acc": 0.67
+  },
+  "yemiyorum": {
+   "text": "yemiyorum",
+   "heard": "İniyorum.",
+   "acc": 0.67
+  },
+  "servis": {
+   "text": "Servis",
+   "heard": "Terbis",
+   "acc": 0.67
+  },
+  "götürür": {
+   "text": "götürür",
+   "heard": "Ötülür.",
+   "acc": 0.71
+  },
+  "durabilir": {
+   "text": "durabilir",
+   "heard": "Burayı bilir.",
+   "acc": 0.56
+  },
+  "sola": {
+   "text": "Sola",
+   "heard": "Soda",
+   "acc": 0.75
+  },
+  "düz": {
+   "text": "Düz",
+   "heard": "BÜZ",
+   "acc": 0.67
+  },
+  "istasyonu": {
+   "text": "istasyonu",
+   "heard": "İstasyon mu?",
+   "acc": 0.78
+  },
+  "daha büyük var mı?": {
+   "text": "Daha büyük var mı?",
+   "heard": "Daha büyük varlığına.",
+   "acc": 0.71
+  },
+  "yarım": {
+   "text": "Yarım",
+   "heard": "Yerim.",
+   "acc": 0.6
+  },
+  "rusça": {
+   "text": "Rusça",
+   "heard": "RÜSÇE",
+   "acc": 0.6
+  },
+  "eder": {
+   "text": "eder",
+   "heard": "Hüder.",
+   "acc": 0.5
+  },
+  "türkçesi": {
+   "text": "Türkçesi",
+   "heard": "Ülkesi",
+   "acc": 0.62
+  },
+  "numara": {
+   "text": "numara",
+   "heard": "Bu mora.",
+   "acc": 0.5
+  },
+  "kedi": {
+   "text": "kedi",
+   "heard": "Hedi.",
+   "acc": 0.75
+  },
+  "mama": {
+   "text": "mama",
+   "heard": "Bama",
+   "acc": 0.75
+  },
+  "düğün": {
+   "text": "düğün",
+   "heard": "Dün.",
+   "acc": 0.6
+  },
+  "ikamet": {
+   "text": "ikamet",
+   "heard": "Karmet.",
+   "acc": 0.67
+  },
+  "sade": {
+   "text": "sade",
+   "heard": "Tade",
+   "acc": 0.75
+  },
+  "poğaça": {
+   "text": "poğaça",
+   "heard": "Boyça",
+   "acc": 0.5
+  },
+  "mercimek": {
+   "text": "mercimek",
+   "heard": "Narcimek",
+   "acc": 0.75
+  },
+  "pilav": {
+   "text": "pilav",
+   "heard": "İLAB",
+   "acc": 0.6
+  },
+  "reçete": {
+   "text": "reçete",
+   "heard": "Ve çete.",
+   "acc": 0.67
+  },
+  "vermek": {
+   "text": "vermek",
+   "heard": "Darmik",
+   "acc": 0.5
+  },
+  "sevmek": {
+   "text": "sevmek",
+   "heard": "Sevmeyin.",
+   "acc": 0.5
+  },
+  "yaşamak": {
+   "text": "yaşamak",
+   "heard": "Eşhamak",
+   "acc": 0.57
+  },
+  "göstermek": {
+   "text": "göstermek",
+   "heard": "Üstermek",
+   "acc": 0.78
+  },
+  "acıkmak": {
+   "text": "acıkmak",
+   "heard": "Cikmap",
+   "acc": 0.57
+  },
+  "görünmek": {
+   "text": "görünmek",
+   "heard": "Gülünmek.",
+   "acc": 0.75
+  },
+  "tat": {
+   "text": "tat",
+   "heard": "DAT",
+   "acc": 0.67
+  },
+  "randevu": {
+   "text": "randevu",
+   "heard": "Hande Vur",
+   "acc": 0.57
+  },
+  "tedavi": {
+   "text": "tedavi",
+   "heard": "Te davdi.",
+   "acc": 0.67
+  },
+  "durum": {
+   "text": "durum",
+   "heard": "Buram.",
+   "acc": 0.6
+  },
+  "üşümek": {
+   "text": "üşümek",
+   "heard": "Şimek",
+   "acc": 0.67
+  },
+  "kilitlemek": {
+   "text": "kilitlemek",
+   "heard": "İlit demek.",
+   "acc": 0.7
+  },
+  "kedimiz": {
+   "text": "kedimiz",
+   "heard": "İdiniz.",
+   "acc": 0.57
+  },
+  "ikametim": {
+   "text": "ikametim",
+   "heard": "Kavmiyetim",
+   "acc": 0.5
+  },
+  "maaşta": {
+   "text": "maaşta",
+   "heard": "Başta",
+   "acc": 0.67
+  },
+  "ellerinize": {
+   "text": "ellerinize",
+   "heard": "halleyinize.",
+   "acc": 0.7
+  },
+  "reçetem": {
+   "text": "reçetem",
+   "heard": "Ve çetem.",
+   "acc": 0.71
+  },
+  "köy": {
+   "text": "köy",
+   "heard": "Koy.",
+   "acc": 0.67
+  },
+  "kitap": {
+   "text": "kitap",
+   "heard": "GİTAR",
+   "acc": 0.6
+  },
+  "çatal": {
+   "text": "çatal",
+   "heard": "Şata",
+   "acc": 0.6
+  },
+  "süt": {
+   "text": "süt",
+   "heard": "Sürt.",
+   "acc": 0.67
+  },
+  "balık": {
+   "text": "balık",
+   "heard": "BÖLÜK",
+   "acc": 0.6
+  },
+  "zeytin": {
+   "text": "zeytin",
+   "heard": "Seyit'in.",
+   "acc": 0.67
+  },
+  "peçete": {
+   "text": "peçete",
+   "heard": "Pç'de",
+   "acc": 0.5
+  },
+  "uçak": {
+   "text": "uçak",
+   "heard": "Çak.",
+   "acc": 0.75
+  },
+  "dolmuş": {
+   "text": "dolmuş",
+   "heard": "Bonmuş.",
+   "acc": 0.67
+  },
+  "kasa": {
+   "text": "kasa",
+   "heard": "Asla.",
+   "acc": 0.5
+  },
+  "fiş": {
+   "text": "fiş",
+   "heard": "Piş.",
+   "acc": 0.67
+  },
+  "mağaza": {
+   "text": "mağaza",
+   "heard": "Baza",
+   "acc": 0.5
+  },
+  "nakit": {
+   "text": "nakit",
+   "heard": "da kit.",
+   "acc": 0.6
+  },
+  "kart": {
+   "text": "kart",
+   "heard": "Part",
+   "acc": 0.75
+  },
+  "gömlek": {
+   "text": "gömlek",
+   "heard": "Gümrük",
+   "acc": 0.5
+  },
+  "pantolon": {
+   "text": "pantolon",
+   "heard": "Vaat olun.",
+   "acc": 0.5
+  },
+  "mont": {
+   "text": "mont",
+   "heard": "Mod",
+   "acc": 0.5
+  },
+  "hemşire": {
+   "text": "hemşire",
+   "heard": "Enşire",
+   "acc": 0.71
+  },
+  "grip": {
+   "text": "grip",
+   "heard": "BİP",
+   "acc": 0.5
+  },
+  "nezle": {
+   "text": "nezle",
+   "heard": "Neyse.",
+   "acc": 0.6
+  },
+  "iğne": {
+   "text": "iğne",
+   "heard": "Yine",
+   "acc": 0.5
+  },
+  "kalp": {
+   "text": "kalp",
+   "heard": "Kaldı.",
+   "acc": 0.5
+  },
+  "ülke": {
+   "text": "ülke",
+   "heard": "Bülke",
+   "acc": 0.75
+  },
+  "ay": {
+   "text": "ay",
+   "heard": "Hay.",
+   "acc": 0.5
+  },
+  "kar": {
+   "text": "kar",
+   "heard": "Par.",
+   "acc": 0.67
+  },
+  "kaza": {
+   "text": "kaza",
+   "heard": "Hıza.",
+   "acc": 0.5
+  },
+  "karakol": {
+   "text": "karakol",
+   "heard": "Örakov",
+   "acc": 0.57
+  },
+  "konsolosluk": {
+   "text": "konsolosluk",
+   "heard": "Bonsu Osluk",
+   "acc": 0.73
+  },
+  "avukat": {
+   "text": "avukat",
+   "heard": "Dovukat",
+   "acc": 0.67
+  },
+  "rüzgâr": {
+   "text": "Rüzgâr",
+   "heard": "Hüzlar",
+   "acc": 0.5
+  },
+  "sert": {
+   "text": "sert",
+   "heard": "SELT",
+   "acc": 0.75
+  },
+  "zam": {
+   "text": "zam",
+   "heard": "ZAN",
+   "acc": 0.67
+  },
+  "kaybetti": {
+   "text": "kaybetti",
+   "heard": "Hayretti.",
+   "acc": 0.75
+  },
+  "galatasaray": {
+   "text": "Galatasaray",
+   "heard": "Berat Hasaray",
+   "acc": 0.55
+  },
+  "sonu": {
+   "text": "sonu",
+   "heard": "Sona.",
+   "acc": 0.75
+  },
+  "ramazan": {
+   "text": "Ramazan",
+   "heard": "Kamazlar",
+   "acc": 0.57
+  },
+  "beri": {
+   "text": "beri",
+   "heard": "Verip",
+   "acc": 0.5
+  },
+  "kata": {
+   "text": "kata",
+   "heard": "Hatta.",
+   "acc": 0.5
+  },
+  "türkçen": {
+   "text": "Türkçen",
+   "heard": "BÜLKÇEN",
+   "acc": 0.71
+  },
+  "içelim": {
+   "text": "içelim",
+   "heard": "ŞELİN",
+   "acc": 0.5
+  },
+  "dizi": {
+   "text": "Dizi",
+   "heard": "Dizit",
+   "acc": 0.75
+  },
+  "emekli": {
+   "text": "Emekli",
+   "heard": "Heneckli",
+   "acc": 0.5
+  },
+  "maaşı": {
+   "text": "maaşı",
+   "heard": "Başı",
+   "acc": 0.6
+  },
+  "geldik. yüz seksen lira.": {
+   "text": "Geldik. Yüz seksen lira.",
+   "heard": "Geldik. 180 lira.",
+   "acc": 0.55
+  },
+  "seksen": {
+   "text": "seksen",
+   "heard": "Seç sen.",
+   "acc": 0.67
+  },
+  "sana yüz altmış olsun.": {
+   "text": "Sana yüz altmış olsun.",
+   "heard": "Sana 160 olsun.",
+   "acc": 0.52
+  },
+  "veresiye": {
+   "text": "Veresiye",
+   "heard": "Birisiye.",
+   "acc": 0.62
+  },
+  "kusura": {
+   "text": "kusura",
+   "heard": "Kursuru",
+   "acc": 0.67
+  },
+  "nakit var mı?": {
+   "text": "Nakit var mı?",
+   "heard": "Nakit Farma",
+   "acc": 0.75
+  },
+  "hepsi yüz on lira.": {
+   "text": "Hepsi yüz on lira.",
+   "heard": "Hepsi 110 lira.",
+   "acc": 0.65
+  },
+  "beş numara.": {
+   "text": "Beş numara.",
+   "heard": "5 numara",
+   "acc": 0.7
+  },
+  "susamlı mı, sade mi?": {
+   "text": "Susamlı mı, sade mi?",
+   "heard": "Susamlımız sadeni.",
+   "acc": 0.78
+  },
+  "on beş lira abi.": {
+   "text": "On beş lira abi.",
+   "heard": "15 lira abi.",
+   "acc": 0.6
+  },
+  "üsküdar": {
+   "text": "Üsküdar",
+   "heard": "Pısküdar.",
+   "acc": 0.71
+  },
+  "yirmi beş lira. parayı öne uzat.": {
+   "text": "Yirmi beş lira. Parayı öne uzat.",
+   "heard": "25 lira. Parayı öne uzat.",
+   "acc": 0.7
+  },
+  "parayı": {
+   "text": "Parayı",
+   "heard": "Var ayı.",
+   "acc": 0.67
+  },
+  "otuz lira.": {
+   "text": "Otuz lira.",
+   "heard": "30 lira",
+   "acc": 0.56
+  },
+  "ineceğim": {
+   "text": "ineceğim",
+   "heard": "İnecee.",
+   "acc": 0.62
+  },
+  "okutun": {
+   "text": "okutun",
+   "heard": "okudum.",
+   "acc": 0.67
+  },
+  "yüz lira.": {
+   "text": "Yüz lira.",
+   "heard": "100 lira.",
+   "acc": 0.62
+  },
+  "kartı okutun. elli lira.": {
+   "text": "Kartı okutun. Elli lira.",
+   "heard": "Kartı okutun.  Daylı ilgira.",
+   "acc": 0.73
+  },
+  "elli lira.": {
+   "text": "Elli lira.",
+   "heard": "50 lira.",
+   "acc": 0.56
+  },
+  "ekmek taze mi?": {
+   "text": "Ekmek taze mi?",
+   "heard": "Ekmek tazeğine.",
+   "acc": 0.69
+  },
+  "fiş?": {
+   "text": "Fiş?",
+   "heard": "Piş.",
+   "acc": 0.67
+  },
+  "türk": {
+   "text": "Türk",
+   "heard": "TÜL",
+   "acc": 0.5
+  },
+  "sade lütfen.": {
+   "text": "Sade lütfen.",
+   "heard": "Tadil lütfen.",
+   "acc": 0.73
+  },
+  "çay on beş lira.": {
+   "text": "Çay on beş lira.",
+   "heard": "Çay 15 lira.",
+   "acc": 0.6
+  },
+  "fasulye pilav yüz yirmi.": {
+   "text": "Fasulye pilav yüz yirmi.",
+   "heard": "Fasulye pilav 120",
+   "acc": 0.61
+  },
+  "afiyet olsun. hesap yüz yirmi lira.": {
+   "text": "Afiyet olsun. Hesap yüz yirmi lira.",
+   "heard": "Afiyet olsun.  Hesap 120 lira.",
+   "acc": 0.73
+  },
+  "görüşürüz!": {
+   "text": "Görüşürüz!",
+   "heard": "Üşürüz.",
+   "acc": 0.67
+  },
+  "reçeteniz": {
+   "text": "Reçeteniz",
+   "heard": "Ve çeteniz.",
+   "acc": 0.78
+  },
+  "reçeteye": {
+   "text": "reçeteye",
+   "heard": "Peçeteği",
+   "acc": 0.62
+  },
+  "kez": {
+   "text": "kez",
+   "heard": "Kes.",
+   "acc": 0.67
+  },
+  "çaya": {
+   "text": "çaya",
+   "heard": "ÇEYAR",
+   "acc": 0.5
+  },
+  "iç": {
+   "text": "iç",
+   "heard": "İl.",
+   "acc": 0.5
+  },
+  "börek de var, ye ye!": {
+   "text": "Börek de var, ye ye!",
+   "heard": "Bırak da var yayı.",
+   "acc": 0.67
+  },
+  "gül sokak, beş numara, üçüncü kat.": {
+   "text": "Gül Sokak, beş numara, üçüncü kat.",
+   "heard": "Gül Sokak 5 numara 3. kart",
+   "acc": 0.68
+  },
+  "üçüncü": {
+   "text": "üçüncü",
+   "heard": "Bütüncül.",
+   "acc": 0.5
+  },
+  "yarım saate gelir. seksen lira.": {
+   "text": "Yarım saate gelir. Seksen lira.",
+   "heard": "Yarım saate gelir.  80 lira.",
+   "acc": 0.79
+  },
+  "yarım saat. seksen lira.": {
+   "text": "Yarım saat. Seksen lira.",
+   "heard": "Yarım saat, 80 lira.",
+   "acc": 0.73
+  },
+  "bir saate gelir. yüz altmış lira.": {
+   "text": "Bir saate gelir. Yüz altmış lira.",
+   "heard": "Bir saate gelir.  160 lira.",
+   "acc": 0.68
+  },
+  "bakmayın": {
+   "text": "bakmayın",
+   "heard": "Batu'yun.",
+   "acc": 0.5
+  },
+  "suyunuz geldi! seksen lira.": {
+   "text": "Suyunuz geldi! Seksen lira.",
+   "heard": "Suyunuz geldi. 80 lira.",
+   "acc": 0.76
+  },
+  "sularınız geldi! yüz altmış lira.": {
+   "text": "Sularınız geldi! Yüz altmış lira.",
+   "heard": "Sulağınız geldi.  160 lira.",
+   "acc": 0.65
+  },
+  "içeride": {
+   "text": "İçeride",
+   "heard": "Çelidi",
+   "acc": 0.57
+  },
+  "otur": {
+   "text": "Otur",
+   "heard": "Batur.",
+   "acc": 0.5
+  },
+  "acelem": {
+   "text": "Acelem",
+   "heard": "Hecelam.",
+   "acc": 0.5
+  },
+  "köpekten": {
+   "text": "Köpekten",
+   "heard": "Pekten.",
+   "acc": 0.75
+  },
+  "yenikapı'ya": {
+   "text": "Yenikapı'ya",
+   "heard": "DİN KAPIYA",
+   "acc": 0.7
+  },
+  "numarası": {
+   "text": "numarası",
+   "heard": "Bu morası.",
+   "acc": 0.62
+  },
+  "pul": {
+   "text": "pul",
+   "heard": "PUR",
+   "acc": 0.67
+  },
+  "kimlik?": {
+   "text": "Kimlik?",
+   "heard": "Kimdir?",
+   "acc": 0.67
+  },
+  "sakal": {
+   "text": "sakal",
+   "heard": "Sağol.",
+   "acc": 0.6
+  },
+  "domates kaça?": {
+   "text": "Domates kaça?",
+   "heard": "Tomates kaçağı",
+   "acc": 0.75
+  },
+  "çilek, seksen!": {
+   "text": "Çilek, seksen!",
+   "heard": "Şilek Seksak",
+   "acc": 0.75
+  },
+  "koyuyor": {
+   "text": "koyuyor",
+   "heard": "Uyuyor.",
+   "acc": 0.71
+  },
+  "alayım": {
+   "text": "alayım",
+   "heard": "Hayayim.",
+   "acc": 0.5
+  },
+  "simit ister misin?": {
+   "text": "Simit ister misin?",
+   "heard": "Simit-i Starnisi",
+   "acc": 0.65
+  },
+  "geçti": {
+   "text": "geçti",
+   "heard": "Geçteli.",
+   "acc": 0.6
+  },
+  "poğaça var mı?": {
+   "text": "Poğaça var mı?",
+   "heard": "Porta var mı?",
+   "acc": 0.77
+  },
+  "neyiniz": {
+   "text": "Neyiniz",
+   "heard": "İyiyiniz.",
+   "acc": 0.57
+  },
+  "çay istemem, sağ ol.": {
+   "text": "Çay istemem, sağ ol.",
+   "heard": "Cahil istemen sağ ol.",
+   "acc": 0.72
+  },
+  "istemem": {
+   "text": "istemem",
+   "heard": "İstenen.",
+   "acc": 0.71
+  },
+  "paket mi, burada mı?": {
+   "text": "Paket mi, burada mı?",
+   "heard": "Hak etme burada mı?",
+   "acc": 0.78
+  },
+  "paket mi?": {
+   "text": "Paket mi?",
+   "heard": "Hak etme.",
+   "acc": 0.5
+  },
+  "gelsene": {
+   "text": "gelsene",
+   "heard": "Her sene.",
+   "acc": 0.57
+  },
+  "okuyacağım": {
+   "text": "okuyacağım",
+   "heard": "Okuyucuyum.",
+   "acc": 0.6
+  },
+  "imza": {
+   "text": "imza",
+   "heard": "İNZAR",
+   "acc": 0.5
+  },
+  "tamam, nereye imza?": {
+   "text": "Tamam, nereye imza?",
+   "heard": "Tamam ne rehinza?",
+   "acc": 0.71
+  },
+  "kedinin": {
+   "text": "kedinin",
+   "heard": "Yedinil.",
+   "acc": 0.71
+  },
+  "kedim": {
+   "text": "Kedim",
+   "heard": "Keydin",
+   "acc": 0.6
+  },
+  "hayırlı": {
+   "text": "Hayırlı",
+   "heard": "Hayırdır?",
+   "acc": 0.71
+  },
+  "olan": {
+   "text": "olan",
+   "heard": "Oldan.",
+   "acc": 0.75
+  },
+  "aylık": {
+   "text": "aylık",
+   "heard": "Ayıp.",
+   "acc": 0.6
+  },
+  "pahalısı": {
+   "text": "Pahalısı",
+   "heard": "Ağalısı",
+   "acc": 0.75
+  },
+  "pahalısını": {
+   "text": "Pahalısını",
+   "heard": "Pahalısınlar.",
+   "acc": 0.7
+  },
+  "adı pamuk.": {
+   "text": "Adı Pamuk.",
+   "heard": "Hadi pomuk.",
+   "acc": 0.67
+  },
+  "seksen lira, eksik.": {
+   "text": "Seksen lira, eksik.",
+   "heard": "80 lira eksik.",
+   "acc": 0.65
+  },
+  "yüz lira, eksik.": {
+   "text": "Yüz lira, eksik.",
+   "heard": "100 lira eksik.",
+   "acc": 0.79
+  },
+  "yüz on lira, eksik.": {
+   "text": "Yüz on lira, eksik.",
+   "heard": "110 lira eksik.",
+   "acc": 0.65
+  },
+  "yüz elli lira, eksik.": {
+   "text": "Yüz elli lira, eksik.",
+   "heard": "150 lira eksik.",
+   "acc": 0.58
+  },
+  "söylerim": {
+   "text": "Söylerim",
+   "heard": "Töllerin",
+   "acc": 0.62
+  },
+  "miyav": {
+   "text": "Miyav",
+   "heard": "Diyar.",
+   "acc": 0.6
+  },
+  "şemsiyen var mı? bakkalda altmış lira.": {
+   "text": "Şemsiyen var mı? Bakkalda altmış lira.",
+   "heard": "Şemsiyah var mı? Bak aldı 60 lira.",
+   "acc": 0.72
+  },
+  "şemsiyen": {
+   "text": "Şemsiyen",
+   "heard": "Ken Siyan",
+   "acc": 0.5
+  },
+  "düğüüün!": {
+   "text": "Düğüüün!",
+   "heard": "Düğündü.",
+   "acc": 0.57
+  },
+  "düğüüün": {
+   "text": "Düğüüün",
+   "heard": "Büyüyün.",
+   "acc": 0.57
+  },
+  "düğün var!": {
+   "text": "Düğün var!",
+   "heard": "Dün var.",
+   "acc": 0.78
+  },
+  "sımııııt": {
+   "text": "Sımııııt",
+   "heard": "sınır et.",
+   "acc": 0.5
+  },
+  "fenerliyim": {
+   "text": "Fenerliyim",
+   "heard": "FENARLIĞIN",
+   "acc": 0.5
+  },
+  "galatasaraylıyım": {
+   "text": "Galatasaraylıyım",
+   "heard": "Allah'ta saraylıyım.",
+   "acc": 0.75
+  },
+  "hı? söyle.": {
+   "text": "Hı? Söyle.",
+   "heard": "Püh! Söyle!",
+   "acc": 0.62
+  },
+  "evdeydim": {
+   "text": "evdeydim",
+   "heard": "herbdeydim.",
+   "acc": 0.62
+  },
+  "kapatmam": {
+   "text": "Kapatmam",
+   "heard": "Hapatman",
+   "acc": 0.75
+  },
+  "alırım": {
+   "text": "alırım",
+   "heard": "Ölürüm.",
+   "acc": 0.5
+  },
+  "gel yemeğe.": {
+   "text": "Gel yemeğe.",
+   "heard": "Eğri Yemeği",
+   "acc": 0.5
+  },
+  "gelemem": {
+   "text": "Gelemem",
+   "heard": "Kelemat",
+   "acc": 0.57
+  },
+  "dakikada": {
+   "text": "dakikada",
+   "heard": "Derhikada",
+   "acc": 0.62
+  },
+  "gol": {
+   "text": "gol",
+   "heard": "Bol.",
+   "acc": 0.67
+  },
+  "maçtı": {
+   "text": "maçtı",
+   "heard": "Maç 4",
+   "acc": 0.6
+  },
+  "bizim takım kazandı, iki bir!": {
+   "text": "Bizim takım kazandı, iki bir!",
+   "heard": "Bizim takım kazandı 2-1.",
+   "acc": 0.74
+  },
+  "iki bir!": {
+   "text": "İki bir!",
+   "heard": "Kibir",
+   "acc": 0.71
+  },
+  "ailen nasıl?": {
+   "text": "Ailen nasıl?",
+   "heard": "Haylan Nasır",
+   "acc": 0.64
+  },
+  "olur! saat kaçta?": {
+   "text": "Olur! Saat kaçta?",
+   "heard": "Gülür.  Taat kaçta?",
+   "acc": 0.73
+  },
+  "saat kaçta?": {
+   "text": "Saat kaçta?",
+   "heard": "Tak kaçta?",
+   "acc": 0.7
+  },
+  "yoğunum": {
+   "text": "yoğunum",
+   "heard": "Yoğun.",
+   "acc": 0.71
+  },
+  "iki yüz lira ödünç verir misin?": {
+   "text": "İki yüz lira ödünç verir misin?",
+   "heard": "200 lira ödünç verir misin?",
+   "acc": 0.77
+  },
+  "geri": {
+   "text": "geri",
+   "heard": "Biri",
+   "acc": 0.5
+  },
+  "maaşımı": {
+   "text": "maaşımı",
+   "heard": "Başımı.",
+   "acc": 0.71
+  },
+  "pazara": {
+   "text": "pazara",
+   "heard": "Hazıra.",
+   "acc": 0.67
+  },
+  "eve lütfen.": {
+   "text": "Eve lütfen.",
+   "heard": "Revlütlan",
+   "acc": 0.5
+  },
+  "bakkala": {
+   "text": "Bakkala",
+   "heard": "Bokalı",
+   "acc": 0.57
+  },
+  "durağa": {
+   "text": "Durağa",
+   "heard": "Dura",
+   "acc": 0.67
+  },
+  "eczaneye": {
+   "text": "Eczaneye",
+   "heard": "Tecza neye?",
+   "acc": 0.75
+  },
+  "iskeleye": {
+   "text": "İskeleye",
+   "heard": "Eskiliğe",
+   "acc": 0.5
+  },
+  "parka": {
+   "text": "Parka",
+   "heard": "Harika.",
+   "acc": 0.6
+  },
+  "eksik. yüz lira.": {
+   "text": "Eksik. Yüz lira.",
+   "heard": "Eksik 100 lira.",
+   "acc": 0.79
+  },
+  "geldik. yüz on lira.": {
+   "text": "Geldik. Yüz on lira.",
+   "heard": "Geldik. 110 lira.",
+   "acc": 0.67
+  },
+  "geldik. yüz yirmi lira.": {
+   "text": "Geldik. Yüz yirmi lira.",
+   "heard": "Geldik.  120 lira.",
+   "acc": 0.57
+  },
+  "geldik. yüz beş lira.": {
+   "text": "Geldik. Yüz beş lira.",
+   "heard": "Veldik 105 lira",
+   "acc": 0.58
+  },
+  "geldik. yüz otuz lira.": {
+   "text": "Geldik. Yüz otuz lira.",
+   "heard": "Eldik 130 lira",
+   "acc": 0.55
+  },
+  "geldik. yüz on beş lira.": {
+   "text": "Geldik. Yüz on beş lira.",
+   "heard": "Geldik.  115 lira.",
+   "acc": 0.55
+  },
+  "geldik. yüz kırk lira.": {
+   "text": "Geldik. Yüz kırk lira.",
+   "heard": "Geldik. 140 lira.",
+   "acc": 0.6
+  },
+  "eksik. yüz kırk lira.": {
+   "text": "Eksik. Yüz kırk lira.",
+   "heard": "Esik 140 lira",
+   "acc": 0.53
+  },
+  "geldik. yüz elli lira.": {
+   "text": "Geldik. Yüz elli lira.",
+   "heard": "Geldik.  150 lira.",
+   "acc": 0.6
+  },
+  "geldik. yüz otuz beş lira.": {
+   "text": "Geldik. Yüz otuz beş lira.",
+   "heard": "Geldik. 135 lira.",
+   "acc": 0.5
+  },
+  "geldik. yüz altmış lira.": {
+   "text": "Geldik. Yüz altmış lira.",
+   "heard": "Geldik, 160 lira.",
+   "acc": 0.55
+  },
+  "geldik. yüz yetmiş lira.": {
+   "text": "Geldik. Yüz yetmiş lira.",
+   "heard": "Geldik. 170 lira.",
+   "acc": 0.55
+  },
+  "geldik. iki yüz lira.": {
+   "text": "Geldik. İki yüz lira.",
+   "heard": "Geldik. 200 lira.",
+   "acc": 0.63
+  },
+  "eksik. iki yüz lira.": {
+   "text": "Eksik. İki yüz lira.",
+   "heard": "Eksik 200 lira.",
+   "acc": 0.61
+  },
+  "geldik. iki yüz on lira.": {
+   "text": "Geldik. İki yüz on lira.",
+   "heard": "Geldik. 210 lira.",
+   "acc": 0.55
+  },
+  "geldik. iki yüz beş lira.": {
+   "text": "Geldik. İki yüz beş lira.",
+   "heard": "Geldik. 205 lira.",
+   "acc": 0.52
+  },
+  "geldik. iki yüz kırk lira.": {
+   "text": "Geldik. İki yüz kırk lira.",
+   "heard": "Geldik. 240 lira.",
+   "acc": 0.5
+  },
+  "geldik. iki yüz elli lira.": {
+   "text": "Geldik. İki yüz elli lira.",
+   "heard": "Geldik 250 lira.",
+   "acc": 0.5
+  },
+  "geldik. üç yüz lira.": {
+   "text": "Geldik. Üç yüz lira.",
+   "heard": "Geldik. 300 lira.",
+   "acc": 0.67
+  },
+  "eksik. üç yüz lira.": {
+   "text": "Eksik. Üç yüz lira.",
+   "heard": "Eksik 300 lira.",
+   "acc": 0.65
+  },
+  "geldik. üç yüz on lira.": {
+   "text": "Geldik. Üç yüz on lira.",
+   "heard": "Geldik. 310 lira.",
+   "acc": 0.57
+  },
+  "eksik. üç yüz on lira.": {
+   "text": "Eksik. Üç yüz on lira.",
+   "heard": "Eksik 310 lira.",
+   "acc": 0.55
+  },
+  "geldik. iki yüz seksen beş lira.": {
+   "text": "Geldik. İki yüz seksen beş lira.",
+   "heard": "Geldik ki 185 lira.",
+   "acc": 0.5
+  },
+  "geldik. üç yüz otuz lira.": {
+   "text": "Geldik. Üç yüz otuz lira.",
+   "heard": "Geldik. 330 lira.",
+   "acc": 0.52
+  },
+  "eksik. üç yüz otuz lira.": {
+   "text": "Eksik. Üç yüz otuz lira.",
+   "heard": "Eksik 330 lira.",
+   "acc": 0.5
+  },
+  "geldik. üç yüz kırk lira.": {
+   "text": "Geldik. Üç yüz kırk lira.",
+   "heard": "Geldik. 340 lira.",
+   "acc": 0.52
+  },
+  "geldik. üç yüz beş lira.": {
+   "text": "Geldik. Üç yüz beş lira.",
+   "heard": "Geldik. 305 lira.",
+   "acc": 0.55
+  },
+  "geldik. üç yüz elli lira.": {
+   "text": "Geldik. Üç yüz elli lira.",
+   "heard": "Geldik. 350 lira.",
+   "acc": 0.52
+  },
+  "cam": {
+   "text": "cam",
+   "heard": "Can",
+   "acc": 0.67
+  },
+  "kir": {
+   "text": "kir",
+   "heard": "Gir.",
+   "acc": 0.67
+  },
+  "dağ": {
+   "text": "dağ",
+   "heard": "Da.",
+   "acc": 0.67
+  },
+  "ağaç": {
+   "text": "ağaç",
+   "heard": "Aç",
+   "acc": 0.5
+  }
+ }
+}
