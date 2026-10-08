@@ -67,7 +67,7 @@ jobs:
       - name: Сайт отдаёт новую сборку
         shell: bash
         run: |
-          URL="https://euxgb.github.io/untitled2"
+          URL="https://www.simitci.ru"
           for i in $(seq 1 40); do
             # сначала в переменную: «curl | grep -q» при pipefail ложно падает (grep закрывает трубу раньше, curl получает SIGPIPE)
             PAGE="$(curl -fsS "$URL/index.html?v=$GITHUB_SHA-$i" || true)"
@@ -94,7 +94,7 @@ jobs:
       - run: npx playwright install --with-deps chromium || (sleep 20 && npx playwright install --with-deps chromium)
         timeout-minutes: 12
       - name: Снять живой сайт
-        run: node tests/live-screens.js "https://euxgb.github.io/untitled2/?v=$GITHUB_SHA" shots
+        run: node tests/live-screens.js "https://www.simitci.ru/?v=$GITHUB_SHA" shots
       - name: Проверить внешние сервисы (Tatoeba, MyMemory, YouGlish)
         run: node tests/probe-services.js shots || true
       - name: Common Voice — сколько фраз записано носителями

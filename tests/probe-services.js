@@ -3,7 +3,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const OUT = process.argv[2] || 'shots';
-const H = { 'Origin':'https://euxgb.github.io' };
+const H = { 'Origin':'https://www.simitci.ru' };
 async function get(url){
   try { const r = await fetch(url, { headers:H, signal: AbortSignal.timeout(20000) }); const t = await r.text();
     return { url, status:r.status, cors:r.headers.get('access-control-allow-origin'), type:r.headers.get('content-type'), body: (r.headers.get('content-type')||'').includes('json') || (r.headers.get('content-type')||'').includes('javascript') ? t.slice(0, 2500) : ('двоичные данные, байт: ' + t.length) };
