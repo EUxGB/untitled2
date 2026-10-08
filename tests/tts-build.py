@@ -55,15 +55,8 @@ except Exception as e:
         if r.returncode: subprocess.run([sys.executable, "-m", "piper", "-m", model, "-f", wav, "--", text], check=True)
 
 tmp = "/tmp/tts-wav"; os.makedirs(tmp, exist_ok=True)
-t0 = time.time(); made = []
-for i, k in enumerate(todo):
-    wav = os.path.join(tmp, f"{i}.wav"); mp3 = os.path.join(out, fname(k))
-    synth(keys[k], wav)
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", wav, "-ac", "1", "-b:a", "48k", mp3], check=True)
-    made.append((k, wav))
-print(f"озвучено {len(made)} за {time.time() - t0:.0f} с", flush=True)
 
-# 3) проверка распознаванием
+# проверка распознаванием
 def norm(s):
     s = s.replace("I", "ı").replace("İ", "i").lower(); s = unicodedata.normalize("NFC", s)
     s = re.sub(r"[^\w\s]", "", s); return re.sub(r"\s+", " ", s).strip()
@@ -79,15 +72,27 @@ from faster_whisper import WhisperModel
 def hear(m, wav):
     segs, _ = m.transcribe(wav, language="tr", beam_size=5, condition_on_previous_text=False)
     return " ".join(s.text for s in segs).strip()
-t0 = time.time(); small = WhisperModel("small", device="cpu", compute_type="int8"); doubt = []
-for k, wav in made:
-    h = hear(small, wav); a = acc(keys[k], h)
-    if a >= 0.8: man["items"][k] = fname(k); report["doubt"].pop(k, None)
-    else: doubt.append((k, wav, h, a))
-print(f"Whisper small: {len(made) - len(doubt)} разборчиво, сомнительных {len(doubt)} ({time.time() - t0:.0f} с)", flush=True)
-if doubt:
-    big = WhisperModel("large-v3", device="cpu", compute_type="int8")
-    for k, wav, h1, a1 in doubt:
+small = WhisperModel("small", device="cpu", compute_type="int8"); big = None
+def save():
+    json.dump(man, open(man_path, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    json.dump(report, open(rep_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+# частями по 150: озвучить → проверить → сохранить (если задачу оборвёт предел времени, сделанное не пропадёт)
+t0 = time.time()
+for c0 in range(0, len(todo), 150):
+    chunk = todo[c0:c0 + 150]; made = []
+    for i, k in enumerate(chunk):
+        wav = os.path.join(tmp, f"{i}.wav"); mp3 = os.path.join(out, fname(k))
+        synth(keys[k], wav)
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", wav, "-ac", "1", "-b:a", "48k", mp3], check=True)
+        made.append((k, wav))
+    doubt = []
+    for k, wav in made:
+        h = hear(small, wav); a = acc(keys[k], h)
+        if a >= 0.8: man["items"][k] = fname(k); report["doubt"].pop(k, None)
+        else: doubt.append((k, wav))
+    if doubt and big is None: big = WhisperModel("large-v3", device="cpu", compute_type="int8")
+    for k, wav in doubt:
         h = hear(big, wav); a = acc(keys[k], h)
         if a >= 0.5:
             man["items"][k] = fname(k)
@@ -95,9 +100,9 @@ if doubt:
             else: report["doubt"].pop(k, None)
         else:
             report["bad"][k] = {"text": keys[k], "heard": h, "acc": round(a, 2)}
-            p = os.path.join(out, fname(k))
-            if os.path.exists(p): os.remove(p)
-json.dump(man, open(man_path, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-json.dump(report, open(rep_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            pth = os.path.join(out, fname(k))
+            if os.path.exists(pth): os.remove(pth)
+    save()
+    print(f"{c0 + len(chunk)}/{len(todo)}: в манифесте {len(man['items'])}, сомнительных {len(report['doubt'])}, выброшено {len(report['bad'])} ({time.time() - t0:.0f} с)", flush=True)
 left = len([k for k in keys if k not in man["items"] and k not in report["bad"]])
 print(f"в манифесте {len(man['items'])} из {len(keys)}; сомнительных {len(report['doubt'])}, выброшено {len(report['bad'])}, осталось озвучить {left}")
