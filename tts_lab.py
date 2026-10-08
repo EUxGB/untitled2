@@ -6,6 +6,8 @@ texts = [t.strip() for t in open("texts.txt", encoding="utf-8") if t.strip()]
 REF, REF_TEXT = "ref/ref.wav", "Faturamı ödemek istiyorum."
 
 def save(name, clips, sr):
+    cd = os.path.join(out, "clips", name); os.makedirs(cd, exist_ok=True)
+    for i, c in enumerate(clips): sf.write(os.path.join(cd, f"{i}.wav"), np.asarray(c, dtype=np.float32).reshape(-1), sr)
     gap = np.zeros(int(sr * 0.8), dtype=np.float32); parts = []
     for c in clips: parts += [np.asarray(c, dtype=np.float32).reshape(-1), gap]
     wav = os.path.join(out, name + ".wav"); sf.write(wav, np.concatenate(parts), sr)
