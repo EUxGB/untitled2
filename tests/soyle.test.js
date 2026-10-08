@@ -1901,6 +1901,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await p.evaluate(() => ['Yastayım.', 'Yasa açık.', 'Tom yasta.', 'Biz yastayız.', 'Yastığı yok.', 'Bir yastık lütfen.'].filter(s => exampleHas(s, 'yastık')).concat(['İstiyorum.', 'Kitabı aldım.'].filter((s, i) => exampleHas(s, ['istemek', 'kitap'][i]))));
     eq(r, ['Yastığı yok.', 'Bir yastık lütfen.', 'İstiyorum.', 'Kitabı aldım.']);
   });
+  await test('Город (08:51): заголовок дома — «Mahalle (квартал) · …», без «города»', async () => {
+    const q = await openCity();
+    const s = await q.evaluate(() => { cityRender(); return document.getElementById('ctPlace').textContent; }); await q.context().close();
+    ok(/^Mahalle \(квартал\) · /.test(s) && !/города/.test(s), s);
+  });
   await test('«Память» (22:03): сохранённые карточки со старым «çok güzel» про еду заменяются на «çok lezzetli»', async () => {
     const q = await openPage(browser, { storage:{ 'soyle-srs': JSON.stringify([{ tr:'Ellerinize sağlık, çok güzel.', ru:'x', side:'rec', state:2, step:null, s:3, d:5, due:0, last:0, reps:2, seen:true }]) } });
     const r = await q.evaluate(() => loadCards().map(c => c.tr)); await q.context().close();

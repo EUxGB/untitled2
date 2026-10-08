@@ -4833,7 +4833,7 @@ function cityRes(){
 function cityRender(){
   const home = !ct;
   ctEl("ctHome").hidden = !home; ctEl("ctScene").hidden = home;
-  ctEl("ctPlace").textContent = home ? `Mahalle (квартал города) · ${DOW_RU[cityDow()]}, день ${city.day}` : ct.scene.place;
+  ctEl("ctPlace").textContent = home ? `Mahalle (квартал) · ${DOW_RU[cityDow()]}, день ${city.day}` : ct.scene.place;
   cityRes();
   if(home) cityBoard();
   scheduleFit();
