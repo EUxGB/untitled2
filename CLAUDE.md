@@ -67,6 +67,14 @@
 | `using-superpowers`, `brainstorming`, `writing-plans`, `executing-plans`, `test-driven-development`, `systematic-debugging`, `verification-before-completion`, `requesting-code-review`, `subagent-driven-development` | obra/superpowers (293K звёзд; по просьбе пользователя 2026-10-03) | **процесс любой работы**: новая функция → `brainstorming` (классифицировать: spike / bounded / architectural; вопросы по одному; дизайн в чате или спек в `docs/superpowers/specs/`, одобрение — потом `writing-plans` → план в `docs/superpowers/plans/`); код — только после падающего теста (`test-driven-development`); ошибка/упавший тест → `systematic-debugging` (сначала причина, потом правка); перед «готово/опубликовано» — `verification-before-completion` (свежий прогон команды, выход и числа — в ответе); перед публикацией крупного — `requesting-code-review` отдельным агентом |
 | на будущее: `playwright-cli` | microsoft (167K) | видео/трассировки тестов |
 
+**Имя, домен и план увлекательности (2026-10-07…08) — в отдельной ветке, не в `main`:** спек
+`docs/superpowers/specs/2026-10-07-brand-and-engagement-design.md` в ветке `skills/naming-positioning`
+(https://github.com/EUxGB/untitled2/tree/skills/naming-positioning; прочитать: `git fetch origin skills/naming-positioning &&
+git show origin/skills/naming-positioning:docs/superpowers/specs/2026-10-07-brand-and-engagement-design.md`). Кратко: имя — **Simit**,
+домен **simitci.ru** (DNS в Timeweb → GitHub Pages; включение Custom domain и правка адресов в `tests.yml` — после того, как домен заработает),
+правки игры по рангу (аренда, цена «Показать», задания дня про город, такси без XP, Pazarlık растёт от торга, множитель XP — только за новые реплики)
+ждут одобрения плана. Там же навыки `product-name`, `obviously-awesome`, `naming-and-branding`, `interview-script`.
+
 Макет нового вида (Claude Design, по frontend-design): https://claude.ai/artifact/LJwX1w4VPH9jx2gVjskWqp —
 без эмодзи, свои линейные SVG-иконки; палитра «туман Босфора» #EEF2F0, «вода Босфора» #0F5C5A,
 «тюльпан» #C62F35 (только трудные звуки и запись), «чернила» #14262B; шрифты Literata (турецкие слова) и
