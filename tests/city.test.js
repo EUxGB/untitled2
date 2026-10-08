@@ -121,8 +121,11 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
         if(policy === 'happy' && !r.done.length) bad.push(`${tag}: нет записи в city.done`);
       }
     }
+    // озвучка Piper (спек 2026-10-08): всё, что сцены пытались сказать, есть в списке ttsInventory — иначе CI не озвучит это заранее
+    const notInv = await q.evaluate(() => { const keys = new Set(ttsInventory().map(ttsKey)); return [...new Set((window.__ttsSeen || []).filter(t => !keys.has(ttsKey(t))))].slice(0, 15); });
+    const seenN = await q.evaluate(() => (window.__ttsSeen || []).length);
     await q.evaluate(() => { window.__seed = 0; });
-    await q.context().close(); eq(bad, []);
+    await q.context().close(); eq(bad, []); ok(process.env.SCENE_ONLY || seenN > 100, 'журнал озвучки пуст: ' + seenN); eq(notInv, [], 'сказано, но нет в списке озвучки');
   });
 
   console.log('Сцены «Города»: помещаются на 360×640, 390×844, 412×915');

@@ -34,11 +34,41 @@ jobs:
           shopt -s nullglob; f=(tests/approved/*.actual.png); [ ${#f[@]} -gt 0 ] || exit 0
           mkdir -p /tmp/aa && cp "${f[@]}" /tmp/aa/ && cd /tmp/aa && git init -q && git checkout -q -b approved-actual && git config user.name ci && git config user.email ci@example.com
           git add . && git commit -q -m "снимок вида из CI для эталона" && git push -f -q "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" approved-actual
+  # Озвучка Piper (спек docs/superpowers/specs/2026-10-08-piper-tts-design.md): недостающие тексты озвучиваются и проверяются Whisper,
+  # результат — ветка tts-audio. Сбой этой задачи публикацию не останавливает: на сайте для новых текстов будет голос телефона.
+  tts:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    continue-on-error: true
+    concurrency: { group: tts-audio, cancel-in-progress: false }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium || (sleep 20 && npx playwright install --with-deps chromium)
+        timeout-minutes: 12
+      - run: node tests/tts-texts.js
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: sudo apt-get install -y -qq ffmpeg && pip install -q piper-tts==1.2.0 faster-whisper huggingface_hub
+      - name: Ветка tts-audio
+        run: git clone -q --depth 1 -b tts-audio "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" tts-audio || (mkdir tts-audio && cd tts-audio && git init -q && git checkout -q -b tts-audio)
+      - name: Озвучить новые тексты (не больше 150 за публикацию)
+        env: { TTS_MAX: "150" }
+        run: python3 tests/tts-build.py tests/tts-texts.json tts-audio
+      - name: Сохранить ветку tts-audio
+        shell: bash
+        run: |
+          cd tts-audio && git config user.name "github-actions" && git config user.email "github-actions@users.noreply.github.com"
+          git add -A && (git commit -qm "Озвучка Piper для ${GITHUB_SHA::7}" || true)
+          git push -q "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:tts-audio
   # Публикация на GitHub Pages — только если все тесты прошли
   deploy:
-    needs: test
+    needs: [test, tts]
     timeout-minutes: 10
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: always() && needs.test.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -48,6 +78,10 @@ jobs:
       - name: Собрать сайт (только файлы приложения)
         run: |
           mkdir _site && cp -r index.html manifest.json icon-*.png fonts audio _site/
+          # озвучка Piper из ветки tts-audio (нет ветки — сайт говорит голосом телефона)
+          if git clone -q --depth 1 -b tts-audio "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" /tmp/tta; then
+            mkdir -p _site/tts && cp /tmp/tta/manifest.json /tmp/tta/*.mp3 _site/tts/ && echo "озвучка: $(ls _site/tts/*.mp3 | wc -l) файлов"
+          fi
           # номер сборки: приложение сверяет его с сайтом и само подтягивает свежую версию
           BUILD="$(date -u +%Y-%m-%d) · ${GITHUB_SHA::7}"
           sed -i "s/__BUILD__/$BUILD/g" _site/index.html
@@ -78,6 +112,13 @@ jobs:
           for f in fonts/DejaVuSans.woff2 fonts/DejaVuSans-Bold.woff2 fonts/LiberationSerif-Regular.woff2 fonts/LiberationSerif-Bold.woff2 manifest.json audio/cv/index.json audio/cv/001.mp3; do
             curl -fsS -o /dev/null "$URL/$f?v=$GITHUB_SHA" || { echo "::error::нет файла $f на сайте"; exit 1; }
           done
+          # озвучка Piper: манифест и 20 случайных файлов отдаются сайтом
+          MAN="$(curl -fsS "$URL/tts/manifest.json?v=$GITHUB_SHA" || true)"
+          if [ -z "$MAN" ]; then echo "::warning::на сайте нет tts/manifest.json — озвучка Piper не опубликована"; else
+            echo "$MAN" | python3 -c "import sys,json,random;v=list(json.load(sys.stdin)['items'].values());random.shuffle(v);print('\n'.join(v[:20]))" > /tmp/ttsf
+            echo "в манифесте: $(echo "$MAN" | python3 -c "import sys,json;print(len(json.load(sys.stdin)['items']))") текстов"
+            while read -r f; do curl -fsS -o /dev/null "$URL/tts/$f?v=$GITHUB_SHA" || { echo "::error::нет файла озвучки tts/$f"; exit 1; }; done < /tmp/ttsf
+          fi
   # Снимки живого сайта во всех разделах → ветка `screens` (чтобы показать пользователю, как сайт выглядит на самом деле)
   screens:
     needs: verify

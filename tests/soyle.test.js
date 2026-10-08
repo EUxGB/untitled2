@@ -1672,6 +1672,27 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r2 = await p.evaluate(list => { const keys = new Set(ttsInventory().map(ttsKey)); return list.filter(t => !keys.has(ttsKey(t))).slice(0, 10); }, city);
     eq(r.miss, [], 'нет в списке (' + r.nmiss + ')'); eq(r2, [], 'реплики города (city-phrases.json) не в списке'); eq(r.n, r.uniq, 'повторы'); eq(r.empty, 0); ok(r.n > 2000, 'текстов мало: ' + r.n);
   });
+  await test('озвучка Piper, шаг 4: есть файл в манифесте — играет он (слово, «Синтез» обычный и медленный, собеседник в городе со скоростью Kulak, образец без записи носителя); нет файла — голос телефона', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(async () => {
+      const wait = ms => new Promise(z => setTimeout(z, ms)), a = document.getElementById('nativeAudio');
+      trVoice = { name:'T', lang:'tr-TR' }; trVoices = [trVoice]; const pl0 = HTMLMediaElement.prototype.play; HTMLMediaElement.prototype.play = function(){ window.__rate = this.playbackRate; return pl0.call(this); };
+      TTS.man = { [ttsKey('Hesap lütfen.')]:'aaa.mp3', [ttsKey('hesap')]:'bbb.mp3', [ttsKey('Merhaba, buyurun.')]:'ccc.mp3' };
+      const out = {}, reset = () => { window.__played = []; window.__spoken = []; }; const P = () => window.__played.map(s => s.replace(/^.*\/(tts\/)/, '$1'));
+      reset(); sayText('Hesap'); await wait(50); out.word = [P(), window.__spoken.slice()];
+      reset(); sayText('yok böyle'); await wait(50); out.missing = [P(), window.__spoken.slice()];
+      setMode('phrases'); item = { target:'Hesap lütfen.', gid:'x' }; document.getElementById('play').disabled = false; synthSlow = false;
+      reset(); document.getElementById('play').click(); await wait(50); out.synth = [P(), window.__rate];
+      await wait(200); reset(); document.getElementById('play').click(); await wait(50); out.slow = [P(), window.__rate];
+      await wait(200); nativeCache.set(clean('Hesap lütfen.'), []); reset(); let done = 0; playReference('Hesap lütfen.', () => done++); await wait(300); out.ref = [P(), window.__spoken.slice(), done];
+      reset(); trVoices = []; trVoice = null; let fin = 0; npcSay('Merhaba, buyurun.', () => fin++); await wait(50); out.npc = [P(), window.__rate === npcRate()]; await wait(100); out.npcDone = fin;
+      out.canSpeak = canSpeak();
+      return out; });
+    const errs = q.errors; await q.context().close();
+    eq(r.word, [['tts/bbb.mp3'], []], 'слово'); eq(r.missing, [[], ['yok böyle']], 'нет файла — телефон');
+    eq(r.synth[0], ['tts/aaa.mp3'], '«Синтез»'); eq(r.synth[1], 1); eq(r.slow[0], ['tts/aaa.mp3']); ok(Math.abs(r.slow[1] - 0.7) < 1e-6, 'медленно: ' + r.slow[1]);
+    eq(r.ref, [['tts/aaa.mp3'], [], 1], 'образец без записи носителя'); eq(r.npc, [['tts/ccc.mp3'], true], 'собеседник'); eq(r.npcDone, 1); ok(r.canSpeak, 'без голоса телефона — можно говорить файлами'); eq(errs, []);
+  });
   await test('«Из ваших фраз» (21:39): у каждой фразы урока словообразования есть разбор «слово = части», а формы этих фраз объяснены в тексте урока', async () => {
     const r = await p.evaluate(() => { const g = GRAMMAR.find(x => x.id === 'deriv'), html = gramRuleHtml(g), ph = gramPhrases(g).map(x => x.tr); return { html, ph, lesson: JSON.stringify([g.txt, g.tbl]) }; });
     ok(r.ph.length >= 3, 'фраз мало: ' + r.ph.length);

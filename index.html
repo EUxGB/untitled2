@@ -1043,7 +1043,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
         <p class="bk-msg" id="bkMsg" role="status" aria-live="polite"></p>
       </section>
 
-      <label class="opt">Голос синтеза: <select id="voice"></select></label>
+      <label class="opt">Голос телефона (запасной): <select id="voice"></select></label>
 
       <details class="help">
         <summary>Как пользоваться</summary>
@@ -1061,6 +1061,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
           <li><b>Как приложение:</b> меню браузера, затем «Добавить на главный экран» — откроется без адресной строки.</li>
         </ol>
         <p>Лучше всего работает в Chrome или Edge. Нужен интернет. На iPhone распознавание речи ограничено.</p>
+        <p id="ttsCredit">Голос синтеза: Piper, голос tr_TR-dfki-medium (данные DFKI, лицензия CC BY-NC-SA 4.0 — только некоммерческое использование). Где озвучки ещё нет — голос телефона (выбор выше). Записи носителей — Common Voice (CC0) и Tatoeba.</p>
         <p class="hint hintable"><kbd>Пробел</kbd> — сказать, <kbd>Enter</kbd> — дальше, <kbd>N</kbd> — носитель, <kbd>L</kbd> — синтез, «На слух»: <kbd>1</kbd> <kbd>2</kbd>; «Город»: <kbd>1</kbd>–<kbd>3</kbd> — выбрать ответ, <kbd>R</kbd> — ещё раз</p>
       </details>
       <div class="app-ver">
@@ -2417,7 +2418,7 @@ function memSetButtons(phase, side){
   $("speak").disabled = phase === "empty" || !SR;
   // до ответа «Носитель», «Примеры», «Синтез» выдали бы ответ на «сказать»; на «понять на слух» звук — это и есть вопрос
   const hide = prompt && side === "prod";
-  $("native").disabled = hide || phase === "empty"; $("play").disabled = hide || phase === "empty" || !trVoice; $("yg").disabled = prompt || phase === "empty";
+  $("native").disabled = hide || phase === "empty"; $("play").disabled = hide || phase === "empty" || !canSpeak(); $("yg").disabled = prompt || phase === "empty";
 }
 function memRender(){
   const t = $("target"), c = mem.card, side = c ? c.side : null;   // «На сегодня всё» — карточки нет (было: падение)
@@ -2544,7 +2545,7 @@ function memCount(gid, ok, xpScore){                                     // ка
 function memRestoreButtons(){                                           // вне «Памяти» у кнопок карточки обычные роли
   setLbl($("compare"), "Сравнить"); setIc($("compare"), "compare"); $("compare").disabled = false;
   setLbl($("next"), "Дальше"); $("next").disabled = false; $("speak").disabled = !SR;
-  $("native").disabled = false; $("yg").disabled = false; $("play").disabled = !trVoice;
+  $("native").disabled = false; $("yg").disabled = false; $("play").disabled = !canSpeak();
   $("target").classList.remove("mem-hide");
   $("memGrades").hidden = true; $("memGrades").innerHTML = "";
 }
@@ -2662,7 +2663,7 @@ function pickVoice(){
   const sel = $("voice");
   sel.innerHTML = vs.map(v=>`<option value="${esc(v.name)}"${v===trVoice?" selected":""}>${esc(v.name)}${voiceRank(v)<=1?" — естественный":""}</option>`).join("") || "<option>нет турецких голосов</option>";
   sel.disabled = !vs.length;
-  $("play").disabled = !trVoice;
+  $("play").disabled = !canSpeak();
   if(trVoice && voiceRank(trVoice)>1) showHintWarn("Синтез на этом устройстве звучит механически. Живую речь дают «Носитель» и «Примеры». Самый естественный синтез — в Microsoft Edge (голоса Emel и Ahmet, Natural).");
 }
 $("voice").onchange = e => {
@@ -2670,6 +2671,10 @@ $("voice").onchange = e => {
   try { localStorage.setItem("soyle-voice", trVoice.name); } catch(err){}
 };
 function say(rate){
+  if(!item) return;
+  ttsPlay(item.target, () => sayDevice(rate), null, rate < 0.7 ? 0.7 : 1);
+}
+function sayDevice(rate){
   if(!trVoice) return;
   const busy = speechSynthesis.speaking || speechSynthesis.pending;
   speechSynthesis.cancel(); $("nativeAudio").pause();
@@ -3035,10 +3040,10 @@ async function freeListen(){
   try { freeRec.start(); } catch(e){ freeRec.onend(); }
 }
 function sayText(text){
-  if(!trVoice || !text) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text); u.voice = trVoice; u.lang = trVoice.lang; u.rate = .85;
-  speechSynthesis.speak(u);
+  if(!text) return;
+  ttsPlay(text, () => { if(!trVoice) return; speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.voice = trVoice; u.lang = trVoice.lang; u.rate = .85;
+    speechSynthesis.speak(u); });
 }
 
 // Образец: запись носителя, если есть, иначе синтез (случайный голос — разнообразие помогает слуху)
@@ -3051,7 +3056,8 @@ function playReference(text, onDone, varied, onStart){
   const busy = speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending);
   speechSynthesis && speechSynthesis.cancel();
   const a = $("nativeAudio"); a.pause(); a.onended = null; a.onerror = null;
-  const speakSynth = () => {
+  const speakSynth = () => ttsPlay(text, speakDevice, finish, 1, started);
+  const speakDevice = () => {
     const v = varied && trVoices.length ? trVoices[Math.floor(Math.random()*trVoices.length)] : trVoice;
     if(!v){ finish(); return; }
     const rate = varied ? 0.75 + Math.random()*0.25 : .85;
@@ -5136,6 +5142,10 @@ function localNative(text){ try { return [...cvRecordings(text), ...(TAT_REC.get
 let nativeCur = null;     // текущее воспроизведение записи: общий <audio> один, новое не должно «съедать» окончание прежнего
 function playNativeOr(recs, synth, onDone, rate){
   if(!recs.length || (TESTMODE && !window.__realNative)) return synth();
+  playFileOr(recs.map(r => r.url), synth, onDone, rate);
+}
+// Проиграть файл (запись носителя или озвучку Piper); не загрузился за 4 с или ошибка — запасной путь synth() ровно один раз
+function playFileOr(urls, synth, onDone, rate, onStart){
   const a = $("nativeAudio"); speechSynthesis && speechSynthesis.cancel();
   if(nativeCur) nativeCur.end();                                      // прежняя запись перехвачена: её onDone всё равно нужен (реплика собеседника иначе зависла бы под veil)
   a.pause(); let fell = false, ended = false, started = false, guard = 0;
@@ -5145,9 +5155,9 @@ function playNativeOr(recs, synth, onDone, rate){
   const me = { end };
   nativeCur = me;
   a.defaultPlaybackRate = a.playbackRate = rate || 1; a.preservesPitch = true;     // способность Kulak меняет скорость и у записей, не только у синтеза
-  a.onended = end; a.onemptied = end; a.onerror = fb; a.onplaying = () => { started = true; clearTimeout(guard); };
+  a.onended = end; a.onemptied = end; a.onerror = fb; a.onplaying = () => { started = true; clearTimeout(guard); onStart && onStart(); };
   guard = setTimeout(() => { if(!started) fb(); }, 4000);              // запись не стартовала (сеть, отказ воспроизведения без ошибки) — запасной синтез
-  a.src = recs[Math.floor(Math.random() * recs.length)].url; a.play().catch(fb);
+  a.src = urls[Math.floor(Math.random() * urls.length)]; a.play().then(() => { if(TESTMODE && !started){ started = true; clearTimeout(guard); onStart && onStart(); } }, fb);
 }
 async function sayNative(text){
   if(TESTMODE) return sayText(text);
@@ -5159,13 +5169,14 @@ async function sayNative(text){
 let npcTok = 0;
 function npcSay(text, onDone){
   const tok = ++npcTok, finish = () => { if(tok !== npcTok) return; npcTok++; onDone && onDone(); };
-  if(!(trVoices.length || trVoice)){ setTimeout(finish, 30); return; }
+  if(!(trVoices.length || trVoice) && !ttsUrl(text)){ if(TESTMODE) (window.__ttsSeen = window.__ttsSeen || []).push(text); setTimeout(finish, 30); return; }
   const idx = ct && CHARS[ct.char] ? CHARS[ct.char].voice : ct ? Object.keys(SCENES).indexOf(ct.id) : 0, v = trVoices[idx % trVoices.length] || trVoice;
   const busy = speechSynthesis.speaking || speechSynthesis.pending; speechSynthesis.cancel();
   let done = false; const once = () => { if(done) return; done = true; finish(); };
-  { const rec = localNative(text); if(rec.length && (!TESTMODE || window.__realNative)){ playNativeOr(rec, () => { speakNpc(); }, once, npcRate()); return; } }
-  speakNpc();
+  { const rec = localNative(text); if(rec.length && (!TESTMODE || window.__realNative)){ playNativeOr(rec, () => ttsPlay(text, speakNpc, once, npcRate()), once, npcRate()); return; } }
+  ttsPlay(text, speakNpc, once, npcRate());
   function speakNpc(){
+  if(!(trVoices.length || trVoice)){ setTimeout(once, 30); return; }
   setTimeout(() => {
     if(tok !== npcTok) return;
     const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = Math.max(ct && ct.scene.phone ? 1.0 : 0, npcRate());
@@ -5209,7 +5220,21 @@ function ctAltIdx(nid, len){
 const relDiscount = price => Math.floor(price * 0.9 / 5) * 5;
 // Озвучка Piper (спек docs/superpowers/specs/2026-10-08-piper-tts-design.md): ключ текста и список ВСЕГО, что сайт может произнести.
 // Список читает генератор в CI (tests/tts-texts.js → озвучка недостающего); тест сверяет его с данными сайта.
-const ttsKey = t => String(t || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("tr-TR");
+function ttsKey(t){ return String(t || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("tr-TR"); }
+// Озвучка Piper на сайте: tts/manifest.json {voice, items:{ключ: файл}} грузится один раз; нет манифеста или текста в нём — голос телефона.
+var TTS = { man:null, tried:false };
+function ttsLoad(){ if(TTS.tried) return; TTS.tried = true;
+  fetch("tts/manifest.json", { cache:"no-cache" }).then(r => r.ok ? r.json() : null).then(m => { if(m && m.items) TTS.man = m.items; }).catch(() => {}); }
+function ttsUrl(text){ const f = TTS && TTS.man && TTS.man[ttsKey(text)]; return f ? "tts/" + f : null; }
+function canSpeak(){ return !!trVoice || !!(TTS && TTS.man); }
+// Сказать турецкий текст: файл Piper (скорость rate, с сохранением высоты), иначе synth() — прежний голос телефона.
+// В тестах — журнал window.__ttsSeen (все тексты, которые сайт пытался озвучить).
+function ttsPlay(text, synth, onDone, rate, onStart){
+  if(TESTMODE) (window.__ttsSeen = window.__ttsSeen || []).push(text);
+  const url = ttsUrl(text); if(!url) return synth();
+  speechSynthesis && speechSynthesis.cancel();
+  playFileOr([url], synth, onDone, rate || 1, onStart);
+}
 function ttsInventory(){
   const out = new Map(), add = t => { if(Array.isArray(t)) return t.forEach(add); if(typeof t !== "string") return; t = t.trim().replace(/\s+/g, " ");
       if(!/\p{L}/u.test(t)) return; const k = ttsKey(t); if(!out.has(k)) out.set(k, t); },
@@ -7540,6 +7565,7 @@ async function checkUpdate(){
   } catch(e){ /* нет сети — работаем с тем, что есть */ }
 }
 setTimeout(checkUpdate, 1500);
+if(!TESTMODE) ttsLoad();            // озвучка Piper: манифест рядом с сайтом (tts/manifest.json); нет — голос телефона
 
 // ---------- окно внутри приложения: видео носителей и перевод без перехода на другие сайты ----------
 let sheetOpen = false, sheetOnClose = null, sheetReturn = null;
