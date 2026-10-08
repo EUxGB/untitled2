@@ -143,3 +143,6 @@ Speak, ELSA, Memrise); двухсловные имена — только в н�
 - Ниша: https://www.sozcu.com.tr/ikamet-izinli-yabanci-sayisi-250-bine-yakin-azaldi-p15657 ; https://www.haberturk.com/turkiye-de-ikamet-izniyle-yasayanlarin-sayisi-aciklandi-3780490
 - Аналоги: https://www.lingolooper.com/ ; https://fluenttown.com/ ; https://store.steampowered.com/app/2313720/Noun_Town_Language_Learning/
 - Навыки: https://www.skills.sh/phuryn/pm-skills/interview-script ; домены — RDAP реестров .app/.com, 07–08.10.2026
+
+## Проверка знаков для «Simit» (2026-10-08) — НЕ ВЫПОЛНЕНА
+Реестры TÜRKPATENT, Роспатент (fips.ru), WIPO Global Brand Database, EUIPO eSearch — из среды не опрашиваются (поиск в них идёт через формы/JS, обычный веб-поиск отдаёт посторонние страницы; запросы к WIPO/EUIPO ждали разрешения и не получили его). Поиском по приложениям в сторах с названием «Simit» учебных или игровых приложений не найдено, но это не проверка знаков. Что нужно сделать вручную: поиск «SIMIT» (+ SİMİT, СИМИТ) в классах 9, 41, 42 и смежных 43/30 на search.turkpatent.gov.tr, fips.ru (открытый реестр), branddb.wipo.int. Ожидаемый риск: «Simit Sarayı» и др. в 30/43 (еда) — для классов 9/41 коллизия маловероятна, но не доказана.
