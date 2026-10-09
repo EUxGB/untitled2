@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <!-- Simit, иконка ярлыка: вариант A «кольцо-поле» (Claude Design, выбран пользователем 2026-10-09 13:09).
+       Кольцо из 28 клеток = поле «Города» и симит; фишка на первой клетке. Палитра: вода #0F5C5A, туман #EEF2F0, тюльпан #C62F35.
+       PNG собираются скриптом tests/make-icons.js (не публикуется). -->
+  <rect width="192" height="192" rx="42" fill="#0F5C5A"/>
+  <circle cx="96" cy="96" r="56" fill="none" stroke="#EEF2F0" stroke-width="18" stroke-dasharray="10.2 2.366" transform="rotate(-90 96 96)"/>
+  <circle cx="101.1" cy="40.2" r="12" fill="#C62F35" stroke="#0F5C5A" stroke-width="3"/>
+</svg>

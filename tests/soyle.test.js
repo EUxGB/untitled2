@@ -603,6 +603,22 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const sizes = man.icons.map(i => i.sizes); ok(sizes.includes('192x192') && sizes.includes('512x512'));
     man.icons.forEach(i => ok(fs.existsSync(path.join(dir, i.src)), 'нет файла ' + i.src));
     eq(await p.evaluate(() => [!!document.querySelector('link[rel=manifest]'), document.querySelector('meta[name=theme-color]').content, getComputedStyle(document.body).backgroundColor]), [true, '#EEF2F0', 'rgb(238, 242, 240)']); // цвет панели = фон страницы
+    // Иконка Simit (2026-10-09, вариант A «кольцо-поле», выбран пользователем 13:09): фон «вода Босфора», кольцо из клеток «туман», фишка «тюльпан».
+    // iPhone закрашивает прозрачные углы чёрным — для него отдельная непрозрачная 180×180; maskable — без прозрачности (Android сам обрезает).
+    const apple = await p.evaluate(() => { const l = document.querySelector('link[rel="apple-touch-icon"]'); return { href:l.getAttribute('href'), sizes:l.getAttribute('sizes') }; });
+    const b64 = f => 'data:image/png;base64,' + fs.readFileSync(path.join(dir, f)).toString('base64');   // data: — чтобы canvas с file:// не был «чужим»
+    const ic = await p.evaluate(async ([aSrc, mSrc, rSrc, sizes]) => {
+      const px = (img, x, y) => { const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; const g = c.getContext('2d'); g.drawImage(img, 0, 0); return [...g.getImageData(Math.min(c.width - 1, Math.round(x * c.width)), Math.min(c.height - 1, Math.round(y * c.height)), 1, 1).data]; };
+      const load = src => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no('не загрузилась'); i.src = src; });
+      const a = await load(aSrc), m = await load(mSrc), r = await load(rSrc);
+      return { appleSize:[a.naturalWidth, a.naturalHeight], appleSizesAttr:sizes, appleCorner:px(a, 0, 0), maskCorner:px(m, 0, 0),
+        anyCorner:px(r, 0, 0)[3], token:px(r, 0.527, 0.21) };
+    }, [b64(apple.href), b64('icon-maskable-512.png'), b64('icon-512.png'), apple.sizes]);
+    eq(ic.appleSize, [180, 180]); eq(ic.appleSizesAttr, '180x180');
+    eq(ic.appleCorner, [15, 92, 90, 255], 'apple-touch-icon: непрозрачный фон #0F5C5A в углу');
+    eq(ic.maskCorner, [15, 92, 90, 255], 'maskable: фон #0F5C5A до края');
+    eq(ic.anyCorner, 0, 'обычная иконка: скруглённые прозрачные углы');
+    ok(ic.token[0] > 180 && ic.token[1] < 80, 'на кольце красная фишка: ' + ic.token);
   });
 
   console.log('Сценарий пользователя: только нажатия, как на телефоне');
