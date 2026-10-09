@@ -5178,6 +5178,7 @@ async function sayNative(text){
 // Реплика собеседника: синтез голосом персонажа; текст по-турецки открывается, когда звук прозвучал; перевод — по нажатию (стоит терпения)
 let npcTok = 0;
 function npcSay(text, onDone){
+  if(ct) ct.lastNpc = text;
   const tok = ++npcTok, finish = () => { if(tok !== npcTok) return; npcTok++; onDone && onDone(); };
   if(!(trVoices.length || trVoice) && !ttsUrl(text)){ if(TESTMODE) (window.__ttsSeen = window.__ttsSeen || []).push(text); setTimeout(finish, 30); return; }
   const idx = ct && CHARS[ct.char] ? CHARS[ct.char].voice : ct ? Object.keys(SCENES).indexOf(ct.id) : 0, v = trVoices[idx % trVoices.length] || trVoice;
@@ -5363,7 +5364,8 @@ function cityReveal(){   // перевод реплики: первая встр
   if(ctEl("ctRu").hidden){ ctEl("ctRu").hidden = false; ct.sawRu = true; if(!ct.revealed && !ct.firstTime && (trVoices.length || trVoice) && skillLvl("nezaket") < 4){ ct.revealed = true; ct.patience = Math.max(0, ct.patience - 1); cityRes(); } }
   scheduleFit();
 }
-function cityReplay(){ if(!ct || !ct.node || ct.node.end) return; ctEl("ctTr").classList.add("veil"); npcSay(ctNpc(ct.node), () => { if(ct) { ctEl("ctTr").classList.remove("veil"); ctButtons(); } }); }
+// нажатие на лицо — повторить ПОСЛЕДНЮЮ реплику собеседника (лавка: «Su, tamam. Başka?», «ещё раз», «не хватает»), а не первую реплику узла (жалоба 2026-10-09 18:14)
+function cityReplay(){ if(!ct || !ct.node || ct.node.end) return; ctEl("ctTr").classList.add("veil"); npcSay(ct.lastNpc || ctNpc(ct.node), () => { if(ct) { ctEl("ctTr").classList.remove("veil"); ctButtons(); } }); }
 // распознавание ответа: одна фраза, без записи своего голоса (в разговоре она не нужна, а на Android мешает)
 let ctRec = null, ctOn = false, ctTok = 0, ctRaw = "";
 function cityListen(){
@@ -5643,7 +5645,7 @@ const FUNC_GLOSS = {
   misin:"вопрос к «ты» (…ли ты?)", mısın:"вопрос к «ты» (…ли ты?)", musun:"вопрос к «ты» (…ли ты?)", müsün:"вопрос к «ты» (…ли ты?)",
   misiniz:"вопрос к «вы» (…ли вы?)", mısınız:"вопрос к «вы» (…ли вы?)", musunuz:"вопрос к «вы» (…ли вы?)", müsünüz:"вопрос к «вы» (…ли вы?)",
   miyim:"вопрос к «я» (…ли я? можно мне?)", mıyım:"вопрос к «я» (…ли я?)", muyum:"вопрос к «я» (…ли я?)", müyüm:"вопрос к «я» (…ли я?)", mıydı:"вопрос в прошедшем (было ли?)", miydi:"вопрос в прошедшем (было ли?)",
-  da:"тоже; и (после слова)", de:"тоже; и (после слова)", ki:"что; ведь (союз)", ama:"но", hiç:"совсем (не), никогда", daha:"ещё; более", kadar:"до; настолько (ne kadar — сколько)", artık:"уже; больше (не)",
+  da:"тоже; и (после слова)", de:"тоже; и (после слова)", ki:"что; ведь (союз)", ama:"но", hiç:"совсем (не), никогда", daha:"ещё; более", kadar:"столько, настолько (bu kadar — вот столько; ne kadar — сколько); ещё «до»: akşama kadar — до вечера", artık:"уже; больше (не)",
   pek:"не очень (с отрицанием)", peki:"ладно, хорошо", galiba:"кажется, наверное", hâlâ:"всё ещё", hala:"всё ещё", şu:"вот этот, тот", şuna:"на это, вот на то", bunun:"этого (у этого)", onu:"его, её (кого? что?)", beni:"меня", biz:"мы",
   sizde:"у вас (sıra sizde — ваша очередь)", sizin:"ваш", kendimi:"себя (я)", kendinizi:"себя (вы)", kim:"кто", kimse:"кто-нибудь; никто", nedir:"что это?", neresi:"какое место, где именно", nerelisin:"откуда ты родом?",
   olur:"ладно, подойдёт (букв. «будет»)", olmaz:"нельзя, не пойдёт", olabilir:"может быть, возможно", ol:"будь (sakin ol — успокойся)", olsun:"пусть будет (afiyet olsun — приятного аппетита)", olun:"будьте (sağ olun — спасибо, букв. «будьте здоровы»)",

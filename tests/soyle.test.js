@@ -1967,6 +1967,20 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await p.evaluate(() => ['Yastayım.', 'Yasa açık.', 'Tom yasta.', 'Biz yastayız.', 'Yastığı yok.', 'Bir yastık lütfen.'].filter(s => exampleHas(s, 'yastık')).concat(['İstiyorum.', 'Kitabı aldım.'].filter((s, i) => exampleHas(s, ['istemek', 'kitap'][i]))));
     eq(r, ['Yastığı yok.', 'Bir yastık lütfen.', 'İstiyorum.', 'Kitabı aldım.']);
   });
+  await test('Город (2026-10-09 18:14): нажатие на лицо собеседника повторяет ПОСЛЕДНЮЮ его реплику («Su, tamam. Başka?»), а не первую реплику узла («Ne lazım?»)', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(async () => { const wait = ms => new Promise(z => setTimeout(z, ms));
+      cityStart('bakkal'); await wait(200); const first = ctNpc(ct.node);
+      ctEl('ctTr').textContent = 'Su, tamam. Başka?'; npcSay('Su, tamam. Başka?'); await wait(100);
+      window.__ttsSeen = []; ctEl('ctReplay').disabled = false; ctEl('ctReplay').click(); await wait(100);
+      return { first, replay: (window.__ttsSeen || []).slice(-1)[0] }; });
+    await q.context().close();
+    ok(r.first !== 'Su, tamam. Başka?', 'первая реплика узла: ' + r.first); eq(r.replay, 'Su, tamam. Başka?');
+  });
+  await test('перевод «kadar» (2026-10-09 18:16: «Hepsi bu kadar — что такое kadar?»): «столько» и пример bu kadar; у слова hepsi — пример фразы целиком', async () => {
+    const r = await p.evaluate(() => [wordGloss('kadar').ctx, wordGloss('hepsi').ctx]);
+    ok(/столько/.test(r[0]) && /bu kadar/.test(r[0]), r[0]); ok(/hepsi bu kadar/.test(r[1]), r[1]);   // на карточке выбора — короткое «Это всё.», дословный разбор — по нажатию на слово
+  });
   await test('Город (08:51): заголовок дома — «Mahalle (квартал) · …», без «города»', async () => {
     const q = await openCity();
     const s = await q.evaluate(() => { cityRender(); return document.getElementById('ctPlace').textContent; }); await q.context().close();
