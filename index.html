@@ -770,6 +770,19 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .sheet-body .gm-p, .sheet-body .gm-t{color:var(--ink)} .sheet-body .gm-lead2{color:var(--accent-ink)} .sheet-body .gm-ru{color:var(--ink-2)}
 .wordpop .wd-line b{color:var(--bg)}
 .gm-tw{overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--surface)}
+/* перечни в уроках (2026-10-10 12:04): плитки «слово — перевод», строки таблицы, ряд окончаний; ничего не шире рамки */
+.gm-para{display:flex; flex-direction:column; gap:8px}
+#gramView > *, .gm-para > *{flex-shrink:0}   /* блок с overflow в колонке-flex сжимался до 0 px: таблица урока не видна на телефоне (найдено тестом 2026-10-10) */
+.gm-tiles{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(88px, 1fr)); gap:6px}
+.gm-tiles li{min-width:0; display:flex; flex-direction:column; gap:1px; padding:6px 9px; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+.gm-tiles li b.tr{font-size:16px; white-space:normal; overflow-wrap:anywhere}
+.gm-tiles small{font-size:12.5px; line-height:1.3; color:var(--ink-2); overflow-wrap:anywhere}
+.gm-chips{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:6px}
+.gm-chips li{padding:3px 11px; border:1px solid var(--line); border-radius:999px; background:var(--surface); max-width:100%; overflow-wrap:anywhere}
+.gm-chips li b.tr{white-space:normal}
+.gm-t td b.tr, .gm-t th b.tr{white-space:normal; overflow-wrap:anywhere} .gm-t td, .gm-t th{overflow-wrap:anywhere}
+.gm-rows td:first-child{width:46%} .gm-tw.gm-fit{width:fit-content; max-width:100%} .gm-t.gm-map{width:auto} .gm-map td{padding-right:14px; overflow-wrap:normal} .gm-map .gm-ar{width:1.2em; color:var(--accent); font-weight:700; padding-left:2px; padding-right:2px; text-align:center} .gm-map .gm-mru{display:block; font-size:12px; color:var(--ink-2)}
+b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:var(--accent-ink)}
 .gm-t{border-collapse:collapse; width:100%; font-size:13px; line-height:1.35}
 .gm-t th, .gm-t td{padding:7px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
 .gm-t th{font-weight:700; color:var(--muted); font-size:12px} .gm-t tr:last-child td{border-bottom:0}
@@ -7137,7 +7150,7 @@ const GRAMMAR = [
     { q:"Он ждёт: {bekle} + …", o:["bekliyor","bekleiyor","beklayor","beklıyor"], a:0, w:"«e» на конце основы сужается и сливается: {bekl-iyor}." } ] },
 
 { id:"person", grp:"Глаголы", t:"Кто делает: я, ты, мы, вы, они", lead:"Два набора окончаний лица: после -dı и после -yor, -ecek, -r",
-  txt:["Лицо ставится в самом конце глагола. Набор зависит от времени (сами времена — в уроках ниже: {-dı} — «сделал», {-yor} — «делаю сейчас», {-ecek} — «сделаю», {-r} — «делаю обычно» или «сделаю, обещаю»). Сейчас важны только окончания лица. Скобки в записи вроде {-(ı)m} значат: гласная в скобках ставится после согласной, а после гласной её нет ({geldi-m}, но {gelir-im}).",
+  txt:["Лицо ставится в самом конце глагола. Набор зависит от времени. Сами времена — в уроках ниже: {-dı} — «сделал», {-yor} — «делаю сейчас», {-ecek} — «сделаю», {-r} — «делаю обычно» или «обещаю сделать». Сейчас важны только окончания лица. Скобки в записи вроде {-(ı)m} значат: гласная в скобках ставится после согласной, а после гласной её нет ({geldi-m}, но {gelir-im}).",
        "После прошедшего {-dı}: я {-m}, ты {-n}, мы {-k}, вы {-nız/-niz/-nuz/-nüz}: {geldim, geldin, geldik, geldiniz} (пришёл, пришёл, пришли, пришли). «Он» — без окончания: {geldi}; «они» — {-lar/-ler}: {geldiler}, {yaptılar} (они сделали).",
        "После {-yor}: «я» {-um}, «ты» {-sun}, «мы» {-uz}, «вы» {-sunuz}: {gidiyorum, gidiyorsun, gidiyoruz, gidiyorsunuz} (гласная здесь всегда {u}, потому что перед ней стоит {o}). После будущего {-ecek} и после {-r} окончания те же, но гласную выбирает последняя гласная слова: {gideceğim} (я пойду), {gelirim} (я приду), {gelirsiniz} (вы придёте). «Он» — {gidiyor}, «они» — {gidiyorlar}. Если «они» — слово во множественном числе ({çocuklar}), глагол обычно без {-lar}: {Çocuklar oynuyor}.",
        "Местоимения ({ben, sen, biz, siz}) в речи опускаются: лицо уже слышно в окончании."],
@@ -7288,7 +7301,58 @@ const gramRule = id => GRAMMAR.find(r => r.id === id);
 const GM_VOW = "aeıioöuü", GM_VOICELESS = "çfhkpsşt";
 function hlWord(w){ const a = [...w]; let li = -1; a.forEach((c, i) => { if(GM_VOW.includes(c)) li = i; });
   return `<span class="hw" lang="tr" translate="no" aria-label="${esc(w)}">` + a.map((c, i) => i === li ? `<span class="lv">${esc(c)}</span>` : GM_VOICELESS.includes(c) ? `<span class="vl">${esc(c)}</span>` : GM_VOW.includes(c) ? `<span class="v">${esc(c)}</span>` : `<span class="vd">${esc(c)}</span>`).join("") + `</span>`; }
-const gmFmt = s => esc(String(s)).replace(/\{\{([^}]+)\}\}/g, (m, w) => `<span class="wd gm-snd" data-w="${w}" role="button" tabindex="0" lang="tr" translate="no"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>${w}</span>`).replace(/\[\[([^\]]+)\]\]/g, (m, w) => hlWord(w)).replace(/\{([^}]+)\}/g, '<b class="tr" lang="tr" translate="no">$1</b>');
+const gmFmt = s => esc(String(s)).replace(/\{\{([^}]+)\}\}/g, (m, w) => `<span class="wd gm-snd" data-w="${w}" role="button" tabindex="0" lang="tr" translate="no"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>${w}</span>`).replace(/\[\[([^\]]+)\]\]/g, (m, w) => hlWord(w)).replace(/\{([^}]+)\}/g, (m, w) => `<b class="tr${w[0] === "-" ? " sfx" : ""}" lang="tr" translate="no">${w}</b>`);   // окончание (-da, -ler) — плашкой: видно, что это кубик, а не слово
+// Перечни в тексте урока — плитками или таблицей, а не строкой (просьба 2026-10-10 12:04: «один, два… всё сливается в строке, тяжело читать»).
+// Находятся сами, по виду: «{слово} — перевод, …» (gl), «перевод — {слово}» (rg), «{слово} (перевод), …» (gp), «{a} → {b}, …» (map), «{a}, {b}, {c}» (ch).
+// Новый урок пишется как прежде — перечень из трёх и больше (у «→» — из двух) станет плитками сам; тест «перечни … плитками».
+const GM_TR = String.raw`\{\{?[^{}]+\}\}?`, GM_PAR = String.raw`(?: \((?:[^()]|\([^()]*\))*\))?`;
+const GM_KINDS = [
+  ["map", `(${GM_TR})(${GM_PAR}) → (${GM_TR})(${GM_PAR})`, 2],
+  ["gl",  `(${GM_TR})(${GM_PAR}) — ((?:[^,;.{}—→:()]|\\([^()]*\\))+?)(?=[,;.)]|$| \\{)`, 3],
+  ["rg",  `([^,;.{}—→:()]{1,14}) — (${GM_TR})(${GM_PAR})`, 3],
+  ["gp",  `(${GM_TR})(?: (\\((?:[^()]|\\([^()]*\\))+\\)))?`, 3],          // «{слово} (перевод)»; без единого перевода — ряд «{a}, {b}, {c}» (ch)
+];
+function gmRuns(t){
+  const out = [], sep = /, |; | или | и /y, depth = s => (s.match(/\(/g) || []).length - (s.match(/\)/g) || []).length;
+  GM_KINDS.forEach(([kind, item, min]) => {
+    const run = new RegExp(`(?:${item})(?:(?:, |; | или | и )(?:${item})){${min - 1},}`, "g"), one = new RegExp(item, "y");
+    let m; while((m = run.exec(t))){
+      const s = m.index; let e = s + m[0].length;
+      const items = [], ends = []; let pos = s;
+      while(pos < e){ one.lastIndex = pos; const x = one.exec(t); if(!x) break; items.push(x.slice(1)); ends.push(one.lastIndex); pos = one.lastIndex; if(pos >= e) break; sep.lastIndex = pos; if(!sep.exec(t)) break; pos = sep.lastIndex; }
+      if(out.some(o => s < o.e && e > o.s)) continue;
+      if(depth(t.slice(0, s)) > 0 && !(t[s - 1] === "(" && t[e] === ")")) continue;   // перечень внутри скобок — текстом, если скобка не целиком из перечня
+      if(items.length >= min) out.push({ kind:kind === "gp" && !items.some(x => x[1]) ? "ch" : kind, s, e, items, ends });
+    }
+  });
+  // «{park} (парк), {at} (лошадь) … → {parka}, {ata} …»: два перечня одной длины через «→» — одна таблица превращений
+  for(let i = 0; i < out.length; i++) for(let j = 0; j < out.length; j++){ const a = out[i], b = out[j];
+    if(a === b || a.kind === "map" || b.kind === "map" || t.slice(a.e, b.s) !== " → " || a.items.length !== b.items.length) continue;
+    const part = x => [x[0], x[1] || ""];
+    a.items = a.items.map((x, k) => [...part(x), ...part(b.items[k])]); a.kind = "map"; a.e = b.e; out.splice(out.indexOf(b), 1); i = -1; break; }
+  for(let i = out.length - 1; i >= 0; i--) if(out[i].kind !== "map" && /→ $/.test(t.slice(0, out[i].s))) out.splice(i, 1);   // хвост «… → {a}, {b}» без пары — текстом
+  // «…, {kanat} (крыло) → {kanada}»: последнее слово перечня — пример превращения, а не часть перечня
+  out.slice().forEach(r => { if(r.kind === "map" || r.items.length <= 3 || !/^ →/.test(t.slice(r.e))) return; r.items.pop(); r.ends.pop(); r.e = r.ends[r.ends.length - 1]; });
+  return out.sort((a, b) => a.s - b.s);
+}
+const gmPlain = x => String(x || "").replace(/[{}]/g, "").trim();
+function gmBlock(r){
+  const it = r.items, unp = x => (x || "").trim().replace(/^\(|\)$/g, "");
+  if(r.kind === "ch") return `<ul class="gm-chips">${it.map(x => `<li>${gmFmt(x[0])}</li>`).join("")}</ul>`;
+  if(r.kind === "map"){ const cell = (tr, par) => gmFmt(tr) + (par ? `<small class="gm-mru">${gmFmt(unp(par))}</small>` : "");
+    return `<div class="gm-tw gm-fit"><table class="gm-t gm-map"><tbody>${it.map(x => `<tr><td>${cell(x[0], x[1])}</td><td class="gm-ar" aria-label="становится">→</td><td>${cell(x[2], x[3])}</td></tr>`).join("")}</tbody></table></div>`; }
+  const pairs = it.map(x => r.kind === "gl" ? [x[0] + (x[1] || ""), x[2].trim()] : r.kind === "gp" ? [x[0], unp(x[1] || "")] : [x[1], x[0].trim() + (x[2] ? " · " + unp(x[2]) : "")]);
+  const short = pairs.every(([tr, ru]) => gmPlain(tr).length <= 14 && gmPlain(ru).length <= 16);
+  if(short) return `<ul class="gm-tiles">${pairs.map(([tr, ru]) => `<li>${gmFmt(tr)}${ru ? `<small>${gmFmt(ru)}</small>` : ""}</li>`).join("")}</ul>`;
+  return `<div class="gm-tw"><table class="gm-t gm-rows"><tbody>${pairs.map(([tr, ru]) => `<tr><td>${gmFmt(tr)}</td><td>${gmFmt(ru)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function gmPara(t){
+  const runs = gmRuns(t); if(!runs.length) return `<p class="gm-p">${gmFmt(t)}</p>`;
+  let h = "", pos = 0;
+  runs.forEach(r => { const inPar = t[r.s - 1] === "(" && t[r.e] === ")"; let before = t.slice(pos, r.s).trim(); if(inPar) before = before.replace(/\($/, "").trim(); if(before && !/^[.,;]$/.test(before)) h += `<p class="gm-p">${gmFmt(before.replace(/^[.,;]\s*/, ""))}</p>`; h += gmBlock(r); pos = r.e + (inPar ? 1 : 0); });
+  const after = t.slice(pos).replace(/^\s*[.,;]?\s*/, ""); if(after.trim()) h += `<p class="gm-p">${gmFmt(after)}</p>`;
+  return `<div class="gm-para">${h}</div>`;
+}
 const GRAM_GROUPS = ["С чего начать", "Произношение", "Основа", "Существительные", "Предложение", "Глаголы", "Слова из слов", "Памятка"];
 let gstate = (() => { try { const o = JSON.parse(localStorage.getItem("soyle-gram")); return o && typeof o === "object" ? o : {}; } catch(e){ return {}; } })();
 function gramNormalize(){ if(!gstate || typeof gstate !== "object") gstate = {}; if(!gstate.r || typeof gstate.r !== "object") gstate.r = {};
@@ -7392,7 +7456,7 @@ function gramBreak(tr, r){
   return out.length ? `<span class="gm-bk" lang="tr" translate="no">${out.join("; ")}</span>` : "";
 }
 function gramRuleHtml(r, inSheet){
-  let h = `<p class="gm-lead2">${gmFmt(r.lead)}</p>` + r.txt.map(t => `<p class="gm-p">${gmFmt(t)}</p>`).join("");
+  let h = `<p class="gm-lead2">${gmFmt(r.lead)}</p>` + r.txt.map(gmPara).join("");
   if(r.tbl) h += `<div class="gm-tw"><table class="gm-t"><thead><tr>${r.tbl.head.map(c => `<th scope="col">${gmFmt(c)}</th>`).join("")}</tr></thead><tbody>${r.tbl.rows.map(row => `<tr>${row.map(c => `<td>${gmFmt(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
   const ph = gramPhrases(r);
   if(ph.length) h += `<h3 class="gm-h3">Из ваших фраз</h3><p class="gm-hint">Нажмите на слово — увидите его разбор по частям.</p><ul class="gm-ph">${ph.map(p => `<li><span class="gm-tr" lang="tr" translate="no">${wordsHtml(p.tr)}</span><span class="gm-ru">${esc(p.ru)}</span>${gramBreak(p.tr, r)}</li>`).join("")}</ul>`;

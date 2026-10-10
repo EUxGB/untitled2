@@ -1727,6 +1727,28 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     for(const f of ['sıra-da-ki', 'nere-li-sin', 'gürültü-lü-ydü', 'Sessiz olun']) ok(r.lesson.includes(f), 'в уроке нет разбора: ' + f);
     for(const f of ['sıradaki = sıra-da-ki', 'nerelisin = nere-li-sin', 'gürültülüydü = gürültü-lü-ydü']) ok(r.html.toLowerCase().includes(f), 'нет разбора под фразой: ' + f);
   });
+  await test('грамматика (2026-10-10 12:04): перечни в тексте уроков — плитками/таблицей, а не строкой («один, два… всё сливается»); ничего не выходит за рамку на 320, 360, 390, 412 px во всех уроках', async () => {
+    const q = await openPage(browser); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    const bad = [];
+    for(const w of [320, 360, 390, 412]){
+      await q.setViewportSize({ width:w, height:700 });
+      const r = await q.evaluate(() => { const out = [], info = {};
+        for(const g of GRAMMAR){ gram = { view:'rule', rule:g.id }; gramRender();
+          const v = document.getElementById('gramView'), vr = v.getBoundingClientRect();
+          // перечень строкой: три и больше «{слово} — перевод,» или «{a} → {b},» подряд внутри одного абзаца
+          v.querySelectorAll('.gm-p').forEach(p => { const h = p.innerHTML;
+            if(/(<\/b> — [^<,;.]{1,40}[,;] <b[^>]*>[^<]*<\/b> — [^<,;.]{1,40}[,;] <b[^>]*>[^<]*<\/b> —)/.test(h) || /(<\/b> → <b[^>]*>[^<]*<\/b>[^<,;]{0,40}[,;] <b[^>]*>[^<]*<\/b> → <b[^>]*>[^<]*<\/b>[^<,;]{0,40}[,;] <b[^>]*>[^<]*<\/b> →)/.test(h)) out.push(g.id + ': перечень строкой: ' + p.textContent.slice(0, 60)); });
+          v.querySelectorAll('*').forEach(el => { const b = el.getBoundingClientRect(); if(b.width && (b.right > vr.right + 1 || b.left < vr.left - 1)) out.push(g.id + ': выходит за рамку: ' + el.tagName + '.' + el.className + ' «' + el.textContent.slice(0, 30) + '»'); });
+          v.querySelectorAll('.gm-tw, .gm-tiles, .gm-rows, .gm-map').forEach(el => { if(el.scrollWidth > el.clientWidth + 1) out.push(g.id + ': прокрутка вбок в ' + el.className); if(el.scrollHeight > el.clientHeight + 1) out.push(g.id + ': таблица обрезана по высоте (' + el.clientHeight + ' из ' + el.scrollHeight + ' px): ' + el.className); });
+          if(g.id === 'nums') info.nums = [...v.querySelectorAll('.gm-tiles')].map(t => t.querySelectorAll('li').length);
+        }
+        if(document.documentElement.scrollWidth > innerWidth) out.push('страница шире экрана');
+        return { out:[...new Set(out)].slice(0, 12), info }; });
+      r.out.forEach(x => bad.push(w + ': ' + x));
+      if(w === 360) ok(r.info.nums && r.info.nums.includes(10) && r.info.nums.includes(9), 'числа 0–9 и десятки — плитками: ' + JSON.stringify(r.info.nums));
+    }
+    eq(bad, []); eq(q.errors, []); await q.context().close();
+  });
   await test('«нажмите на последнюю гласную»: буквы любого слова из списка (и слова на 10 букв) стоят в ОДНУ строку на 320, 360, 390, 412 px, не шире экрана, кнопка не уже 24 px (WCAG 2.5.8), слова не длиннее 10 букв (жалоба 10-06 22:04: telefon переносился)', async () => {
     const q = await openPage(browser); await q.click('#tab-train'); await tap(q, 'tab-grammar');
     const bad = [];
