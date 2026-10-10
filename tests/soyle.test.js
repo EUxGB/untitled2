@@ -2429,6 +2429,31 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(taxi && taxi[1] === 'toast', 'такси без дел — подсказка: ' + JSON.stringify(taxi));
     eq(rest.length, 19); eq(rest.filter(v => v[1] !== 'Зайти' || !v[3] || !v[4]).map(v => v.slice(0, 4)), []); eq(errs, []);
   });
+  await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
+    const GEN = ['Evet, öyle.', 'Hı hı.'];
+    const r = await q.evaluate(GEN => { const out = {};
+      out.noAns = SMALLTALK.filter(t => /\?/.test(t.tr) && !(t.a || []).some(m => !GEN.includes(m.say[0]))).map(t => t.tr);
+      out.gloss = SMALLTALK.flatMap(t => t.a || []).concat(SMALLTALK_GREET).flatMap(m => m.say[0].split(/\s+/)).map(w => w.replace(/[^\p{L}]/gu, '')).filter(w => nphr(w) && !wordGloss(w));
+      const keys = new Set(ttsInventory().map(ttsKey)); out.tts = SMALLTALK.flatMap(t => t.a || []).concat(SMALLTALK_GREET).map(m => m.say[0]).filter(s => !keys.has(ttsKey(s)));
+      out.idx = SMALLTALK.findIndex(t => t.tr === 'Kaç yıldır buradasın?');
+      window.__smalltalk = out.idx; window.__seed = 0; cityStart('bakkal');
+      out.opts = [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent);
+      return out; }, GEN);
+    eq(r.noAns, [], 'вопросы без своего ответа'); eq(r.gloss, [], 'слова ответов без перевода'); eq(r.tts, [], 'ответы не в списке озвучки');
+    ok(r.opts.length >= 2 && !r.opts.some(o => /так и есть|Угу/.test(o)), 'варианты: ' + JSON.stringify(r.opts));
+    const s1 = await ctSay(q, 'merhaba kolay gelsin');                                   // своё приветствие, карточка не выбрана
+    const a1 = await q.evaluate(() => ct.node === ct.scene.nodes._chat);
+    await ctNext(q);
+    const a1b = await q.evaluate(() => ct.node === ct.scene.nodes[ct.scene.start]);
+    await q.evaluate(i => { cityLeave(); ct = null; window.__smalltalk = i; cityStart('bakkal'); }, r.idx);
+    await ctPick(q, 1); const s2 = await ctSay(q, 'iki yıldır buradayım');                // выбрана другая карточка, сказали свой ответ
+    await ctNext(q);
+    const a2 = await q.evaluate(() => [ct.node === ct.scene.nodes[ct.scene.start], city.todaySaid.slice(-1)[0]]);
+    const errs = q.errors; await q.context().close();
+    ok(s1.next && a1, 'приветствие не понято: ' + s1.res); eq(a1b, true);
+    ok(s2.next, 'свой ответ не понят: ' + s2.res); eq(a2[0], true); eq(errs, []);
+  });
   await test('Вариативность (07:52): узлы с alt — свой вариант на визит (window.__alt или seed), «сквозной» pass пропускает узел, подряд не повторяется, текст итога — список; «Корм для кота» — ≥ 50 разных реплик игрока, два визита с разными seed отличаются; у всех 20 мест своя сцена visit_*, дом среди дня — в дверь звонят; свободное дело вместо захода', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; });
     const r = await q.evaluate(() => { const out = {}; const tr = () => document.getElementById('ctTr').textContent, opts = () => [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent);

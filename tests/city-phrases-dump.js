@@ -7,7 +7,7 @@ const { chromium } = require('playwright'); const fs = require('fs'), path = req
     const node = n => { if(!n || typeof n !== 'object') return; add(n.npc); add(n.again); add(n.greetAlt); Object.values(n.npcBy || {}).forEach(add); Object.values(n.againBy || {}).forEach(add);
       (n.moves || []).forEach(m => add(m.say)); (n.extra || []).forEach(m => m && add(m.say)); (n.variants || []).forEach(v => { node(v); }); (n.alt || []).forEach(v => node(v)); if(n.pay){ add(n.pay.short); } };
     Object.values(SCENES).forEach(sc => Object.values(sc.nodes || {}).forEach(node));
-    (typeof SMALLTALK !== 'undefined' ? SMALLTALK : []).forEach(t => add(t.tr));
+    (typeof SMALLTALK !== 'undefined' ? SMALLTALK : []).forEach(t => { add(t.tr); (t.a || []).forEach(m => add(m.say)); });
     return [...set]; });
   const only = out.filter(t => /[A-Za-zÇĞİÖŞÜçğıöşü]{2}/.test(t)).sort();
   fs.writeFileSync(path.join(__dirname, 'city-phrases.json'), JSON.stringify(only, null, 0)); console.log(only.length, 'реплик'); await b.close(); })();
