@@ -1727,10 +1727,10 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     for(const f of ['sıra-da-ki', 'nere-li-sin', 'gürültü-lü-ydü', 'Sessiz olun']) ok(r.lesson.includes(f), 'в уроке нет разбора: ' + f);
     for(const f of ['sıradaki = sıra-da-ki', 'nerelisin = nere-li-sin', 'gürültülüydü = gürültü-lü-ydü']) ok(r.html.toLowerCase().includes(f), 'нет разбора под фразой: ' + f);
   });
-  await test('грамматика (2026-10-10 12:04): перечни в тексте уроков — плитками/таблицей, а не строкой («один, два… всё сливается»); ничего не выходит за рамку на 320, 360, 390, 412 px во всех уроках', async () => {
+  await test('грамматика (2026-10-10 12:04): перечни в тексте уроков — плитками/таблицей, а не строкой («один, два… всё сливается»); ничего не выходит за рамку на 300, 320, 360, 390, 412 px во всех уроках (300 — запас: в CI шрифт шире)', async () => {
     const q = await openPage(browser); await q.click('#tab-train'); await tap(q, 'tab-grammar');
     const bad = [];
-    for(const w of [320, 360, 390, 412]){
+    for(const w of [300, 320, 360, 390, 412]){
       await q.setViewportSize({ width:w, height:700 });
       const r = await q.evaluate(() => { const out = [], info = {};
         for(const g of GRAMMAR){ gram = { view:'rule', rule:g.id }; gramRender();
