@@ -1,0 +1,129 @@
+{
+ "files": [
+  "test-00000-of-00001.parquet",
+  "train-00000-of-00001.parquet",
+  "validated-00000-of-00001.parquet",
+  "validation-00000-of-00001.parquet"
+ ],
+ "uniqueSentences": 47010,
+ "ourPhrases": 99,
+ "exact": 11,
+ "exactList": [
+  "İyi akşamlar.",
+  "Afiyet olsun.",
+  "Ambulans çağırın!",
+  "Çok teşekkürler.",
+  "Alerjim var.",
+  "İngilizce biliyor musunuz?",
+  "Tuvalet nerede?",
+  "Hoş geldiniz.",
+  "Polis çağırın!",
+  "Hesap lütfen.",
+  "Nasılsınız?"
+ ],
+ "topics": {
+  "hotel": {
+   "n": 48,
+   "sample": [
+    "Fakat gösterinin yıldızı erken havlu attı.",
+    "Elleriyle başını tutarak odada dolaşmaya başladı.",
+    "Odada gözlerini gezdirdi.",
+    "Dolaştığımız şehirlerde aynı yerlerde, bazan aynı odada kalıyoruz.",
+    "Odada insanı ürküten bir sükût vardı.",
+    "Kahvaltı hazır!",
+    "Altın anahtar her kapıyı açar.",
+    "Yeni ve oldukça tertipli bir odada karşı karşıyaydılar.",
+    "İşte anahtar.",
+    "Buna ek olarak anahtar beyazlatma sık olarak kullanılır.",
+    "Oda henüz karanlıktı.",
+    "Odada insanı şaşırtacak bir kargaşalık hüküm sürüyordu."
+   ]
+  },
+  "food": {
+   "n": 154,
+   "sample": [
+    "Restoran yaklaşık yedi yüz kişilik kapasiteye sahip.",
+    "Burası azgın su slalom olanaklarıyla tanınıyor.",
+    "Şimdiyse daha çok sembolik bir yemek.",
+    "Tesis, Balkanlar'daki en büyük su parkı olacak.",
+    "Un, su ve tuzu karıştırın.",
+    "Su parkı da iki bin altı yılında açıldı.",
+    "Su sistemi üç aşamada tamamlanacak.",
+    "Daha sonra bu kişi yemek masasını hazırlar.",
+    "Garsonu çağırıp hesap gördüm.",
+    "Küçük kız birkaç dakika sonra kahve getirdi.",
+    "Sana biraz su getireyim.",
+    "Yemek üstüne hemen yola çıkmak iyi değildir."
+   ]
+  },
+  "transport": {
+   "n": 120,
+   "sample": [
+    "Hareket, etnik Rusların protestolarına yol açtı.",
+    "Olay Türkiye'de farklı tepkilere yol açtı.",
+    "Pek çok bölgede yağmurlar heyelanlara yol açtı.",
+    "O zamandan beri, filme bilet bulmak oldukça zor.",
+    "Bu da sonunda mali krize yol açabilir.",
+    "En ucuz bilet on dokuz avro civarındaydı.",
+    "Kazara oylama halk arasında ihtiyata yol açtı.",
+    "Ancak satış bazı tartışmalara yol açtı.",
+    "En ucuz bilet on beş avroydu.",
+    "Ancak reform bazı güçlüklere de yol açmadı değil.",
+    "Şimdilik yol istikrara gidiyor gibi görünüyor.",
+    "Bu da oyların bölünmesine yol açabilir."
+   ]
+  },
+  "shop": {
+   "n": 179,
+   "sample": [
+    "Festival Pazar günü sona eriyor.",
+    "Şimdiye kadar kaç kızı kurtardınız?",
+    "Miktarı ne olursa olsun para kabul edemeyecekler.",
+    "Eğer öyleyse, seçimleri kaç gözlemci izleyecek?",
+    "Para, hükûmetin yedek fonlarından sağlanacak.",
+    "En ucuz bilet on dokuz avro civarındaydı.",
+    "Arnavutluk, pazar sınırlamalarını kaldırdı.",
+    "En ucuz bilet on beş avroydu.",
+    "Pazar günü Almanya itirazlarını geri çekti.",
+    "Operasyon Pazar günü şafak sularında başlatıldı.",
+    "Asgari fiyat altı milyon avro olarak belirlendi.",
+    "Romanya'da mazot, benzinden daha pahalı."
+   ]
+  },
+  "health": {
+   "n": 150,
+   "sample": [
+    "Hasta yirmi beş yaşındaki bir kadındı.",
+    "Hiç hasta olmadılar.",
+    "Halk tasarıya ateş püskürüyor.",
+    "Otopark şirketleri karara ateş püskürüyorlar.",
+    "Hepsi de hasta adamlar, çocuklar ve yaşlılardı.",
+    "Bize arkadan ateş de ettiler.",
+    "Sırp doktor yeteneğinden ötürü ödüllendirildi.",
+    "İlaç ve tarım firmaları başı çekiyor.",
+    "Bu ekibe ayrıca üç yerel doktor eşlik ediyor.",
+    "Doktor omuzlarını silkerek gitti.",
+    "Hasta başını şiddetle sallayarak sözümü kesti.",
+    "Hasta olacağım."
+   ]
+  },
+  "greet": {
+   "n": 521,
+   "sample": [
+    "Tadiç Ahtisaari'nin kararını daha hoş karşıladı.",
+    "Fikir herkes tarafından hoş karşılanmadı.",
+    "Bu yorumlar Lahey tarafından hoş karşılanmadı.",
+    "Doğrusu benim için hoş bir sürpriz oldu.",
+    "Ancak mahkeme başkanı bu fikri hoş karşılamadı.",
+    "Ankete katılan herkese teşekkür ederiz.",
+    "Bunları sonsuza dek hoş görmeyeceğimiz kesin.",
+    "Ortaya çıkan bu trendi herkes hoş karşılamıyor.",
+    "Lütfen kredi kartınızın bilgilerini giriniz.",
+    "Lütfen yorumlayın.",
+    "Bir saniye lütfen.",
+    "İyiyim, teşekkürler."
+   ]
+  }
+ },
+ "seconds": 50
+}

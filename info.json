@@ -1,0 +1,304 @@
+{
+  "url": "https://www.simitci.ru/?v=9156a7066a0434de2b4338a298f0776a23a88c24",
+  "taken": "2026-10-10T10:16:41.382Z",
+  "shots": [
+    {
+      "size": "android-360x640",
+      "version": "2026-10-10 · 9156a70",
+      "fonts": [
+        "Soyle Serif 700",
+        "Soyle Sans 400",
+        "Soyle Sans 700"
+      ],
+      "cityScene": {
+        "android-360x640": {
+          "node": "_chat",
+          "npc": "Kaç yıldır buradasın?",
+          "opts": [
+            "Я здесь год.",
+            "Я только приехал."
+          ],
+          "alts": {}
+        }
+      },
+      "listenPhrases": {
+        "android-360x640": {
+          "answer": "Sıradaki kim?",
+          "a": "Tabii ki.",
+          "b": "Sıradaki kim?",
+          "src": "cv/367.mp3",
+          "cut": false
+        }
+      },
+      "errors": []
+    },
+    {
+      "size": "iphone-390x844",
+      "version": "2026-10-10 · 9156a70",
+      "fonts": [
+        "Soyle Serif 700",
+        "Soyle Sans 400",
+        "Soyle Sans 700"
+      ],
+      "cityScene": {
+        "iphone-390x844": {
+          "node": "greet",
+          "npc": "Gel bakalım, kedinin karnı aç mı?",
+          "opts": [
+            "Дайте, пожалуйста, один вот такой корм.",
+            "Корм ещё остался?"
+          ],
+          "alts": {
+            "greet": 4
+          }
+        }
+      },
+      "listenPhrases": {
+        "iphone-390x844": {
+          "answer": "Bugün nasıl hissediyorsun?",
+          "a": "Bugün nasıl hissediyorsun?",
+          "b": "Nasılsın bugün?",
+          "src": "cv/236.mp3",
+          "cut": false
+        }
+      },
+      "live": {
+        "examples": {
+          "word": "Kapıyı kilitledin mi?",
+          "msg": "Примеров: 2, с записью носителя: 0.",
+          "n": 2,
+          "audio": 0
+        },
+        "video": {
+          "word": "Kapıyı kilitledin mi?",
+          "msg": "Отрывков: 1. Слушайте и повторяйте вслух.",
+          "iframes": 1
+        },
+        "translate": "Можно мне счет?",
+        "phrases": {
+          "word": "Elektriğimiz yok.",
+          "meaning": "У нас нет электричества.",
+          "audio": "https://api.tatoeba.org/v1/audios/1162651/file",
+          "audioOk": true,
+          "fetchAudio": [
+            200,
+            "audio/mpeg",
+            16708,
+            ""
+          ],
+          "blobOk": true,
+          "commonsUrl": "https://upload.wikimedia.org/wikipedia/commons/0/05/LL-Q256_%28tur%29-ToprakM-merhaba.wav?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "commonsOk": true,
+          "merhaba": [
+            "ToprakM"
+          ]
+        },
+        "pagesOpened": 1,
+        "words": {
+          "word": "şey",
+          "meaning": "вещь, что-то",
+          "pool0": 73,
+          "pools": [
+            [
+              "basic",
+              62,
+              0
+            ],
+            [
+              "hotel",
+              66,
+              0
+            ],
+            [
+              "greet",
+              44,
+              0
+            ],
+            [
+              "food",
+              73,
+              0
+            ],
+            [
+              "transport",
+              65,
+              0
+            ],
+            [
+              "shop",
+              67,
+              0
+            ],
+            [
+              "health",
+              66,
+              0
+            ],
+            [
+              "talk",
+              83,
+              0
+            ],
+            [
+              "sos",
+              43,
+              0
+            ]
+          ],
+          "native": {
+            "mahkûm": "заключённый",
+            "sarma": "заворачивание",
+            "kedi": "кот, кошка",
+            "bulut": "облако",
+            "anahtarlık": "брелок",
+            "göstermek": "показывать"
+          },
+          "nativeEnglish": [],
+          "examples": {
+            "çay": [
+              12,
+              2,
+              10
+            ],
+            "oda": [
+              12,
+              0,
+              12
+            ],
+            "bilet": [
+              12,
+              0,
+              12
+            ],
+            "ilaç": [
+              9,
+              0,
+              9
+            ],
+            "hesap": [
+              12,
+              1,
+              11
+            ]
+          },
+          "recs": 3
+        },
+        "ctx": {
+          "dict": {
+            "words": 40,
+            "withExamples": 39,
+            "avg": 4.9
+          },
+          "seeds": {
+            "words": 15,
+            "withExamples": 15,
+            "avg": 6
+          },
+          "none": [
+            "kombi"
+          ]
+        },
+        "ctxCard": {
+          "word": "istemek",
+          "text": "İster misin?Хочешь?пример 2 из 6 · нажмите — следующий",
+          "n": 6,
+          "loaded": true,
+          "loadMs": 12007
+        },
+        "longWords": {
+          "göstermek": {
+            "lines": 1,
+            "px": 81,
+            "fits": true
+          },
+          "affedersiniz": {
+            "lines": 1,
+            "px": 73,
+            "fits": true
+          },
+          "teşekkürler": {
+            "lines": 1,
+            "px": 74,
+            "fits": true
+          },
+          "kahvaltı": {
+            "lines": 1,
+            "px": 103,
+            "fits": true
+          }
+        },
+        "nativePhrases": {
+          "Teşekkürler, her şey çok güzeldi.": {
+            "status": "Носители по словам: teşekkürler · her · şey · çok · güzeldi (синтез)",
+            "played": [
+              "LL-Q256_%28tur%29-Veravi95-te%C5%9Fekk%C"
+            ]
+          },
+          "Hesabı alabilir miyim?": {
+            "status": "Носитель 1 из 2: носитель (Common Voice)",
+            "played": [
+              "119.mp3"
+            ]
+          },
+          "Hesap lütfen.": {
+            "status": "Носитель: носитель (Common Voice)",
+            "played": [
+              "406.mp3"
+            ]
+          },
+          "Merhaba.": {
+            "status": "Носитель: ToprakM",
+            "played": [
+              "LL-Q256_%28tur%29-ToprakM-merhaba.wav?ut"
+            ]
+          },
+          "Tuvalet nerede?": {
+            "status": "Носитель: носитель (Common Voice)",
+            "played": [
+              "362.mp3"
+            ]
+          }
+        },
+        "voicedSets": {
+          "ok": 308,
+          "bad": []
+        },
+        "topicPhrasesError": "Error: page.evaluate: ReferenceError: wordFromTitle is not defined\n    at eval (eval at evaluate (:290:30), <anonymous>:13:94)\n    at Array.forEach (<anonymous>)\n    at eval (eval at evaluate (:290:30), <anonymous>:13:59)\n    at async <anonymous>:316:30",
+        "coverageError": "Error: проверка дольше 5 минут: внешняя база не отвечает"
+      },
+      "errors": []
+    },
+    {
+      "size": "android-412x915",
+      "version": "2026-10-10 · 9156a70",
+      "fonts": [
+        "Soyle Serif 700",
+        "Soyle Sans 400",
+        "Soyle Sans 700"
+      ],
+      "cityScene": {
+        "android-412x915": {
+          "node": "greet",
+          "npc": "Mama günü mü bugün?",
+          "opts": [
+            "Возьму пачку кошачьего корма.",
+            "Сухой корм есть?"
+          ],
+          "alts": {
+            "greet": 2
+          }
+        }
+      },
+      "listenPhrases": {
+        "android-412x915": {
+          "answer": "Dondurma var mı?",
+          "a": "Telefonunuz var mı?",
+          "b": "Dondurma var mı?",
+          "src": "cv/345.mp3",
+          "cut": false
+        }
+      },
+      "errors": []
+    }
+  ]
+}
