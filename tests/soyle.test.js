@@ -2533,6 +2533,9 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       // статистика звуков и итог недели
       city.snd = {}; ['Çay lütfen.', 'Çok teşekkürler.', 'Üç simit.'].forEach((l, i) => cityStatSnd(l, 50 + i));
       ['Çay lütfen.', 'Çok güzel.', 'Üç ekmek.'].forEach((l, i) => cityStatSnd(l, 80 + i));
+      // ревью: торг, узнанный по ключевому слову (бормотание), — не «чистый»: Pazarlık не растёт
+      cityStart('mama'); const hm = Object.assign({}, SCENES.mama.nodes.best.moves.find(x => x.haggle), { go:null }); const pz0 = (city.skill.pazarlik || {}).n || 0;
+      cityAccept(hm, ['ucuz mmm'], false, 100); out.mumble = ((city.skill.pazarlik || {}).n || 0) - pz0; cityLeave(); ct = null; if(M()) closeModal();
       city.day = 7; city.done = []; city.plan = []; cityDayEnd(); const titles = [T()]; closeModal(); out.weekModal = null;
       for(let k = 0; k < 3 && !out.weekModal; k++){ if(M() && /Неделя 1 из 4/.test(T())) out.weekModal = [T(), document.getElementById('modalText').textContent, [...document.querySelectorAll('#modal .ms-choice')].map(b => b.textContent)]; }
       return out; });
@@ -2542,6 +2545,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       const b = [...document.querySelectorAll('#modal .ms-choice')].find(x => /так себе/.test(x.textContent)); b && b.click(); out.fb = (city.feedback || {})[1];
       document.getElementById('modalPrimary').click(); return out; });
     await q.waitForTimeout(250);
+    const again = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; for(let k = 0; k < 3 && M(); k++) closeModal(); cityDayEnd(); closeModal(); return new Promise(r => setTimeout(() => r(M() ? document.getElementById('modalTitle').textContent : ''), 300)); });
     const d8 = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; if(M()) closeModal(); city.day = 7; cityNewDay(); const out = { soon:[M(), document.getElementById('modalTitle').textContent], plan:city.plan.length };
       if(M()) closeModal(); cityRender(); out.intro = document.getElementById('ctIntro').textContent; setMode('progress'); out.tile = document.getElementById('gbCitySub').textContent; setMode('city'); return out; });
     const fits = [];
@@ -2553,14 +2557,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.plans.map(p => p.slice().sort()), [['bakkal', 'firin', 'simit'], ['cay', 'lokanta', 'market'], ['dolmus', 'istanbulkart', 'taxi']]);
     ok(/Неделя 1 из 4/.test(wk.t), wk.t); ok(/ç: 51 → 81/.test(wk.text) && /ü: 51 → 81/.test(wk.text), wk.text);   // «Üç» тоже с ç: [50,51,52 | 80,81,82] eq(wk.ch, ['да', 'так себе', 'нет']); eq(wk.fb, 'так себе');
     eq(d8.soon, [true, d8.soon[1]]); ok(/Неделя 2 — скоро/.test(d8.soon[1]), d8.soon[1]); ok(d8.plan >= 3, 'дела есть'); ok(/скоро/.test(d8.intro), d8.intro); ok(/так себе/.test(d8.tile), d8.tile);
-    eq(fits, [true, true, true], 'строка недели помещается'); eq(errs, []);
+    eq(fits, [true, true, true], 'строка недели помещается'); eq(r.mumble, 0, 'бормотание не растит Pazarlık'); ok(!/Неделя 1 из 4/.test(again), 'итог недели — один раз: ' + again); eq(errs, []);
   });
   await test('Этап 1, публикация Г: старое сохранение (день 20) — деньги, отношения, умения, освоение на месте; кампания с «Недели 1» без пролога, с пометкой «освоились»', async () => {
     const old = { ver:2, day:20, days:19, money:999, rel:{ bakkal:4, sofor:7 }, mastery:{ 'Ekmek lütfen.':3 }, skill:{ dil:{ n:9, lvl:2 } }, plan:['bakkal'], done:[], carry:[] };
     const q = await openCity({ storage:{ 'soyle-city':JSON.stringify(old) } }); await q.evaluate(() => { window.__prologue = true; cityRender(); });
     const r = await q.evaluate(() => ({ money:city.money, rel:city.rel, m:city.mastery['Ekmek lütfen.'], dil:city.skill.dil.lvl, w:campWeek(), old:!!(city.camp && city.camp.old), modal:!document.getElementById('modal').hidden ? document.getElementById('modalTitle').textContent : '', intro:document.getElementById('ctIntro').textContent }));
+    r.sunday = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; for(let k = 0; k < 3 && M(); k++) closeModal(); city.day = 21; cityDayEnd(); closeModal(); return new Promise(res => setTimeout(() => res(M() ? document.getElementById('modalTitle').textContent.replace(/^День.*/, '') : ''), 300)); });
     const errs = q.errors; await q.context().close();
-    eq([r.money, r.rel, r.m, r.dil, r.w, r.old], [999, { bakkal:4, sofor:7 }, 3, 2, 1, true]); ok(!/Стамбул/.test(r.modal), 'без пролога: ' + r.modal); ok(/освоились/.test(r.intro + r.modal), r.intro + ' | ' + r.modal); eq(errs, []);
+    eq([r.money, r.rel, r.m, r.dil, r.w, r.old], [999, { bakkal:4, sofor:7 }, 3, 2, 1, true]); eq(r.sunday, '', 'старое сохранение: итог недели — не в первый же вечер'); ok(!/Стамбул/.test(r.modal), 'без пролога: ' + r.modal); ok(/освоились/.test(r.intro + r.modal), r.intro + ' | ' + r.modal); eq(errs, []);
   });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });

@@ -3473,7 +3473,8 @@ const CAMPAIGN = [
   { goal:"подать документы на ВНЖ" },
 ];
 const FIRST_DAYS = [["bakkal", "firin", "simit"], ["market", "lokanta", "cay"], ["taxi", "dolmus", "istanbulkart"]];   // лавка → оплата и сдача → транспорт и числа
-const campWeek = () => Math.max(1, Math.ceil(city.day / 7) - ((city.camp && city.camp.w0) || 0));
+const campWeekRaw = () => Math.ceil(city.day / 7) - ((city.camp && city.camp.w0) || 0);   // у старого сохранения до ближайшего понедельника — 0 (неделя ещё не началась)
+const campWeek = () => Math.max(1, campWeekRaw());
 const campReady = w => w <= 1 || (WEEK_SETS[w - 1] || []).some(id => SCENES[id] && !SCENES[id].event);   // у недели есть свои сцены
 const cityMasteredN = () => Object.values(city.mastery || {}).filter(v => v >= 3).length;
 const SND_LETTERS = "çşıöüğ";
@@ -3603,10 +3604,11 @@ function cityNewDay(){
   let rentShort = 0;
   if(payday){ city.money += SALARY; const back = Math.min(city.debt, city.money); city.money -= back; city.debt -= back;   // долг гасится из зарплаты, деньги не уходят в минус
     const pay = Math.min(RENT, city.money); city.money -= pay; rentShort = RENT - pay; city.debt += rentShort; }   // аренда; не хватило — хозяин подождёт (долг)
+  if(payday) city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) };   // начало недели: снимок для итога (до сохранения — ревью 2026-10-11)
   city.plan = cityPlanFor(city.day); city.carry = []; cityMorning(); citySave(); cityRender();
   toast(payday ? `Pazartesi: maaş +${SALARY} ₺, kira −${RENT} ₺` : `${DOW_RU[cityDow()]}, день ${city.day}`);
-  if(payday){ city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) };   // начало недели: снимок для итога
-    const w = campWeek(); if(w > 1 && w <= 4 && !campReady(w) && city.camp.soon !== w){ city.camp.soon = w; citySave();
+  if(payday){
+    const w = campWeek(); if(campWeekRaw() > 1 && w <= 4 && !campReady(w) && city.camp.soon !== w){ city.camp.soon = w; citySave();
       showModal({ ic:"Hafta", title:`Неделя ${w - 1} пройдена. Неделя ${w} — скоро`, text:`Сцены недели ${w} («${CAMPAIGN[w - 1].goal}») ещё готовятся. Пока — свободная игра: дела недели 1, задания дня, знакомые. Когда неделя ${w} появится, она откроется сама.`, primary:{ label:"Дальше" } }); } }
   if(rentShort) milestone({ ic:"Kira", title:"Аренда: не хватило", text:`Хозяин квартиры подождёт: долг ${rentShort} ₺. Спишется с зарплаты в следующий понедельник.`, primary:{ label:"Tamam" } }, `Аренда: долг ${rentShort} ₺`);
 }
@@ -4891,7 +4893,7 @@ function cityNormalize(){
   if(typeof city.debt !== "number") city.debt = 0; if(typeof city.haggleWins !== "number") city.haggleWins = 0;
   if(!Array.isArray(city.visited)) city.visited = []; if(!Array.isArray(city.deckUsed)) city.deckUsed = []; if(!Array.isArray(city.prevPlan)) city.prevPlan = [];
   if(!city.camp || typeof city.camp !== "object"){   // кампания: новая игра — с пролога; старое сохранение (день > 1) — с недели 1, всё накопленное на месте (§2б п. 4)
-    city.camp = city.day <= 1 ? { w0:0 } : { w0:Math.ceil(city.day / 7) - 1, old:true, prologue:true };
+    city.camp = city.day <= 1 ? { w0:0 } : { w0:Math.ceil(city.day / 7), old:true, prologue:true };
     city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) }; }
   if(!city.feedback || typeof city.feedback !== "object") city.feedback = {};
   if(!Array.isArray(city.plan)) city.plan = cityPlanFor(city.day);
@@ -4937,9 +4939,9 @@ function cityWeekLine(){ const w = campWeek();
   return w > 4 ? "Месяц прожит — свободная игра" : campReady(w) ? `Неделя ${w} из 4: ${CAMPAIGN[w - 1].goal}${city.camp && city.camp.old && w === 1 ? " (вы здесь уже освоились)" : ""}` : `Неделя ${w - 1} пройдена · неделя ${w} — скоро`; }
 function cityRender(){
   const home = !ct;
-  if(home && city.camp && !city.camp.prologue && (!TESTMODE || window.__prologue)){ city.camp.prologue = true; citySave();   // пролог — один раз (§2б п. 1)
+  if(home && mode === "city" && city.camp && !city.camp.prologue && (!TESTMODE || window.__prologue)){ city.camp.prologue = true; citySave();   // пролог — один раз (§2б п. 1)
     showModal({ ic:"Hoş geldin!", title:"Первый месяц в Стамбуле", text:"Вы только что переехали в Стамбул. За месяц: обжиться, открыть счёт, оформить жильё, подать на ВНЖ. У каждой недели своя цель, в воскресенье — проверка и итог недели.", primary:{ label:"Начать" } }); }
-  if(home && city.camp && city.camp.old && !city.camp.told && (!TESTMODE || window.__prologue)){ city.camp.told = true; citySave();
+  if(home && mode === "city" && city.camp && city.camp.old && !city.camp.told && (!TESTMODE || window.__prologue)){ city.camp.told = true; citySave();
     showModal({ ic:"Kampanya", title:"Кампания «Первый месяц»", text:"Вы здесь уже освоились: деньги, знакомые и умения — с вами. Кампания начинается с недели 1: у каждой недели своя цель, в воскресенье — итог.", primary:{ label:"Дальше" } }); }
   ctEl("ctHome").hidden = !home; ctEl("ctScene").hidden = home;
   ctEl("ctPlace").textContent = home ? `Mahalle (квартал) · ${DOW_RU[cityDow()]}, день ${city.day}` : ct.scene.place;
@@ -5546,8 +5548,9 @@ function cityAccept(m, alts, polite, score, names){
   const liked = cityLikes(m, alts); if(liked) cityFx({ rel:liked });
   if(m.xp !== false){ if(score >= 90) skillBump("dil"); if(!ct.sawRu) skillBump("kulak"); if(polite || liked) skillBump("nezaket"); }   // способности растут от успехов
   ctBump(line, score >= 70 && !(ct.peeked && mastery(line) >= 2), skillLvl("dil") >= 3 && score >= 90);   // реплика растёт в освоении, только если сказана чисто и без подглядывания
-  if(m.haggle && score >= 70){ ct.haggled = true; city.haggleWins++; skillBump("pazarlik"); questCity("haggle"); }
-  if(score >= 90) questCity("clean");
+  const real = line ? pronScore(line.replace(/['’]/g, ""), alts).score : 0;   // настоящая оценка сказанного: «узнали по ключевому слову» приходит сюда как 100 (ревью 2026-10-11)
+  if(m.haggle && real >= 70){ ct.haggled = true; city.haggleWins++; skillBump("pazarlik"); questCity("haggle"); }
+  if(real >= 90) questCity("clean");
   if(!ct.kolay && ctHas(alts.map(nphr).join(" | "), "kolay gelsin")){ ct.kolay = true; questCity("kolay"); }   // один раз за разговор = один человек   // торг сказан чисто — Pazarlık растёт («Показать» сюда не попадает)
   if(m.xp !== false) count("city", 1);
   ct.xpFresh = undefined;
@@ -5647,7 +5650,7 @@ function ctDiscount(failed){
 }
 function cityEnd(end, failed){
   cityFx(end.fx);
-  const disc = ctDiscount(failed); if(disc){ city.money += disc; ct.spent -= disc; }
+  const disc = ctDiscount(failed); if(disc){ const toDebt = Math.min(disc, city.debt); city.debt -= toDebt; city.money += disc - toDebt; ct.spent -= disc; }   // уступка сначала гасит долг
   const L = CHARS[ct.char] && CHARS[ct.char].likes, quiet = !!(L && L.quiet && !failed && !ct.misses && ct.ok > 0);
   if(quiet) cityFx({ rel:1 });                                               // молчун ценит, когда его ни разу не переспросили
   const kind = end.kind || "ok", short = kind === "ok" ? "получилось" : kind === "near" ? "так себе" : "не вышло";
@@ -5676,7 +5679,7 @@ function cityDayEnd(){
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
     primary: city.todaySaid.length ? { label:`Повторить фразы дня (${Math.min(5, city.todaySaid.length)})`, fn:cityReview } : { label:"Новый день", fn:cityNewDay },
     secondary: city.todaySaid.length ? { label:"Новый день", fn:cityNewDay } : { label:"Остаться", fn:cityRender } });
-  if(cityDow() === 7) cityWeekSummary();                                         // воскресенье — итог недели (очередь окон: после итога дня)
+  if(cityDow() === 7 && campWeekRaw() >= 1 && city.camp && city.camp.sum !== campWeek()){ city.camp.sum = campWeek(); citySave(); cityWeekSummary(); }   // воскресенье — итог недели, один раз (ревью: «Итоги дня» можно открыть снова)
 }
 function cityReview(){ memFilter = new Set(city.todaySaid.slice(-5)); setMode("memory"); }
 function memEnroll(tr, ru){ try { const all = loadCards(); if(all.some(c => c.tr === tr)) return; all.push(newMemCard(tr, trToCyr(tr), ru, "rec", Date.now())); saveCards(all); updateMemTab(); } catch(e){} }
