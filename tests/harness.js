@@ -56,8 +56,10 @@ async function openPage(browser, opts = {}){
     return r.fulfill({ json:{ query:{ pages:{} } } });
   });
   await p.addInitScript(INIT);
-  if(opts.storage) await p.addInitScript(s => { if(!sessionStorage.getItem('seeded')){ localStorage.clear(); Object.entries(s).forEach(([k,v]) => localStorage.setItem(k, v)); sessionStorage.setItem('seeded','1'); } }, opts.storage);
-  else await p.addInitScript(() => { if(!sessionStorage.getItem('seeded')){ localStorage.clear(); sessionStorage.setItem('seeded','1'); } });
+  // «засеять» хранилище один раз на вкладку. Метка — и в sessionStorage, и в localStorage (__seeded): у file:// при перезагрузке sessionStorage
+  // иногда ещё не восстановлен, когда идёт этот скрипт, — хранилище чистилось, и «сохранение после перезагрузки» падало ~1 раз из 4 (2026-10-11)
+  if(opts.storage) await p.addInitScript(s => { if(!sessionStorage.getItem('seeded') && !localStorage.getItem('__seeded')){ localStorage.clear(); Object.entries(s).forEach(([k,v]) => localStorage.setItem(k, v)); sessionStorage.setItem('seeded','1'); localStorage.setItem('__seeded','1'); } }, opts.storage);
+  else await p.addInitScript(() => { if(!sessionStorage.getItem('seeded') && !localStorage.getItem('__seeded')){ localStorage.clear(); sessionStorage.setItem('seeded','1'); localStorage.setItem('__seeded','1'); } });
   await p.goto(FILE); await p.waitForTimeout(150);
   return p;
 }

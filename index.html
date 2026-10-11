@@ -365,6 +365,9 @@ h1 span{color:inherit}
 .act:not(:disabled):active .ring{background:var(--accent-soft)}
 .main-row{flex:none; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:10px; padding:10px 2px 10px}
 .main-row .pill{min-width:0; max-width:100%; padding:0 14px} .main-row .pill .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+/* цена «Показать» видна до нажатия (этап 1, п. 3; решение 2026-10-10) */
+.ct-show2{display:flex; flex-direction:column; align-items:flex-start; min-width:0; line-height:1.05} .ct-cost{font:400 9.5px/1.1 var(--body); color:var(--muted); white-space:normal; text-align:left}
+#ctShow.ct-showbtn{padding:0 8px; gap:6px} #ctShow .lbl{font-size:14px}
 .main-row.single{grid-template-columns:1fr}
 .main-row.single .mic{justify-self:center}
 .main-row .pill:first-child{justify-self:start} .main-row .pill:last-child{justify-self:end}
@@ -967,7 +970,7 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
         <div class="result info" id="ctResult" aria-live="polite"></div>
         <div class="ct-pay" id="ctPay" hidden></div>
         <div class="main-row">
-          <button class="pill" id="ctShow" disabled title="Показать фразу на экране телефона: поймут, но без разговора"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><span class="lbl">Показать</span></button>
+          <button class="pill ct-showbtn" id="ctShow" disabled title="Показать фразу на экране телефона: поймут, но без разговора" aria-label="Показать на телефоне — без опыта и отношений"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><span class="ct-show2"><span class="lbl">Показать</span><small class="ct-cost">без опыта и отношений</small></span></button>
           <button class="mic" id="ctSpeak" aria-label="Сказать" disabled><svg class="ic on" aria-hidden="true"><use href="#i-mic"/></svg><svg class="ic off" aria-hidden="true"><use href="#i-stop"/></svg><span class="sr lbl">Сказать</span></button>
           <button class="pill" id="ctNext" disabled><span class="lbl">Дальше</span><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg></button>
         </div>
@@ -3512,7 +3515,7 @@ const SKILL_LVLS = [3, 8, 15, 25, 40];
 const SKILLS = {
   kulak:    { name:"Kulak",    ru:"слух",       lv:["", "первые успехи", "собеседники говорят естественнее", "в числах на слух — четыре варианта", "говорят ещё быстрее", "опыт за «Город» ×1,25"] },
   dil:      { name:"Dil",      ru:"речь",       lv:["", "первые успехи", "собеседник ждёт чище: порог 75", "подсказка выцветает быстрее при 90+", "порог 80", "опыт за «Город» ×1,25"] },
-  pazarlik: { name:"Pazarlık", ru:"торг",       lv:["", "первые успехи", "продавцы уступают быстрее", "торг открыт у портного, парикмахера, на парковке", "встречная цена принимается ниже", "у пазарджи всегда «ikram»"] },
+  pazarlik: { name:"Pazarlık", ru:"торг",       lv:["", "первые успехи", "поторговались — уступают 5 ₺", "знакомые торговцы (отношения 3+) сами уступают 5 ₺", "поторговались — уступают 10 ₺", "у знакомых торговцев — «ikram»: ещё 5 ₺ в подарок"] },   // тексты = то, что делает ctDiscount (было: портной, парикмахер, парковка — их нет)
   nezaket:  { name:"Nezaket",  ru:"вежливость", lv:["", "первые успехи", "с вами здороваются первыми", "терпение +1 во всех сценах", "перевод реплики не стоит терпения", "отношения растут вдвое быстрее"] },
 };
 const skillLvl = id => (city.skill[id] || {}).lvl || 0;
@@ -3526,7 +3529,7 @@ function citySkillModal(id){
   const sk = SKILLS[id], lvl = skillLvl(id);
   milestone({ ic:"Seviye!", title:`${sk.name} ${lvl}`, text:`Способность «${sk.ru}» выросла: ${sk.lv[lvl] || "первые успехи"}.`, primary:{ label:"Devam" } }, `${sk.name} ${lvl}: ${sk.lv[lvl] || ""}`);
 }
-const cityXpMult = () => (skillLvl("kulak") >= 5 ? 1.25 : 1) * (skillLvl("dil") >= 5 ? 1.25 : 1);
+const cityXpMult = () => (typeof ct !== "undefined" && ct && ct.xpFresh === false) ? 1 : (skillLvl("kulak") >= 5 ? 1.25 : 1) * (skillLvl("dil") >= 5 ? 1.25 : 1);   // ×1,25 — только за неосвоенную реплику (mastery < 3; этап 1, п. 4)
 const ctAcceptScore = () => skillLvl("dil") >= 4 ? 80 : skillLvl("dil") >= 2 ? 75 : 70;
 const npcRate = () => skillLvl("kulak") >= 4 ? 1.1 : skillLvl("kulak") >= 2 ? 1.0 : 0.9;
 // Утро: последствия вчерашнего (кот просит корм, промокли — могли простудиться)
@@ -4423,14 +4426,14 @@ const SCENES = {
       best:{ npc:"Şu kırmızı paket. Biraz pahalı ama kediler bayılıyor.", ru:"Вот та красная пачка. Дороговато, но кошки её обожают.", again:"Kırmızı paket, pahalı olan.", againRu:"Красная пачка, та, что дорогая.",
         moves:[
           { key:["onu", "alayım"], say:["Onu alayım."], ru:"Возьму её.", go:"price_big" },
-          { key:["ucuzu", "daha ucuz", "yok mu"], say:["Daha ucuzu yok mu?"], ru:"Подешевле нет?", go:"cheap" },
+          { key:["ucuzu", "daha ucuz", "yok mu"], say:["Daha ucuzu yok mu?"], ru:"Подешевле нет?", go:"cheap", haggle:true },
         ] },
       ask:{ alt:[
           { npc:"Var. Hangisi: büyük mü, küçük mü?", ru:"Есть. Какой: большой или маленький?", again:"Büyük mü, küçük mü?", againRu:"Большой или маленький?", shop:true,
             items:{ mama:["mama", "büyük", "küçük", "kedi maması"] }, itemRu:{ mama:"корм" },
             none:{ key:["balık", "süt"], npc:"O yok, sadece mama var.", ru:"Этого нет, только корм." },
             done:{ key:["hepsi", "bu kadar", "tamam"], say:["Hepsi bu kadar."], ru:"Это всё." },
-            extra:[ { key:["ucuz", "ucuzu"], say:["Ucuz olanı verin."], ru:"Дайте тот, что подешевле.", go:"cheap" } ],
+            extra:[ { key:["ucuz", "ucuzu"], say:["Ucuz olanı verin."], ru:"Дайте тот, что подешевле.", go:"cheap", haggle:true } ],
             moves:[ { key:["mama", "büyük"], say:["Büyük olanı lütfen."], ru:"Большой, пожалуйста." } ], go:"twist" },
           { npc:"Kuru mu, yaş mı?", ru:"Сухой или влажный?", again:"Kuru mama mı, yaş mama mı?", againRu:"Сухой корм или влажный?",
             moves:[
@@ -4458,7 +4461,7 @@ const SCENES = {
           { npc:"Hangi markadan? Pahalısı da var, ucuzu da.", ru:"Какой марки? Есть и дорогой, и дешёвый.", again:"Pahalısı mı, ucuzu mu?", againRu:"Дорогой или дешёвый?",
             moves:[
               { key:["orta", "orta bir şey"], say:["Orta bir şey verin."], ru:"Дайте что-нибудь среднее.", go:"twist" },
-              { key:["ucuzu", "ucuz"], say:["Ucuzu olsun."], ru:"Пусть дешёвый.", go:"cheap" },
+              { key:["ucuzu", "ucuz"], say:["Ucuzu olsun."], ru:"Пусть дешёвый.", go:"cheap", haggle:true },
               { key:["pahalısını", "pahalı", "şımarık"], say:["Pahalısını verin, kedi şımarık."], ru:"Дайте дорогой, кот избалованный.", go:"price_big" },
             ] },
         ] },
@@ -5453,19 +5456,22 @@ function cityAnswer(alts){
 function cityLikes(m, alts){
   const L = CHARS[ct.char] && CHARS[ct.char].likes; if(!L) return 0; let bonus = 0;
   const heardN = alts.map(nphr).join(" | ");
-  if(!ct.liked && ((L.words || []).some(w => ctHas(heardN, w)) || m.like)){ ct.liked = true; bonus++; }
+  if(!ct.liked && ((L.words || []).some(w => ctHas(heardN, w)) || m.like || (L.haggle && m.haggle))){ ct.liked = true; bonus++; }
   if(L.firstTry && !ct.likedFirst && ct.tries === 0){ ct.likedFirst = true; bonus++; }
   return bonus;
 }
 function cityAccept(m, alts, polite, score, names){
   const n = ct.node, line = m.say[0];
+  ct.xpFresh = mastery(line) < 3;                                                         // до ctBump: освоенная реплика — без множителя опыта
   ct.n++; ct.ok++; city.said++; city.ok++;
   if(line && !city.todaySaid.includes(line)){ city.todaySaid.push(line); memEnroll(line, m.ru); }   // «фразы дня» и карточка «Памяти» — сразу, даже если сцену не доиграли
   if(polite && !ct.polite && !(m.fx && m.fx.rel)){ ct.polite = true; cityFx({ rel:1 }); }
   const liked = cityLikes(m, alts); if(liked) cityFx({ rel:liked });
   if(m.xp !== false){ if(score >= 90) skillBump("dil"); if(!ct.sawRu) skillBump("kulak"); if(polite || liked) skillBump("nezaket"); }   // способности растут от успехов
   ctBump(line, score >= 70 && !(ct.peeked && mastery(line) >= 2), skillLvl("dil") >= 3 && score >= 90);   // реплика растёт в освоении, только если сказана чисто и без подглядывания
+  if(m.haggle && score >= 70){ ct.haggled = true; city.haggleWins++; skillBump("pazarlik"); }   // торг сказан чисто — Pazarlık растёт («Показать» сюда не попадает)
   if(m.xp !== false) count("city", 1);
+  ct.xpFresh = undefined;
   const lvl = mastery(line), grown = lvl >= 3 ? " Реплика освоена: дальше — по памяти." : lvl === 2 ? " В следующий раз — только первые буквы." : "";
   const head = `<div class="res-head">${scoreHtml(score, "Произношение")}<div class="res-body">`, tail = `</div></div>`;
   if(n.shop && (m.item || m.doneShop || !m.go)){
@@ -5552,8 +5558,17 @@ function cityResolve(go, kind, html){
   ctButtons(); setTimeout(() => ctEl("ctNext").focus(), 50);
 }
 function cityNextNode(){ if(!ct || !ct.resolved || !ct.pendingGo) return; const go = ct.pendingGo; cityNode(go); }
+// Pazarlık (этап 1, п. 2): уступка считается в конце сцены от потраченного — не больше четверти, кратно 5
+const TRADERS = ["bakkal", "bakkal_emre", "bakkal_ramiz", "pazarci", "pazarci_orhan"];
+function ctDiscount(failed){
+  const lv = skillLvl("pazarlik"), cap = Math.floor((ct.spent || 0) * 0.25 / 5) * 5, known = TRADERS.includes(ct.char) && (city.rel[ct.char] || 0) >= 3;
+  if(failed || cap <= 0) return 0;
+  let off = 0; if(ct.haggled && lv >= 2) off += lv >= 4 ? 10 : 5; if(known && lv >= 3) off += 5; if(known && lv >= 5) off += 5;
+  return Math.min(off, cap);
+}
 function cityEnd(end, failed){
   cityFx(end.fx);
+  const disc = ctDiscount(failed); if(disc){ city.money += disc; ct.spent -= disc; }
   const L = CHARS[ct.char] && CHARS[ct.char].likes, quiet = !!(L && L.quiet && !failed && !ct.misses && ct.ok > 0);
   if(quiet) cityFx({ rel:1 });                                               // молчун ценит, когда его ни разу не переспросили
   const kind = end.kind || "ok", short = kind === "ok" ? "получилось" : kind === "near" ? "так себе" : "не вышло";
@@ -5567,7 +5582,7 @@ function cityEnd(end, failed){
   if(dest !== null && kind !== "bad"){ city.pos = dest; city.roll = null; city.visited.push(dest); citySave(); }     // доехали — фишка на месте
   ct = null; cityRender();
   const stats = [["время", `${took} мин`], ["потрачено", `${spent} ₺`], ["реплик верно", `${learned.length}`]];
-  showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: title + " — " + short, text: endText + contactNote + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
+  showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: title + " — " + short, text: endText + (disc ? ` Pazarlık: уступили ${disc} ₺.` : "") + contactNote + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
     stats, primary:{ label:"К делам", fn:() => { cityRender(); if(dest !== null && kind !== "bad") cityArrive(dest); } } });
   if(quiet) $("modalText").textContent += ` ${CHARS[ct0].name} оценил: ни одного переспроса.`;
   (levelUps || []).forEach(citySkillModal);                                   // окна уровней — после итога сцены (очередь showModal)

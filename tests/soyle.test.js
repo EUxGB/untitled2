@@ -2451,6 +2451,33 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(taxi && taxi[1] === 'toast', 'такси без дел — подсказка: ' + JSON.stringify(taxi));
     eq(rest.length, 19); eq(rest.filter(v => v[1] !== 'Зайти' || !v[3] || !v[4]).map(v => v.slice(0, 4)), []); eq(errs, []);
   });
+  await test('Этап 1, публикация А (2026-10-11): у «Показать» цена видна до нажатия; ×1,25 — только за неосвоенную реплику; Pazarlık растёт от чисто сказанного торга (не от «Показать»), уровень 2 — уступка 5 ₺, тексты уровней без портного/парковки', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
+    const cost = [];
+    for(const w of [320, 360, 412]){ await q.setViewportSize({ width:w, height:640 });
+      cost.push(await q.evaluate(() => { cityStart('bakkal'); const b = document.getElementById('ctShow'), c = b.querySelector('.ct-cost'); const r = c ? [c.textContent, c.getBoundingClientRect().width > 0, c.scrollWidth <= c.clientWidth + 1, b.getBoundingClientRect().height <= document.getElementById('ctNext').getBoundingClientRect().height + 1] : null; cityLeave(); ct = null; return r; })); }
+    eq(cost, Array(3).fill(['без опыта и отношений', true, true, true]), 'подпись под «Показать»');
+    await q.setViewportSize({ width:360, height:640 });
+    const lv = await q.evaluate(() => SKILLS.pazarlik.lv.join(' | '));
+    ok(!/портн|парикмах|парковк/.test(lv) && /5 ₺/.test(lv) && /ikram/.test(lv), lv);
+    // путь «корм коту»: «Какой корм лучший?» (освоена) → «Подешевле нет?» (новая, торг) → «Ладно, дайте его» → конец
+    const run = async (phone, lvl) => { await q.evaluate(([lvl]) => { cityLeave(); ct = null; closeModal && closeModal(); city.money = 1000; city.skill = { kulak:{ n:40, lvl:5 }, pazarlik:{ n:lvl === 2 ? 8 : 0, lvl } }; city.haggleWins = 0;
+        city.mastery = { 'En iyi mama hangisi?':3 }; window.__alt = { greet:5 }; window.__seed = 0; window.__mult = [];
+        if(!window.__countOrig) window.__countOrig = count; count = (g, s) => { if(g === 'city') window.__mult.push(cityXpMult()); return window.__countOrig(g, s); };
+        cityStart('mama'); }, [lvl]);
+      await ctSay(q, 'en iyi mama hangisi'); await ctNext(q);
+      if(phone){ await q.evaluate(() => { const i = ct.opts.findIndex(m => m.haggle); ct.pick = ct.opts[i]; cityPhone(); }); }
+      else await ctSay(q, 'daha ucuzu yok mu');
+      await ctNext(q); await ctSay(q, 'olsun onu verin'); await ctNext(q); await q.waitForTimeout(100);
+      return q.evaluate(() => ({ pz:(city.skill.pazarlik || {}).n || 0, wins:city.haggleWins, money:city.money, mult:window.__mult, text:document.getElementById('modalText').textContent })); };
+    const said = await run(false, 0), phoned = await run(true, 0), lv2 = await run(false, 2);
+    const errs = q.errors; await q.context().close();
+    eq([said.pz, said.wins], [1, 1], 'торг сказан — Pazarlık и победы: ' + JSON.stringify(said));
+    eq([phoned.pz, phoned.wins], [0, 0], 'через «Показать» — без роста');
+    eq(said.mult.slice(0, 2), [1, 1.25], 'множитель: освоенная реплика ×1, новая ×1,25');
+    eq(said.money, 950, 'уровень 0 — без уступки'); eq(lv2.money, 955, 'уровень 2 — уступили 5 ₺: ' + lv2.text); ok(/уступили 5/.test(lv2.text), lv2.text);
+    eq(errs, []);
+  });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
     const GEN = ['Evet, öyle.', 'Hı hı.'];
