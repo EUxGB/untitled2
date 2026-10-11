@@ -677,6 +677,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-decoration:none; line-height:1.15} .ct-homebtns .linkbtn span{text-decoration:underline} .ct-homebtns .linkbtn small{font-size:11px; color:var(--muted)} .ct-homebtns #ctHomeBtn{align-items:flex-end}
 .ct-task.go{cursor:pointer; min-height:44px; display:flex; align-items:center; flex-wrap:wrap; gap:0 4px; padding:2px 8px; border:1.5px solid var(--accent); border-radius:10px; background:var(--surface)} .ct-task.go span{color:var(--accent); font-weight:700}
 #ctDayEnd{width:100%; min-height:44px}
+.ct-rent{display:block; font-size:11.5px; font-weight:400; color:var(--muted)}
 .ct-intro{text-align:left; margin:0; font-size:11.5px; line-height:1.3; color:var(--muted)}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
 .ct-goal{margin:0; font-size:13px; color:var(--muted); text-align:left; display:flex; gap:8px; align-items:baseline} .ct-goal > span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
@@ -3375,7 +3376,8 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 // (узлы, ветки, флаги). Собеседник говорит синтезом: это персонаж, а не образец для подражания (записей всех реплик нет нигде).
 // Сцена: nodes[id] = { npc, ru, moves:[{ key:[слова, по которым узнаём ответ], say:[как сказать], ru, go, fx, hide }],
 //   again (переспрос), pay:{ price, notes }, end:{ kind, text, fx } }. fx: { money, min, rel, flag }.
-const CITY_START = { ver:2, day:1, money:3500, min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, pos:0, roll:null, visited:[], plan:null, contacts:{}, dmDay:{}, callback:null };
+const CITY_START = { ver:2, day:1, money:1700,   // 3 500 зарплата − 1 800 аренда первой недели (уже оплачена при въезде; RENT ниже)
+  min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, pos:0, roll:null, visited:[], plan:null, contacts:{}, dmDay:{}, callback:null };
 // Поле-настолка (спек §4а): кольцо из 24 клеток по периметру сетки 7×7 (по часовой от дома в левом верхнем углу), две срезки-улицы.
 // kind: home — дом (звонки, визиты мастеров), place — место со сценами, event — клетка «?» (карта из колоды). dat — дательный падеж для такси («Eczaneye lütfen»).
 const BOARD = [
@@ -3432,6 +3434,9 @@ const cityErrandAt = i => cityPlanIds().find(id => (BOARD[i].scenes || []).inclu
 // Календарь недели (спек §7; решение пользователя 20:00 — «начало всегда разное»): дела дня — случайные 3 из набора открытых недель,
 // без повторов вчерашних, пока есть другие; закреплено только первое дело первого дня — bakkal. Зарплата по понедельникам, часы работы, перенос несделанного.
 const SALARY = 3500, DAY_START = 9 * 60, PLAN_SIZE = 3;
+// Аренда (этап 1, п. 1): каждый понедельник; первую неделю оплатили при въезде (CITY_START.money = 3 500 − 1 800). Подобрана ботом tests/city-bot.js (2026-10-11): при честной игре расход 1 055–1 595 ₺ в неделю,
+// в среднем 1 406 ₺ (3 набора дел × 2 недели) → 3 500 − 1 406 − 1 800 ≈ 300 ₺ остаётся к воскресенью (решение: «к воскресенью ≈ 300 ₺»).
+const RENT = 1800;
 const WEEK_SETS = [
   ["bakkal", "taxi", "kapici", "simit", "dolmus", "istanbulkart", "firin", "market", "cay", "lokanta", "eczane", "komsu", "su"],
   ["kuafor", "kargo", "pazar", "manav", "ptt", "fatura", "terzi", "kasap", "banka", "telefon", "balikci", "tesisatci", "cilingir"],
@@ -3542,9 +3547,12 @@ function cityMorning(){
 function cityNewDay(){
   city.prevPlan = (city.plan || []).slice(); city.day++; city.days++; city.done = []; city.min = DAY_START; city.pos = 0; city.roll = null; city.visited = []; city.deckUsed = []; city.todaySaid = [];
   const payday = cityDow() === 1;
-  if(payday){ city.money += SALARY; if(city.debt){ city.money -= city.debt; city.debt = 0; } }
+  let rentShort = 0;
+  if(payday){ city.money += SALARY; const back = Math.min(city.debt, city.money); city.money -= back; city.debt -= back;   // долг гасится из зарплаты, деньги не уходят в минус
+    const pay = Math.min(RENT, city.money); city.money -= pay; rentShort = RENT - pay; city.debt += rentShort; }   // аренда; не хватило — хозяин подождёт (долг)
   city.plan = cityPlanFor(city.day); city.carry = []; cityMorning(); citySave(); cityRender();
-  toast(payday ? `Pazartesi: maaş +${SALARY} ₺` : `${DOW_RU[cityDow()]}, день ${city.day}`);
+  toast(payday ? `Pazartesi: maaş +${SALARY} ₺, kira −${RENT} ₺` : `${DOW_RU[cityDow()]}, день ${city.day}`);
+  if(rentShort) milestone({ ic:"Kira", title:"Аренда: не хватило", text:`Хозяин квартиры подождёт: долг ${rentShort} ₺. Спишется с зарплаты в следующий понедельник.`, primary:{ label:"Tamam" } }, `Аренда: долг ${rentShort} ₺`);
 }
 // Числа словами для реплик с ценой («Yüz yetmiş lira»)
 const TR_ONES = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"], TR_TENS = ["", "on", "yirmi", "otuz", "kırk", "elli", "altmış", "yetmiş", "seksen", "doksan"];
@@ -3701,7 +3709,7 @@ const SCENES = {
   simit:{ free:true, title:"Симитчи у метро", who:"Симитчи", initial:"S", place:"Тележка у метро",
     goal:"Купить симит. Понять цену на слух.",
     start:"greet",
-    fail:{ text:"Симитчи решил, что вы турист, и переключился на следующего. Остались без завтрака.", fx:{ min:5 } },
+    fail:{ text:"Симитчи решил, что вы турист, и переключился на следующего. Завтракали в кафе у метро — втрое дороже.", fx:{ min:5, money:-40 } },
     nodes:{
       greet:{ npc:["Buyurun abi, taze simit!", "Sıcak simit, buyurun!", "Abi simit? Yeni çıktı."], ru:["Пожалуйста, брат, свежий симит!", "Горячий симит, пожалуйста!", "Брат, симит? Только вышел."], again:"Simit? Taze!", againRu:"Симит? Свежий!",
         moves:[
@@ -3726,7 +3734,7 @@ const SCENES = {
   dolmus:{ title:"Долмуш до Кадыкёя", who:"Водитель долмуша", initial:"D", place:"Остановка долмуша",
     goal:"Сказать, куда, передать деньги и выйти где нужно.",
     start:"greet",
-    fail:{ text:"Водитель не понял, где вам выходить, и провёз до конечной. Обратно пешком — полчаса.", fx:{ min:30 } },
+    fail:{ text:"Водитель не понял, где вам выходить, и провёз до конечной. Обратно — ещё один долмуш и полчаса.", fx:{ min:30, money:-35 } },
     nodes:{
       greet:{ npc:"Nereye? Kadıköy, Üsküdar?", ru:"Куда? Кадыкёй, Ускюдар?", again:"Nereye gidiyorsun?", againRu:"Куда едешь?",
         moves:[
@@ -3746,7 +3754,7 @@ const SCENES = {
   istanbulkart:{ title:"Пополнить İstanbulkart", who:"Киоскёр", initial:"B", place:"Киоск у метро",
     goal:"Положить на карту сто лир.",
     start:"greet",
-    fail:{ text:"Киоскёр так и не понял, что вам нужно. Карта пуста — в метро не пройти.", fx:{ min:10 } },
+    fail:{ text:"Киоскёр так и не понял, что вам нужно. Карта пуста — в метро не пройти, поехали на такси.", fx:{ min:10, money:-60 } },
     nodes:{
       greet:{ npc:"Buyurun?", ru:"Слушаю?", again:"Ne lazım? Kart mı?", againRu:"Что нужно? Карту?",
         moves:[
@@ -3761,7 +3769,7 @@ const SCENES = {
   firin:{ free:true, title:"Пекарня", who:"Пекарь", initial:"F", place:"Пекарня за углом",
     goal:"Купить хлеб и поачу. Спросить, свежие ли.",
     start:"greet",
-    fail:{ text:"Пекарь развёл руками и отвернулся к печи. Остались без хлеба.", fx:{ min:10 } },
+    fail:{ text:"Пекарь развёл руками и отвернулся к печи. Хлеб купили в маркете — вдвое дороже и вчерашний.", fx:{ min:10, money:-30 } },
     nodes:{
       greet:{ npc:["Hoş geldiniz! Ne vereyim?", "Buyurun, ekmek sıcak.", "Hoş geldiniz, poğaça yeni çıktı."], ru:["Добро пожаловать! Что вам дать?", "Пожалуйста, хлеб горячий.", "Добро пожаловать, поача только из печи."], again:"Ne vereyim?", againRu:"Что дать?",
         moves:[
@@ -3786,7 +3794,7 @@ const SCENES = {
   market:{ free:true, title:"Касса супермаркета", who:"Кассир", initial:"K", place:"Супермаркет",
     goal:"Расплатиться на кассе: пакет, карта или наличные.",
     start:"greet",
-    fail:{ text:"Очередь зашумела, кассир вызвала старшего. Вы оставили корзину и ушли.", fx:{ min:15 } },
+    fail:{ text:"Очередь зашумела, кассир вызвала старшего. Вы оставили корзину и купили то же в лавке — дороже.", fx:{ min:15, money:-50 } },
     nodes:{
       greet:{ npc:"Poşet ister misiniz?", ru:"Пакет хотите?", again:"Poşet?", againRu:"Пакет?",
         moves:[
@@ -3815,7 +3823,7 @@ const SCENES = {
   cay:{ free:true, title:"Чайная у пристани", who:"Уста Кемаль", initial:"K", place:"Çay bahçesi", pool:["usta", "usta_can"],
     goal:"Выпить чай и расплатиться как местный.",
     start:"greet",
-    fail:{ text:"Уста пожал плечами и ушёл к самовару. Чай вы так и не получили.", fx:{ min:10 } },
+    fail:{ text:"Уста пожал плечами и ушёл к самовару. Чай взяли в кафе для туристов — вдвое дороже.", fx:{ min:10, money:-30 } },
     nodes:{
       greet:{ npc:["Hoş geldiniz. Ne içersiniz?", "Buyurun, çay mı?", "Hoş geldin komşu, ne içersin?"], ru:["Добро пожаловать. Что будете пить?", "Пожалуйста, чай?", "Добро пожаловать, сосед, что будешь пить?"], again:"Çay mı, kahve mi?", againRu:"Чай или кофе?",
         moves:[
@@ -3851,7 +3859,7 @@ const SCENES = {
   lokanta:{ free:true, title:"Обед в локанте", who:"Уста Кемаль", initial:"K", place:"Эснаф-локанта", pool:["usta", "usta_can"],
     goal:"Понять, что есть, выбрать и расплатиться.",
     start:"greet",
-    fail:{ text:"Уста махнул рукой: «Sonra gel». Обед не состоялся.", fx:{ min:10 } },
+    fail:{ text:"Уста махнул рукой: «Sonra gel». Пообедали в кафе для туристов — втрое дороже.", fx:{ min:10, money:-60 } },
     nodes:{
       greet:{ npc:["Buyurun, ne yersiniz?", "Hoş geldiniz, bugün fasulye güzel.", "Gel komşu, yemek hazır."], ru:["Пожалуйста, что будете есть?", "Добро пожаловать, сегодня фасоль хороша.", "Заходи, сосед, еда готова."], again:"Ne yersiniz?", againRu:"Что будете есть?",
         moves:[
@@ -3880,7 +3888,7 @@ const SCENES = {
   eczane:{ title:"Аптека", who:"Эджзаджи Зейнеп", initial:"Z", place:"Аптека на углу", pool:["eczaci", "eczaci_meryem"],
     goal:"Купить что-нибудь от головной боли и понять дозировку.",
     start:"greet",
-    fail:{ text:"Зейнеп строго сказала «Doktora gidin» и повернулась к следующему. Голова болит дальше.", fx:{ min:10 } },
+    fail:{ text:"Зейнеп строго сказала «Doktora gidin» и повернулась к следующему. Таблетки купили в другой аптеке — дальше и дороже.", fx:{ min:30, money:-40 } },
     nodes:{
       greet:{ npc:"Buyurun.", ru:"Слушаю.", again:"Ne lazım?", againRu:"Что нужно?",
         variants:[ { if:{ late:19 * 60 }, npc:"Nöbetçi eczane, buyurun. Biraz bekleyin.", ru:"Дежурная аптека, слушаю. Немного подождите.", again:"Buyurun?", againRu:"Слушаю?" } ],
@@ -4887,7 +4895,8 @@ function cityBoard(){
       + `${i === city.pos ? '<span class="bd-token" aria-hidden="true"></span>' : ""}${pins[i] !== undefined ? `<span class="bd-pin ${pins[i]}" aria-hidden="true"></span>` : ""}`;
     b.onclick = () => cityMoveTo(i); bd.insertBefore(b, ctEl("ctInner")); });
   const left = plan.filter(id => !cityDoneId(id)).length;
-  ctEl("ctDay").textContent = allDone ? "Все дела сделаны — домой." : `Дела на сегодня — ${left} из ${plan.length}`;
+  const toRent = (8 - cityDow()) % 7 || 7;                                                   // дней до понедельника (сам понедельник — аренда уже списана: до следующей 7)
+  ctEl("ctDay").innerHTML = esc(allDone ? "Все дела сделаны — домой." : `Дела на сегодня — ${left} из ${plan.length}`) + `<small class="ct-rent">до аренды ${toRent} дн. · ${RENT} ₺${city.debt ? ` · долг ${city.debt} ₺` : ""}</small>`;
   ctEl("ctTasks").innerHTML = plan.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id), i = cellOfScene(id), op = cityOpenNow(id), dist = i < 0 ? 0 : boardDist(city.pos, i);
     const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? (s.phone ? "звоните отсюда" : "дело здесь") : s.phone ? `звонок · ${BOARD[i].ru}, ${dist} ${plural(dist, "клетка", "клетки", "клеток")}` : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
     const go = !d && op.open && i >= 0 && i === city.pos && !ct && !city.roll, w2 = go ? (s.phone ? "нажмите, чтобы позвонить" : "нажмите, чтобы начать") : where;
@@ -5541,7 +5550,7 @@ function cityPay(v){
 }
 function cityFx(fx){
   if(!fx) return;
-  if(fx.money){ city.money += fx.money; if(fx.money < 0 && ct) ct.spent -= fx.money; }
+  if(fx.money){ city.money += fx.money; if(fx.money < 0 && ct) ct.spent -= fx.money; if(city.money < 0){ city.debt += -city.money; city.money = 0; } }   // провал при пустом кошельке — в долг, не в минус
   if(fx.min) city.min += fx.min;
   if(fx.rel > 0 && ct && ct.dm){ if(ct.dmCap) fx = Object.assign({}, fx, { rel:0 }); else city.dmDay[ct.char] = city.day; }     // чат поднимает отношения только в первом разговоре дня с человеком
   if(fx.rel && ct && ct.char){ city.rel[ct.char] = (city.rel[ct.char] || 0) + fx.rel * (fx.rel > 0 && skillLvl("nezaket") >= 5 ? 2 : 1); }
