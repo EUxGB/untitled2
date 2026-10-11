@@ -2567,6 +2567,21 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const errs = q.errors; await q.context().close();
     eq([r.money, r.rel, r.m, r.dil, r.w, r.old], [999, { bakkal:4, sofor:7 }, 3, 2, 1, true]); eq(r.sunday, '', 'старое сохранение: итог недели — не в первый же вечер'); ok(!/Стамбул/.test(r.modal), 'без пролога: ' + r.modal); ok(/освоились/.test(r.intro + r.modal), r.intro + ' | ' + r.modal); eq(errs, []);
   });
+  await test('Этап 1, публикация Д (2026-10-11): новый игровой день — раз в календарный день; в тот же день «Новый день» не листает, квартал открыт; пропуск дней ничего не отнимает', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__calendar = true; });
+    const r = await q.evaluate(() => { const out = {}, today = dayStr(new Date()), M = () => !document.getElementById('modal').hidden;
+      const finish = () => { city.plan.forEach(id => { if(!city.done.some(d => d.id === id)) city.done.push({ id, kind:'ok', short:'', ok:1, n:1, took:1, spent:0 }); }); city.todaySaid = []; };
+      out.cal0 = city.calDay === today;                                                  // новая игра: день 1 — сегодня
+      finish(); cityDayEnd(); out.same = [document.getElementById('modalPrimary').textContent, document.getElementById('modalText').textContent]; document.getElementById('modalPrimary').click();
+      out.day1 = city.day;
+      city.calDay = dayStr(new Date(Date.now() - 3 * 864e5)); const money = city.money;   // не заходили три дня
+      finish(); cityDayEnd(); out.next = document.getElementById('modalPrimary').textContent; document.getElementById('modalPrimary').click(); if(M()) closeModal();
+      out.after = [city.day, city.calDay === today, city.money === money];
+      return out; });
+    const errs = q.errors; await q.context().close();
+    eq(r.cal0, true); ok(/завтра/i.test(r.same[0]) && /завтра/i.test(r.same[1]), JSON.stringify(r.same)); eq(r.day1, 1, 'в тот же день — без нового дня');
+    eq(r.next, 'Новый день'); eq(r.after, [2, true, true], 'после пропуска — один новый день, деньги те же (вт — без аренды)'); eq(errs, []);
+  });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
     const GEN = ['Evet, öyle.', 'Hı hı.'];

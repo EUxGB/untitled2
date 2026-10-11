@@ -3598,7 +3598,11 @@ function cityMorning(){
   if(city.flags.wet){ delete city.flags.wet; const sick = TESTMODE ? !!window.__sick : Math.random() < 0.5;
     if(sick){ if(!plan.includes("eczane")) plan.push("eczane"); toast("Вчерашний дождь: горло болит — зайдите в аптеку."); } }
 }
+// Темп (решение 2026-10-11 §2б п. 5, публикация Д): новый игровой день — раз в календарный день (интервалы «Памяти» — в днях); после — свободная игра,
+// за пропуск ничего не теряется (пропустили три дня — просто следующий день). В тестах — только с window.__calendar.
+const cityCanNewDay = () => (TESTMODE && !window.__calendar) || city.calDay !== dayStr(new Date());
 function cityNewDay(){
+  city.calDay = dayStr(new Date());
   city.prevPlan = (city.plan || []).slice(); city.day++; city.days++; city.done = []; city.min = DAY_START; city.pos = 0; city.roll = null; city.visited = []; city.deckUsed = []; city.todaySaid = [];
   const payday = cityDow() === 1;
   let rentShort = 0;
@@ -4896,6 +4900,7 @@ function cityNormalize(){
     city.camp = city.day <= 1 ? { w0:0 } : { w0:Math.ceil(city.day / 7), old:true, prologue:true };
     city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) }; }
   if(!city.feedback || typeof city.feedback !== "object") city.feedback = {};
+  if(fresh && !city.calDay) city.calDay = dayStr(new Date());                         // новая игра: день 1 — сегодня; у старых сохранений метки нет — новый день можно сразу
   if(!Array.isArray(city.plan)) city.plan = cityPlanFor(city.day);
   if(typeof city.pos !== "number" || !BOARD[city.pos]) city.pos = 0; if(typeof city.roll !== "number") city.roll = null;
   if(!(city.face >= 1 && city.face <= 6)) city.face = TESTMODE ? 1 : 1 + Math.floor(Math.random() * 6);   // грань кубика до первого броска — случайная
@@ -5675,10 +5680,12 @@ function cityDayEnd(){
   const rels = Object.entries(city.rel).filter(([, v]) => v > 0).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} +${v}`).join(", ");
   city.carry = cityPlanIds().filter(id => SCENES[id] && !cityDoneId(id)); citySave();
   const carryTxt = city.carry.length ? ` Не успели: ${city.carry.map(id => SCENES[id].title).join(", ")} — перенесено на завтра.` : "";
-  showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${dayDone.length}.${carryTxt} ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}`,
+  const wait = !cityCanNewDay(), waitTxt = wait ? " Новые дела откроются завтра. Пока можно заходить к людям, звонить и повторять фразы — квартал открыт." : "";
+  const next = wait ? { label:"Новые дела — завтра", fn:cityRender } : { label:"Новый день", fn:cityNewDay };
+  showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${dayDone.length}.${carryTxt} ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}${waitTxt}`,
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
-    primary: city.todaySaid.length ? { label:`Повторить фразы дня (${Math.min(5, city.todaySaid.length)})`, fn:cityReview } : { label:"Новый день", fn:cityNewDay },
-    secondary: city.todaySaid.length ? { label:"Новый день", fn:cityNewDay } : { label:"Остаться", fn:cityRender } });
+    primary: city.todaySaid.length ? { label:`Повторить фразы дня (${Math.min(5, city.todaySaid.length)})`, fn:cityReview } : next,
+    secondary: city.todaySaid.length ? next : wait ? null : { label:"Остаться", fn:cityRender } });
   if(cityDow() === 7 && campWeekRaw() >= 1 && city.camp && city.camp.sum !== campWeek()){ city.camp.sum = campWeek(); citySave(); cityWeekSummary(); }   // воскресенье — итог недели, один раз (ревью: «Итоги дня» можно открыть снова)
 }
 function cityReview(){ memFilter = new Set(city.todaySaid.slice(-5)); setMode("memory"); }
