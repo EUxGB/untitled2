@@ -677,7 +677,8 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-decoration:none; line-height:1.15} .ct-homebtns .linkbtn span{text-decoration:underline} .ct-homebtns .linkbtn small{font-size:11px; color:var(--muted)} .ct-homebtns #ctHomeBtn{align-items:flex-end}
 .ct-task.go{cursor:pointer; min-height:44px; display:flex; align-items:center; flex-wrap:wrap; gap:0 4px; padding:2px 8px; border:1.5px solid var(--accent); border-radius:10px; background:var(--surface)} .ct-task.go span{color:var(--accent); font-weight:700}
 #ctDayEnd{width:100%; min-height:44px}
-.ct-rent{display:block; font-weight:600; color:var(--ink-2)}
+.ct-rent{display:block; font-weight:600; color:var(--ink-2)} .ct-week{display:block; font-weight:700; color:var(--accent-ink)}
+.ms-choices{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:6px 0 2px} .ms-choice{min-height:44px; min-width:72px; padding:0 14px; border-radius:22px; border:1px solid var(--line); background:var(--surface); font:600 15px var(--body); color:var(--ink)} .ms-choice[aria-pressed="true"]{background:var(--accent); color:#fff; border-color:var(--accent)}
 .ct-intro{text-align:left; margin:0; font-size:11.5px; line-height:1.3; color:var(--muted)}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
 .ct-goal{margin:0; font-size:13px; color:var(--muted); text-align:left; display:flex; gap:8px; align-items:baseline} .ct-goal > span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
@@ -2079,7 +2080,7 @@ function renderGame(){
   $("gbLevelRing").style.strokeDashoffset = 263.9 * (1 - part); $("gbLevel2").textContent = L;
   $("gbBlitz").textContent = game.blitzBestPh || 0;
   if(typeof city !== "undefined" && city){ const okN = Object.values(city.played || {}).reduce((a, p) => a + (p.ok || 0), 0), n = Object.values(city.played || {}).reduce((a, p) => a + (p.n || 0), 0);
-    $("gbCity").textContent = `день ${city.day} · неделя ${Math.ceil(city.day / 7)}`; $("gbCitySub").textContent = `дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}`; }
+    $("gbCity").textContent = `день ${city.day} · неделя ${Math.ceil(city.day / 7)}`; $("gbCitySub").textContent = `дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}${(() => { const f = Object.entries(city.feedback || {}).sort((a, b) => b[0] - a[0])[0]; return f ? ` · продолжить: ${f[1]}` : ""; })()}`; }
   { const m = memStats(); $("gbMem").textContent = m.strong; $("gbMemSub").textContent = `прочно (3+ нед.) · всего ${m.total} · сегодня ${m.today}`; }
   $("gbBlitzSub").textContent = "фраз за минуту";
   $("gbFreeze").textContent = game.freezes;
@@ -2113,6 +2114,9 @@ function showModal(o){
   $("modalMedal").innerHTML = o.medal ? medalHtml(o.medal, true, true) : ""; $("modalMedal").hidden = !o.medal;
   $("modalTitle").textContent = o.title || ""; $("modalText").textContent = o.text || "";
   $("modalStats").innerHTML = (o.stats || []).map(([l, v]) => `<div class="ms"><b>${esc(String(v))}</b><span>${esc(l)}</span></div>`).join("");
+  let ch = $("modalChoices"); if(!ch){ ch = document.createElement("div"); ch.id = "modalChoices"; ch.className = "ms-choices"; ch.setAttribute("role", "group"); $("modalStats").after(ch); }
+  ch.hidden = !o.choices; ch.innerHTML = o.choices ? o.choices.items.map(v => `<button type="button" class="ms-choice" aria-pressed="${o.choices.value === v}">${esc(v)}</button>`).join("") : "";
+  if(o.choices){ ch.setAttribute("aria-label", o.choices.label); ch.querySelectorAll(".ms-choice").forEach(b => b.onclick = () => { ch.querySelectorAll(".ms-choice").forEach(x => x.setAttribute("aria-pressed", x === b)); o.choices.fn(b.textContent); }); }
   const P = $("modalPrimary"), S = $("modalSecondary");
   P.textContent = (o.primary && o.primary.label) || "Дальше";
   S.hidden = !o.secondary; if(o.secondary) S.textContent = o.secondary.label;
@@ -3461,6 +3465,35 @@ const WEEK_SETS = [
   ["kuafor", "kargo", "pazar", "manav", "ptt", "fatura", "terzi", "kasap", "banka", "telefon", "balikci", "tesisatci", "cilingir"],
   ["muhtar", "noter", "goc", "doktor", "hastane", "vapur", "metro", "otopark", "emlakci", "aidat", "elektrikci", "veteriner", "spor", "misafir"],
 ];
+// Кампания «Первый месяц в Стамбуле» (решения 2026-10-10 §2а, §2б): цель недели, подобранные первые три дня, итог недели в воскресенье
+const CAMPAIGN = [
+  { goal:"купить всё нужное и познакомиться с соседями" },
+  { goal:"открыть счёт и получить посылку из дома" },
+  { goal:"оформить жильё как положено" },
+  { goal:"подать документы на ВНЖ" },
+];
+const FIRST_DAYS = [["bakkal", "firin", "simit"], ["market", "lokanta", "cay"], ["taxi", "dolmus", "istanbulkart"]];   // лавка → оплата и сдача → транспорт и числа
+const campWeek = () => Math.max(1, Math.ceil(city.day / 7) - ((city.camp && city.camp.w0) || 0));
+const campReady = w => w <= 1 || (WEEK_SETS[w - 1] || []).some(id => SCENES[id] && !SCENES[id].event);   // у недели есть свои сцены
+const cityMasteredN = () => Object.values(city.mastery || {}).filter(v => v >= 3).length;
+const SND_LETTERS = "çşıöüğ";
+function cityStatSnd(line, score){             // оценка слов с трудными звуками по неделям кампании — для итога недели («ç: 55 → 78»)
+  const w = campWeek(), all = city.snd || (city.snd = {}), wk = all[w] || (all[w] = {});
+  new Set([...String(line).toLocaleLowerCase("tr-TR")].filter(c => SND_LETTERS.includes(c))).forEach(c => { const a = wk[c] || (wk[c] = []); a.push(Math.round(score)); if(a.length > 60) a.splice(30, 1); });
+}
+function citySndGrowth(w){                      // первая половина недели → вторая (буквы, где оценок ≥ 2)
+  const wk = (city.snd || {})[w] || {}, avg = a => Math.floor(a.reduce((x, y) => x + y, 0) / a.length);
+  return Object.keys(wk).filter(c => wk[c].length >= 2).map(c => { const a = wk[c], h = Math.floor(a.length / 2); return `${c}: ${avg(a.slice(0, h))} → ${avg(a.slice(a.length - h))}`; });
+}
+function cityWeekSummary(){
+  const w = campWeek(), snap = city.wk || { m:0, rel:{} }, grow = citySndGrowth(w), dm = cityMasteredN() - (snap.m || 0);
+  const newFriends = Object.entries(city.rel).filter(([k, v]) => v >= 3 && ((snap.rel || {})[k] || 0) < 3).map(([k]) => CHARS[k] ? (CHARS[k].short || CHARS[k].name) : k);
+  const text = `Звуки за неделю (начало → конец): ${grow.length ? grow.join(", ") : "мало данных — говорите по карточкам"}. Освоено реплик: +${Math.max(0, dm)} (всего ${cityMasteredN()}).`
+    + ` ${newFriends.length ? "Стали знакомыми: " + newFriends.join(", ") + "." : "Новых знакомых пока нет — попробуйте «kolay gelsin»."} Хочется продолжить?`;
+  showModal({ ic:"Hafta!", title: w <= 4 ? `Неделя ${w} из 4 пройдена` : "Неделя пройдена", text,
+    choices:{ label:"Хочется продолжить?", items:["да", "так себе", "нет"], value:(city.feedback || {})[w], fn:v => { (city.feedback || (city.feedback = {}))[w] = v; citySave(); } },
+    primary:{ label:"Дальше" } });
+}
 const OPEN_HOURS = {                             // по умолчанию — до 21:00 ежедневно
   banka:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, ptt:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, noter:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 },
   muhtar:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, goc:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, fatura:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 },
@@ -3484,6 +3517,7 @@ function cityPlanFor(day){
   const openToday = id => { const h = OPEN_HOURS[id]; return !h || h.days.includes((day - 1) % 7 + 1); };
   let pool = unlocked.filter(id => !carry.includes(id) && openToday(id));
   const fresh = pool.filter(id => !prev.has(id)); if(fresh.length >= PLAN_SIZE - carry.length) pool = fresh;
+  if(city.camp && !city.camp.old && day <= FIRST_DAYS.length){ const fx = FIRST_DAYS[day - 1].filter(id => SCENES[id] && !carry.includes(id)); return carry.concat(fx).slice(0, Math.max(PLAN_SIZE, carry.length)); }   // первые три дня кампании подобраны
   const plan = carry.slice();
   if(day === 1 && pool.includes("bakkal")){ plan.push("bakkal"); pool = pool.filter(id => id !== "bakkal"); }   // первое дело первого дня — знакомое: лавка
   while(plan.length < PLAN_SIZE && pool.length){ const k = TESTMODE ? 0 : Math.floor(Math.random() * pool.length); plan.push(pool.splice(k, 1)[0]); }
@@ -3571,6 +3605,9 @@ function cityNewDay(){
     const pay = Math.min(RENT, city.money); city.money -= pay; rentShort = RENT - pay; city.debt += rentShort; }   // аренда; не хватило — хозяин подождёт (долг)
   city.plan = cityPlanFor(city.day); city.carry = []; cityMorning(); citySave(); cityRender();
   toast(payday ? `Pazartesi: maaş +${SALARY} ₺, kira −${RENT} ₺` : `${DOW_RU[cityDow()]}, день ${city.day}`);
+  if(payday){ city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) };   // начало недели: снимок для итога
+    const w = campWeek(); if(w > 1 && w <= 4 && !campReady(w) && city.camp.soon !== w){ city.camp.soon = w; citySave();
+      showModal({ ic:"Hafta", title:`Неделя ${w - 1} пройдена. Неделя ${w} — скоро`, text:`Сцены недели ${w} («${CAMPAIGN[w - 1].goal}») ещё готовятся. Пока — свободная игра: дела недели 1, задания дня, знакомые. Когда неделя ${w} появится, она откроется сама.`, primary:{ label:"Дальше" } }); } }
   if(rentShort) milestone({ ic:"Kira", title:"Аренда: не хватило", text:`Хозяин квартиры подождёт: долг ${rentShort} ₺. Спишется с зарплаты в следующий понедельник.`, primary:{ label:"Tamam" } }, `Аренда: долг ${rentShort} ₺`);
 }
 // Числа словами для реплик с ценой («Yüz yetmiş lira»)
@@ -4853,6 +4890,10 @@ function cityNormalize(){
   ["rel", "mastery", "seen", "flags", "played", "skill", "met", "altLast", "contacts", "dmDay"].forEach(obj); if(city.callback && typeof city.callback !== "object") city.callback = null; ["done", "carry", "todaySaid"].forEach(arr);
   if(typeof city.debt !== "number") city.debt = 0; if(typeof city.haggleWins !== "number") city.haggleWins = 0;
   if(!Array.isArray(city.visited)) city.visited = []; if(!Array.isArray(city.deckUsed)) city.deckUsed = []; if(!Array.isArray(city.prevPlan)) city.prevPlan = [];
+  if(!city.camp || typeof city.camp !== "object"){   // кампания: новая игра — с пролога; старое сохранение (день > 1) — с недели 1, всё накопленное на месте (§2б п. 4)
+    city.camp = city.day <= 1 ? { w0:0 } : { w0:Math.ceil(city.day / 7) - 1, old:true, prologue:true };
+    city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) }; }
+  if(!city.feedback || typeof city.feedback !== "object") city.feedback = {};
   if(!Array.isArray(city.plan)) city.plan = cityPlanFor(city.day);
   if(typeof city.pos !== "number" || !BOARD[city.pos]) city.pos = 0; if(typeof city.roll !== "number") city.roll = null;
   if(!(city.face >= 1 && city.face <= 6)) city.face = TESTMODE ? 1 : 1 + Math.floor(Math.random() * 6);   // грань кубика до первого броска — случайная
@@ -4892,8 +4933,14 @@ function cityRes(){
   ctEl("ctRes").innerHTML = `<span class="ct-money">${fmtMoney(city.money)}</span><span class="ct-time"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg>${fmtClock(city.min)}</span>`
     + (ct ? `<span class="ct-pat" aria-label="Терпение собеседника: ${pat} из ${max}" title="Терпение собеседника">${Array.from({ length:max }, (_, i) => `<i${i < pat ? ' class="on"' : ""}></i>`).join("")}</span>` : "");
 }
+function cityWeekLine(){ const w = campWeek();
+  return w > 4 ? "Месяц прожит — свободная игра" : campReady(w) ? `Неделя ${w} из 4: ${CAMPAIGN[w - 1].goal}${city.camp && city.camp.old && w === 1 ? " (вы здесь уже освоились)" : ""}` : `Неделя ${w - 1} пройдена · неделя ${w} — скоро`; }
 function cityRender(){
   const home = !ct;
+  if(home && city.camp && !city.camp.prologue && (!TESTMODE || window.__prologue)){ city.camp.prologue = true; citySave();   // пролог — один раз (§2б п. 1)
+    showModal({ ic:"Hoş geldin!", title:"Первый месяц в Стамбуле", text:"Вы только что переехали в Стамбул. За месяц: обжиться, открыть счёт, оформить жильё, подать на ВНЖ. У каждой недели своя цель, в воскресенье — проверка и итог недели.", primary:{ label:"Начать" } }); }
+  if(home && city.camp && city.camp.old && !city.camp.told && (!TESTMODE || window.__prologue)){ city.camp.told = true; citySave();
+    showModal({ ic:"Kampanya", title:"Кампания «Первый месяц»", text:"Вы здесь уже освоились: деньги, знакомые и умения — с вами. Кампания начинается с недели 1: у каждой недели своя цель, в воскресенье — итог.", primary:{ label:"Дальше" } }); }
   ctEl("ctHome").hidden = !home; ctEl("ctScene").hidden = home;
   ctEl("ctPlace").textContent = home ? `Mahalle (квартал) · ${DOW_RU[cityDow()]}, день ${city.day}` : ct.scene.place;
   cityRes();
@@ -4932,7 +4979,7 @@ function cityBoard(){
   // строка аренды — в подсказке под делами (в заголовке дел в CI шрифт шире — названия дел обрезались, 2026-10-11); «Отношения: …» убраны отсюда —
   // они есть во вкладке «Люди», а лишняя строка не помещалась на 360×640. Во время хода — только подсказка хода.
   ctEl("ctIntro").innerHTML = city.roll ? esc(`Нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`)
-    : `<span class="ct-rent">до аренды ${toRent} дн. · ${RENT} ₺${city.debt ? ` · долг ${city.debt} ₺` : ""}</span>`;
+    : `<span class="ct-week">${esc(cityWeekLine())}</span><span class="ct-rent">до аренды ${toRent} дн. · ${RENT} ₺${city.debt ? ` · долг ${city.debt} ₺` : ""}</span>`;
 }
 // Вкладки внутри кольца: дела дня · люди (персонажи с уровнем отношений) · умения (способности)
 let cityTab = (() => { try { return ["tasks", "people", "skills"].includes(localStorage.getItem("soyle-city-tab")) ? localStorage.getItem("soyle-city-tab") : "tasks"; } catch(e){ return "tasks"; } })();
@@ -5460,7 +5507,8 @@ function cityAnswer(alts){
   const pick = ct.pick;
   if((pick && pick.repeat) || (!pick && ct.scene.phone && REPEAT_MOVE.key.some(k => ctHas(heardN, k)))) return cityRepeat();
   if(pick){                                                                            // выбрали ответ — оцениваем, как сказали именно его
-    const line = pick.say[0], ps = pronScore(line.replace(/['’]/g, ""), alts), keyHit = pick.key.some(k => ctHas(heardN, k));   // Taksim'e → taksime: так пишет распознаватель
+    const line = pick.say[0], ps = pronScore(line.replace(/['’]/g, ""), alts), keyHit = pick.key.some(k => ctHas(heardN, k));
+    cityStatSnd(line, ps.score);                                                       // трудные звуки — для итога недели   // Taksim'e → taksime: так пишет распознаватель
     if(pick.minScore){ const need = pick.minScore - (typeof skillLvl === "function" && skillLvl("dil") >= 3 ? 10 : 0);              // нужна уверенность: только оценка, ключевого слова мало
       return ps.score >= need ? cityAccept(pick, alts, polite, ps.score) : cityMiss(`Слабо: нужно не ниже ${need} из 100.`, ps); }
     if(ps.score >= ctAcceptScore() || keyHit) return cityAccept(pick, alts, polite, ps.score);     // ключевые слова на месте — собеседник понял; порог по оценке растёт с Dil
@@ -5628,6 +5676,7 @@ function cityDayEnd(){
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
     primary: city.todaySaid.length ? { label:`Повторить фразы дня (${Math.min(5, city.todaySaid.length)})`, fn:cityReview } : { label:"Новый день", fn:cityNewDay },
     secondary: city.todaySaid.length ? { label:"Новый день", fn:cityNewDay } : { label:"Остаться", fn:cityRender } });
+  if(cityDow() === 7) cityWeekSummary();                                         // воскресенье — итог недели (очередь окон: после итога дня)
 }
 function cityReview(){ memFilter = new Set(city.todaySaid.slice(-5)); setMode("memory"); }
 function memEnroll(tr, ru){ try { const all = loadCards(); if(all.some(c => c.tr === tr)) return; all.push(newMemCard(tr, trToCyr(tr), ru, "rec", Date.now())); saveCards(all); updateMemTab(); } catch(e){} }

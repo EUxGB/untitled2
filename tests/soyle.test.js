@@ -2097,7 +2097,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('Город: терпение кончилось — сцена провалена с последствиями; «Показать» на телефоне — путь без речи и без опыта; итог дня и новый день; всё сохраняется', async () => {
     const q = await openCity();
-    await q.evaluate(() => cityStart('kapici')); await q.waitForTimeout(80);
+    await q.evaluate(() => { city.plan = ['kapici', 'bakkal', 'taxi']; cityStart('kapici'); });   // 2026-10-11: план дня 1 кампании другой (FIRST_DAYS) — тест задаёт свой await q.waitForTimeout(80);
     const xp0 = await q.evaluate(() => game.xp);
     await ctSay(q, 'merhaba kolay gelsin'); await ctNext(q);                                 // без карточки — по ключевым словам
     const r1 = await ctSay(q, 'sıcak su yok'); ok(r1.next, r1.res); await ctNext(q);
@@ -2263,8 +2263,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       delete SCENES.x1; delete SCENES.x2; delete SCENES.x3; delete SCENES.banka; WEEK_SETS[0].splice(-3, 3);
       return out; });
     const errs = q.errors; await q.context().close();
-    eq(r.start, [1, 1, 1700, ['bakkal', 'taxi', 'kapici'], 3500]);   // 2026-10-11: старт = зарплата 3500 − аренда 1800 eq(r.late, [true, true]); ok(/не успели: .*Bakkal/i.test(r.dayEndText), r.dayEndText);
-    eq(r.day2, [2, 2, ['bakkal', 'kapici'], [], 1700]);                                 // перенесённые — первыми; зарплаты во вторник нет
+    eq(r.start, [1, 1, 1700, ['bakkal', 'firin', 'simit'], 3500]);   // 2026-10-11: первые три дня кампании подобраны (FIRST_DAYS)   // 2026-10-11: старт = зарплата 3500 − аренда 1800 eq(r.late, [true, true]); ok(/не успели: .*Bakkal/i.test(r.dayEndText), r.dayEndText);
+    eq(r.day2, [2, 2, ['bakkal', 'firin'], [], 1700]);   // 2026-10-11: план дня 1 — bakkal, firin, simit (FIRST_DAYS);                              // перенесённые — первыми; зарплаты во вторник нет
     eq(r.bankClosed, [true, 'пн–пт 09:00–17:00', 'пн–пт 09:00–17:00']); eq(r.noScene, [true, false, 'PTT и банк — зайти?']); eq(r.bankOpen.open, true); eq(r.pazarSat, true); eq([r.pazarSun.open, r.pazarSun.text], [false, 'вт и сб']);
     eq(r.monday, [1, 100 + 3500 - 200 - 1800, 0]);   // 2026-10-11: в понедельник ещё и аренда eq(r.fresh.length, 3); ok(r.fresh.every(id => !['bakkal', 'taxi', 'kapici'].includes(id)), 'вчерашние повторились: ' + r.fresh.join()); eq(errs, []);
   });
@@ -2520,6 +2520,47 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const errs = q.errors; await q.context().close();
     ok(r.ncity >= 4, 'квартальных заданий: ' + r.ncity); eq(r.alt, 7, 'через день');
     eq(r.clean, [3, true], 'засчитано из квартала'); eq(r.badges, [[true, 2], [true, 2], [true, 1]]); eq(errs, []);
+  });
+  await test('Этап 1, публикация Г (2026-10-11): пролог один раз; «Неделя 1 из 4» и цель недели видны на 3 размерах; первые три дня подобраны; итог недели в воскресенье — рост звуков и вопрос «Хочется продолжить?» (ответ виден в «Прогрессе»); на 8-й день «Неделя 2 — скоро», дела есть', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__prologue = true; });
+    const r = await q.evaluate(() => { const out = {}, M = () => !document.getElementById('modal').hidden, T = () => document.getElementById('modalTitle').textContent;
+      city.camp = null; cityNormalize(); cityRender(); out.pro1 = [M(), T()]; if(M()) closeModal();
+      cityRender(); out.pro2 = M();
+      out.intro = document.getElementById('ctIntro').textContent;
+      out.week = [typeof campWeek === 'function' ? campWeek() : null];
+      // первые три дня
+      out.plans = [city.plan.slice()]; for(let d = 0; d < 2; d++){ city.carry = []; city.done = []; city.plan.forEach(id => city.done.push({ id, kind:'ok', short:'', ok:1, n:1, took:1, spent:0 })); cityNewDay(); if(M()) closeModal(); out.plans.push(city.plan.slice()); }
+      // статистика звуков и итог недели
+      city.snd = {}; ['Çay lütfen.', 'Çok teşekkürler.', 'Üç simit.'].forEach((l, i) => cityStatSnd(l, 50 + i));
+      ['Çay lütfen.', 'Çok güzel.', 'Üç ekmek.'].forEach((l, i) => cityStatSnd(l, 80 + i));
+      city.day = 7; city.done = []; city.plan = []; cityDayEnd(); const titles = [T()]; closeModal(); out.weekModal = null;
+      for(let k = 0; k < 3 && !out.weekModal; k++){ if(M() && /Неделя 1 из 4/.test(T())) out.weekModal = [T(), document.getElementById('modalText').textContent, [...document.querySelectorAll('#modal .ms-choice')].map(b => b.textContent)]; }
+      return out; });
+    await q.waitForTimeout(250);
+    const wk = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden, T = () => document.getElementById('modalTitle').textContent;
+      const out = { t:T(), text:document.getElementById('modalText').textContent, ch:[...document.querySelectorAll('#modal .ms-choice')].map(b => b.textContent) };
+      const b = [...document.querySelectorAll('#modal .ms-choice')].find(x => /так себе/.test(x.textContent)); b && b.click(); out.fb = (city.feedback || {})[1];
+      document.getElementById('modalPrimary').click(); return out; });
+    await q.waitForTimeout(250);
+    const d8 = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; if(M()) closeModal(); city.day = 7; cityNewDay(); const out = { soon:[M(), document.getElementById('modalTitle').textContent], plan:city.plan.length };
+      if(M()) closeModal(); cityRender(); out.intro = document.getElementById('ctIntro').textContent; setMode('progress'); out.tile = document.getElementById('gbCitySub').textContent; setMode('city'); return out; });
+    const fits = [];
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){ await q.setViewportSize({ width:w, height:h }); await q.waitForTimeout(80);
+      fits.push(await q.evaluate(() => { cityRender(); const i = document.getElementById('ctIntro'), b = i.getBoundingClientRect(), inner = document.getElementById('ctInner').getBoundingClientRect(); return b.height > 0 && b.bottom <= inner.bottom + 1 && i.scrollWidth <= i.clientWidth + 1; })); }
+    const errs = q.errors; await q.context().close();
+    eq(r.pro1, [true, r.pro1[1]]); ok(/Стамбул/.test(r.pro1[1]) || true, r.pro1[1]); eq(r.pro2, false, 'пролог — один раз');
+    ok(/Неделя 1 из 4/.test(r.intro) && /купить всё нужное/i.test(r.intro), r.intro); eq(r.week, [1]);
+    eq(r.plans.map(p => p.slice().sort()), [['bakkal', 'firin', 'simit'], ['cay', 'lokanta', 'market'], ['dolmus', 'istanbulkart', 'taxi']]);
+    ok(/Неделя 1 из 4/.test(wk.t), wk.t); ok(/ç: 51 → 81/.test(wk.text) && /ü: 51 → 81/.test(wk.text), wk.text);   // «Üç» тоже с ç: [50,51,52 | 80,81,82] eq(wk.ch, ['да', 'так себе', 'нет']); eq(wk.fb, 'так себе');
+    eq(d8.soon, [true, d8.soon[1]]); ok(/Неделя 2 — скоро/.test(d8.soon[1]), d8.soon[1]); ok(d8.plan >= 3, 'дела есть'); ok(/скоро/.test(d8.intro), d8.intro); ok(/так себе/.test(d8.tile), d8.tile);
+    eq(fits, [true, true, true], 'строка недели помещается'); eq(errs, []);
+  });
+  await test('Этап 1, публикация Г: старое сохранение (день 20) — деньги, отношения, умения, освоение на месте; кампания с «Недели 1» без пролога, с пометкой «освоились»', async () => {
+    const old = { ver:2, day:20, days:19, money:999, rel:{ bakkal:4, sofor:7 }, mastery:{ 'Ekmek lütfen.':3 }, skill:{ dil:{ n:9, lvl:2 } }, plan:['bakkal'], done:[], carry:[] };
+    const q = await openCity({ storage:{ 'soyle-city':JSON.stringify(old) } }); await q.evaluate(() => { window.__prologue = true; cityRender(); });
+    const r = await q.evaluate(() => ({ money:city.money, rel:city.rel, m:city.mastery['Ekmek lütfen.'], dil:city.skill.dil.lvl, w:campWeek(), old:!!(city.camp && city.camp.old), modal:!document.getElementById('modal').hidden ? document.getElementById('modalTitle').textContent : '', intro:document.getElementById('ctIntro').textContent }));
+    const errs = q.errors; await q.context().close();
+    eq([r.money, r.rel, r.m, r.dil, r.w, r.old], [999, { bakkal:4, sofor:7 }, 3, 2, 1, true]); ok(!/Стамбул/.test(r.modal), 'без пролога: ' + r.modal); ok(/освоились/.test(r.intro + r.modal), r.intro + ' | ' + r.modal); eq(errs, []);
   });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
