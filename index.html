@@ -677,7 +677,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-decoration:none; line-height:1.15} .ct-homebtns .linkbtn span{text-decoration:underline} .ct-homebtns .linkbtn small{font-size:11px; color:var(--muted)} .ct-homebtns #ctHomeBtn{align-items:flex-end}
 .ct-task.go{cursor:pointer; min-height:44px; display:flex; align-items:center; flex-wrap:wrap; gap:0 4px; padding:2px 8px; border:1.5px solid var(--accent); border-radius:10px; background:var(--surface)} .ct-task.go span{color:var(--accent); font-weight:700}
 #ctDayEnd{width:100%; min-height:44px}
-.ct-rent{display:block; font-size:11.5px; font-weight:400; color:var(--muted)}
+.ct-rent{display:block; font-weight:600; color:var(--ink-2)}
 .ct-intro{text-align:left; margin:0; font-size:11.5px; line-height:1.3; color:var(--muted)}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
 .ct-goal{margin:0; font-size:13px; color:var(--muted); text-align:left; display:flex; gap:8px; align-items:baseline} .ct-goal > span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
@@ -2188,11 +2188,16 @@ const QUESTS = [
   { t:"3 фразы в «Свободно», которые поймёт носитель", gids:["free"], n:3 },
   { t:"5 верных фраз «транспорт»", gids:["ph-transport"], n:5 },
   { t:"5 верных фраз «магазин и базар»", gids:["ph-shop"], n:5 },
+  // задания про квартал (этап 1, п. 5): чередуются с прежними через день; засчитываются из «Города» (questCity)
+  { t:"2 дела в квартале — «получилось»", city:"ok", n:2 },
+  { t:"3 реплики в квартале на 90+", city:"clean", n:3 },
+  { t:"«Kolay gelsin» — трём людям в квартале", city:"kolay", n:3 },
+  { t:"Поторговаться в квартале и выиграть", city:"haggle", n:1 },
 ];
 function todayQuest(){
   const today = dayStr(new Date());
   if(!game.quest || game.quest.day !== today){
-    const idx = Math.floor(Date.parse(today) / 864e5) % QUESTS.length;
+    const dn = Math.floor(Date.parse(today) / 864e5), pool = QUESTS.map((x, i) => i).filter(i => !!QUESTS[i].city === (dn % 2 === 0)), idx = pool[Math.floor(dn / 2) % pool.length];   // через день: квартал / тренировка
     game.quest = { day:today, idx, got:0, done:false };
   }
   return Object.assign({}, QUESTS[game.quest.idx], game.quest);
@@ -2201,11 +2206,21 @@ function questProgress(score, gid){
   const q = todayQuest(), def = QUESTS[game.quest.idx];
   if(game.quest.done) return;
   if(def.combo) game.quest.got = Math.min(def.n, Math.max(game.quest.got, game.combo));
-  else if(score >= 1 && def.gids.includes(gid)) game.quest.got++;
-  if(game.quest.got >= def.n){
+  else if(score >= 1 && def.gids && def.gids.includes(gid)) game.quest.got++;
+  questCheck(def);
+}
+function questCheck(def){
+  if(!game.quest.done && game.quest.got >= def.n){
     game.quest.done = true; game.xp += 50;
     toast("Задание дня выполнено: +50 XP"); confetti();
   }
+}
+function questCity(kind){                       // событие квартала: ok — дело «получилось», clean — реплика на 90+, kolay — «kolay gelsin», haggle — торг выигран
+  todayQuest(); const def = QUESTS[game.quest.idx];
+  if(game.quest.done || !def || def.city !== kind) return;
+  game.quest.got++; questCheck(def);
+  try { localStorage.setItem("soyle-game", JSON.stringify(game)); } catch(e){}
+  if(typeof renderGame === "function") renderGame();
 }
 
 // ---------- достижения ----------
@@ -2238,6 +2253,10 @@ const BADGES = [
   { id:"level5",  ic:"6",     tier:3, t:"Стамбулец",      d:"Достичь 6-го уровня",                  v:g => levelOf(g.xp), n:6 },
   { id:"lesson10",ic:"×10",   tier:3, t:"Прилежный",      d:"Пройти 10 уроков",                     v:g => g.lessons, n:10 },
   { id:"hafta",   ic:"7g",    tier:2, t:"Hafta",          d:"Прожить неделю в квартале",            v:() => typeof city !== "undefined" ? city.days : 0, n:7 },
+  // медали квартала (этап 1, п. 5): за людей, торг и дела — редкость по усилию
+  { id:"pazarlikci", ic:"₺",  tier:2, t:"Pazarlıkçı",     d:"Выиграть 5 торгов в квартале",          v:() => typeof city !== "undefined" ? city.haggleWins || 0 : 0, n:5 },
+  { id:"mahalleli",  ic:"5",  tier:2, t:"Mahalleli",      d:"5 знакомых в квартале (отношения 3+)",   v:() => typeof city !== "undefined" ? Object.values(city.rel || {}).filter(v => v >= 3).length : 0, n:5 },
+  { id:"week1",      ic:"13", tier:1, t:"Все дела недели", d:"Сделать каждое дело недели 1 хотя бы раз", v:() => typeof city !== "undefined" && typeof WEEK_SETS !== "undefined" ? WEEK_SETS[0].filter(id => (city.played || {})[id] && city.played[id].n).length : 0, n:13 },
   { id:"komsu",   ic:"6+",    tier:2, t:"Komşu",          d:"Стать своим для кого-то в квартале (отношения 6)", v:() => typeof city !== "undefined" ? Math.max(0, ...Object.values(city.rel || {})) : 0, n:6 },
 ];
 BADGES.forEach(b => b.ok = (g, s) => (b.v(g, s) || 0) >= b.n);
@@ -4895,8 +4914,7 @@ function cityBoard(){
       + `${i === city.pos ? '<span class="bd-token" aria-hidden="true"></span>' : ""}${pins[i] !== undefined ? `<span class="bd-pin ${pins[i]}" aria-hidden="true"></span>` : ""}`;
     b.onclick = () => cityMoveTo(i); bd.insertBefore(b, ctEl("ctInner")); });
   const left = plan.filter(id => !cityDoneId(id)).length;
-  const toRent = (8 - cityDow()) % 7 || 7;                                                   // дней до понедельника (сам понедельник — аренда уже списана: до следующей 7)
-  ctEl("ctDay").innerHTML = esc(allDone ? "Все дела сделаны — домой." : `Дела на сегодня — ${left} из ${plan.length}`) + `<small class="ct-rent">до аренды ${toRent} дн. · ${RENT} ₺${city.debt ? ` · долг ${city.debt} ₺` : ""}</small>`;
+  ctEl("ctDay").textContent = allDone ? "Все дела сделаны — домой." : `Дела на сегодня — ${left} из ${plan.length}`;
   ctEl("ctTasks").innerHTML = plan.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id), i = cellOfScene(id), op = cityOpenNow(id), dist = i < 0 ? 0 : boardDist(city.pos, i);
     const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? (s.phone ? "звоните отсюда" : "дело здесь") : s.phone ? `звонок · ${BOARD[i].ru}, ${dist} ${plural(dist, "клетка", "клетки", "клеток")}` : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
     const go = !d && op.open && i >= 0 && i === city.pos && !ct && !city.roll, w2 = go ? (s.phone ? "нажмите, чтобы позвонить" : "нажмите, чтобы начать") : where;
@@ -4910,9 +4928,11 @@ function cityBoard(){
   { const b = ctEl("ctRoll"); b.disabled = !!city.roll || rolling || city.min >= DAY_END; b.innerHTML = dieSvg(city.face); b.dataset.n = String(city.face);
     b.setAttribute("aria-label", city.roll ? `Выпало ${city.roll} — выберите клетку` : city.min >= DAY_END ? "День окончен" : `Бросить кубик (на кубике ${city.face})`);
     ctEl("ctDiceHint").textContent = city.roll ? "Выберите клетку" : city.min >= DAY_END ? "21:00 — пора домой" : "Нажмите кубик"; }
-  ctEl("ctIntro").textContent = city.roll ? `Нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`
-    : city.days || city.visited.length ? `Отношения: ${Object.entries(city.rel).filter(([, v]) => v).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} ${v > 0 ? "+" : ""}${v}`).join(", ") || "пока ни с кем"}`
-    : "Говорите с людьми: ошибки стоят денег и времени.";
+  const toRent = (8 - cityDow()) % 7 || 7;   // дней до понедельника (в сам понедельник аренда уже списана — до следующей 7)
+  // строка аренды — в подсказке под делами (в заголовке дел в CI шрифт шире — названия дел обрезались, 2026-10-11); «Отношения: …» убраны отсюда —
+  // они есть во вкладке «Люди», а лишняя строка не помещалась на 360×640. Во время хода — только подсказка хода.
+  ctEl("ctIntro").innerHTML = city.roll ? esc(`Нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`)
+    : `<span class="ct-rent">до аренды ${toRent} дн. · ${RENT} ₺${city.debt ? ` · долг ${city.debt} ₺` : ""}</span>`;
 }
 // Вкладки внутри кольца: дела дня · люди (персонажи с уровнем отношений) · умения (способности)
 let cityTab = (() => { try { return ["tasks", "people", "skills"].includes(localStorage.getItem("soyle-city-tab")) ? localStorage.getItem("soyle-city-tab") : "tasks"; } catch(e){ return "tasks"; } })();
@@ -5478,7 +5498,9 @@ function cityAccept(m, alts, polite, score, names){
   const liked = cityLikes(m, alts); if(liked) cityFx({ rel:liked });
   if(m.xp !== false){ if(score >= 90) skillBump("dil"); if(!ct.sawRu) skillBump("kulak"); if(polite || liked) skillBump("nezaket"); }   // способности растут от успехов
   ctBump(line, score >= 70 && !(ct.peeked && mastery(line) >= 2), skillLvl("dil") >= 3 && score >= 90);   // реплика растёт в освоении, только если сказана чисто и без подглядывания
-  if(m.haggle && score >= 70){ ct.haggled = true; city.haggleWins++; skillBump("pazarlik"); }   // торг сказан чисто — Pazarlık растёт («Показать» сюда не попадает)
+  if(m.haggle && score >= 70){ ct.haggled = true; city.haggleWins++; skillBump("pazarlik"); questCity("haggle"); }
+  if(score >= 90) questCity("clean");
+  if(!ct.kolay && ctHas(alts.map(nphr).join(" | "), "kolay gelsin")){ ct.kolay = true; questCity("kolay"); }   // один раз за разговор = один человек   // торг сказан чисто — Pazarlık растёт («Показать» сюда не попадает)
   if(m.xp !== false) count("city", 1);
   ct.xpFresh = undefined;
   const lvl = mastery(line), grown = lvl >= 3 ? " Реплика освоена: дальше — по памяти." : lvl === 2 ? " В следующий раз — только первые буквы." : "";
@@ -5582,6 +5604,7 @@ function cityEnd(end, failed){
   if(quiet) cityFx({ rel:1 });                                               // молчун ценит, когда его ни разу не переспросили
   const kind = end.kind || "ok", short = kind === "ok" ? "получилось" : kind === "near" ? "так себе" : "не вышло";
   const took = city.min - ct.startMin, spent = ct.spent;
+  if(kind === "ok" && !ct.scene.event) questCity("ok");
   if(!ct.scene.event) city.done = city.done.filter(d => d.id !== ct.id).concat([{ id:ct.id, kind, short, ok:ct.ok, n:ct.n, took, spent }]);   // событие — не дело дня
   { const pl = city.played[ct.id] || (city.played[ct.id] = { n:0, ok:0, last:0 }); pl.n++; if(kind === "ok") pl.ok++; pl.last = city.day; }
   const learned = ct.lines.filter(l => l.ok && l.tr), missed = ct.lines.filter(l => !l.ok && l.tr);

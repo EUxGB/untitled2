@@ -714,7 +714,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('кольцо уровня и достижения-жетоны без эмодзи', async () => {
     const r = await p.evaluate(() => { game.xp = 125; renderGame(); renderBadges(); const off = parseFloat(document.getElementById('gbLevelRing').style.strokeDashoffset);
       return [document.getElementById('gbLevel2').textContent, off > 100 && off < 200, document.querySelectorAll('#badgeGrid .badge').length, BADGES.every(b => !/\p{Extended_Pictographic}/u.test(b.ic))]; });
-    eq(r, ['2', true, 25, true]);   // 22 медали + 3 за грамматику (gram3, gram10, gramall)
+    eq(r, ['2', true, 28, true]);   // 22 медали + 3 за грамматику (gram3, gram10, gramall) + 3 квартала (2026-10-11: pazarlikci, mahalleli, week1)
   });
 
   console.log('«Память»: вспоминание (эффект тестирования) + FSRS-6');
@@ -2016,7 +2016,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('Город: выбор ответа карточками — что сказать, видно сразу по-русски; выбранная раскрывается (турецкий + чтение), говорите её; выбор меняет исход; перевод первой реплики бесплатно', async () => {
     const q = await openCity();
     const home = await q.evaluate(() => [document.querySelectorAll('.ct-task:not(.done)').length, document.getElementById('ctDay').textContent, city.money, city.min]);
-    eq([home[0], home[1].replace(/до аренды.*/, ''), home[2], home[3]], [3, 'Дела на сегодня — 3 из 3', 1700, 540]);   // 2026-10-11: 3500 − аренда первой недели 1800 (этап 1, п. 1); строка «до аренды» — свой тест
+    eq(home, [3, 'Дела на сегодня — 3 из 3', 1700, 540]);   // 2026-10-11: 3500 − аренда первой недели 1800 (этап 1, п. 1)
     await q.evaluate(() => cityStart('taxi')); await q.waitForTimeout(80);
     const start = await q.evaluate(() => [document.getElementById('ctTr').textContent, document.getElementById('ctSpeak').disabled, document.getElementById('ctWho').textContent, [...document.querySelectorAll('#ctOpts .ct-opt-main')].map(b => b.textContent)]);
     eq(start, ['Buyurun, nereye?', false, 'Шофёр Али', ['На Таксим, пожалуйста.']]);           // варианты — сразу, по-русски; скрытые ходы (Кадыкёй) не показываются
@@ -2132,7 +2132,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.click('#ctDayEnd'); await q.waitForTimeout(60);
     eq(await q.evaluate(() => [document.getElementById('modalTitle').textContent, document.getElementById('modalStats').textContent.includes('потрачено'), document.getElementById('modalPrimary').textContent.startsWith('Повторить фразы дня')]), ['День 1 прожит', true, true]);
     await q.click('#modalSecondary'); await q.waitForTimeout(60);                                        // «Новый день» (первая кнопка — повтор фраз дня)
-    eq(await q.evaluate(() => [city.day, city.done.length, city.min, document.getElementById('ctDay').firstChild.textContent, JSON.parse(localStorage.getItem('soyle-city')).day]), [2, 0, 540, 'Дела на сегодня — 3 из 3', 2]);
+    eq(await q.evaluate(() => [city.day, city.done.length, city.min, document.getElementById('ctDay').textContent, JSON.parse(localStorage.getItem('soyle-city')).day]), [2, 0, 540, 'Дела на сегодня — 3 из 3', 2]);
     const errs = q.errors; await q.context().close(); eq(errs, []);
   });
   await test('Город: собеседник говорит голосом персонажа; турецкий текст открывается после звука; перевод знакомой реплики стоит терпения (один раз)', async () => {
@@ -2397,7 +2397,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.tabs, ['Дела', 'Люди', 'Умения']); eq(r.people, [['sofor', 'свой'], ['bakkal', 'знакомый']]); eq(r.visible, [true, false]);
     eq(r.card[0], 'Шофёр Али'); ok(/Разговорчивый/.test(r.card[1]) && /Такси до Таксима/.test(r.card[1]) && /свой/.test(r.card[1]), r.card[1]);
     eq(r.skills, [['kulak', '0', '0%'], ['dil', '1', '50%'], ['pazarlik', '0', '0%'], ['nezaket', '0', '0%']]);   // полоса — доля до следующего порога: dil 4 из 8
-    eq(r.back, [false, 'tasks']); eq(r.tile, ['день 1 · неделя 1', 'дел хорошо 2 из 2 · 1700 ₺ · знакомых 2']);   // 2026-10-11: старт 1700   // played: taxi n 2, ok 2 eq(r.badges, [true, true, 22]); eq(errs, []);
+    eq(r.back, [false, 'tasks']); eq(r.tile, ['день 1 · неделя 1', 'дел хорошо 2 из 2 · 1700 ₺ · знакомых 2']);   // 2026-10-11: старт 1700; played: taxi n 2, ok 2
+    eq(r.badges.slice(0, 2), [true, true]); eq(errs, []);   // 2026-10-11: эта проверка была случайно закомментирована (стояла после «//»); число медалей проверяет тест «медали»
   });
   await test('Сцены недели 1: аптека — дозировка числом на слух (Zeynep ≥3 — два варианта, ≥6 — без вопроса о рецепте, после 19:00 — дежурная), звонок за водой (#num адрес), Айше-тейзе (терпение 4, чай/отказ), уста — «elinize sağlık» ценит, ≥3 чай угощение', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; });
@@ -2480,7 +2481,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('Этап 1, публикация Б (2026-10-11): аренда каждый понедельник (RENT, подобрана ботом; первая неделя оплачена при въезде — старт 1700), не хватает — долг, не минус; строка «до аренды N дн.»; провал любого дела недели 1 чего-то стоит', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; });
-    const r = await q.evaluate(() => { const out = {}; const t = () => document.getElementById('ctDay').textContent;
+    const r = await q.evaluate(() => { const out = {}; const t = () => document.getElementById('ctIntro').textContent;
       out.rent = typeof RENT === 'number' ? RENT : null;
       out.line1 = t();
       city.day = 7; city.money = 1000; city.debt = 0; cityNewDay(); out.d8 = [city.day, cityDow(), city.money, city.debt]; out.line8 = t();   // пн недели 2: +3500 −аренда
@@ -2496,6 +2497,29 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.d2, [500], 'вторник — без аренды');
     eq(r.short, [0, r.rent - 500], 'нехватка — в долг');
     eq(r.fails, [], 'провал без цены'); eq(r.neg, [0, 30], 'деньги не уходят в минус — остаток в долг'); eq(errs, []);
+  });
+  await test('Этап 1, публикация В (2026-10-11): задания дня про квартал (через день с прежними) засчитываются из квартала; медали «Pazarlıkçı», «Mahalleli», «Все дела недели»', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
+    const r = await q.evaluate(() => { const out = {};
+      const cq = QUESTS.map((x, i) => [x, i]).filter(([x]) => x.city); out.ncity = cq.length;
+      // через день: из 14 дней подряд — 7 квартальных
+      const days = [...Array(14)].map((_, k) => { game.quest = null; const d = new Date(Date.UTC(2026, 9, 1 + k)); const real = Date; window.Date = class extends real { constructor(...a){ return a.length ? new real(...a) : new real(d); } static now(){ return d.getTime(); } }; const t = todayQuest(); window.Date = real; return !!t.city; });
+      out.alt = days.filter(Boolean).length;
+      // «3 реплики в квартале на 90+»: засчитывается из cityAccept
+      const clean = cq.find(([x]) => x.city === 'clean');
+      todayQuest(); game.quest.idx = clean[1]; game.quest.got = 0; game.quest.done = false;
+      cityStart('bakkal'); const m = ctMoves(ct.node).find(x => !x.hide) || ct.node.moves[0];
+      for(let i = 0; i < 3; i++) cityAccept(Object.assign({}, m, { go:null }), [m.say[0]], false, 95);
+      out.clean = [game.quest.got, game.quest.done]; cityLeave(); ct = null;
+      // медали
+      const B = id => BADGES.find(b => b.id === id);
+      city.haggleWins = 5; city.rel = { bakkal:3, sofor:4, kapici:3, komsu:3, eczaci:5 };
+      city.played = Object.fromEntries(WEEK_SETS[0].filter(id => SCENES[id]).map(id => [id, { n:1, ok:1, last:1 }]));
+      out.badges = ['pazarlikci', 'mahalleli', 'week1'].map(id => B(id) ? [B(id).v(game, stats) >= B(id).n, B(id).tier] : null);
+      return out; });
+    const errs = q.errors; await q.context().close();
+    ok(r.ncity >= 4, 'квартальных заданий: ' + r.ncity); eq(r.alt, 7, 'через день');
+    eq(r.clean, [3, true], 'засчитано из квартала'); eq(r.badges, [[true, 2], [true, 2], [true, 1]]); eq(errs, []);
   });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
@@ -2660,7 +2684,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       quest: QUESTS.some(x => /Звук/.test(x.t)), help: document.querySelector('details.help').textContent }));
     const errs = q.errors; await q.context().close();
     eq([r.tab, r.lsChip, r.quest], [false, false, false]); eq(r.modes, ['city','memory','phrases','listen','free','grammar','progress']); eq(r.train, ['phrases','listen','free','grammar']);   // «Грамматика» — четвёртая подвкладка (просьба 21:39)
-    eq(r.groups, 'undefined'); eq(r.badges.length, 25); ok(!r.badges.some(id => ['ear','blitz10','blitz20','o','u','i','c','sounds'].includes(id)), 'медали звуков: ' + r.badges.join());
+    eq(r.groups, 'undefined'); eq(r.badges.length, 28);   /* 2026-10-11: +3 медали квартала */ ok(!r.badges.some(id => ['ear','blitz10','blitz20','o','u','i','c','sounds'].includes(id)), 'медали звуков: ' + r.badges.join());
     ok(!/Звуки/.test(r.help), 'справка упоминает «Звуки»'); eq(errs, []);
   });
   await test('кнопки не сдвигаются при смене слов и нажатиях', async () => {
