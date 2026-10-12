@@ -3732,7 +3732,7 @@ const SCENES = {
       nobuy:{ end:{ kind:"near", text:"Ушли без покупок. В долг здесь дают только своим — когда Хасан вас запомнит. Хлеб придётся искать в супермаркете.", fx:{ min:20, money:-60 } } },
       credit:{ end:{ kind:"ok", text:"Хасан записал 110 ₺ в тетрадку. Veresiye — знак доверия: спишется с зарплаты в понедельник.", fx:{ debt:110 } } },
       price:{ npc:"Hepsi yüz on lira.", ru:"Всего сто десять лир.", pay:{ price:110, notes:[100, 200, 500], short:"On lira daha.", shortRu:"Ещё десять лир.", go:"bye" },
-        variants:[ { if:{ rel:{ min:3 } }, pay:null, npc:"Hepsi yüz on lira, komşu.", ru:"Всего сто десять лир, сосед.", again:"Yüz on lira.", againRu:"Сто десять лир.", moves:[   // знакомому можно поторговаться (одобрено 2026-10-11 19:58)
+        variants:[ { if:{ rel:{ min:3 }, money:110 }, pay:null, npc:"Hepsi yüz on lira, komşu.", ru:"Всего сто десять лир, сосед.", again:"Yüz on lira.", againRu:"Сто десять лир.", moves:[   // знакомому можно поторговаться (одобрено 2026-10-11 19:58)
           { key:["indirim", "yapar mısın"], say:["Komşu, biraz indirim yapar mısın?"], ru:"Сосед, сделаешь небольшую скидку?", go:"pricedisc", haggle:true },
           { key:["tamam", "buyurun"], say:["Tamam, buyurun."], ru:"Хорошо, держите.", go:"pricefull" } ] } ] },
       pricefull:{ npc:"Hepsi yüz on lira.", ru:"Всего сто десять лир.", pay:{ price:110, notes:[100, 200, 500], short:"On lira daha.", shortRu:"Ещё десять лир.", go:"bye" } },
@@ -5362,7 +5362,7 @@ function ctTaxiNode(id, n){
 function ctNodeFor(id){
   let n = ct.scene.nodes[id]; if(!n) return n;
   if(n.variants){
-    const v = n.variants.find(v => { const f = v.if || {}; if(f.late !== undefined && city.min < f.late) return false; const c = f.rel; if(!c) return true; const who = c.char || ct.char; return (who === ct.char ? ct.rel0 : city.rel[who] || 0) >= c.min; });   // отношения — на начало сцены: заслуженное сегодня действует с завтра; late — после часа
+    const v = n.variants.find(v => { const f = v.if || {}; if(f.late !== undefined && city.min < f.late) return false; if(f.money !== undefined && city.money < f.money) return false; const c = f.rel; if(!c) return true; const who = c.char || ct.char; return (who === ct.char ? ct.rel0 : city.rel[who] || 0) >= c.min; });   // отношения — на начало сцены: заслуженное сегодня действует с завтра; late — после часа
     if(v){ n = Object.assign({}, n, v); delete n.variants; delete n.if; if(n.pay === null) delete n.pay; }
   }
   if(n.alt && n.alt.length){ const k = ctAltIdx(id, n.alt.length); n = Object.assign({}, n, n.alt[k]); delete n.alt; }
