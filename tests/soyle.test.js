@@ -1,6 +1,6 @@
 // Автотесты тренажёра Söyle. Запуск: node tests/soyle.test.js [путь к index.html]
 // Нужен Playwright (npm i playwright). Распознавание речи, микрофон и сеть подменяются заглушками (tests/harness.js).
-const { chromium, fs, path, FILE, test, tap, eq, ok, openPage, summary } = require('./harness');
+const { chromium, fs, path, FILE, test, tap, eq, ok, INIT, openPage, summary } = require('./harness');
 const AXE = process.env.AXE && fs.existsSync(process.env.AXE) ? fs.readFileSync(process.env.AXE, 'utf8') : null;
 const PHRASE_DICT_SRC = (() => { const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8'); const m = src.match(/const PHRASE_DICT = (\{[\s\S]*?\n\});/); return m ? eval('(' + m[1] + ')') : {}; })();
 const PHRASE_DICT_RU = lemma => (PHRASE_DICT_SRC[lemma] || [])[0];
@@ -2892,6 +2892,64 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       v.push(...(await q.evaluate(async () => (await axe.run(document, { runOnly:['wcag2a','wcag2aa','wcag21aa'] })).violations.map(x => x.id))).map(id => m + ':' + id));
     }
     await q.context().close(); eq(v, []);
+  });
+  // ---- Страницы ситуаций для поиска (2026-10-12: «Мне нравится, делай»; навыки programmatic-seo, ai-seo, schema) ----
+  await test('страницы ситуаций для поиска: адрес #phrases=<тема> открывает приложение сразу на этой теме фраз', async () => {
+    const q = await openPage(browser); await q.evaluate(() => { try { localStorage.setItem('soyle-kind', 'words'); } catch(e){} });
+    await q.goto(FILE + '#phrases=health'); await q.reload(); await q.waitForTimeout(400);
+    const r = await q.evaluate(() => ({ mode, setId, wordsKind, pressed:(document.querySelector('.chip.set[aria-pressed="true"]') || {}).dataset, gid:item && item.gid }));
+    eq([r.mode, r.setId, r.wordsKind, r.gid], ['phrases', 'health', false, 'ph-health']);
+    await q.goto(FILE + '#phrases=nope'); await q.reload(); await q.waitForTimeout(300); eq(await q.evaluate(() => mode), 'phrases', 'неизвестная тема — просто «Фразы»');
+    eq(q.errors, []); await q.context().close();
+  });
+  await test('страницы ситуаций для поиска: файлы в frazy/ совпадают со сборкой из данных приложения (node tests/seo-build.js), у каждой фразы есть запись носителя, есть карта сайта и llms.txt, публикация их копирует', async () => {
+    const { build, strip } = require('./seo-build');
+    const out = await build(browser), bad = [];
+    for(const [f, html] of Object.entries(out)){
+      const disk = fs.existsSync(path.join(__dirname, '..', f)) ? fs.readFileSync(path.join(__dirname, '..', f), 'utf8') : null;
+      if(disk === null) bad.push('нет файла ' + f); else if(strip(disk) !== strip(html)) bad.push('устарел ' + f + ' — запустите node tests/seo-build.js');
+    }
+    const pages = Object.keys(out).filter(f => /^frazy\/[a-z-]+\/index\.html$/.test(f));
+    ok(pages.length === 9, 'страниц тем: ' + pages.length);
+    for(const f of pages){ const h = out[f];
+      if(/noindex/.test(h)) bad.push(f + ': noindex');
+      if(!/<link rel="canonical" href="https:\/\/www\.simitci\.ru\/frazy\/[a-z-]+\/">/.test(h)) bad.push(f + ': нет canonical');
+      if(/\p{Extended_Pictographic}/u.test(h)) bad.push(f + ': эмодзи');
+      const recs = [...h.matchAll(/data-src="([^"]+)"/g)].map(m => m[1]), items = (h.match(/class="ph"/g) || []).length;
+      if(!items || recs.length !== items) bad.push(f + ': фраз ' + items + ', записей ' + recs.length);
+      recs.filter(u => !/^https:/.test(u)).forEach(u => { if(!fs.existsSync(path.join(__dirname, '..', 'frazy', 'x', u))) bad.push(f + ': нет файла ' + u); });
+      [...h.matchAll(/href="(\.\.\/[^"#]*)"/g)].forEach(m => { const t = path.join(__dirname, '..', 'frazy', 'x', m[1]); if(!fs.existsSync(t) && !fs.existsSync(path.join(t, 'index.html')) && !Object.keys(out).includes(path.relative(path.join(__dirname, '..'), path.join(t, 'index.html')))) bad.push(f + ': ссылка в никуда ' + m[1]); });
+      if(!/#phrases=[a-z]+"/.test(h)) bad.push(f + ': кнопка не открывает тему в приложении');
+    }
+    // фразы страницы = фразы темы в приложении, у которых есть запись носителя
+    const cvIdx = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'audio', 'cv', 'index.json'), 'utf8')).phrases;
+    const app = await p.evaluate(cv => { const keep = CV_INDEX; CV_INDEX = cv; const r = Object.fromEntries(PHRASE_SETS.map(g => [g.id, g.items.filter(x => !x.rare && localNative(x.tr).length).map(x => x.tr)])); CV_INDEX = keep; return r; }, cvIdx);
+    for(const [id, list] of Object.entries(app)){ const f = pages.find(x => out[x].includes('#phrases=' + id + '"')); if(!f){ bad.push('нет страницы темы ' + id); continue; }
+      const got = [...out[f].matchAll(/<p class="tr" lang="tr" translate="no">([^<]+)<\/p>/g)].map(m => m[1].replace(/&amp;/g, '&').replace(/&#39;/g, "'"));
+      if(JSON.stringify(got) !== JSON.stringify(list)) bad.push(id + ': фразы страницы не совпадают с приложением (' + got.length + ' / ' + list.length + ')'); }
+    const sm = out['sitemap.xml'], llms = out['llms.txt'];
+    pages.concat(['frazy/index.html']).forEach(f => { const u = 'https://www.simitci.ru/' + f.replace(/index\.html$/, ''); if(!sm.includes('<loc>' + u + '</loc>')) bad.push('sitemap без ' + u); if(!llms.includes(u)) bad.push('llms.txt без ' + u); });
+    const wf = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'tests.yml'), 'utf8');
+    if(!/cp -r [^\n]*\bfrazy\b/.test(wf) || !/cp -r [^\n]*\bllms\.txt\b/.test(wf)) bad.push('публикация не копирует frazy/ и llms.txt');
+    eq(bad, []);
+  });
+  await test('страницы ситуаций для поиска: на 320 и 360 px без прокрутки вбок, кнопки ≥ 44 px, свои шрифты, WCAG 2.1 AA в светлой и тёмной теме, кнопка играет запись', async () => {
+    const pg = path.join(__dirname, '..', 'frazy', 'u-vracha', 'index.html'); ok(fs.existsSync(pg), 'нет frazy/u-vracha');
+    const bad = [];
+    for(const scheme of ['light', 'dark']){
+      const c = await browser.newContext({ colorScheme:scheme }); const q = await c.newPage(); const errs = []; q.on('pageerror', e => errs.push(e.message));
+      await q.route('https://**', r => r.abort()); await q.addInitScript(INIT);
+      for(const w of [320, 360]){ await q.setViewportSize({ width:w, height:700 }); await q.goto('file://' + pg); await q.evaluate(() => document.fonts.ready);
+        const r = await q.evaluate(() => ({ x:document.documentElement.scrollWidth > innerWidth, small:[...document.querySelectorAll('button,a.open,.cta a,summary')].filter(e => { const b = e.getBoundingClientRect(); return b.height < 44 || (e.tagName === 'BUTTON' && b.width < 44); }).length,
+          fonts:[...document.fonts].filter(f => f.status === 'loaded').map(f => f.family) }));
+        if(r.x) bad.push(scheme + ' ' + w + ': прокрутка вбок'); if(r.small) bad.push(scheme + ' ' + w + ': мелких кнопок ' + r.small);
+        if(!r.fonts.includes('Soyle Serif') || !r.fonts.includes('Soyle Sans')) bad.push(scheme + ': шрифты ' + r.fonts); }
+      await q.click('.play'); await q.waitForTimeout(50); const played = await q.evaluate(() => (window.__played || []).slice(-1)[0] || '');
+      if(!/audio\/cv\/\d+\.mp3$/.test(played)) bad.push('кнопка не играет запись: ' + played);
+      if(AXE){ await q.addScriptTag({ content:AXE }); const v = await q.evaluate(async () => (await axe.run(document, { runOnly:['wcag2a', 'wcag2aa', 'wcag21aa'] })).violations.map(x => x.id + ':' + x.nodes.length)); if(v.length) bad.push(scheme + ' axe: ' + v.join(', ')); }
+      if(errs.length) bad.push(scheme + ' ошибки JS: ' + errs.join('; '));
+      await c.close(); }
+    eq(bad, []);
   });
   await test('за весь прогон на странице не было JS-ошибок', async () => eq(p.errors, []));
 

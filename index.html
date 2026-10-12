@@ -8161,7 +8161,10 @@ document.addEventListener("keydown", e => {
 
 renderChips(); renderStats(); renderGame(); renderBadges(); renderLesson(); updateMemTab();
 setupSelfRecord(); next();
-{ const h = location.hash.slice(1), start = MODES.includes(h) ? h : "city"; setTimeout(() => setMode(start === "pairs" ? "phrases" : start), 0); }   // стартовый экран — «Город» (игра), если в адресе не указан раздел
+{ const h = location.hash.slice(1), dl = /^phrases=([a-z]+)$/.exec(h), start = dl ? "phrases" : MODES.includes(h) ? h : "city";
+  // #phrases=<тема> — со страниц ситуаций (frazy/<тема>/, 2026-10-12): сразу эта тема фраз, не слова
+  if(dl && PHRASE_SETS.some(g => g.id === dl[1])){ setId = dl[1]; wordsKind = false; }
+  setTimeout(() => setMode(start === "pairs" ? "phrases" : start), 0); }   // стартовый экран — «Город» (игра), если в адресе не указан раздел
 </script>
 </body>
 </html>

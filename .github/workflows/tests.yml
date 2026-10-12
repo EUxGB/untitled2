@@ -77,7 +77,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Собрать сайт (только файлы приложения)
         run: |
-          mkdir _site && cp -r index.html manifest.json robots.txt sitemap.xml icon-*.png fonts audio _site/
+          mkdir _site && cp -r index.html manifest.json robots.txt sitemap.xml llms.txt icon-*.png fonts audio frazy _site/
           # озвучка Piper из ветки tts-audio (нет ветки — сайт говорит голосом телефона)
           if git clone -q --depth 1 -b tts-audio "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" /tmp/tta; then
             mkdir -p _site/tts && cp /tmp/tta/manifest.json /tmp/tta/*.mp3 _site/tts/ && echo "озвучка: $(ls _site/tts/*.mp3 | wc -l) файлов"
@@ -109,7 +109,7 @@ jobs:
             [ "$i" = 40 ] && { echo "::error::Через 10 минут сайт всё ещё отдаёт старую сборку"; exit 1; }
             sleep 15
           done
-          for f in fonts/DejaVuSans.woff2 fonts/DejaVuSans-Bold.woff2 fonts/LiberationSerif-Regular.woff2 fonts/LiberationSerif-Bold.woff2 manifest.json audio/cv/index.json audio/cv/001.mp3; do
+          for f in fonts/DejaVuSans.woff2 fonts/DejaVuSans-Bold.woff2 fonts/LiberationSerif-Regular.woff2 fonts/LiberationSerif-Bold.woff2 manifest.json audio/cv/index.json audio/cv/001.mp3 llms.txt frazy/ frazy/u-vracha/; do
             curl -fsS -o /dev/null "$URL/$f?v=$GITHUB_SHA" || { echo "::error::нет файла $f на сайте"; exit 1; }
           done
           # озвучка Piper: манифест и 20 случайных файлов отдаются сайтом
