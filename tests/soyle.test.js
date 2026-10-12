@@ -2582,6 +2582,42 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.cal0, true); ok(/завтра/i.test(r.same[0]) && /завтра/i.test(r.same[1]), JSON.stringify(r.same)); eq(r.day1, 1, 'в тот же день — без нового дня');
     eq(r.next, 'Новый день'); eq(r.after, [2, true, true], 'после пропуска — один новый день, деньги те же (вт — без аренды)'); eq(errs, []);
   });
+  await test('Этап 1 (одобрено 2026-10-11 19:58): торг у водовоза (две бутыли — 150 вместо 160) и у знакомого Хасана (−5 ₺); воскресенье — «Хозяин квартиры»: аренда в разговоре (в понедельник не списывается), нехватка — в долг, провал — долг и повтор в понедельник без второй оплаты', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
+    const run = async steps => { for(const s of steps){ if(typeof s === 'number'){ await q.evaluate(v => cityPay(v), s); await q.waitForTimeout(60); await ctNext(q); continue; } const r = await ctSay(q, s); if(r.next) await ctNext(q); } await q.waitForTimeout(120); };
+    // водовоз
+    await q.evaluate(() => { city.money = 1000; city.skill = {}; city.haggleWins = 0; cityStart('su'); });
+    await run(['iki damacana lütfen', 'gül sokak beş numara üçüncü kat', 'iki damacana alıyorum biraz indirim olur mu', 'tamam bekliyorum teşekkürler', 200]);
+    const su = await q.evaluate(() => { const o = { money:city.money, wins:city.haggleWins }; if(!document.getElementById('modal').hidden) closeModal(); return o; });
+    // знакомый Хасан
+    await q.evaluate(() => { city.money = 1000; city.rel.bakkal = 3; window.__seed = 0; cityStart('bakkal'); });
+    await run(['merhaba', 'ekmek su yumurta', 'komşu biraz indirim yapar mısın', 200]);   // всё взято одной фразой — сразу цена
+    const bk = await q.evaluate(() => { const o = { money:city.money, wins:city.haggleWins }; for(let k = 0; k < 3 && !document.getElementById('modal').hidden; k++) closeModal(); return o; });
+    // воскресенье
+    const sun = await q.evaluate(() => { cityLeave(); ct = null; city.day = 6; city.done = []; city.carry = []; city.debt = 0; cityNewDay(); for(let k = 0; k < 3 && !document.getElementById('modal').hidden; k++) closeModal(); return { dow:cityDow(), plan:city.plan.slice() }; });
+    await q.evaluate(() => { city.money = 2500; cityStart('ev_sahibi'); });
+    await run(['merhaba buyurun kirayı getirdim', 2000, 'musluk damlıyor', 'yarın sabah evdeyim', 'sağ olun kolay gelsin']);
+    const paid = await q.evaluate(() => { for(let k = 0; k < 3 && !document.getElementById('modal').hidden; k++) closeModal(); const before = city.money; city.debt = 0; cityNewDay(); for(let k = 0; k < 3 && !document.getElementById('modal').hidden; k++) closeModal(); return { sunMoney:before, monMoney:city.money, dow:cityDow() }; });
+    // нехватка денег у хозяина — в долг
+    await q.evaluate(() => { city.day = 13; city.done = []; cityNewDay(); for(let k = 0; k < 3 && !document.getElementById('modal').hidden; k++) closeModal(); city.money = 1000; city.debt = 0; cityStart('ev_sahibi'); });
+    await run(['merhaba buyurun kirayı getirdim']); await ctNext(q);   // нехватка решается сразу у оплаты — «Дальше» ведёт к разговору о поломке
+    const short = await q.evaluate(() => ({ money:city.money, debt:city.debt, node:ct && ct.nodeId }));
+    // провал — долг и повтор в понедельник без второй оплаты
+    await q.evaluate(() => { cityLeave(); ct = null; city.day = 20; city.done = []; cityNewDay(); for(let k = 0; k < 3 && !document.getElementById('modal').hidden; k++) closeModal(); city.debt = 0; city.money = 3000; cityStart('ev_sahibi'); });
+    for(let k = 0; k < 6 && await q.evaluate(() => !!ct && !ct.resolved); k++) await ctSay(q, '');   // молчание до конца терпения
+    await q.waitForTimeout(150);
+    const failed = await q.evaluate(() => { for(let k = 0; k < 3 && !document.getElementById('modal').hidden; k++) closeModal(); const o = { debt:city.debt }; city.done = []; city.carry = []; cityNewDay(); for(let k = 0; k < 3 && !document.getElementById('modal').hidden; k++) closeModal(); o.mon = [cityDow(), city.plan.includes('ev_sahibi'), city.money, city.debt]; return o; });
+    await q.evaluate(() => { cityStart('ev_sahibi'); }); await ctSay(q, 'merhaba buyurun kirayı getirdim'); await ctNext(q);
+    const again = await q.evaluate(() => ({ node:ct && ct.nodeId, pay:!document.getElementById('ctPay').hidden }));
+    const errs = q.errors; await q.context().close();
+    eq(su, { money:850, wins:1 }, 'водовоз: 150 и торг засчитан');
+    eq(bk.money, 895, 'знакомый Хасан: 110 − 5'); eq(bk.wins, 2);
+    eq([sun.dow, sun.plan[0]], [7, 'ev_sahibi'], 'в воскресенье первым — хозяин');
+    eq([paid.sunMoney, paid.dow, paid.monMoney], [700, 1, 700 + 3500], 'аренда отдана в воскресенье — в понедельник не списывается');
+    eq([short.money, short.debt, short.node], [0, 800, 'problem'], 'не хватило — в долг, разговор идёт дальше');
+    eq(failed.debt, 1800, 'провал — аренда в долг'); eq([failed.mon[0], failed.mon[1], failed.mon[2], failed.mon[3]], [1, true, 3000 + 3500 - 1800, 0], 'понедельник: долг погашен из зарплаты, аренда не дважды, хозяин снова в плане');
+    eq(again, { node:'problem', pay:false }, 'повтор — без второй оплаты'); eq(errs, []);
+  });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
     const GEN = ['Evet, öyle.', 'Hı hı.'];

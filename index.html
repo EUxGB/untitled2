@@ -3404,7 +3404,7 @@ const CITY_START = { ver:2, day:1, money:1700,   // 3 500 зарплата − 1
 // Поле-настолка (спек §4а): кольцо из 24 клеток по периметру сетки 7×7 (по часовой от дома в левом верхнем углу), две срезки-улицы.
 // kind: home — дом (звонки, визиты мастеров), place — место со сценами, event — клетка «?» (карта из колоды). dat — дательный падеж для такси («Eczaneye lütfen»).
 const BOARD = [
-  { id:"ev",        kind:"home",  title:"Дом",               short:"Ev",      ru:"дом",        ic:"b-ev",        dat:"Eve",            scenes:["su", "cilingir", "kargo", "goc", "tesisatci", "elektrikci"] },
+  { id:"ev",        kind:"home",  title:"Дом",               short:"Ev",      ru:"дом",        ic:"b-ev",        dat:"Eve",            scenes:["su", "ev_sahibi", "cilingir", "kargo", "goc", "tesisatci", "elektrikci"] },
   { id:"kapici",    kind:"place", title:"Подъезд",           short:"Kapıcı",  ru:"подъезд",   ic:"b-kapici",    dat:"Eve",            gen:"подъезда", scenes:["kapici", "aidat"] },
   { id:"bakkal",    kind:"place", title:"Bakkal",            short:"Bakkal",  ru:"лавка",      ic:"b-bakkal",    dat:"Bakkala",        gen:"лавки", scenes:["bakkal", "mama"] },
   { id:"q3",        kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
@@ -3460,6 +3460,7 @@ const SALARY = 3500, DAY_START = 9 * 60, PLAN_SIZE = 3;
 // Аренда (этап 1, п. 1): каждый понедельник; первую неделю оплатили при въезде (CITY_START.money = 3 500 − 1 800). Подобрана ботом tests/city-bot.js (2026-10-11): при честной игре расход 1 055–1 595 ₺ в неделю,
 // в среднем 1 406 ₺ (3 набора дел × 2 недели) → 3 500 − 1 406 − 1 800 ≈ 300 ₺ остаётся к воскресенью (решение: «к воскресенью ≈ 300 ₺»).
 const RENT = 1800;
+const rentWeek = () => Math.ceil((city.day + (cityDow() === 7 ? 1 : 0)) / 7);   // за какую неделю платим сейчас: в воскресенье — за следующую (её понедельник), иначе — за текущую
 const WEEK_SETS = [
   ["bakkal", "taxi", "kapici", "simit", "dolmus", "istanbulkart", "firin", "market", "cay", "lokanta", "eczane", "komsu", "su"],
   ["kuafor", "kargo", "pazar", "manav", "ptt", "fatura", "terzi", "kasap", "banka", "telefon", "balikci", "tesisatci", "cilingir"],
@@ -3512,7 +3513,11 @@ function cityOpenNow(id, day = city.day, min = city.min){
   const open = h.days.includes(dow) && (h.from === undefined || (min >= h.from && min < h.to));
   return { open, text: daysTxt + hoursTxt };
 }
-function cityPlanFor(day){
+function cityPlanFor(day){                       // воскресенье (и повтор после провала) — первым «Хозяин квартиры»
+  const p = cityPlanBase(day), ev = SCENES.ev_sahibi && ((day - 1) % 7 + 1 === 7 || (city.flags && city.flags.evAgain));
+  return ev ? ["ev_sahibi", ...p.filter(id => id !== "ev_sahibi")].slice(0, Math.max(PLAN_SIZE, p.length)) : p;
+}
+function cityPlanBase(day){
   const week = Math.ceil(day / 7), unlocked = WEEK_SETS.slice(0, Math.min(3, week)).flat().filter(id => SCENES[id] && !SCENES[id].event);
   const carry = (city.carry || []).filter(id => SCENES[id]), prev = new Set(city.prevPlan || []);
   const openToday = id => { const h = OPEN_HOURS[id]; return !h || h.days.includes((day - 1) % 7 + 1); };
@@ -3607,7 +3612,7 @@ function cityNewDay(){
   const payday = cityDow() === 1;
   let rentShort = 0;
   if(payday){ city.money += SALARY; const back = Math.min(city.debt, city.money); city.money -= back; city.debt -= back;   // долг гасится из зарплаты, деньги не уходят в минус
-    const pay = Math.min(RENT, city.money); city.money -= pay; rentShort = RENT - pay; city.debt += rentShort; }   // аренда; не хватило — хозяин подождёт (долг)
+    if(city.rentFor !== Math.ceil(city.day / 7)){ const pay = Math.min(RENT, city.money); city.money -= pay; rentShort = RENT - pay; city.debt += rentShort; } }   // отдали хозяину в воскресенье — не списывается   // аренда; не хватило — хозяин подождёт (долг)
   if(payday) city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) };   // начало недели: снимок для итога (до сохранения — ревью 2026-10-11)
   city.plan = cityPlanFor(city.day); city.carry = []; cityMorning(); citySave(); cityRender();
   toast(payday ? `Pazartesi: maaş +${SALARY} ₺, kira −${RENT} ₺` : `${DOW_RU[cityDow()]}, день ${city.day}`);
@@ -3726,7 +3731,12 @@ const SCENES = {
         ] },
       nobuy:{ end:{ kind:"near", text:"Ушли без покупок. В долг здесь дают только своим — когда Хасан вас запомнит. Хлеб придётся искать в супермаркете.", fx:{ min:20, money:-60 } } },
       credit:{ end:{ kind:"ok", text:"Хасан записал 110 ₺ в тетрадку. Veresiye — знак доверия: спишется с зарплаты в понедельник.", fx:{ debt:110 } } },
-      price:{ npc:"Hepsi yüz on lira.", ru:"Всего сто десять лир.", pay:{ price:110, notes:[100, 200, 500], short:"On lira daha.", shortRu:"Ещё десять лир.", go:"bye" } },
+      price:{ npc:"Hepsi yüz on lira.", ru:"Всего сто десять лир.", pay:{ price:110, notes:[100, 200, 500], short:"On lira daha.", shortRu:"Ещё десять лир.", go:"bye" },
+        variants:[ { if:{ rel:{ min:3 }, money:110 }, pay:null, npc:"Hepsi yüz on lira, komşu.", ru:"Всего сто десять лир, сосед.", again:"Yüz on lira.", againRu:"Сто десять лир.", moves:[   // знакомому можно поторговаться (одобрено 2026-10-11 19:58)
+          { key:["indirim", "yapar mısın"], say:["Komşu, biraz indirim yapar mısın?"], ru:"Сосед, сделаешь небольшую скидку?", go:"pricedisc", haggle:true },
+          { key:["tamam", "buyurun"], say:["Tamam, buyurun."], ru:"Хорошо, держите.", go:"pricefull" } ] } ] },
+      pricefull:{ npc:"Hepsi yüz on lira.", ru:"Всего сто десять лир.", pay:{ price:110, notes:[100, 200, 500], short:"On lira daha.", shortRu:"Ещё десять лир.", go:"bye" } },
+      pricedisc:{ npc:"Senin için beş lira indirim.", ru:"Для тебя — пять лир скидки.", pay:{ price:105, notes:[100, 200, 500], short:"Beş lira daha.", shortRu:"Ещё пять лир.", go:"bye" } },
       bye:{ npc:"Buyur, poşet. İyi günler!", ru:"Держи, пакет. Хорошего дня!", again:"İyi günler komşu!", againRu:"Хорошего дня, сосед!",
         moves:[
           { key:["kolay gelsin", "hayırlı işler"], say:["Kolay gelsin!"], ru:"Лёгкой работы! (так уходят от продавца)", go:"local", fx:{ rel:2 } },
@@ -4004,6 +4014,40 @@ const SCENES = {
       done2:{ end:{ kind:"ok", text:"Отшутились — тётушка засмеялась и положила ещё бёрек. Чай с секретом — тоже чай.", fx:{} } },
       later:{ end:{ kind:"near", text:"Вежливо отказались. Айше-тейзе кивнула: «Peki, peki» — но запомнила.", fx:{} } },
     } },
+  // ---- воскресная проверка недели (кампания, решения §2а/§2б п. 3; реплики одобрены пользователем 2026-10-11 19:58): аренда, поломка, мастер ----
+  ev_sahibi:{ title:"Хозяин квартиры", who:"Хозяин квартиры", initial:"N", place:"Дома, у двери", rent:true,
+    goal:"Отдать аренду, сказать, что сломалось, и договориться о мастере.",
+    start:"greet",
+    fail:{ text:"Хозяин так и не понял, о чём вы, и ушёл. Аренду записал в долг — спишется с зарплаты; в понедельник он зайдёт снова.", fx:{} },
+    nodes:{
+      greet:{ npc:"Merhaba, kiracım! Kira günü geldi.", ru:"Здравствуйте, мой жилец! Пришёл день аренды.", again:"Merhaba, kiracım! Kira günü geldi.", againRu:"Здравствуйте, мой жилец! Пришёл день аренды.",
+        moves:[ { key:["kira", "kirayı", "getirdim", "buyurun"], say:["Merhaba, buyurun. Kirayı getirdim."], ru:"Здравствуйте, проходите. Я принёс аренду.", go:"pay" } ] },
+      pay:{ npc:"Bin sekiz yüz lira.", ru:"Тысяча восемьсот лир.", pay:{ price:1800, notes:[1000, 2000], short:"Bin sekiz yüz lira, eksik.", shortRu:"Тысяча восемьсот лир, не хватает.", go:"problem" } },
+      problem:{ npc:"Evde bir sorun var mı?", ru:"Дома есть проблемы?", again:"Evde bir sorun var mı?", againRu:"Дома есть проблемы?",
+        moves:[
+          { key:["musluk", "damlıyor"], say:["Musluk damlıyor."], ru:"Кран капает.", go:"when" },
+          { key:["kombi", "çalışmıyor"], say:["Kombi çalışmıyor."], ru:"Котёл не работает.", go:"when" },
+          { key:["hayır", "yolunda", "her şey"], say:["Hayır, her şey yolunda."], ru:"Нет, всё в порядке.", go:"fine" },
+        ] },
+      when:{ npc:"Tamam, ustayı gönderirim. Ne zaman evdesiniz?", ru:"Хорошо, пришлю мастера. Когда вы дома?", again:"Ne zaman evdesiniz?", againRu:"Когда вы дома?",
+        moves:[
+          { key:["yarın", "sabah", "evdeyim"], say:["Yarın sabah evdeyim."], ru:"Завтра утром я дома.", go:"bye" },
+          { key:["akşam", "altıdan", "sonra"], say:["Akşam altıdan sonra."], ru:"Вечером после шести.", go:"bye2" },
+        ] },
+      bye:{ npc:"Tamam, usta yarın gelir. İyi günler!", ru:"Хорошо, мастер придёт завтра. Хорошего дня!", again:"Usta yarın gelir. İyi günler!", againRu:"Мастер придёт завтра. Хорошего дня!",
+        moves:[
+          { key:["kolay gelsin", "sağ olun"], say:["Sağ olun, kolay gelsin."], ru:"Спасибо, лёгкой работы.", go:"ok" },
+          { key:["teşekkür", "iyi günler"], say:["Teşekkürler, iyi günler."], ru:"Спасибо, хорошего дня.", go:"ok" },
+        ] },
+      bye2:{ npc:"Tamam, usta yarın gelir. İyi günler!", ru:"Хорошо, мастер придёт завтра. Хорошего дня!", again:"Usta yarın gelir. İyi günler!", againRu:"Мастер придёт завтра. Хорошего дня!",
+        moves:[
+          { key:["kolay gelsin", "sağ olun"], say:["Sağ olun, kolay gelsin."], ru:"Спасибо, лёгкой работы.", go:"late" },
+          { key:["teşekkür", "iyi günler"], say:["Teşekkürler, iyi günler."], ru:"Спасибо, хорошего дня.", go:"late" },
+        ] },
+      late:{ end:{ kind:"near", text:"Аренда отдана, но мастер освободится только к вечеру — полдня ждать дома, кран капает. Неделя прожита." } },
+      ok:{ end:{ kind:"ok", text:["Аренда отдана, мастер придёт завтра. Неделя прожита — дальше итог недели.", "Хозяин пересчитал купюры, кивнул и записал мастера в блокнот. Неделя прожита."] } },
+      fine:{ end:{ kind:"ok", text:"Аренда отдана, дома всё в порядке. Хозяин доволен — такие жильцы редкость." } },
+    } },
   su:{ title:"Заказать воду по телефону", who:"Su Dünyası", initial:"S", place:"Телефон", phone:true,
     goal:"Заказать бутыль воды домой и понять, когда привезут.",
     start:"greet",
@@ -4030,6 +4074,11 @@ const SCENES = {
       when2:{ npc:"Bir saate gelir. Yüz altmış lira.", ru:"Через час привезут. Сто шестьдесят лир.", again:"Bir saat. Yüz altmış.", againRu:"Час. Сто шестьдесят.",
         moves:[
           { key:["tamam", "teşekkür", "bekliyorum", "olur"], say:["Tamam, bekliyorum. Teşekkürler."], ru:"Хорошо, жду. Спасибо.", go:"door2" },
+          { key:["indirim", "olur mu", "alıyorum"], say:["İki damacana alıyorum, biraz indirim olur mu?"], ru:"Беру две бутыли, можно немного скидки?", go:"when2d", haggle:true },   // торг (одобрено пользователем 2026-10-11 19:58)
+        ] },
+      when2d:{ npc:"Tamam, yüz elli olsun.", ru:"Ладно, пусть будет сто пятьдесят.", again:"Yüz elli olsun.", againRu:"Пусть будет сто пятьдесят.",
+        moves:[
+          { key:["tamam", "teşekkür", "bekliyorum", "olur"], say:["Tamam, bekliyorum. Teşekkürler."], ru:"Хорошо, жду. Спасибо.", go:"door2d" },
         ] },
       fast:{ npc:"Kusura bakmayın, yarım saat.", ru:"Извините, полчаса.", again:"Yarım saat.", againRu:"Полчаса.",
         moves:[
@@ -4037,6 +4086,7 @@ const SCENES = {
         ] },
       door:{ npc:"Suyunuz geldi! Seksen lira.", ru:"Ваша вода приехала! Восемьдесят лир.", pay:{ price:80, notes:[50, 100, 200], short:"Seksen lira.", shortRu:"Восемьдесят лир.", go:"done" } },
       door2:{ npc:"Sularınız geldi! Yüz altmış lira.", ru:"Ваша вода приехала! Сто шестьдесят лир.", pay:{ price:160, notes:[100, 200, 500], short:"Yüz altmış lira.", shortRu:"Сто шестьдесят лир.", go:"done2" } },
+      door2d:{ npc:"Sularınız geldi! Yüz elli lira.", ru:"Ваша вода приехала! Сто пятьдесят лир.", pay:{ price:150, notes:[100, 200, 500], short:"Yüz elli lira.", shortRu:"Сто пятьдесят лир.", go:"done2" } },
       done:{ end:{ kind:"ok", text:"Бутыль у двери через полчаса. Заказать воду по телефону — первый настоящий экзамен на слух.", fx:{ min:30 } } },
       done2:{ end:{ kind:"near", text:"Две бутыли, но ждали час и заплатили вдвое. Хватит на две недели — если найдёте, куда поставить.", fx:{ min:60 } } },
     } },
@@ -5312,7 +5362,7 @@ function ctTaxiNode(id, n){
 function ctNodeFor(id){
   let n = ct.scene.nodes[id]; if(!n) return n;
   if(n.variants){
-    const v = n.variants.find(v => { const f = v.if || {}; if(f.late !== undefined && city.min < f.late) return false; const c = f.rel; if(!c) return true; const who = c.char || ct.char; return (who === ct.char ? ct.rel0 : city.rel[who] || 0) >= c.min; });   // отношения — на начало сцены: заслуженное сегодня действует с завтра; late — после часа
+    const v = n.variants.find(v => { const f = v.if || {}; if(f.late !== undefined && city.min < f.late) return false; if(f.money !== undefined && city.money < f.money) return false; const c = f.rel; if(!c) return true; const who = c.char || ct.char; return (who === ct.char ? ct.rel0 : city.rel[who] || 0) >= c.min; });   // отношения — на начало сцены: заслуженное сегодня действует с завтра; late — после часа
     if(v){ n = Object.assign({}, n, v); delete n.variants; delete n.if; if(n.pay === null) delete n.pay; }
   }
   if(n.alt && n.alt.length){ const k = ctAltIdx(id, n.alt.length); n = Object.assign({}, n, n.alt[k]); delete n.alt; }
@@ -5372,6 +5422,7 @@ function ttsInventory(){
 }
 function cityNode(id, replyHtml){
   const n0 = ctNodeFor(id); if(!n0) return;
+  if(n0.pay && ct.scene.rent && city.rentFor === rentWeek()) return cityNode(n0.pay.go, replyHtml);   // аренда за эту неделю уже записана (повтор после провала) — без второй оплаты
   if(n0.pass) return cityNode(n0.pass, replyHtml);                                                      // сквозной вариант: шага «иногда» сегодня нет
   if(n0.onlyChar && n0.onlyChar !== ct.char && n0.elseGo) return cityNode(n0.elseGo, replyHtml);      // узел только для этого персонажа (болтливый шофёр)
   const n = ctTaxiNode(id, n0);
@@ -5384,6 +5435,9 @@ function cityNode(id, replyHtml){
   ctEl("ctInitial").innerHTML = charAvatar(ct.char) || sceneAvatar(ct.scene);
   ctEl("ctLive").textContent = "";
   if(n.pay){
+    if(ct.scene.rent && city.money < n.pay.price){                                     // аренда: не хватило — хозяин подождёт, разговор идёт дальше
+      const short = n.pay.price - city.money; city.debt += short; ct.spent += city.money; city.money = 0; city.rentFor = rentWeek(); ct.n++; ct.ok++; count("city", 1);
+      return cityResolve(n.pay.go, "near", `<span class="verdict">Не хватило ${short} ₺ — хозяин подождёт.</span><div class="alts">Долг спишется с зарплаты в понедельник.</div>`); }
     if(city.money < n.pay.price && ct.char === "bakkal" && (city.rel.bakkal || 0) >= 6){   // свой человек: остаток — в долг, спишется с зарплаты
       const short = n.pay.price - city.money; city.debt += short; ct.spent += city.money; city.money = 0; ct.n++; ct.ok++; count("city", 1);
       ctEl("ctTr").textContent = "Sonra ödersin, komşu."; ctEl("ctTr").classList.remove("veil"); ctEl("ctRu").textContent = "Потом отдашь, сосед."; npcSay("Sonra ödersin, komşu.");
@@ -5624,6 +5678,7 @@ function cityPay(v){
     if(ct.patience <= 0) return cityEnd(Object.assign({ kind:"bad" }, ct.scene.fail), true);
     return ctResult("bad", `<span class="verdict">Мало.</span><div class="alts">Послушайте ещё раз: сколько просят? Перевод — нажмите на реплику.</div>`); }
   city.money -= p.price; ct.spent += p.price; ct.change = v - p.price; ct.n++; ct.ok++; count("city", 1);
+  if(ct.scene.rent) city.rentFor = rentWeek();                                              // аренда отдана хозяину — в понедельник не списывается
   cityResolve(p.go, "ok", `<span class="verdict">Заплатили ${p.price} ₺${ct.change ? `, сдача ${ct.change} ₺` : ", без сдачи"}.</span><div class="alts">Цену поняли на слух верно.</div>`);
 }
 function cityFx(fx){
@@ -5655,6 +5710,9 @@ function ctDiscount(failed){
 }
 function cityEnd(end, failed){
   cityFx(end.fx);
+  if(ct.scene.rent){ city.flags = city.flags || {};
+    if(failed && city.rentFor !== rentWeek()){ city.debt += RENT; city.rentFor = rentWeek(); }   // провал проверки: аренда в долг (§2б п. 3)
+    if(failed) city.flags.evAgain = city.day; else delete city.flags.evAgain; }                 // и повтор разговора, пока не получится
   const disc = ctDiscount(failed); if(disc){ const toDebt = Math.min(disc, city.debt); city.debt -= toDebt; city.money += disc - toDebt; ct.spent -= disc; }   // уступка сначала гасит долг
   const L = CHARS[ct.char] && CHARS[ct.char].likes, quiet = !!(L && L.quiet && !failed && !ct.misses && ct.ok > 0);
   if(quiet) cityFx({ rel:1 });                                               // молчун ценит, когда его ни разу не переспросили
@@ -5710,6 +5768,8 @@ ctEl("ctTaxi").onclick = cityTaxiAsk;
 // Перевод формы — вручную (FORM_GLOSS: как слово значит именно в этой форме), служебные слова и частицы — FUNC_GLOSS,
 // словарная форма и значение — PHRASE_DICT. Машинного перевода здесь нет: нет глоссы — честно «отдельного перевода нет».
 const FORM_GLOSS = {
+  // «Хозяин квартиры» (2026-10-11)
+  kirayı:"аренду, плату за жильё (kira + -yı «кого? что?»)", getirdim:"я принёс", musluk:"кран", damlıyor:"капает", yolunda:"в порядке (her şey yolunda — всё в порядке)", evdeyim:"я дома (ev + -de «где» + -yim «я есть»)", altıdan:"с шести, после шести (altıdan sonra)",
   // ответы на светские вопросы (2026-10-10 10:03)
   içtim:"я выпил(а)", içmedim:"я не пил(а)", fena:"плохой (fena değil — неплохо)", iyiler:"они в порядке, хорошо (iyi + -ler «они»)", dinlendim:"я отдохнул(а)",
   denize:"на море (deniz + -e «куда»)", gittim:"я ездил(а), сходил(а)", duydum:"я слышал(а)", duymadım:"я не слышал(а)", rusyadan:"из России (Rusya + -dan «откуда»)",

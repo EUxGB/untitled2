@@ -115,7 +115,8 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
         const r = await playScene(q, id, policy, seed);
         if(!r.ended) bad.push(`${tag}: не завершилась`);
         if(r.errors.length) bad.push(`${tag}: ${r.errors.join(' ; ')}`);
-        if(r.money > 600 || r.min > 180 || r.min < 0) bad.push(`${tag}: деньги −${r.money}, время +${r.min}`);
+        if(r.money > (id === 'ev_sahibi' ? 1800 : 600) || r.min > 180 || r.min < 0)   // хозяин квартиры берёт аренду (RENT, 2026-10-11)
+          bad.push(`${tag}: деньги −${r.money}, время +${r.min}`);
         if(sc.event) continue;                                                             // событие — не дело дня: в city.done не пишется
         if(policy === 'fail' && r.done[0] !== 'bad') bad.push(`${tag}: итог ${r.done[0]}`);
         if(policy === 'happy' && !r.done.length) bad.push(`${tag}: нет записи в city.done`);
