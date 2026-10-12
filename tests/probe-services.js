@@ -52,6 +52,9 @@ async function get(url){
   // аудио: первый download_url из ответов
   const m = JSON.stringify(res).match(/https?:[^"\\]*audios[^"\\]*file[^"\\]*/);
   if(m) res.push(await get(m[0]).then(r => ({ ...r, body: r.body && r.body.length + ' bytes (обрезано)' })));
+  // Счётчик «соседей» (Supabase, 2026-10-12): только чтение числа, без отметки — CI не должен считаться пользователем
+  try { const r = await fetch('https://fqbowvmvhqkeqoldzcuv.supabase.co/rest/v1/rpc/simit_count', { method:'POST', headers:{ apikey:'sb_publishable_HMPV4eEt0_NW04e-7v-3yA_5LOObGO2', 'Content-Type':'application/json', Origin:'https://www.simitci.ru' }, body:'{}' });
+    res.push({ supabaseCount:{ status:r.status, cors:r.headers.get('access-control-allow-origin'), body:(await r.text()).slice(0, 200) } }); } catch(e){ res.push({ supabaseCount:{ error:String(e) } }); }
   // YouGlish виджет в настоящем браузере
   const b = await chromium.launch(); const p = await b.newPage();
   await p.setContent('<div id="yg"></div>');

@@ -2618,6 +2618,47 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(failed.debt, 1800, 'провал — аренда в долг'); eq([failed.mon[0], failed.mon[1], failed.mon[2], failed.mon[3]], [1, true, 3000 + 3500 - 1800, 0], 'понедельник: долг погашен из зарплаты, аренда не дважды, хозяин снова в плане');
     eq(again, { node:'problem', pay:false }, 'повтор — без второй оплаты'); eq(errs, []);
   });
+  await test('Установка, «Начать сначала», соседи (2026-10-11 20:11–20:13): на телефоне в «Городе» вместо «?» — «Установить» (Android — окно браузера, iPhone — инструкция), на ПК и в тренировке — «?»; «Начать сначала» стирает прогресс после подтверждения; «Соседи: N» из Supabase, отметка устройства раз в день', async () => {
+    // ПК: «?» на месте
+    const pc = await openPage(browser); await pc.click('#tab-city');
+    const r0 = await pc.evaluate(() => [document.getElementById('hintsBtn').hidden, !document.getElementById('installBtn') || document.getElementById('installBtn').hidden]); await pc.context().close();
+    eq(r0, [false, true], 'ПК: «?» виден, «Установить» скрыт');
+    // Android: окно установки браузера
+    const q = await openPage(browser, { android:true });
+    const rpc = [];
+    await q.route('**/rest/v1/rpc/**', r => { const u = r.request().url(); rpc.push([u.split('/rpc/')[1], r.request().postData() || '']); return r.fulfill({ json: u.includes('simit_count') ? { d30:42, today:7 } : null }); });
+    await q.evaluate(() => { window.__nbForce = true; window.__noReload = true; const e = new Event('beforeinstallprompt'); e.prompt = () => { window.__prompted = true; }; e.userChoice = Promise.resolve({ outcome:'accepted' }); window.dispatchEvent(e); nbPing(); });
+    await q.click('#tab-city'); await q.waitForTimeout(100);
+    await q.setViewportSize({ width:360, height:640 }); await q.waitForTimeout(80);
+    const a = await q.evaluate(() => [document.getElementById('hintsBtn').hidden, document.getElementById('installBtn').hidden, document.getElementById('installBtn').textContent.trim()]);
+    const fitsTop = await q.evaluate(() => { const b = document.getElementById('installBtn').getBoundingClientRect(), t = document.querySelector('.topbar').getBoundingClientRect(); return b.width >= 44 && b.height >= 44 && b.bottom <= t.bottom + 1 && b.right <= innerWidth; });
+    ok(fitsTop, '«Установить» в одну строку с шапкой на 360 px, ≥ 44 px');
+    await q.click('#installBtn'); await q.waitForTimeout(80);
+    const prompted = await q.evaluate(() => !!window.__prompted);
+    await q.click('#tab-train'); const inTrain = await q.evaluate(() => [document.getElementById('hintsBtn').hidden, document.getElementById('installBtn').hidden]);
+    // соседи
+    await q.click('#tab-progress'); await q.waitForTimeout(200);
+    const nb = await q.evaluate(() => [document.getElementById('gbNb').textContent, document.getElementById('gbNbSub').textContent, localStorage.getItem('soyle-uid'), BK_DEVICE_KEYS.includes('soyle-uid')]);
+    await q.evaluate(() => nbPing()); await q.waitForTimeout(80);
+    const pings = rpc.filter(x => x[0].startsWith('simit_ping'));
+    // начать сначала
+    await q.evaluate(() => { game.xp = 500; localStorage.setItem('soyle-game', JSON.stringify(game)); localStorage.setItem('soyle-voice', 'X'); });
+    await q.click('#rsStart'); await q.waitForTimeout(80);
+    const conf = await q.evaluate(() => [document.getElementById('modalTitle').textContent, localStorage.getItem('soyle-game') !== null]);
+    await q.click('#modalSecondary'); await q.waitForTimeout(80);
+    const after = await q.evaluate(() => [localStorage.getItem('soyle-game'), localStorage.getItem('soyle-voice'), !!window.__reloaded]);
+    const errs = q.errors; await q.context().close();
+    // iPhone: инструкция
+    const ip = await (await browser.newContext({ viewport:{ width:390, height:844 }, userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1' })).newPage();
+    await ip.addInitScript(() => { window.SOYLE_TEST = true; }); await ip.route(u => /^https?:/.test(u.href), r => r.abort());
+    await ip.goto(FILE); await ip.waitForTimeout(150); await ip.click('#tab-city'); await ip.click('#installBtn'); await ip.waitForTimeout(80);
+    const ios = await ip.evaluate(() => document.getElementById('sheet') ? document.getElementById('sheet').textContent : ''); await ip.context().close();
+    eq(a, [true, false, 'Установить'], 'Android в «Городе»'); eq(prompted, true, 'окно установки браузера'); eq(inTrain, [false, true], 'в тренировке — «?»');
+    eq(nb.slice(0, 2), ['42', 'за 30 дней · сегодня 7']); ok(/^[0-9a-f-]{36}$/.test(nb[2]), 'номер устройства: ' + nb[2]); eq(nb[3], true, 'номер устройства не идёт в резервную копию');
+    eq(pings.length, 1, 'отметка — раз в день'); ok(pings[0][1].includes(nb[2]), 'отметка с номером устройства');
+    ok(/сначала/i.test(conf[0]) && conf[1], 'подтверждение: ' + conf[0]); eq(after, [null, 'X', true], 'прогресс стёрт, настройки устройства на месте');
+    ok(/Поделиться/.test(ios) && /Домой/.test(ios), 'iPhone: инструкция — ' + ios.slice(0, 80)); eq(errs, []);
+  });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
     const GEN = ['Evet, öyle.', 'Hı hı.'];

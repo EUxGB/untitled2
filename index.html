@@ -364,6 +364,8 @@ h1 span{color:inherit}
 @media (hover:hover){ .act:not(:disabled):not(.off):hover .ring{background:var(--accent-soft); border-color:var(--accent)} }
 .act:not(:disabled):active .ring{background:var(--accent-soft)}
 .main-row{flex:none; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:10px; padding:10px 2px 10px}
+/* «Установить» на месте «?» (телефон, «Город»): значок над подписью, как в нижней панели — по ширине помещается и на 320 px */
+.topbar .tb-install{flex:none; flex-direction:column; gap:1px; width:auto; min-width:44px; height:44px; padding:0 6px; border-radius:12px; font:600 10px/1.1 var(--body)} .topbar .tb-install .ic{width:18px; height:18px; display:block}
 .main-row .pill{min-width:0; max-width:100%; padding:0 14px} .main-row .pill .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 /* цена «Показать» видна до нажатия (этап 1, п. 3; решение 2026-10-10) */
 .ct-show2{display:flex; flex-direction:column; align-items:flex-start; min-width:0; line-height:1.05} .ct-cost{font:400 9.5px/1.1 var(--body); color:var(--muted); white-space:normal; text-align:left}
@@ -906,6 +908,7 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
       <span class="tb-ring" aria-hidden="true"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" class="ring-bg"/><circle cx="18" cy="18" r="14" class="ring-fg" id="tbRing"/></svg></span>
     </button>
     <button class="qbtn" id="hintsBtn" aria-pressed="false" title="Показать подсказки" aria-label="Подсказки"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg></button>
+    <button class="pill tb-install" id="installBtn" hidden aria-label="Установить приложение на телефон"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span class="lbl">Установить</span></button>
   </header>
 
   <div id="warn" class="warn" hidden></div>
@@ -1036,6 +1039,7 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
         <div class="pv-tile"><span>Цель дня</span><b id="gbGoalTxt">0 / 20</b><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
         <div class="pv-tile"><span>Память</span><b id="gbMem">0</b><span id="gbMemSub">фраз прочно</span></div>
         <button class="pv-tile pv-tile-btn" id="gbCityTile" type="button"><span>Город</span><b id="gbCity">день 1</b><span id="gbCitySub"></span></button>
+        <div class="pv-tile" id="gbNbTile" title="Сколько устройств открывали Simit за 30 дней (анонимно)"><span>Соседи</span><b id="gbNb">—</b><span id="gbNbSub">за 30 дней</span></div>
         <div class="pv-tile"><span>Рекорд блица</span><b id="gbBlitz">0</b><span id="gbBlitzSub">фраз за минуту</span></div>
       </div>
       <div class="pv-quest" id="gbQuest"><span class="pv-sub">Задание дня · +50 XP</span><b id="gbQuestTxt"></b></div>
@@ -1069,6 +1073,11 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
           </div>
         </div>
         <p class="bk-msg" id="bkMsg" role="status" aria-live="polite"></p>
+      </section>
+      <section class="backup" aria-labelledby="rsTitle">
+        <h2 id="rsTitle">Начать сначала</h2>
+        <p class="bk-note">Удалит весь прогресс на этом устройстве: опыт, медали, «Память», грамматику и квартал. Сначала сохраните резервную копию выше — по ней всё можно вернуть.</p>
+        <button class="btn" id="rsStart"><svg class="ic" aria-hidden="true"><use href="#i-restore"/></svg>Начать сначала</button>
       </section>
 
       <label class="opt">Голос телефона (запасной): <select id="voice"></select></label>
@@ -3301,7 +3310,7 @@ function compareWithFreshRecording(){
 
 // ---------- резервная копия прогресса ----------
 // В копию идёт всё «soyle-*», кроме настроек конкретного устройства (голос, обход микрофона)
-const BK_DEVICE_KEYS = ["soyle-rec-conflict", "soyle-voice"];
+const BK_DEVICE_KEYS = ["soyle-rec-conflict", "soyle-voice", "soyle-uid", "soyle-ping-day"];   // номер устройства для счётчика «соседей» — не переносится копией
 function bkCollect(){
   const data = {};
   try {
@@ -7974,6 +7983,46 @@ function openExamples(text){
     return tatoebaExamples(longest).then(r2 => render(r2, `Целиком фразы в примерах нет — примеры со словом «${longest}».`));
   }).catch(() => { const m = $("exMsg"); if(m) m.textContent = "Нет связи с базой примеров. Проверьте интернет."; });
 }
+// ---------- установка, «Начать сначала», соседи (просьбы 2026-10-11 20:11–20:13) ----------
+const UA = navigator.userAgent || "", IS_IOS = /iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);   // IS_ANDROID объявлен выше (микрофон)
+const isStandalone = () => { try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch(e){ return false; } };
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault && e.preventDefault(); installEvt = e; installUi(); });
+window.addEventListener("appinstalled", () => { installEvt = null; installUi(); });
+const canInstall = () => (IS_IOS || IS_ANDROID) && !isStandalone();
+function installUi(){                                   // на телефоне/планшете в «Городе» вместо «?» — «Установить»; в тренировке «?» нужен для подсказок
+  const show = canInstall() && mode === "city";
+  $("installBtn").hidden = !show; $("hintsBtn").hidden = show;
+}
+$("installBtn").onclick = async () => {
+  if(installEvt){ const e = installEvt; installEvt = null; try { e.prompt(); const c = await e.userChoice; if(c && c.outcome === "accepted") toast("Simit устанавливается на главный экран"); } catch(err){} installUi(); return; }
+  openSheet("Установить Simit", IS_IOS
+    ? `<p class="gm-p">На iPhone и iPad — через Safari:</p><ol class="gm-p"><li>Нажмите «Поделиться» (квадрат со стрелкой вверх) внизу экрана.</li><li>Выберите «На экран „Домой“».</li><li>Нажмите «Добавить».</li></ol><p class="gm-p">Simit появится среди приложений и откроется на весь экран.</p>`
+    : `<p class="gm-p">В Chrome на Android:</p><ol class="gm-p"><li>Откройте меню браузера (три точки справа вверху).</li><li>Выберите «Установить приложение» или «Добавить на главный экран».</li><li>Подтвердите.</li></ol><p class="gm-p">Simit появится среди приложений и откроется на весь экран.</p>`);
+};
+$("rsStart").onclick = () => showModal({ ic:"Sıfırdan", title:"Начать сначала?", text:"Весь прогресс на этом устройстве будет удалён: опыт, медали, «Память», грамматика и квартал. Вернуть можно только из резервной копии. Голос и настройки микрофона останутся.",
+  primary:{ label:"Отмена" }, secondary:{ label:"Да, удалить всё", fn:resetAll } });
+function resetAll(){
+  try { Object.keys(localStorage).filter(k => k.startsWith("soyle-") && !BK_DEVICE_KEYS.includes(k)).forEach(k => localStorage.removeItem(k)); } catch(e){}
+  if(TESTMODE && window.__noReload){ window.__reloaded = true; return; }
+  location.reload();
+}
+// Соседи: анонимный номер устройства (UUID) + отметка раз в день в Supabase (таблица simit_visits, функции simit_ping / simit_count; ни имён, ни IP, ни данных игры)
+const SB_URL = "https://fqbowvmvhqkeqoldzcuv.supabase.co", SB_KEY = "sb_publishable_HMPV4eEt0_NW04e-7v-3yA_5LOObGO2";
+const sbRpc = (fn, body) => fetch(`${SB_URL}/rest/v1/rpc/${fn}`, { method:"POST", headers:{ apikey:SB_KEY, "Content-Type":"application/json" }, body:JSON.stringify(body || {}) });
+function nbUid(){ let id = null; try { id = localStorage.getItem("soyle-uid"); if(!id){ id = (crypto.randomUUID ? crypto.randomUUID() : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16))); localStorage.setItem("soyle-uid", id); } } catch(e){} return id; }
+function nbPing(){
+  if(TESTMODE && !window.__nbForce) return;
+  const today = dayStr(new Date()); let last = null; try { last = localStorage.getItem("soyle-ping-day"); } catch(e){}
+  if(last === today) return; const id = nbUid(); if(!id) return;
+  sbRpc("simit_ping", { p_id:id }).then(r => { if(r.ok) try { localStorage.setItem("soyle-ping-day", today); } catch(e){} }).catch(() => {});
+}
+let nbLoaded = false;
+function nbShow(){
+  if(nbLoaded || (TESTMODE && !window.__nbForce)) return; nbLoaded = true;
+  sbRpc("simit_count").then(r => r.ok ? r.json() : null).then(j => { if(!j) return; $("gbNb").textContent = String(j.d30); $("gbNbSub").textContent = `за 30 дней · сегодня ${j.today}`; }).catch(() => { nbLoaded = false; });
+}
+setTimeout(nbPing, 1500);
 function setMode(m){
   try { if(location.hash.slice(1) !== m) history.replaceState(null, "", "#" + m); } catch(e){}
   if(listening) stopListening();
@@ -7986,6 +8035,7 @@ function setMode(m){
   $("tab-memory").setAttribute("aria-pressed", m==="memory");
   $("tab-train").setAttribute("aria-pressed", TRAIN.includes(m));
   $("tab-progress").setAttribute("aria-pressed", m==="progress");
+  installUi(); if(m === "progress") nbShow();
   $("subtabs").hidden = !TRAIN.includes(m);                      // тренировка: Фразы · На слух · Свободно — переключатель над наборами
   TRAIN.forEach(t => $("tab-" + t).setAttribute("aria-pressed", m===t));
   if(TRAIN.includes(m)){ lastTrain = m; try { localStorage.setItem("soyle-train", m); } catch(e){} }
