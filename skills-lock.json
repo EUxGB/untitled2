@@ -37,6 +37,12 @@
       "skillPath": "skills/productivity/game-design/SKILL.md",
       "computedHash": "79c2695ba9d1721fd05dab6833775ae43cfb6fce92357ef31c8341166fc5b5da"
     },
+    "programmatic-seo": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "skillPath": "skills/programmatic-seo/SKILL.md",
+      "computedHash": "e40eee11a367397e56e304fd646d582e276751ffd6f7275c64ea74b046cf5c22"
+    },
     "requesting-code-review": {
       "source": "obra/superpowers",
       "sourceType": "github",
