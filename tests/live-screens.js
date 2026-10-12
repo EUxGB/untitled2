@@ -11,7 +11,10 @@ const URL = process.argv[2], OUT = process.argv[3];
   const save = () => fs.writeFileSync(`${OUT}/info.json`, JSON.stringify({ url: URL, taken: new Date().toISOString(), shots: log }, null, 2));
   setTimeout(() => { log.push({ size:'—', error:'общий предел 25 минут: внешние базы не отвечают, снято не всё' }); save(); process.exit(0); }, 25 * 60e3).unref();
   for(const [w, h, name] of [[360, 640, 'android-360x640'], [390, 844, 'iphone-390x844'], [412, 915, 'android-412x915']]){
-    const ctx = await b.newContext({ viewport:{ width:w, height:h }, deviceScaleFactor:2, isMobile:true, hasTouch:true, locale:'ru-RU' });
+    // настоящая строка браузера телефона (2026-10-12): без неё сайт не узнаёт Android/iPhone и не показывает «Установить»
+    const userAgent = name.startsWith('iphone') ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1'
+      : 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36';
+    const ctx = await b.newContext({ viewport:{ width:w, height:h }, deviceScaleFactor:2, isMobile:true, hasTouch:true, locale:'ru-RU', userAgent });
     const p = await ctx.newPage(); const errs = [];
     await ctx.route('**/rest/v1/rpc/simit_ping', r => r.fulfill({ status:204, body:'' }));   // снимки CI — не «соседи» (2026-10-12)
     // внешние базы могут не отвечать — ни одна проверка не ждёт дольше 5 минут (было: задача висела 35 минут, снимки не сохранились)
@@ -20,7 +23,9 @@ const URL = process.argv[2], OUT = process.argv[3];
     p.on('pageerror', e => errs.push(e.message));
     await p.goto(URL, { waitUntil:'load' }); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1500);
     const info = await p.evaluate(() => ({ version: (document.getElementById('appVersion') || {}).textContent,
-      fonts: [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.weight) }));
+      fonts: [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.weight),
+      install: (() => { setMode('city'); const i = document.getElementById('installBtn'); return !!(i && !i.hidden && i.offsetParent); })(),
+      reset: !!document.getElementById('rsStart'), neighbours: !!document.getElementById('gbNbTile') }));
     for(const tab of ['city', 'memory', 'phrases', 'listen', 'free', 'progress']){
       await p.evaluate(t => document.getElementById('tab-' + t).click(), tab); await p.waitForTimeout(1200);   // подвкладки тренировки скрыты вне неё
       if(await p.isVisible('#modal')) await p.keyboard.press('Escape');
