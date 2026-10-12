@@ -170,7 +170,7 @@ header{position:relative; padding-right:56px}
 body.hints .hintable{display:block !important}
 body.hints details.hintable{display:block !important}
 .btngrid{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; width:100%}
-.btngrid .btn{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:10px 4px; text-align:center; min-height:46px; font-size:14px}
+.btngrid .btn{white-space:normal; overflow:hidden; overflow-wrap:normal; line-height:1.2; padding:6px 6px; text-align:center; min-height:46px; font-size:14px}   /* длинная подпись — в две строки, а не «Повтор…» (21:09; было nowrap + многоточие) */
 @media (max-width:480px){ .btngrid{grid-template-columns:repeat(2, minmax(0,1fr))} .card{padding:20px 14px} .btngrid .btn{font-size:15px} }
 .btngrid .wide{grid-column:1 / -1}
 .btn.off{opacity:.45; pointer-events:none}
@@ -366,7 +366,7 @@ h1 span{color:inherit}
 .main-row{flex:none; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:10px; padding:10px 2px 10px}
 /* «Установить» на месте «?» (телефон, «Город»): значок над подписью, как в нижней панели — по ширине помещается и на 320 px */
 .topbar .tb-install{flex:none; flex-direction:column; gap:1px; width:auto; min-width:44px; height:44px; padding:0 6px; border-radius:12px; font:600 10px/1.1 var(--body)} .topbar .tb-install .ic{width:18px; height:18px; display:block}
-.main-row .pill{min-width:0; max-width:100%; padding:0 14px} .main-row .pill .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.main-row .pill{min-width:0; max-width:100%; padding:0 14px} .main-row .pill.noic .ic, .btngrid .btn.noic .ic{display:none} .main-row .pill.two .lbl{white-space:normal; line-height:1.1; text-align:center} .main-row .pill .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 /* цена «Показать» видна до нажатия (этап 1, п. 3; решение 2026-10-10) */
 .ct-show2{display:flex; flex-direction:column; align-items:flex-start; min-width:0; line-height:1.05} .ct-cost{font:400 9.5px/1.1 var(--body); color:var(--muted); white-space:normal; text-align:left}
 #ctShow.ct-showbtn{padding:0 8px; gap:6px} #ctShow .lbl{font-size:14px}
@@ -638,7 +638,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .bd-ic{position:absolute; left:50%; top:4px; width:62%; height:52%; transform:translateX(-50%); fill:none; stroke:var(--accent); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; opacity:.3; pointer-events:none}
 .bd-cell.event .bd-ic{stroke:var(--near)} .bd-cell.home .bd-ic{stroke:var(--bg); opacity:.45}
 .bd-tr{position:relative; font:700 9.5px/1.1 var(--body); letter-spacing:-.02em; text-shadow:0 0 3px var(--surface), 0 0 3px var(--surface)}
-.bd-ru{position:relative; font:500 7.5px/1.1 var(--body); color:var(--muted); letter-spacing:-.02em; text-shadow:0 0 3px var(--surface), 0 0 3px var(--surface)}
+.bd-ru{position:relative; white-space:normal; max-width:100%; text-align:center; font:500 7.5px/1.1 var(--body); color:var(--muted); letter-spacing:-.02em; text-shadow:0 0 3px var(--surface), 0 0 3px var(--surface)}
 .bd-cell.home .bd-tr, .bd-cell.home .bd-ru{text-shadow:none; color:var(--bg)} .bd-cell.home .bd-ru{opacity:.8}
 .bd-cell.event .bd-tr{font-size:14px}
 @media (min-width:400px){ .bd-tr{font-size:10.5px} .bd-ru{font-size:8.5px} }
@@ -1360,7 +1360,22 @@ function tokens(s){
   return norm(s).replace(/[.,!?;:"'«»…()\-–—]/g," ").split(/\s+/).filter(Boolean).map(w => NUM[w] || w);
 }
 // надпись кнопки меняется, иконка остаётся (иконки — SVG внутри кнопки)
-function setLbl(el, t){ const l = el.querySelector(".lbl"); (l || el).textContent = t; if(el.hasAttribute("aria-label")) el.setAttribute("aria-label", t); }
+function setLbl(el, t){ const l = el.querySelector(".lbl"); (l || el).textContent = t; if(el.hasAttribute("aria-label")) el.setAttribute("aria-label", t); if(l && el.closest(".main-row")) fitPill(el); }
+// Подписи не обрезаются (2026-10-12 21:09: «не помещаются на кнопках, проверь все подобные случаи»): не помещается — сначала убрать значок
+// у кнопки, потом уменьшить шрифт до предела; клетки поля и заголовок квартала — то же уменьшение. Окна — перенос на 2 строки (CSS).
+function fitText(el, box, min){ el.style.fontSize = ""; let fs = parseFloat(getComputedStyle(el).fontSize);
+  const over = () => el.scrollWidth > el.clientWidth || (box && el.getBoundingClientRect().width > box.clientWidth - 2);
+  while(fs > min && over()){ fs -= .5; el.style.fontSize = fs + "px"; } }
+function fitPill(p){ const l = p.querySelector(".lbl"); if(!l || !p.getClientRects().length) return; p.classList.remove("noic", "two"); l.style.fontSize = "";
+  const over = () => l.scrollWidth > l.clientWidth || l.scrollHeight > l.clientHeight + 1;
+  if(over()) p.classList.add("noic"); if(over() && /\s/.test(l.textContent.trim())) p.classList.add("two");   // два слова — в две строки
+  let fs = parseFloat(getComputedStyle(l).fontSize); while(fs > 11 && over()){ fs -= .5; l.style.fontSize = fs + "px"; } }
+function fitBtn(b){ if(!b.getClientRects().length) return; b.classList.remove("noic"); b.style.fontSize = "";   // кнопка сетки: одно длинное слово со значком
+  const over = () => b.scrollWidth > b.clientWidth; if(over() && b.querySelector(".ic")) b.classList.add("noic");
+  let fs = parseFloat(getComputedStyle(b).fontSize); while(fs > 11 && over()){ fs -= .5; b.style.fontSize = fs + "px"; } }
+function fitLabels(){ document.querySelectorAll(".main-row .pill").forEach(fitPill); document.querySelectorAll(".btngrid .btn").forEach(fitBtn);
+  document.querySelectorAll(".bd-cell").forEach(c => { if(c.getClientRects().length) c.querySelectorAll(".bd-tr, .bd-ru").forEach(e => fitText(e, c, 6.5)); });
+  const pl = document.getElementById("ctPlace"); if(pl && pl.getClientRects().length) fitText(pl, null, 10.5); }
 function setIc(el, name){ const u = el.querySelector(".ring use, :scope > svg use"); if(u) u.setAttribute("href", "#i-" + name); }
 function esc(s){ return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -2131,6 +2146,7 @@ function showModal(o){
   S.hidden = !o.secondary; if(o.secondary) S.textContent = o.secondary.label;
   const grid = $("modalStats").parentElement.querySelector(".btngrid");
   grid.classList.toggle("two", !!o.secondary); grid.classList.toggle("one", !o.secondary);
+  [P, S].forEach(fitBtn);
   P.onclick = () => { closeModal(); o.primary && o.primary.fn && o.primary.fn(); };
   S.onclick = () => { closeModal(); o.secondary && o.secondary.fn && o.secondary.fn(); };
   $("modal").hidden = false; setTimeout(() => P.focus(), 50);
@@ -5748,7 +5764,7 @@ function cityDayEnd(){
   city.carry = cityPlanIds().filter(id => SCENES[id] && !cityDoneId(id)); citySave();
   const carryTxt = city.carry.length ? ` Не успели: ${city.carry.map(id => SCENES[id].title).join(", ")} — перенесено на завтра.` : "";
   const wait = !cityCanNewDay(), waitTxt = wait ? " Новые дела откроются завтра. Пока можно заходить к людям, звонить и повторять фразы — квартал открыт." : "";
-  const next = wait ? { label:"Новые дела — завтра", fn:cityRender } : { label:"Новый день", fn:cityNewDay };
+  const next = wait ? { label:"В квартал", fn:cityRender }   /* 21:10: «Новые дела — завтра» читалось как действие; что дела завтра — сказано в тексте окна */ : { label:"Новый день", fn:cityNewDay };
   showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${dayDone.length}.${carryTxt} ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}${waitTxt}`,
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
     primary: city.todaySaid.length ? { label:`Повторить фразы дня (${Math.min(5, city.todaySaid.length)})`, fn:cityReview } : next,
@@ -7873,7 +7889,7 @@ function fitWord(){
 function autofit(){
   const t = $("target");                                   // сначала слово в одну строку в полном размере — подгонка по высоте считает его таким
   if(t){ t.classList.toggle("oneword", !!t.offsetParent && !t.classList.contains("phrase") && !/\s/.test(t.textContent.trim())); t.style.setProperty("--wfit", 1); }
-  autofitHeight(); fitWord();
+  autofitHeight(); fitWord(); fitLabels();
 }
 function autofitHeight(){
   const app = document.querySelector(".app"); if(!app) return;

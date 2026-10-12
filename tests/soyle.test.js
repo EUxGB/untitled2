@@ -2606,7 +2606,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       out.after = [city.day, city.calDay === today, city.money === money];
       return out; });
     const errs = q.errors; await q.context().close();
-    eq(r.cal0, true); ok(/завтра/i.test(r.same[0]) && /завтра/i.test(r.same[1]), JSON.stringify(r.same)); eq(r.day1, 1, 'в тот же день — без нового дня');
+    eq(r.cal0, true); eq(r.same[0], 'В квартал', 'кнопка называет действие (21:10: «Новые дела — завтра» читалось как действие)'); ok(/завтра/i.test(r.same[1]), 'что дела завтра — сказано в тексте: ' + r.same[1]); eq(r.day1, 1, 'в тот же день — без нового дня');
     eq(r.next, 'Новый день'); eq(r.after, [2, true, true], 'после пропуска — один новый день, деньги те же (вт — без аренды)'); eq(errs, []);
   });
   await test('Этап 1 (одобрено 2026-10-11 19:58): торг у водовоза (две бутыли — 150 вместо 160) и у знакомого Хасана (−5 ₺); воскресенье — «Хозяин квартиры»: аренда в разговоре (в понедельник не списывается), нехватка — в долг, провал — долг и повтор в понедельник без второй оплаты', async () => {
@@ -2892,6 +2892,35 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       v.push(...(await q.evaluate(async () => (await axe.run(document, { runOnly:['wcag2a','wcag2aa','wcag21aa'] })).violations.map(x => x.id))).map(id => m + ':' + id));
     }
     await q.context().close(); eq(v, []);
+  });
+  // ---- Подписи не обрезаются (2026-10-12 21:09: «Новые дела и повторить фразы не помещаются на кнопках, проверь все подобные случаи») ----
+  await test('подписи не обрезаются (21:09): кнопки окон, «Дальше/Запомнил/Сравнить…» внизу, клетки поля и заголовок квартала — на 320, 360, 390, 412 px во всех разделах; кнопка итога дня — «В квартал»', async () => {
+    const q = await openPage(browser), bad = [];
+    const CUT = () => { const out = [];
+      document.querySelectorAll('button, a, .lbl, .ct-place, .bd-tr, .bd-ru, summary, .chip').forEach(e => { if(e.classList.contains('sr') || !e.getClientRects().length) return;
+        const cs = getComputedStyle(e), r = e.getBoundingClientRect(); if(r.width < 1 || cs.visibility === 'hidden') return;
+        if((cs.overflowX !== 'visible' && e.scrollWidth > e.clientWidth)   /* без допуска: лишний 1 px уже даёт «Сравни…» */ || (cs.overflowY === 'hidden' && e.scrollHeight > e.clientHeight + 2)) out.push('обрезано: ' + (e.id || e.className) + ' «' + e.textContent.trim().slice(0, 30) + '»');
+        const cell = e.closest('.bd-cell'); if(cell && e !== cell){ const c = cell.getBoundingClientRect(); if(r.left < c.left - .5 || r.right > c.right + .5) out.push('не помещается в клетку: «' + e.textContent + '»'); if(parseFloat(cs.fontSize) < 6.5) out.push('слишком мелко: «' + e.textContent + '» ' + cs.fontSize); }
+        if(e.closest('.main-row') && e.classList.contains('lbl') && parseFloat(cs.fontSize) < 11) out.push('мелко: «' + e.textContent + '» ' + cs.fontSize); });
+      return [...new Set(out)]; };
+    const LBL = { memory:{ next:['Запомнил', 'Показать', 'Ещё 5 новых', 'Пропустить'] }, phrases:{ compare:['Сравнить', 'Моя запись', 'Записать себя'], next:['Дальше'] } };
+    for(const [w, h] of [[320, 640], [360, 640], [390, 844], [412, 915]]){ await q.setViewportSize({ width:w, height:h });
+      for(const m of ['city', 'memory', 'phrases', 'listen', 'free', 'grammar', 'progress']){ await q.evaluate(m => setMode(m), m); await q.waitForTimeout(200);
+        (await q.evaluate(CUT)).forEach(x => bad.push(w + ' ' + m + ': ' + x));
+        for(const [id, list] of Object.entries(LBL[m] || {})) for(const t of list){ const r = await q.evaluate(([id, t]) => { const b = document.getElementById(id); b.disabled = false; setLbl(b, t); const l = b.querySelector('.lbl'); return l.scrollWidth > l.clientWidth ? 'обрезано' : ''; }, [id, t]);
+          if(r) bad.push(w + ' ' + m + ': «' + t + '» ' + r); } }
+      // разговор в квартале (внизу «Показать» и «Дальше»)
+      await q.evaluate(() => { setMode('city'); cityStart('bakkal'); }); await q.waitForTimeout(300); (await q.evaluate(CUT)).forEach(x => bad.push(w + ' сцена: ' + x)); await q.evaluate(() => { cityLeave(); ct = null; cityRender(); });
+      // окна: самые длинные подписи кнопок
+      for(const [P, S] of [['Повторить фразы дня (5)', 'В квартал'], ['Да, удалить всё', 'Отмена'], ['Новый день', 'Остаться']]){
+        await q.evaluate(([P, S]) => showModal({ title:'Проверка', text:'x', primary:{ label:P }, secondary:{ label:S } }), [P, S]); await q.waitForTimeout(50);
+        (await q.evaluate(CUT)).filter(x => /modal/.test(x)).forEach(x => bad.push(w + ' окно: ' + x));
+        const hh = await q.evaluate(() => ['modalPrimary', 'modalSecondary'].map(id => document.getElementById(id).getBoundingClientRect().height)); if(hh.some(v => v < 44)) bad.push(w + ' окно: кнопка ниже 44 px');
+        await q.evaluate(() => closeModal()); } }
+    // итог дня, когда новые дела только завтра: кнопка называет действие, а не дату
+    const lab = await q.evaluate(() => { setMode('city'); city.todaySaid = ['Merhaba.']; city.calDay = dayStr(new Date()); window.__calendar = true; cityDayEnd(); const r = [document.getElementById('modalPrimary').textContent, document.getElementById('modalSecondary').textContent]; closeModal(); return r; });
+    eq(lab[1], 'В квартал', 'вторая кнопка итога дня');
+    eq(bad, []); eq(q.errors, []); await q.context().close();
   });
   // ---- Страницы ситуаций для поиска (2026-10-12: «Мне нравится, делай»; навыки programmatic-seo, ai-seo, schema) ----
   await test('страницы ситуаций для поиска: адрес #phrases=<тема> открывает приложение сразу на этой теме фраз', async () => {
