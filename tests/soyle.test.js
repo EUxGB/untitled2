@@ -2424,7 +2424,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.tabs, ['Дела', 'Люди', 'Умения']); eq(r.people, [['sofor', 'свой'], ['bakkal', 'знакомый']]); eq(r.visible, [true, false]);
     eq(r.card[0], 'Шофёр Али'); ok(/Разговорчивый/.test(r.card[1]) && /Такси до Таксима/.test(r.card[1]) && /свой/.test(r.card[1]), r.card[1]);
     eq(r.skills, [['kulak', '0', '0%'], ['dil', '1', '50%'], ['pazarlik', '0', '0%'], ['nezaket', '0', '0%']]);   // полоса — доля до следующего порога: dil 4 из 8
-    eq(r.back, [false, 'tasks']); eq(r.tile, ['день 1 · неделя 1', 'дел хорошо 2 из 2 · 1700 ₺ · знакомых 2']);   // 2026-10-11: старт 1700; played: taxi n 2, ok 2
+    eq(r.back, [false, 'tasks']); eq(r.tile, ['день 1', 'неделя 1 · дел хорошо 2 из 2 · 1700 ₺ · знакомых 2']);   /* 21:40: неделя — во второй строке, иначе плитка в 2 строки сбивала соседнюю */   // 2026-10-11: старт 1700; played: taxi n 2, ok 2
     eq(r.badges.slice(0, 2), [true, true]); eq(errs, []);   // 2026-10-11: эта проверка была случайно закомментирована (стояла после «//»); число медалей проверяет тест «медали»
   });
   await test('Сцены недели 1: аптека — дозировка числом на слух (Zeynep ≥3 — два варианта, ≥6 — без вопроса о рецепте, после 19:00 — дежурная), звонок за водой (#num адрес), Айше-тейзе (терпение 4, чай/отказ), уста — «elinize sağlık» ценит, ≥3 чай угощение', async () => {
@@ -2901,10 +2901,10 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         const cs = getComputedStyle(e), r = e.getBoundingClientRect(); if(r.width < 1 || cs.visibility === 'hidden') return;
         if((cs.overflowX !== 'visible' && e.scrollWidth > e.clientWidth)   /* без допуска: лишний 1 px уже даёт «Сравни…» */ || (cs.overflowY === 'hidden' && e.scrollHeight > e.clientHeight + 2)) out.push('обрезано: ' + (e.id || e.className) + ' «' + e.textContent.trim().slice(0, 30) + '»');
         const cell = e.closest('.bd-cell'); if(cell && e !== cell){ const c = cell.getBoundingClientRect(); if(r.left < c.left - .5 || r.right > c.right + .5) out.push('не помещается в клетку: «' + e.textContent + '»'); if(parseFloat(cs.fontSize) < 6.5) out.push('слишком мелко: «' + e.textContent + '» ' + cs.fontSize); }
-        if(e.closest('.main-row') && e.classList.contains('lbl') && parseFloat(cs.fontSize) < 11) out.push('мелко: «' + e.textContent + '» ' + cs.fontSize); });
+        if(e.closest('.main-row') && e.classList.contains('lbl') && parseFloat(cs.fontSize) < 10) out.push('мелко: «' + e.textContent + '» ' + cs.fontSize); });
       return [...new Set(out)]; };
     const LBL = { memory:{ next:['Запомнил', 'Показать', 'Ещё 5 новых', 'Пропустить'] }, phrases:{ compare:['Сравнить', 'Моя запись', 'Записать себя'], next:['Дальше'] } };
-    for(const [w, h] of [[320, 640], [360, 640], [390, 844], [412, 915]]){ await q.setViewportSize({ width:w, height:h });
+    for(const [w, h] of [[300, 640], [320, 640], [360, 640], [390, 844], [412, 915]]){ await q.setViewportSize({ width:w, height:h });   // 300 — запас: в CI шрифт шире (CI уронил 320)
       for(const m of ['city', 'memory', 'phrases', 'listen', 'free', 'grammar', 'progress']){ await q.evaluate(m => setMode(m), m); await q.waitForTimeout(200);
         (await q.evaluate(CUT)).forEach(x => bad.push(w + ' ' + m + ': ' + x));
         for(const [id, list] of Object.entries(LBL[m] || {})) for(const t of list){ const r = await q.evaluate(([id, t]) => { const b = document.getElementById(id); b.disabled = false; setLbl(b, t); const l = b.querySelector('.lbl'); return l.scrollWidth > l.clientWidth ? 'обрезано' : ''; }, [id, t]);
@@ -2920,6 +2920,17 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     // итог дня, когда новые дела только завтра: кнопка называет действие, а не дату
     const lab = await q.evaluate(() => { setMode('city'); city.todaySaid = ['Merhaba.']; city.calDay = dayStr(new Date()); window.__calendar = true; cityDayEnd(); const r = [document.getElementById('modalPrimary').textContent, document.getElementById('modalSecondary').textContent]; closeModal(); return r; });
     eq(lab[1], 'В квартал', 'вторая кнопка итога дня');
+    eq(bad, []); eq(q.errors, []); await q.context().close();
+  });
+  await test('«Прогресс» → статистика (21:40: «сбивается прогресс на разных строчках»): в одной строке сетки проценты и полоски на одной высоте, даже если название в 2 строки', async () => {
+    const q = await openPage(browser), bad = [];
+    await q.evaluate(() => { ['ct', 'gram', 'mem-rec', 'mem-prod', 'listenph', 'ph-hotel', 'w-shop', 'free', 'ph-health'].forEach((id, i) => stats[id] = { t:19 + i, ok:10 + i }); renderStats(); setMode('progress'); });
+    for(const w of [320, 360, 390, 412]){ await q.setViewportSize({ width:w, height:800 }); await q.waitForTimeout(150);
+      const rows = await q.evaluate(() => { const m = {}; document.querySelectorAll('#stats .stat').forEach(s => { const top = Math.round(s.getBoundingClientRect().top); (m[top] = m[top] || []).push([s.querySelector('.lab').textContent, s.querySelector('.num').getBoundingClientRect().top, s.querySelector('.bar').getBoundingClientRect().top]); }); return Object.values(m); });
+      if(w >= 360 && !rows.some(r => r.length > 1)) bad.push(w + ': нет строк из двух ячеек');   // на 320 — одна колонка
+      const tiles = await q.evaluate(() => { const m = {}; document.querySelectorAll('.pv-tile').forEach(t => { if(!t.offsetParent) return; const top = Math.round(t.getBoundingClientRect().top), k = t.children; (m[top] = m[top] || []).push([k[0].textContent, k[1].getBoundingClientRect().top, k[1].getBoundingClientRect().height, k[2] ? k[2].getBoundingClientRect().top : 0]); }); return Object.values(m); });
+      tiles.forEach(r => { const v = r.map(x => x[1]), hh = r.map(x => x[2]), sub = r.map(x => x[3]); if(Math.max(...v) - Math.min(...v) > 1 || Math.max(...hh) - Math.min(...hh) > 1 || Math.max(...sub) - Math.min(...sub) > 1) bad.push(w + ' плитки: ' + r.map(x => x[0]).join(' / ')); });
+      rows.forEach(r => { const n = r.map(x => x[1]), b = r.map(x => x[2]); if(Math.max(...n) - Math.min(...n) > 1 || Math.max(...b) - Math.min(...b) > 1) bad.push(w + ': ' + r.map(x => x[0]).join(' / ')); }); }
     eq(bad, []); eq(q.errors, []); await q.context().close();
   });
   // ---- Страницы ситуаций для поиска (2026-10-12: «Мне нравится, делай»; навыки programmatic-seo, ai-seo, schema) ----

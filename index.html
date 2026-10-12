@@ -110,7 +110,7 @@ kbd{font:12px var(--mono); border:1px solid var(--line); border-radius:4px; padd
 .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px}
 .stat{border-top:2px solid var(--line); padding-top:8px; display:flex; flex-direction:column; gap:4px}
 .stat .lab{font:600 14px var(--mono)}
-.stat .num{font-variant-numeric:tabular-nums; font-size:14px; color:var(--muted)}
+.stat .num{font-variant-numeric:tabular-nums; font-size:14px; color:var(--muted); margin-top:auto}   /* название в 2 строки — проценты и полоска всё равно вровень с соседней ячейкой (21:40) */
 .bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden}
 .bar i{display:block; height:100%; background:var(--ok)}
 h2{font:600 13px var(--body); text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0}
@@ -366,7 +366,7 @@ h1 span{color:inherit}
 .main-row{flex:none; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:10px; padding:10px 2px 10px}
 /* «Установить» на месте «?» (телефон, «Город»): значок над подписью, как в нижней панели — по ширине помещается и на 320 px */
 .topbar .tb-install{flex:none; flex-direction:column; gap:1px; width:auto; min-width:44px; height:44px; padding:0 6px; border-radius:12px; font:600 10px/1.1 var(--body)} .topbar .tb-install .ic{width:18px; height:18px; display:block}
-.main-row .pill{min-width:0; max-width:100%; padding:0 14px} .main-row .pill.noic .ic, .btngrid .btn.noic .ic{display:none} .main-row .pill.two .lbl{white-space:normal; line-height:1.1; text-align:center} .main-row .pill .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.main-row .pill{min-width:0; max-width:100%; padding:0 14px} .main-row .pill.noic .ic, .btngrid .btn.noic .ic{display:none} .main-row .pill.tight{padding:0 6px} .main-row .pill.two .lbl{white-space:normal; line-height:1.1; text-align:center} .main-row .pill .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 /* цена «Показать» видна до нажатия (этап 1, п. 3; решение 2026-10-10) */
 .ct-show2{display:flex; flex-direction:column; align-items:flex-start; min-width:0; line-height:1.05} .ct-cost{font:400 9.5px/1.1 var(--body); color:var(--muted); white-space:normal; text-align:left}
 #ctShow.ct-showbtn{padding:0 8px; gap:6px} #ctShow .lbl{font-size:14px}
@@ -1366,16 +1366,17 @@ function setLbl(el, t){ const l = el.querySelector(".lbl"); (l || el).textConten
 function fitText(el, box, min){ el.style.fontSize = ""; let fs = parseFloat(getComputedStyle(el).fontSize);
   const over = () => el.scrollWidth > el.clientWidth || (box && el.getBoundingClientRect().width > box.clientWidth - 2);
   while(fs > min && over()){ fs -= .5; el.style.fontSize = fs + "px"; } }
-function fitPill(p){ const l = p.querySelector(".lbl"); if(!l || !p.getClientRects().length) return; p.classList.remove("noic", "two"); l.style.fontSize = "";
+function fitPill(p){ const l = p.querySelector(".lbl"); if(!l || !p.getClientRects().length) return; p.classList.remove("noic", "two", "tight"); l.style.fontSize = "";
   const over = () => l.scrollWidth > l.clientWidth || l.scrollHeight > l.clientHeight + 1;
   if(over()) p.classList.add("noic"); if(over() && /\s/.test(l.textContent.trim())) p.classList.add("two");   // два слова — в две строки
-  let fs = parseFloat(getComputedStyle(l).fontSize); while(fs > 11 && over()){ fs -= .5; l.style.fontSize = fs + "px"; } }
+  if(over()) p.classList.add("tight"); let fs = parseFloat(getComputedStyle(l).fontSize); while(fs > 10 && over()){ fs -= .5; l.style.fontSize = fs + "px"; } }
 function fitBtn(b){ if(!b.getClientRects().length) return; b.classList.remove("noic"); b.style.fontSize = "";   // кнопка сетки: одно длинное слово со значком
   const over = () => b.scrollWidth > b.clientWidth; if(over() && b.querySelector(".ic")) b.classList.add("noic");
   let fs = parseFloat(getComputedStyle(b).fontSize); while(fs > 11 && over()){ fs -= .5; b.style.fontSize = fs + "px"; } }
 function fitLabels(){ document.querySelectorAll(".main-row .pill").forEach(fitPill); document.querySelectorAll(".btngrid .btn").forEach(fitBtn);
   document.querySelectorAll(".bd-cell").forEach(c => { if(c.getClientRects().length) c.querySelectorAll(".bd-tr, .bd-ru").forEach(e => fitText(e, c, 6.5)); });
-  const pl = document.getElementById("ctPlace"); if(pl && pl.getClientRects().length) fitText(pl, null, 10.5); }
+  const pl = document.getElementById("ctPlace"); if(pl && pl.getClientRects().length){ if(pl.dataset.full) pl.textContent = pl.dataset.full; fitText(pl, null, 11);
+    if(pl.scrollWidth > pl.clientWidth && pl.dataset.short){ pl.textContent = pl.dataset.short; fitText(pl, null, 10); } } }
 function setIc(el, name){ const u = el.querySelector(".ring use, :scope > svg use"); if(u) u.setAttribute("href", "#i-" + name); }
 function esc(s){ return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -2104,7 +2105,7 @@ function renderGame(){
   $("gbLevelRing").style.strokeDashoffset = 263.9 * (1 - part); $("gbLevel2").textContent = L;
   $("gbBlitz").textContent = game.blitzBestPh || 0;
   if(typeof city !== "undefined" && city){ const okN = Object.values(city.played || {}).reduce((a, p) => a + (p.ok || 0), 0), n = Object.values(city.played || {}).reduce((a, p) => a + (p.n || 0), 0);
-    $("gbCity").textContent = `день ${city.day} · неделя ${Math.ceil(city.day / 7)}`; $("gbCitySub").textContent = `дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}${(() => { const f = Object.entries(city.feedback || {}).sort((a, b) => b[0] - a[0])[0]; return f ? ` · продолжить: ${f[1]}` : ""; })()}`; }
+    $("gbCity").textContent = `день ${city.day}`; $("gbCitySub").textContent = `неделя ${Math.ceil(city.day / 7)} · дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}${(() => { const f = Object.entries(city.feedback || {}).sort((a, b) => b[0] - a[0])[0]; return f ? ` · продолжить: ${f[1]}` : ""; })()}`; }
   { const m = memStats(); $("gbMem").textContent = m.strong; $("gbMemSub").textContent = `прочно (3+ нед.) · всего ${m.total} · сегодня ${m.today}`; }
   $("gbBlitzSub").textContent = "фраз за минуту";
   $("gbFreeze").textContent = game.freezes;
@@ -5025,6 +5026,7 @@ function cityRender(){
     showModal({ ic:"Kampanya", title:"Кампания «Первый месяц»", text:"Вы здесь уже освоились: деньги, знакомые и умения — с вами. Кампания начинается с недели 1: у каждой недели своя цель, в воскресенье — итог.", primary:{ label:"Дальше" } }); }
   ctEl("ctHome").hidden = !home; ctEl("ctScene").hidden = home;
   ctEl("ctPlace").textContent = home ? `Mahalle (квартал) · ${DOW_RU[cityDow()]}, день ${city.day}` : ct.scene.place;
+  ctEl("ctPlace").dataset.full = ctEl("ctPlace").textContent; ctEl("ctPlace").dataset.short = home ? `Mahalle · ${DOW_RU[cityDow()]}, день ${city.day}` : "";   // узкий экран: без «(квартал)»
   cityRes();
   if(home) cityBoard();
   scheduleFit();
