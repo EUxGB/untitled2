@@ -13,6 +13,7 @@ const URL = process.argv[2], OUT = process.argv[3];
   for(const [w, h, name] of [[360, 640, 'android-360x640'], [390, 844, 'iphone-390x844'], [412, 915, 'android-412x915']]){
     const ctx = await b.newContext({ viewport:{ width:w, height:h }, deviceScaleFactor:2, isMobile:true, hasTouch:true, locale:'ru-RU' });
     const p = await ctx.newPage(); const errs = [];
+    await ctx.route('**/rest/v1/rpc/simit_ping', r => r.fulfill({ status:204, body:'' }));   // снимки CI — не «соседи» (2026-10-12)
     // внешние базы могут не отвечать — ни одна проверка не ждёт дольше 5 минут (было: задача висела 35 минут, снимки не сохранились)
     const ev0 = p.evaluate.bind(p);
     p.evaluate = (fn, arg) => { let t; return Promise.race([ev0(fn, arg), new Promise((_, no) => { t = setTimeout(() => no(new Error('проверка дольше 5 минут: внешняя база не отвечает')), 300000); })]).finally(() => clearTimeout(t)); };
