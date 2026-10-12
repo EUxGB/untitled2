@@ -73,7 +73,7 @@
   "ki": {
    "f": "-ki",
    "n": "«тот, что относится к…»",
-   "rule": "deriv"
+   "rule": "deriv_ki"
   },
   "li": {
    "f": "-lı/-li/-lu/-lü",
@@ -88,22 +88,22 @@
   "lik": {
    "f": "-lık/-lik/-luk/-lük",
    "n": "на срок / для / состояние",
-   "rule": "deriv"
+   "rule": "deriv_job"
   },
   "ci": {
    "f": "-cı/-ci/-çı/-çi",
    "n": "тот, кто занимается",
-   "rule": "deriv"
+   "rule": "deriv_job"
   },
   "ca": {
    "f": "-ça/-çe/-ca/-ce",
    "n": "по-…, на языке",
-   "rule": "deriv"
+   "rule": "deriv_job"
   },
   "nci": {
    "f": "-(ı)ncı/-(i)nci",
    "n": "порядковое число (-й)",
-   "rule": "deriv"
+   "rule": "deriv_ki"
   },
   "cop1s": {
    "f": "-(y)ım/-(y)im",
