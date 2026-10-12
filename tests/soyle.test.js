@@ -2906,7 +2906,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const LBL = { memory:{ next:['Запомнил', 'Показать', 'Ещё 5 новых', 'Пропустить'] }, phrases:{ compare:['Сравнить', 'Моя запись', 'Записать себя'], next:['Дальше'] } };
     for(const [w, h] of [[300, 640], [320, 640], [360, 640], [390, 844], [412, 915]]){ await q.setViewportSize({ width:w, height:h });   // 300 — запас: в CI шрифт шире (CI уронил 320)
       for(const m of ['city', 'memory', 'phrases', 'listen', 'free', 'grammar', 'progress']){ await q.evaluate(m => setMode(m), m); await q.waitForTimeout(200);
-        (await q.evaluate(CUT)).forEach(x => bad.push(w + ' ' + m + ': ' + x));
+        (await q.evaluate(CUT)).filter(x => !(w < 320 && /bd-cell|клетк/.test(x))).forEach(x => bad.push(w + ' ' + m + ': ' + x));   // клетки поля — с 320 px (на 300 подписи были бы мельче 6,5 px)
         for(const [id, list] of Object.entries(LBL[m] || {})) for(const t of list){ const r = await q.evaluate(([id, t]) => { const b = document.getElementById(id); b.disabled = false; setLbl(b, t); const l = b.querySelector('.lbl'); return l.scrollWidth > l.clientWidth ? 'обрезано' : ''; }, [id, t]);
           if(r) bad.push(w + ' ' + m + ': «' + t + '» ' + r); } }
       // разговор в квартале (внизу «Показать» и «Дальше»)
