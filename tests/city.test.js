@@ -81,6 +81,19 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
     await q.context().close(); eq(r, []);
   });
 
+  // Жалоба 2026-10-12 21:06: «при нажатии в диалоге на Otuz пишет „отдельного перевода нет“, это ведь 30». Проверка выше смотрела только реплики игрока (say);
+  // слова собеседника, светские реплики и цены такси, собранные из чисел (trNumWords), не проверялись — 171 слово было без перевода.
+  await test('каждое слово, которое звучит в квартале (реплики собеседников, светские, карты колоды, цены такси), нажимается с переводом', async () => {
+    const q = await open();
+    const r = await q.evaluate(() => { const miss = new Set();
+      const chk = t => t.split(/\s+/).forEach(w0 => { const w = w0.replace(/^[^\p{L}]+|[^\p{L}']+$/gu, ''); if(nphr(w) && !wordGloss(w) && !morphOf(w)) miss.add(w); });
+      ttsInventory().forEach(chk);
+      for(let n = 0; n <= 9999; n++) chk(trNumWords(n));   // любая цена словами: каждое число — отдельное слово
+      return { miss:[...miss], otuz: (wordGloss('Otuz') || {}).ctx || '', bin: (wordGloss('bin') || {}).ctx || '' }; });
+    await q.context().close();
+    eq(r.miss, [], 'слова без перевода:'); ok(/30/.test(r.otuz), `Otuz: «${r.otuz}»`); ok(/1000/.test(r.bin), `bin: «${r.bin}»`);
+  });
+
   console.log('Сцены «Города»: бот проходит каждую сцену');
   // policy: happy — первый видимый ход сказан верно; last — последний видимый ход (другие ветки, крупная купюра); fail — тишина до конца терпения; phone — «Показать» в каждом узле
   async function playScene(q, id, policy, seed = 0){
