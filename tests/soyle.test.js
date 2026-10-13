@@ -2954,6 +2954,24 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return out; });
     ok(/kitap \(книга\)/.test(r.kitap), r.kitap); eq(r.bad, []); eq(q.errors, []); await q.context().close();
   });
+  await test('восклицания в окнах — с переводом мелко снизу (09:08: «Harika и другие восклицания… должны быть снизу переведены мелким шрифтом»); всплывающее сообщение помещается на экране (09:10: «Правило усвоено… не помещается»)', async () => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8'), heads = new Set();
+    for(const m of src.matchAll(/(?:showModal|milestone)\(\{ *ic: *([^,]+?),/g)) for(const w of m[1].matchAll(/"([^"]+)"/g)) if(/^[A-ZÇĞİÖŞÜ][A-Za-zÇĞİÖŞÜçğıöşü]/.test(w[1])) heads.add(w[1]);   // заголовки — с большой буквы (строчные — значения сравнений: kind === "ok")
+    ok(heads.size >= 15, 'восклицаний найдено: ' + heads.size);
+    const q = await openPage(browser), bad = [];
+    for(const [w, h] of [[320, 640], [360, 640], [412, 915]]){ await q.setViewportSize({ width:w, height:h });
+      for(const ic of heads){ const r = await q.evaluate(ic => { showModal({ ic, title:'Проверка', text:'x' }); const e = document.getElementById('modalIcRu'), i = document.getElementById('modalIc');
+          const res = { t:e && !e.hidden ? e.textContent : '', fs:e ? parseFloat(getComputedStyle(e).fontSize) : 0, ifs:parseFloat(getComputedStyle(i).fontSize), below:e ? e.getBoundingClientRect().top >= i.getBoundingClientRect().bottom - 2 : false, cut:e ? e.scrollWidth > e.clientWidth : false };
+          closeModal(); return res; }, ic);
+        if(!/[а-яё]/i.test(r.t)) bad.push(w + ' «' + ic + '»: нет перевода'); else if(!(r.fs < r.ifs / 2) || !r.below || r.cut) bad.push(w + ' «' + ic + '»: перевод не мелко снизу ' + JSON.stringify(r)); }
+      // всплывающие сообщения: самые длинные — в пределах экрана, без обрезки
+      const longest = await q.evaluate(() => 'Правило освоено: ' + GRAMMAR.map(g => g.t).sort((a, b) => b.length - a.length)[0]);
+      for(const t of [longest, 'Тихо. Ничего не случилось — редкость для этого квартала.', 'Pazartesi: maaş +3500 ₺, kira −1800 ₺']){
+        const r = await q.evaluate(t => { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('show'); const b = el.getBoundingClientRect(); const o = { l:b.left, r:b.right, sw:el.scrollWidth, cw:el.clientWidth, vw:innerWidth }; el.classList.remove('show'); return o; }, t);
+        await q.waitForTimeout(50);
+        if(r.l < 0 || r.r > r.vw || r.sw > r.cw) bad.push(w + ' сообщение не помещается: «' + t.slice(0, 40) + '» ' + JSON.stringify(r)); } }
+    eq(bad, []); eq(q.errors, []); await q.context().close();
+  });
   // ---- Страницы ситуаций для поиска (2026-10-12: «Мне нравится, делай»; навыки programmatic-seo, ai-seo, schema) ----
   await test('страницы ситуаций для поиска: адрес #phrases=<тема> открывает приложение сразу на этой теме фраз', async () => {
     const q = await openPage(browser); await q.evaluate(() => { try { localStorage.setItem('soyle-kind', 'words'); } catch(e){} });

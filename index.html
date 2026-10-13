@@ -460,6 +460,8 @@ h1 span{color:inherit}
 .modal-box h3{font:700 20px/1.25 var(--body)}
 .ms{background:var(--bg)} .ms b{font:700 24px/1.1 var(--display)}
 .toast{background:var(--ink); color:var(--surface); font:600 14px var(--body); transform:translate(-50%,-200px)}
+.toast{white-space:normal; max-width:calc(100vw - 32px); width:max-content; text-align:center; border-radius:18px; line-height:1.3}   /* длинное «Правило освоено: …» — в две строки (09:10) */
+.modal-ic-ru{font:500 13px/1.3 var(--body); color:var(--muted); margin-top:-6px; text-align:center}
 .toast:empty{display:none}
 .warn{background:var(--near-soft)}
 @media (max-height:700px){
@@ -1136,7 +1138,7 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
 </div>
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-box">
-    <div class="modal-medal" id="modalMedal" hidden></div><div class="modal-ic" id="modalIc" lang="tr" translate="no"></div>
+    <div class="modal-medal" id="modalMedal" hidden></div><div class="modal-ic" id="modalIc" lang="tr" translate="no"></div><div class="modal-ic-ru" id="modalIcRu" hidden></div>
     <h3 id="modalTitle"></h3>
     <p id="modalText"></p>
     <div class="modal-stats" id="modalStats"></div>
@@ -2131,11 +2133,17 @@ function showNextToast(){
 }
 
 // ---------- окно-праздник ----------
+// Турецкое восклицание крупно, перевод — мелко под ним (просьба 2026-10-13 09:08). Новое восклицание в окне — дописать сюда (тест найдёт пропуск).
+const IC_RU = { "Aferin!":"Молодец!", "Mükemmel!":"Превосходно!", "Devam!":"Продолжаем!", "Harika!":"Здорово!", "Tebrikler!":"Поздравляем!", "Efsane!":"Легенда!",
+  "Rekor!":"Рекорд!", "Süre doldu":"Время вышло", "Seviye!":"Новый уровень!", "Günaydın!":"Доброе утро!", "Hoş geldin!":"Добро пожаловать!", "Hafta!":"Неделя!",
+  "Hafta":"Неделя", "Kampanya":"Кампания", "Mahalle":"Квартал", "Sıfırdan":"С нуля", "Taksi!":"Такси!", "Kira":"Аренда", "Kim o?":"Кто там?", "Buyurun?":"Прошу, заходите?",
+  "Olur.":"Ладно, сойдёт.", "Olmadı.":"Не вышло." };
 const modalQueue = []; let modalOpen = false;
 function showModal(o){
   if(modalOpen){ modalQueue.push(o); return; }
   modalOpen = true;
   if(o.icHtml) $("modalIc").innerHTML = o.icHtml; else $("modalIc").textContent = o.ic || "Aferin!";
+  { const ru = o.icHtml ? "" : (o.icRu || IC_RU[o.ic || "Aferin!"] || ""); $("modalIcRu").textContent = ru; $("modalIcRu").hidden = !ru; }   // перевод восклицания мелко снизу (2026-10-13 09:08)
   $("modalMedal").innerHTML = o.medal ? medalHtml(o.medal, true, true) : ""; $("modalMedal").hidden = !o.medal;
   $("modalTitle").textContent = o.title || ""; $("modalText").textContent = o.text || "";
   $("modalStats").innerHTML = (o.stats || []).map(([l, v]) => `<div class="ms"><b>${esc(String(v))}</b><span>${esc(l)}</span></div>`).join("");
