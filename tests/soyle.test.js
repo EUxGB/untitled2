@@ -2933,6 +2933,27 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       rows.forEach(r => { const n = r.map(x => x[1]), b = r.map(x => x[2]); if(Math.max(...n) - Math.min(...n) > 1 || Math.max(...b) - Math.min(...b) > 1) bad.push(w + ': ' + r.map(x => x[0]).join(' / ')); }); }
     eq(bad, []); eq(q.errors, []); await q.context().close();
   });
+  await test('перевод в вопросах упражнений (2026-10-13 08:58: «Нажмите на ПОСЛЕДНЮЮ гласную в слове kitap — в скобках пиши перевод, если не указано, во всех подобных случаях»)', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    const r = await q.evaluate(() => { const out = { bad:[] };
+      // 1) «нажмите на последнюю гласную» — у каждого слова списка перевод в скобках, на экране
+      for(const w of gramRule('vowel').tap){ gram = { view:'quiz', rule:'vowel', qs:[gramMakeTap(w)], i:0, ok:0, done:false }; gramRender();
+        const t = document.querySelector('#gramView .gm-q').textContent; if(!new RegExp(w + ' \\([а-яё]').test(t)) out.bad.push('нет перевода: ' + t); }
+      gram = { view:'quiz', rule:'vowel', qs:[gramMakeTap('kitap')], i:0, ok:0, done:false }; gramRender(); out.kitap = document.querySelector('#gramView .gm-q').textContent;
+      // 2) готовые упражнения: слово без перевода, когда смысл не сказан по-русски в самом вопросе
+      const must = [['vowel', 'Последняя гласная в слове {okul}:', 'школа'], ['sounds', 'Буква {h} в слове {hava}:', 'погода'], ['where', 'Вопрос КУДА? Слово {okul} →', 'школа'], ['order', 'Какая частица после {gidiyor}?', 'идёт']];
+      for(const [id, q0, ru] of must){ const e = gramRule(id).ex.find(x => x.q.startsWith(q0.replace(/:$/, '').slice(0, 20))); if(!e){ out.bad.push('нет упражнения ' + q0); continue; }
+        const qs = gramBuildQuiz(gramRule(id)), all = [...qs.map(x => x.q)].join(' '); const one = gmFmt(gmQ(e.q, e.o[e.a])); if(!one.includes('(' + ru)) out.bad.push(id + ': ' + one.replace(/<[^>]+>/g, '')); }
+      // 3) перевод никогда не подсказывает ответ и не повторяет то, что уже сказано; вопросы «что значит…» — без перевода
+      for(const g of GRAMMAR) for(const e of g.ex){ const a = e.o[e.a], q1 = gmQ(e.q, a); if(q1 === e.q) continue;
+        if(/значит|означает|перев[оеи]д/i.test(e.q)) out.bad.push('перевод в вопросе о значении: ' + q1);
+        const added = [...q1.matchAll(/\} \(([^)]+)\)/g)].map(m => m[1]).filter(t => !e.q.includes('(' + t + ')'));
+        added.forEach(t => { const st = t.toLowerCase().split(/[^а-яё]+/).filter(x => x.length >= 4).map(x => x.slice(0, 4)); if(st.some(x => a.toLowerCase().includes(x))) out.bad.push('подсказка ответа: ' + q1 + ' → ' + a); }); }
+      if(/\(школа\)/.test(gmQ('Выберите вариант к слову {okul}', 'школа'))) out.bad.push('перевод совпал с ответом и всё равно добавлен');   // защита от подсказки ответа
+      if(!/\(школа\)/.test(gmQ('Выберите вариант к слову {okul}', 'okula'))) out.bad.push('без подсказки — перевод нужен');
+      return out; });
+    ok(/kitap \(книга\)/.test(r.kitap), r.kitap); eq(r.bad, []); eq(q.errors, []); await q.context().close();
+  });
   // ---- Страницы ситуаций для поиска (2026-10-12: «Мне нравится, делай»; навыки programmatic-seo, ai-seo, schema) ----
   await test('страницы ситуаций для поиска: адрес #phrases=<тема> открывает приложение сразу на этой теме фраз', async () => {
     const q = await openPage(browser); await q.evaluate(() => { try { localStorage.setItem('soyle-kind', 'words'); } catch(e){} });

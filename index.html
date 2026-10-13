@@ -7695,20 +7695,58 @@ function gramMakeBlocks(skip, lv){
     q:`Соберите фразу из блоков: «${sn.ru}». Слова: ${gl}. Порядок: кто · когда · где/куда · что · глагол (глагол — в конце).`, w:gmFmt(`{${word}}`) + " " + sn.b.map(x => x[1]).join(" · ") + "." };
 }
 const blocksHtml = m => `<span class="wm" translate="no">${m.parts.map(p => `<span class="wm-c"><b lang="tr">${esc(p.t)}</b><i>${esc(p.role || "")}</i></span>`).join("")}</span>`;
+// Перевод турецкого слова в вопросе упражнения (2026-10-13 08:58: «Нажмите на ПОСЛЕДНЮЮ гласную в слове kitap — в скобках пиши перевод
+// на русском в вопросе, если не указано, и во всех подобных случаях»). Перевод берётся только выверенный: из текстов уроков («{kitap} (книга)»,
+// «{okula} — в школу»), затем словарь фраз и корней (GM_GLOSS — дописанные вручную). Не добавляется: у окончаний и частей слова, если перевод
+// уже есть рядом или в самом вопросе, если вопрос спрашивает значение («что значит…») или перевод подсказал бы ответ.
+const GM_GLOSS = { geliyorum:"я прихожу", geliyorsun:"ты приходишь", banka:"банк", "ağaç":"дерево", at:"лошадь", almak:"брать, покупать", bak:"смотреть", "iç":"пить", olur:"будет", bugün:"сегодня", gidiyorum:"я иду", gidiyor:"идёт", iyi:"хороший, хорошо" };   // вручную: где словарь фраз даёт значение из другой ситуации
+const GM_PIECE = new Set(["iyor","ıyor","uyor","üyor","yor","um","ım","im","üm","sun","sın","sin","sün","uz","ız","iz","üz","sunuz","sınız","siniz","mek","mak","git-","gid","gid-","git"]);   // части слова — без перевода
+let GM_TRMAP = null;
+const gmLow = w => String(w).toLocaleLowerCase("tr");
+function gmTrMap(){
+  if(GM_TRMAP) return GM_TRMAP; GM_TRMAP = new Map();
+  const ok = t => /[а-яё]/i.test(t) && !/\d|урок|гласн|согласн|кубик|окончан|букв|слов|вариант|вопрос|корень|корня|форм|падеж|см\.|ниже|выше|по-турецки|в словаре|«[a-zçğıöşü]/i.test(t);
+  const add = (w, t) => { t = t.replace(/[«»"]/g, "").replace(/\s+/g, " ").trim(); const k = gmLow(w.trim()); if(k && ok(t) && t.length <= 32 && !GM_TRMAP.has(k)) GM_TRMAP.set(k, t); };
+  const scan = s => String(s).replace(/\{([^{}\-,/+\s][^{}+,/]*)\}\s*(?:\(([^(){}]{2,40})\)|—\s*([^,;.{}()]{2,40}))/g, (m, w, a, b) => { add(w, a || b); return m; });
+  GRAMMAR.forEach(g => { g.txt.forEach(scan); if(g.tbl) g.tbl.rows.forEach(r => r.forEach(scan)); g.ex.forEach(e => { scan(e.q); scan(e.w); }); });
+  return GM_TRMAP;
+}
+function gmGloss(w){
+  const k = gmLow(w); if(GM_GLOSS[k]) return GM_GLOSS[k]; if(GM_PIECE.has(k)) return null;
+  const clean = t => { t = String(t).split(" (")[0].replace(/[:;,.\s]+$/, "").trim(); return t && t.length <= 32 && !/[()]/.test(t) ? t : null; };
+  const r = ROOT_GLOSS[k + "mak"] || ROOT_GLOSS[k + "mek"] || ROOT_GLOSS[k]; if(r) return clean(r);   // корень глагола — словарное значение
+  for(const t of Object.keys(WORD_SEEDS)) for(const [tr, ru] of WORD_SEEDS[t]) if(gmLow(tr) === k && clean(ru)) return clean(ru);   // выверенные словари — раньше текстов уроков
+  const d = Object.keys(PHRASE_DICT).find(x => gmLow(x) === k); if(d && clean(PHRASE_DICT[d][0])) return clean(PHRASE_DICT[d][0]);
+  const m = gmTrMap().get(k); if(m && clean(m)) return clean(m);
+  if(k.length < 3) return null;
+  try { const g = wordGloss(w); if(g && g.ctx && clean(g.ctx)) return clean(g.ctx); } catch(e){}
+  return null;
+}
+const gmStem = t => gmLow(t).replace(/[^а-яё ]/g, " ").trim().split(/\s+/).filter(x => x.length >= 3).map(x => x.slice(0, Math.min(4, x.length)));
+function gmQ(q, ans){
+  if(/значит|означает|перев[оеи]д/i.test(q)) return q;                    // вопрос о значении — перевод был бы ответом
+  const plain = gmLow(q.replace(/\{[^{}]*\}/g, " ")), al = gmLow(ans || "");
+  return q.replace(/\{([^{}]+)\}(?!\s*[(—])/g, (m, w) => {
+    if(/^-|[,/+]|\s\+/.test(w) || w.length < 2) return m;
+    const t = gmGloss(w); if(!t) return m;
+    const st = gmStem(t); if(!st.length || st.some(x => plain.includes(x) || al.includes(x))) return m;   // уже сказано или подсказка ответа
+    return `${m} (${t})`;
+  });
+}
 function gramMakeTap(word){
   const a = [...word]; let li = 0; a.forEach((c, i) => { if(GM_VOW.includes(c)) li = i; });
   const vs = a.filter(c => GM_VOW.includes(c)), hard = "aıou".includes(a[li]), lastC = [...word].reverse().find(c => !GM_VOW.includes(c));
-  return { type:"tap", dyn:true, word, a:li, html:true, q:gmFmt(`Нажмите на ПОСЛЕДНЮЮ гласную в слове {${word}}`),
+  return { type:"tap", dyn:true, word, a:li, html:true, q:gmFmt(gmQ(`Нажмите на ПОСЛЕДНЮЮ гласную в слове {${word}}`)),
     w:gmFmt(`{${word}}: гласные — ${vs.join(", ")}. Последняя — {${a[li]}}, она ${hard ? "твёрдая → окончание берём с {a} (например, {-da})" : "мягкая → окончание берём с {e} (например, {-de})"}.`) + (lastC && !GM_VOW.includes(a[a.length - 1]) ? gmFmt(` Слово кончается на {${a[a.length - 1]}} — ${GM_VOICELESS.includes(a[a.length - 1]) ? "глухая: {d} в окончании станет {t}" : "звонкая: {d} остаётся"}.`) : "") };
 }
 function gramBuildQuiz(r){
-  if(r.sounds){ const mk = x => { const o = { type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:x.lang || "ru", w:gmFmt(x.w), snd:x.snd || "" }; o.order = gshuf(x.o.map((_, i) => i)); return o; };
+  if(r.sounds){ const mk = x => { const o = { type:"mc", q:gmFmt(gmQ(x.q, x.o[x.a])), html:true, o:x.o, a:x.a, lang:x.lang || "ru", w:gmFmt(x.w), snd:x.snd || "" }; o.order = gshuf(x.o.map((_, i) => i)); return o; };
     return gshuf([...gshuf(r.ex.filter(x => x.snd)).slice(0, 3), ...gshuf(r.ex.filter(x => !x.snd)).slice(0, 5)].map(mk)); }
-  if(r.tap){ const mc = x => { const o = { type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) }; o.order = gshuf(x.o.map((_, i) => i)); return o; };
+  if(r.tap){ const mc = x => { const o = { type:"mc", q:gmFmt(gmQ(x.q, x.o[x.a])), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) }; o.order = gshuf(x.o.map((_, i) => i)); return o; };
     return gshuf([...gshuf(r.ex).slice(0, 3).map(mc), ...gshuf(r.tap).slice(0, 3).map(gramMakeTap)]); }
-  if(r.blocks){ const hand0 = gshuf(r.ex).slice(0, 4).map(x => ({ type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) })); hand0.forEach(x => { x.order = gshuf(x.o.map((_, i) => i)); });
+  if(r.blocks){ const hand0 = gshuf(r.ex).slice(0, 4).map(x => ({ type:"mc", q:gmFmt(gmQ(x.q, x.o[x.a])), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) })); hand0.forEach(x => { x.order = gshuf(x.o.map((_, i) => i)); });
     const bl = []; for(let i = 0; i < 3; i++) bl.push(gramMakeBlocks(bl.map(x => x.ruKey), r.lv)); bl.forEach(x => { x.q = gmFmt(x.q); x.html = true; }); if(r.sample && bl[0]) bl[0].sample = true; return gshuf([...hand0, ...bl]); }
-  const dynN = gramWordsFor(r.id).length ? 3 : 0, hand = gshuf(r.ex).slice(0, dynN ? 5 : 6).map(x => ({ type:"mc", q:gmFmt(x.q), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) }));
+  const dynN = gramWordsFor(r.id).length ? 3 : 0, hand = gshuf(r.ex).slice(0, dynN ? 5 : 6).map(x => ({ type:"mc", q:gmFmt(gmQ(x.q, x.o[x.a])), html:true, o:x.o, a:x.a, lang:"tr", w:gmFmt(x.w) }));
   hand.forEach(x => { x.order = gshuf(x.o.map((_, i) => i)); });
   const p1 = gramMakeParse(r); let p2 = null; for(let k = 0; k < 8 && p1 && !(p2 && p2.q !== p1.q); k++) p2 = gramMakeParse(r);
   const dyn = [p1, p1 && p2 && p2.q !== p1.q ? p2 : null, gramMakeBuild(r)].filter(Boolean);
