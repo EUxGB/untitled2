@@ -775,6 +775,8 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .gm-back .ic{width:18px; height:18px; transform:rotate(180deg)}
 .gm-lead2{margin:0; font:600 15px/1.35 var(--body); color:var(--accent-ink)}
 .gm-p{margin:0; font-size:14.5px; line-height:1.5; color:var(--ink)}
+.gm-sec{display:flex; flex-direction:column; gap:8px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; flex-shrink:0; min-width:0}
+.gm-sec-h{margin:0; font:700 16px/1.3 var(--body); color:var(--accent)}
 .gram b.tr, .gm-fb b.tr, .sheet-body b.tr{font-family:var(--display); font-weight:700; white-space:nowrap; color:var(--ink)}
 .sheet-body .gm-p, .sheet-body .gm-t{color:var(--ink)} .sheet-body .gm-lead2{color:var(--accent-ink)} .sheet-body .gm-ru{color:var(--ink-2)}
 .wordpop .wd-line b{color:var(--bg)}
@@ -782,7 +784,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 /* перечни в уроках (2026-10-10 12:04): плитки «слово — перевод», строки таблицы, ряд окончаний; ничего не шире рамки */
 .gm-para{display:flex; flex-direction:column; gap:8px}
 #gramView > *, .gm-para > *{flex-shrink:0}   /* блок с overflow в колонке-flex сжимался до 0 px: таблица урока не видна на телефоне (найдено тестом 2026-10-10) */
-.gm-tiles{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(88px, 1fr)); gap:6px}
+.gm-tiles{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, max(88px, calc(var(--tl, 0) * 10.5px + 22px))), 1fr)); gap:6px}
 .gm-tiles li{min-width:0; display:flex; flex-direction:column; gap:1px; padding:6px 9px; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
 .gm-tiles li b.tr{font-size:16px; white-space:normal; overflow-wrap:anywhere}
 .gm-tiles small{font-size:12.5px; line-height:1.3; color:var(--ink-2); overflow-wrap:anywhere}
@@ -795,6 +797,15 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
 .gm-t{border-collapse:collapse; width:100%; font-size:13px; line-height:1.35}
 .gm-t th, .gm-t td{padding:7px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
 .gm-t th{font-weight:700; color:var(--muted); font-size:12px} .gm-t tr:last-child td{border-bottom:0}
+@media (max-width:560px){
+  .gm-t.gm-stack thead{display:none}
+  .gm-t.gm-stack, .gm-t.gm-stack tbody, .gm-t.gm-stack tr, .gm-t.gm-stack td{display:block; width:auto}
+  .gm-t.gm-stack tr{padding:8px 12px; border-bottom:1px solid var(--line)} .gm-t.gm-stack tr:last-child{border-bottom:0}
+  .gm-t.gm-stack td{border:0; padding:1px 0} .gm-t.gm-stack td:empty{display:none}
+  .gm-t.gm-stack td:first-child{font-weight:700; font-size:15px; padding-bottom:3px}
+  .gm-t.gm-stack td::before{content:attr(data-h) ": "; font:600 12px var(--body); color:var(--muted)}
+  .gm-t.gm-stack td:first-child::before{display:block; content:attr(data-h)}
+}
 .gm-h3{margin:8px 0 0; font:700 15px var(--body); color:var(--ink); text-transform:none; letter-spacing:0}
 .gm-ph{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
 .gm-ph li{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:8px 12px; display:flex; flex-direction:column; gap:2px}
@@ -7086,23 +7097,23 @@ const GRAMMAR = [
     { q:"Где? («в комнате»): {oda} + окончание", o:["odada","odade","odata","odadan"], a:0, w:"Вопрос «где?» — {-da/-de}. Последняя гласная «a» → {-da}: {odada}." },
     { q:"В школу (куда?): {okul} + окончание", o:["okula","okulda","okuldan","okulu"], a:0, w:"Вопрос «куда?» — окончание {-a/-e}. Последняя гласная «u» — твёрдая → {-a}: {okula}." },
     { q:"С какого шага начинается любая фраза?", o:["Решить, что я хочу сказать","Перевести слова по очереди","Выучить все окончания","Поставить все слова в словарной форме"], a:0, w:"Сначала мысль: кто, что делает, куда, когда. Потом глагол, потом окончания, потом порядок слов." } ] },
-{ id:"order", grp:"Памятка", begin:true, t:"Памятка: «какой?», вопрос и «не»", lead:"Три правила: где «какой?», как спросить «…ли?» и как сказать «не»",
-  txt:["1. «Какой?» и «сколько?» стоят перед предметом — как в русском: {güzel oda} — красивая комната, {iki bilet} — два билета. Если поставить наоборот, получится целая фраза: {Oda güzel} — «Комната красивая».",
-       "2. Вопрос «…ли?» — это частица {mi}. Она пишется отдельным словом.",
-       "Обычный вопрос — частица после глагола: {Eve gidiyor musunuz?} — Вы идёте домой?",
-       "Вопрос про одно слово — частица сразу после этого слова: {Eve mi gidiyorsunuz?} — Вы идёте ДОМОЙ (а не куда-то ещё)?",
-       "Гласная в частице — по последней гласной слова перед ней: {a, ı} → {mı}; {e, i} → {mi}; {o, u} → {mu}; {ö, ü} → {mü}. Пример: в {gidiyor} последняя гласная {o}, значит {mu}.",
-       "Окончание «вы» или «я» при «сейчас» ({-yor}) переходит с глагола на частицу: {gidiyor musunuz?} — вы идёте?; {gidiyor muyum?} — я иду? ({y} вставляется между двумя гласными). В прошедшем времени окончание остаётся на глаголе: {Geldiniz mi?} — Вы пришли?",
-       "3. «Не». Сначала спросите себя: есть ли в фразе действие (глагол)?",
-       "Есть действие — «не» вставляют внутрь глагола, между корнем и «сейчас»: {git-mi-yor-um} — я не иду (корень {git} + «не» + «сейчас» + «я»). После «не» кубик «сейчас» короче: не {iyor}, а {yor}.",
-       "Гласная в «не» — по последней гласной корня: {gel-mi-yor-um} — я не прихожу, {al-mı-yor-um} — я не беру, {oku-mu-yor-um} — я не читаю, {gör-mü-yor-um} — я не вижу.",
-       "В других временах «не» — {-me/-ma}: {git-me-di-m} — я не пошёл (урок «Не, могу, не могу»).",
-       "Нет действия — отрицаем предмет или качество («не дорого», «не врач»). Тогда в конце ставят отдельное слово {değil}: {Bu pahalı değil} — Это не дорого ({bu} — это, {pahalı} — дорогой). {Ben doktor değilim} — Я не врач (окончание «я» {-im} — на {değil})."],
-  tbl:{ head:["Что нужно","Как","Пример"], rows:[
-    ["«какой?»","перед предметом","{güzel oda} — красивая комната"],
-    ["вопрос «…ли?»","{mı/mi/mu/mü} отдельным словом после того, о чём спрашиваем","{Eve gidiyor musunuz?} — Вы идёте домой?"],
-    ["«не» + действие","{-mi-} внутри глагола","{git-mi-yor-um} — я не иду"],
-    ["«не» без глагола","{değil} в конце","{Bu pahalı değil} — Это не дорого"] ] },
+{ id:"order", grp:"Памятка", begin:true, t:"Памятка: «какой?», вопрос и «не»", lead:"Три правила — три карточки. В каждой: как было и как стало",
+  txt:["## 1. «Какой?» — перед предметом",
+       "Как в русском: {güzel oda} — красивая комната, {iki bilet} — два билета, {büyük ev} — большой дом.",
+       "Наоборот — уже целое предложение: {Oda güzel} — «Комната красивая».",
+       "## 2. «…ли?» — слово mı / mi / mu / mü",
+       "Было: {Eve gidiyorsunuz} — Вы идёте домой.",
+       "Стало: {Eve gidiyor musunuz?} — Вы идёте домой? После глагола — слово {mu}, а «вы» ({sunuz}) переходит на него.",
+       "Какая гласная — смотрим на последнюю гласную слова перед ним: {a, ı} → {mı}; {e, i} → {mi}; {o, u} → {mu}; {ö, ü} → {mü}.",
+       "В {gidiyor} последняя {o} — значит {mu}. В {oda} последняя {a} — значит {Güzel oda mı?} — Красивая комната?",
+       "Спросить про одно слово — {mi} сразу после него: {Eve mi gidiyorsunuz?} — Вы ДОМОЙ идёте (а не куда-то ещё)?",
+       "Про себя: {Gidiyor muyum?} — Я иду? Буква {y} — чтобы две гласные не стояли рядом.",
+       "## 3. «Не» — сначала: есть действие или нет?",
+       "Есть действие. Было: {alıyorum} — я беру. Стало: {almıyorum} — я не беру. «Не» — внутрь глагола, сразу после корня {al}.",
+       "Так же: {gelmiyorum} — я не прихожу, {gitmiyorum} — я не иду, {görmüyorum} — я не вижу.",
+       "Гласная в «не» — как в вопросе: {al} → {mı}, {gel} → {mi}, {oku} → {mu}, {gör} → {mü}.",
+       "Нет действия («не дорого», «не врач») — в конце слово {değil}: {Bu pahalı değil} — Это не дорого. {Ben doktor değilim} — Я не врач.",
+       "Это «не» внутри глагола — для «сейчас». В других временах оно {me} или {ma}: {gitmedim} — я не пошёл (урок «Не, могу, не могу»)."],
   ex:[
     { q:"Вопрос: «Вы идёте домой?» (обычный вопрос, без акцента на слове «домой»). Где и какая частица?", o:["Eve gidiyor musunuz?","Eve gidiyor mısınız?","Mı eve gidiyorsunuz?","Eve gidiyorsunuz mi?"], a:0, w:"Частица — после глагола, а гласная — по последней гласной слова перед ней: {gidiyor} → «o» → {mu}: {gidiyor musunuz?}. (Если спрашиваете именно про «домой» — {Eve mi gidiyorsunuz?}, это другой акцент.)" },
     { q:"«Я не иду» (отрицаем действие):", o:["Gitmiyorum","Gidmiyorum","Değil gidiyorum","Gidiyorum değil"], a:0, w:"Есть глагол действия — «не» внутри него: {git-mi-yor-um}." },
@@ -7596,7 +7607,7 @@ const gramRule = id => GRAMMAR.find(r => r.id === id);
 const GM_VOW = "aeıioöuü", GM_VOICELESS = "çfhkpsşt";
 function hlWord(w){ const a = [...w]; let li = -1; a.forEach((c, i) => { if(GM_VOW.includes(c)) li = i; });
   return `<span class="hw" lang="tr" translate="no" aria-label="${esc(w)}">` + a.map((c, i) => i === li ? `<span class="lv">${esc(c)}</span>` : GM_VOICELESS.includes(c) ? `<span class="vl">${esc(c)}</span>` : GM_VOW.includes(c) ? `<span class="v">${esc(c)}</span>` : `<span class="vd">${esc(c)}</span>`).join("") + `</span>`; }
-const gmFmt = s => esc(String(s)).replace(/\{\{([^}]+)\}\}/g, (m, w) => `<span class="wd gm-snd" data-w="${w}" role="button" tabindex="0" lang="tr" translate="no"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>${w}</span>`).replace(/\[\[([^\]]+)\]\]/g, (m, w) => hlWord(w)).replace(/\{([^}]+)\}/g, (m, w) => w.split(", ").map(x => `<b class="tr${x[0] === "-" ? " sfx" : ""}" lang="tr" translate="no">${x}</b>`).join(", "));   // «{gidiyorum, gidiyorsun, …}» — каждое слово отдельно: строка переносится, а не вылезает за рамку (CI, 320 px)   // окончание (-da, -ler) — плашкой: видно, что это кубик, а не слово
+const gmFmt = s => esc(String(s)).replace(/\{\{([^}]+)\}\}/g, (m, w) => `<span class="wd gm-snd" data-w="${w}" role="button" tabindex="0" lang="tr" translate="no"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>${w}</span>`).replace(/\[\[([^\]]+)\]\]/g, (m, w) => hlWord(w)).replace(/\{([^}]+)\}/g, (m, w) => w.split(", ").map(x => `<b class="tr${x[0] === "-" ? " sfx" : ""}" lang="tr" translate="no">${x.replace(/\//g, "/<wbr>")}</b>`).join(", "));   // «mıyım/miyim/…» переносится после «/», а не посередине слова (2026-10-14)   // «{gidiyorum, gidiyorsun, …}» — каждое слово отдельно: строка переносится, а не вылезает за рамку (CI, 320 px)   // окончание (-da, -ler) — плашкой: видно, что это кубик, а не слово
 // Перечни в тексте урока — плитками или таблицей, а не строкой (просьба 2026-10-10 12:04: «один, два… всё сливается в строке, тяжело читать»).
 // Находятся сами, по виду: «{слово} — перевод, …» (gl), «перевод — {слово}» (rg), «{слово} (перевод), …» (gp), «{a} → {b}, …» (map), «{a}, {b}, {c}» (ch).
 // Новый урок пишется как прежде — перечень из трёх и больше (у «→» — из двух) станет плитками сам; тест «перечни … плитками».
@@ -7638,7 +7649,8 @@ function gmBlock(r){
     return `<div class="gm-tw gm-fit"><table class="gm-t gm-map"><tbody>${it.map(x => `<tr><td>${cell(x[0], x[1])}</td><td class="gm-ar" aria-label="становится">→</td><td>${cell(x[2], x[3])}</td></tr>`).join("")}</tbody></table></div>`; }
   const pairs = it.map(x => r.kind === "gl" ? [x[0] + (x[1] || ""), x[2].trim()] : r.kind === "gp" ? [x[0], unp(x[1] || "")] : [x[1], x[0].trim() + (x[2] ? " · " + unp(x[2]) : "")]);
   const short = pairs.every(([tr, ru]) => gmPlain(tr).length <= 14 && gmPlain(ru).length <= 16);
-  if(short) return `<ul class="gm-tiles">${pairs.map(([tr, ru]) => `<li>${gmFmt(tr)}${ru ? `<small>${gmFmt(ru)}</small>` : ""}</li>`).join("")}</ul>`;
+  const lw = x => Math.max(0, ...gmPlain(x).split(/[\s/,;()]+/).map(w => w.length)), tl = Math.max(...pairs.map(([tr, ru]) => Math.max(lw(tr), Math.ceil(lw(ru) * 0.75))));   // ширина плитки — по самому длинному слову, чтобы оно не рвалось
+  if(short) return `<ul class="gm-tiles" style="--tl:${tl}">${pairs.map(([tr, ru]) => `<li>${gmFmt(tr)}${ru ? `<small>${gmFmt(ru)}</small>` : ""}</li>`).join("")}</ul>`;
   return `<div class="gm-tw"><table class="gm-t gm-rows"><tbody>${pairs.map(([tr, ru]) => `<tr><td>${gmFmt(tr)}</td><td>${gmFmt(ru)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function gmPara(t){
@@ -7789,8 +7801,12 @@ function gramBreak(tr, r){
   return out.length ? `<span class="gm-bk" lang="tr" translate="no">${out.join("; ")}</span>` : "";
 }
 function gramRuleHtml(r, inSheet){
-  let h = `<p class="gm-lead2">${gmFmt(r.lead)}</p>` + r.txt.map(gmPara).join("");
-  if(r.tbl) h += `<div class="gm-tw"><table class="gm-t"><thead><tr>${r.tbl.head.map(c => `<th scope="col">${gmFmt(c)}</th>`).join("")}</tr></thead><tbody>${r.tbl.rows.map(row => `<tr>${row.map(c => `<td>${gmFmt(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  // абзац «## Заголовок» открывает карточку-раздел (жалоба 2026-10-14 21:05: памятка «сумбурно» — правила отдельными карточками)
+  let h = `<p class="gm-lead2">${gmFmt(r.lead)}</p>`, open = false;
+  r.txt.forEach(t => { if(/^## /.test(t)){ if(open) h += `</section>`; h += `<section class="gm-sec"><h3 class="gm-sec-h">${gmFmt(t.slice(3))}</h3>`; open = true; } else h += gmPara(t); });
+  if(open) h += `</section>`;
+  // на телефоне строка таблицы — карточка «Заголовок: значение» (столбцы рвали слова посередине: «Пад еж», «вини тель ный» — 2026-10-14 21:05)
+  if(r.tbl) h += `<div class="gm-tw"><table class="gm-t gm-stack"><thead><tr>${r.tbl.head.map(c => `<th scope="col">${gmFmt(c)}</th>`).join("")}</tr></thead><tbody>${r.tbl.rows.map(row => `<tr>${row.map((c, k) => `<td data-h="${esc(gmPlain(r.tbl.head[k] || ""))}">${gmFmt(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
   const ph = gramPhrases(r);
   if(ph.length) h += `<h3 class="gm-h3">Из ваших фраз</h3><p class="gm-hint">Нажмите на слово — увидите его разбор по частям.</p><ul class="gm-ph">${ph.map(p => `<li><span class="gm-tr" lang="tr" translate="no">${wordsHtml(p.tr)}</span><span class="gm-ru">${esc(p.ru)}</span>${gramBreak(p.tr, r)}</li>`).join("")}</ul>`;
   return h + `<div class="gm-actions"><button class="btn native gm-go" data-act="quiz" data-rule="${r.id}">Упражнения</button></div>`;
@@ -7896,7 +7912,7 @@ const GM_CUE = {
   where:"КУДА? {-a/-e}. ГДЕ? {-da/-de}. ОТКУДА? {-dan/-den}. Гласную выбирайте по последней гласной слова: {okul} → {okula}, {ev} → {eve}. После глухой согласной {d} → {t}: {parkta}.",
   build:"Очередь блоков: кто · когда · где · что · глагол. Глагол — обычно последним. Нет какого-то блока — просто пропустите его.",
   steps:"Начните не с перевода слов, а с вопросов: кто? что делает? куда? когда? Потом: глагол из словаря → корень → время → лицо; остальным словам — окончание по вопросу (куда? {-a/-e}, где? {-da/-de}, что? {-ı}); в конце расставьте блоки, глагол в конце.",
-  order:"Шаг 1: что спрашивают — «какой?», вопрос или «не»? «Какой?» — перед предметом: {güzel oda}. Вопрос — частица после глагола (или после слова, о котором спрашиваете), гласная — по последней гласной слова перед ней: {gidiyor} → {mu}. «Не» с действием — {-mi-} внутри глагола: {gitmiyorum}; без действия — {değil} в конце: {Bu pahalı değil}.",
+  order:"Что нужно: «какой?», «…ли?» или «не»? «Какой?» — перед предметом: {güzel oda}. «…ли?» — после глагола слово {mu}/{mi}/{mı}/{mü}: гласная по последней гласной слова перед ним ({gidiyor} → {mu}). «Не» с действием — внутрь глагола после корня: {almıyorum}; без действия — {değil} в конце.",
   harmony:"Смотрите только на последнюю гласную слова. {okul}: последняя «u» → окончание на «u/a»: {okulu}, {okulda}. {ev}: «e» → {evi}, {evde}.",
   qwords:"Это вопросительные слова: они стоят перед глаголом, а «ли» не нужно. {ne} — что, {nerede} — где, {nereye} — куда, {kaç} — сколько, {ne zaman} — когда, {kim} — кто.",
   plural:"{-lar} после a, ı, o, u; {-ler} после e, i, ö, ü. {araba} → {arabalar}, {ev} → {evler}. После числа — единственное: {üç kedi}.",

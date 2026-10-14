@@ -1351,7 +1351,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('правила: 34 штуки (2026-10-12: «Последняя гласная» и «Словообразование» разделены на короткие уроки), у каждого название, текст, таблица, ≥5 упражнений, один верный ответ, нет повторов; примеры из фраз; медали', async () => {
     const q = await openPage(browser);
     const r = await q.evaluate(() => { const ids = GRAMMAR.map(g => g.id);
-      return { n:GRAMMAR.length, uniq:new Set(ids).size, bad:GRAMMAR.filter(g => !(g.t && g.lead && GRAM_GROUPS.includes(g.grp) && g.txt.length >= 2 && g.tbl && g.tbl.rows.length >= 3 && g.ex.length >= 5 && Object.keys(g.ex).length === g.ex.length /* нет «дыр» (,,) в списке — 2026-10-12 */
+      return { n:GRAMMAR.length, uniq:new Set(ids).size, bad:GRAMMAR.filter(g => !(g.t && g.lead && GRAM_GROUPS.includes(g.grp) && g.txt.length >= 2 && ((g.tbl && g.tbl.rows.length >= 3) || g.txt.filter(t => /^## /.test(t)).length >= 3 /* 2026-10-14 21:05: памятка — три карточки вместо таблицы-дубля */) && g.ex.length >= 5 && Object.keys(g.ex).length === g.ex.length /* нет «дыр» (,,) в списке — 2026-10-12 */
           && g.ex.every(x => x.q && x.w && x.o.length >= 2 && x.a >= 0 && x.a < x.o.length && new Set(x.o).size === x.o.length))).map(g => g.id),
         noPhrases:GRAMMAR.filter(g => !g.micro && !g.begin && !g.nophr && !gramPhrases(g).length).map(g => g.id), badge:BADGES.find(b => b.id === 'gramall').n,
         // у каждого правила, где есть окончания, хватает слов для упражнений «что значит» и «соберите»
@@ -1500,6 +1500,26 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return { bad, mastered:gramMasteredCount(), view:gram.view }; });
     eq(r.bad, []); eq([r.mastered, r.view], [34, 'list']);
     await q.click('[data-rule="plural"]'); await q.keyboard.press('Escape'); eq(await q.evaluate(() => gram.view), 'list'); eq(q.errors, []); await q.context().close();
+  });
+  await test('грамматика (2026-10-14 21:05): памятка «какой?», вопрос и «не» — три отдельные карточки с заголовками, в каждой «было → стало»', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    await q.evaluate(() => document.querySelector('[data-rule="order"]').click());
+    const r = await q.evaluate(() => { const cs = [...document.querySelectorAll('#gramView .gm-sec')];
+      return { n:cs.length, heads:cs.map(c => (c.querySelector('h3') || {}).textContent || ''), paras:cs.map(c => c.querySelectorAll('.gm-p, .gm-tiles, .gm-map, .gm-rows').length),
+        over:cs.filter(c => c.scrollWidth > c.clientWidth + 1).length, long:Math.max(...GRAMMAR.find(g => g.id === 'order').txt.filter(t => !/^## /.test(t)).map(t => t.length)) }; });
+    const cut = []; for(const w of [320, 360, 412]){ await q.setViewportSize({ width:w, height:700 }); cut.push(...await q.evaluate(async () => { const out = [];
+      { for(const g of GRAMMAR){ gram.view = 'rule'; gram.rule = g.id; gramRender(); await new Promise(r => requestAnimationFrame(r));
+        const tw = document.createTreeWalker(document.getElementById('gramView'), NodeFilter.SHOW_TEXT); let nd;
+        while((nd = tw.nextNode())){ if(!nd.parentElement.closest('.gm-tiles, .gm-t')) continue; const re = /[^\s\/\-–—,.;:()«»?!…]+/g; let m;
+          while((m = re.exec(nd.data))){ const rg = document.createRange(); rg.setStart(nd, m.index); rg.setEnd(nd, m.index + m[0].length);
+            const tops = new Set([...rg.getClientRects()].filter(x => x.width > 0).map(x => Math.round(x.top)));
+            if(tops.size > 1) out.push(innerWidth + ' ' + g.id + ': «' + m[0] + '» разорвано'); } } } }
+      gram.view = 'list'; gramRender(); return out; })); } await q.setViewportSize({ width:360, height:640 });
+    if(cut.length) console.log(cut.join('\n'));
+    eq(cut.slice(0, 12), [], 'слова в плитках и таблицах не рвутся посередине');
+    eq(r.n, 3, 'три карточки'); ok(r.heads.every(h => /^[123]\. /.test(h)), 'заголовки с номером: ' + JSON.stringify(r.heads));
+    ok(r.paras.every(n => n >= 2), 'в каждой карточке содержимое: ' + JSON.stringify(r.paras)); eq(r.over, 0); ok(r.long <= 200, 'абзацы короткие: ' + r.long);
+    eq(q.errors, []); await q.context().close();
   });
   await test('грамматика (2026-10-14 09:52): после ответа «Дальше» видна без прокрутки — все уроки, все вопросы, верный и неверный ответ, 320–412', async () => {
     const q = await openPage(browser); const bad = [];
