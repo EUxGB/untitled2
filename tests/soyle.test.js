@@ -1501,6 +1501,33 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.bad, []); eq([r.mastered, r.view], [34, 'list']);
     await q.click('[data-rule="plural"]'); await q.keyboard.press('Escape'); eq(await q.evaluate(() => gram.view), 'list'); eq(q.errors, []); await q.context().close();
   });
+  await test('грамматика (2026-10-14 09:52): после ответа «Дальше» видна без прокрутки — все уроки, все вопросы, верный и неверный ответ, 320–412', async () => {
+    const q = await openPage(browser); const bad = [];
+    for(const [w, h] of [[320, 568], [360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h });
+      await q.evaluate(() => { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); });
+      if(!(await q.evaluate(() => !document.getElementById('gramView').hidden))){ await q.click('#tab-train'); await tap(q, 'tab-grammar'); }
+      for(const wrong of [true, false]){
+        const r = await q.evaluate(async ({ wrong, w, h }) => { const out = []; const fr = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+          for(const g of GRAMMAR){ gram.view = 'list'; gramRender(); document.querySelector(`[data-rule="${g.id}"]`).click(); document.querySelector('.gm-go').click();
+            let steps = 0; while(!gram.done && steps++ < 20){ const x = gram.qs[gram.i];
+              if(x.type === 'mc') document.querySelector(`#gramView [data-act="opt"][data-i="${wrong ? x.order.find(i => i !== x.a) : x.a}"]`).click();
+              else if(x.type === 'tap') document.querySelector(`#gramView [data-act="let"][data-i="${wrong ? (x.a ? 0 : 1) : x.a}"]`).click();
+              else x.m.parts.forEach(p => { const b = [...document.querySelectorAll('#gramView .gm-chip')].find(b => !b.disabled && b.textContent === (p.root ? p.t : '-' + p.t)); if(b) b.click(); });
+              await fr();
+              const nb = document.querySelector('#gramView .gm-next'), rc = nb.getBoundingClientRect(), cx = rc.left + rc.width / 2, cy = rc.top + rc.height / 2;
+              const top = document.elementFromPoint(cx, cy), fb = document.querySelector('#gramView .gm-fb'), fr2 = fb && fb.getBoundingClientRect();
+              if(rc.bottom > innerHeight || rc.top < 0 || !top || !nb.contains(top)) out.push(`${w}x${h} ${g.id} ${gram.i}: «Дальше» не видна (${Math.round(rc.top)}–${Math.round(rc.bottom)} из ${innerHeight}${top && !nb.contains(top) ? ', закрыта ' + (top.id || top.className) : ''})`);
+              else if(fr2){ const gv = document.getElementById('gramView').getBoundingClientRect(), bar = nb.closest('.gm-actions').getBoundingClientRect();
+                if(fr2.top < gv.top - 1 || (fr2.bottom > bar.top + 1 && fr2.height <= bar.top - gv.top)) out.push(`${w}x${h} ${g.id} ${gram.i}: пояснение не видно целиком (${Math.round(fr2.top)}–${Math.round(fr2.bottom)}, полоса с ${Math.round(bar.top)})`); }
+              nb.click(); }
+          }
+          gram.view = 'list'; gramRender(); return out; }, { wrong, w, h });
+        bad.push(...r);
+      }
+    }
+    if(bad.length) console.log("ВСЕГО " + bad.length + "\n" + [...new Set(bad.map(x => x.split(" ")[0] + " " + x.split(": ")[1].split(" (")[0]))].join("\n")); eq(bad.slice(0, 15), []); eq(q.errors, []); await q.context().close();
+  });
   await test('микроуроки для новичка (просьба 09:16 и 12:09): 5 уроков первыми, без записей «-(ı)yor», последняя гласная подсвечена, глухие/звонкие согласные различимы, упражнение «нажмите на гласную», образец в первой сборке фразы', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
     await q.evaluate(() => { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
