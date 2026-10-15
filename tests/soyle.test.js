@@ -1501,6 +1501,20 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.bad, []); eq([r.mastered, r.view], [34, 'list']);
     await q.click('[data-rule="plural"]'); await q.keyboard.press('Escape'); eq(await q.evaluate(() => gram.view), 'list'); eq(q.errors, []); await q.context().close();
   });
+  await test('вопрос объяснён через «да или нет?», а не через непонятное «ли» (жалоба 2026-10-15 08:03: «так и не понял, что такое ли»)', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(() => { const LI = /(«|…)ли(?![а-яё])|(?<![а-яё])ли\?»|\(…ли /i;
+      const texts = [];
+      GRAMMAR.forEach(g => [g.t, g.lead, ...g.txt, ...(g.tbl ? g.tbl.head.concat(...g.tbl.rows) : []), ...g.ex.flatMap(e => [e.q, e.w, ...e.o])].forEach(x => texts.push([g.id, x])));
+      Object.entries(GM_CUE).forEach(([k, v]) => texts.push(['cue ' + k, v]));
+      Object.entries(FUNC_GLOSS).filter(([k]) => k !== 'hayrola').forEach(([k, v]) => texts.push(['gloss ' + k, v]));
+      Object.values(SUF || {}).forEach(v => texts.push(['suf', JSON.stringify(v)]));
+      texts.push(['parse q', JSON.stringify(morphOf('Hazır mı') || '')]);
+      const bad = texts.filter(([, x]) => LI.test(String(x))).map(([k, x]) => k + ': ' + String(x).slice(0, 60));
+      const o = GRAMMAR.find(g => g.id === 'order'), qq = GRAMMAR.find(g => g.id === 'question');
+      return { bad, card:o.txt.find(t => /^## 2\./.test(t)), qtxt:qq.lead + ' ' + qq.txt[0] }; });
+    eq(r.bad, []); ok(/да или нет/.test(r.card), r.card); ok(/да или нет/.test(r.qtxt), r.qtxt); eq(q.errors, []); await q.context().close();
+  });
   await test('грамматика (2026-10-14 21:05): памятка «какой?», вопрос и «не» — три отдельные карточки с заголовками, в каждой «было → стало»', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
     await q.evaluate(() => document.querySelector('[data-rule="order"]').click());
