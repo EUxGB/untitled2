@@ -1538,7 +1538,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   await test('грамматика (2026-10-14 09:52): после ответа «Дальше» видна без прокрутки — все уроки, все вопросы, верный и неверный ответ, 320–412', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[320, 568], [360, 640], [390, 844], [412, 915]]){
-      await q.setViewportSize({ width:w, height:h });
+      await q.setViewportSize({ width:w, height:h }); await q.waitForTimeout(300);   // раскладка после смены размера устоялась (CI 2026-10-15: первый вопрос на 320×568 мерился посреди подгонки)
       await q.evaluate(() => { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); });
       if(!(await q.evaluate(() => !document.getElementById('gramView').hidden))){ await q.click('#tab-train'); await tap(q, 'tab-grammar'); }
       for(const wrong of [true, false]){

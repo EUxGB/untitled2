@@ -7865,7 +7865,8 @@ function gramRecord(id, ok){
   award(ok ? 1 : 0, "gram");
   if(!was && gramMastered(id)) toast(`Правило освоено: ${gramRule(id).t.replace(/\{|\}/g, "")}`);
 }
-function gramResolve(ok){ const q = gram.qs[gram.i]; q.res = ok; if(ok) gram.ok++; gramRecord(gram.rule, ok); gramQuizRender(); scheduleFit(); const fb = gmEl().querySelector(".gm-fb"); if(fb && fb.scrollIntoView) fb.scrollIntoView({ block:"nearest" }); }
+function gramResolve(ok){ const q = gram.qs[gram.i]; q.res = ok; if(ok) gram.ok++; gramRecord(gram.rule, ok); gramQuizRender(); scheduleFit(); const toFb = () => { const fb = gmEl().querySelector(".gm-fb"); if(fb && fb.scrollIntoView) fb.scrollIntoView({ block:"nearest" }); };
+  toFb(); requestAnimationFrame(() => { toFb(); requestAnimationFrame(toFb); }); }   // ещё раз после подгонки (autofit в следующем кадре меняет высоты; CI 320×568: пояснение уходило под «Дальше» на 11 px)
 const gmFocus = sel => { const el = gmEl().querySelector(sel); if(el && !el.disabled) el.focus({ preventScroll:true }); };   // после перерисовки фокус не должен падать в начало страницы
 // звук слова в упражнении «послушайте»: запись носителя (не дольше 1,5 с), иначе синтез; слово на экране НЕ показываем — это и есть ответ
 let gmPlayTok = 0;
