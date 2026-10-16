@@ -1,0 +1,4 @@
+# Файлы, которые собирает tests/seo-build.js, — всегда LF (тест сверяет их со сборкой; в Windows autocrlf давал CRLF и тест падал)
+frazy/** text eol=lf
+llms.txt text eol=lf
+sitemap.xml text eol=lf

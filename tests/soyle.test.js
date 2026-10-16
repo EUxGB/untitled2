@@ -1,7 +1,8 @@
 // Автотесты тренажёра Söyle. Запуск: node tests/soyle.test.js [путь к index.html]
 // Нужен Playwright (npm i playwright). Распознавание речи, микрофон и сеть подменяются заглушками (tests/harness.js).
 const { chromium, fs, path, FILE, test, tap, eq, ok, INIT, openPage, summary } = require('./harness');
-const AXE = process.env.AXE && fs.existsSync(process.env.AXE) ? fs.readFileSync(process.env.AXE, 'utf8') : null;
+const AXE_FILE = process.env.AXE || path.join(__dirname, 'axe.min.js');   // по умолчанию — tests/axe.min.js (в Windows «AXE=… node» в npm test не работает)
+const AXE = fs.existsSync(AXE_FILE) ? fs.readFileSync(AXE_FILE, 'utf8') : null;
 const PHRASE_DICT_SRC = (() => { const src = fs.readFileSync(FILE.replace('file://', ''), 'utf8'); const m = src.match(/const PHRASE_DICT = (\{[\s\S]*?\n\});/); return m ? eval('(' + m[1] + ')') : {}; })();
 const PHRASE_DICT_RU = lemma => (PHRASE_DICT_SRC[lemma] || [])[0];
 const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', meaning:'', partnerMeaning:'' }, it); }, it);
@@ -1141,7 +1142,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     if(u.includes('ru.wiktionary')) return { parse:{ title:'ekmek', wikitext:{ '*':"= {{-tr-}} =\n\n=== Морфологические и синтаксические свойства ===\n{{падежи tr\n|nom-sg=ekmek\n}}\n\n==== Значение ====\n\n# [[хлеб]] {{пример|Ekmek aldım.}}\n\n=== Этимология ===\n" } } };
     return {};
   };
-  const WORDS_FOOD = eval((fs.readFileSync(FILE.replace('file://', ''), 'utf8').match(/\n  food:(\[\["menü".*?\]\]),\n/) || [])[1]);   // стартовые слова темы — из программы
+  const WORDS_FOOD = eval((fs.readFileSync(FILE.replace('file://', ''), 'utf8').match(/\n  food:(\[\["menü".*?\]\]),\r?\n/) || [])[1]);   // стартовые слова темы — из программы
   async function openWords(){ const q = await openInApp(); await q.route('**/*wiktionary.org/w/api.php**', r => r.fulfill({ json: WIKI(decodeURIComponent(r.request().url())) })); return q; }
   await test('«Фразы» → «слова»: слова выбранной темы с переводом, по счётчику в чипах; переключение обратно на фразы', async () => {
     const q = await openWords();
