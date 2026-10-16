@@ -249,6 +249,7 @@ header{padding-right:12px}
 .progress .opt{justify-content:flex-start}
 .backup{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px}
 .bk-note{margin:0; font-size:13px; color:var(--muted)}
+#fbText{width:100%; min-height:72px; font:15px var(--body); color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; resize:vertical}
 #bkInput{width:100%; min-height:48px; font:13px var(--mono); color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; resize:vertical}
 label.btn{display:flex; align-items:center; justify-content:center; cursor:pointer}
 .bk-confirm{background:var(--near-soft); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:8px}
@@ -1088,6 +1089,13 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
           </div>
         </div>
         <p class="bk-msg" id="bkMsg" role="status" aria-live="polite"></p>
+      </section>
+      <section class="backup" aria-labelledby="fbTitle">
+        <h2 id="fbTitle">Чего не хватает?</h2>
+        <p class="bk-note">Что добавить, что мешает, где непонятно — напишите. Отзыв уходит разработчику анонимно, без имени и данных игры; личное не пишите.</p>
+        <textarea id="fbText" rows="3" maxlength="1000" aria-labelledby="fbTitle" placeholder="Например: не хватает фраз для рынка"></textarea>
+        <button class="btn primary" id="fbSend">Отправить</button>
+        <p class="bk-msg" id="fbMsg" role="status" aria-live="polite"></p>
       </section>
       <section class="backup" aria-labelledby="rsTitle">
         <h2 id="rsTitle">Начать сначала</h2>
@@ -3348,7 +3356,7 @@ function compareWithFreshRecording(){
 
 // ---------- резервная копия прогресса ----------
 // В копию идёт всё «soyle-*», кроме настроек конкретного устройства (голос, обход микрофона)
-const BK_DEVICE_KEYS = ["soyle-rec-conflict", "soyle-voice", "soyle-uid", "soyle-ping-day"];   // номер устройства для счётчика «соседей» — не переносится копией
+const BK_DEVICE_KEYS = ["soyle-rec-conflict", "soyle-voice", "soyle-uid", "soyle-ping-day", "soyle-fbq"];   // номер устройства для счётчика «соседей» — не переносится копией
 function bkCollect(){
   const data = {};
   try {
@@ -3540,8 +3548,8 @@ function cityWeekSummary(){
   const text = `Звуки за неделю (начало → конец): ${grow.length ? grow.join(", ") : "мало данных — говорите по карточкам"}. Освоено реплик: +${Math.max(0, dm)} (всего ${cityMasteredN()}).`
     + ` ${newFriends.length ? "Стали знакомыми: " + newFriends.join(", ") + "." : "Новых знакомых пока нет — попробуйте «kolay gelsin»."} Хочется продолжить?`;
   showModal({ ic:"Hafta!", title: w <= 4 ? `Неделя ${w} из 4 пройдена` : "Неделя пройдена", text,
-    choices:{ label:"Хочется продолжить?", items:["да", "так себе", "нет"], value:(city.feedback || {})[w], fn:v => { (city.feedback || (city.feedback = {}))[w] = v; citySave(); } },
-    primary:{ label:"Дальше" } });
+    choices:{ label:"Хочется продолжить?", items:["да", "так себе", "нет"], value:(city.feedback || {})[w], fn:v => { (city.feedback || (city.feedback = {}))[w] = v; citySave(); fbSend({ week:w, answer:v }); } },
+    primary:{ label:"Дальше" }, secondary:{ label:"Чего не хватает?", fn:fbGo } });
 }
 const OPEN_HOURS = {                             // по умолчанию — до 21:00 ежедневно
   banka:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, ptt:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 }, noter:{ days:[1, 2, 3, 4, 5], from:9 * 60, to:17 * 60 },
@@ -8202,6 +8210,35 @@ function nbShow(){
   sbRpc("simit_count").then(r => r.ok ? r.json() : null).then(j => { if(!j) return; $("gbNb").textContent = String(j.d30); $("gbNbSub").textContent = `за 30 дней · сегодня ${j.today}`; }).catch(() => { nbLoaded = false; });
 }
 setTimeout(nbPing, 1500);
+// Отзывы (2026-10-16): ответ итога недели и «Чего не хватает?» → Supabase simit_feedback (номер устройства, без имени и данных игры;
+// схема — supabase/2026-10-16-simit-feedback.sql). Без сети — очередь soyle-fbq (устройство, не в резервной копии), повтор при запуске.
+function fbPost(o){                              // "ok" | "rejected" (сервер отказал — не повторять) | "net"
+  if(TESTMODE && !window.__nbForce) return Promise.resolve("net");
+  const id = nbUid(); if(!id) return Promise.resolve("net");
+  return sbRpc("simit_feedback", { p_id:id, p_week:o.week == null ? null : o.week, p_answer:o.answer || null, p_note:o.note || null, p_build:BUILD.slice(0, 40) })
+    .then(r => r.ok ? r.json().then(v => v === true ? "ok" : "rejected") : (r.status >= 500 ? "net" : "rejected")).catch(() => "net");
+}
+const fbQueue = () => { try { const a = JSON.parse(localStorage.getItem("soyle-fbq") || "[]"); return Array.isArray(a) ? a : []; } catch(e){ return []; } };
+const fbQueueSet = a => { try { localStorage.setItem("soyle-fbq", JSON.stringify(a.slice(-20))); } catch(e){} };
+function fbSend(o){ return fbPost(o).then(s => { if(s === "net" && !(TESTMODE && !window.__nbForce)) fbQueueSet(fbQueue().concat([o])); return s; }); }
+async function fbFlush(){
+  const a = fbQueue(); if(!a.length) return; const left = [];
+  for(const o of a) if(await fbPost(o) === "net") left.push(o);
+  fbQueueSet(left);
+}
+setTimeout(fbFlush, 2500);
+function fbGo(){ setMode("progress"); setTimeout(() => { const t = $("fbText"); t.scrollIntoView({ block:"center" }); t.focus(); }, 60); }
+$("fbSend").onclick = () => {
+  const t = $("fbText"), note = t.value.trim(), msg = $("fbMsg");
+  if(!note){ msg.textContent = "Напишите, чего не хватает, — хотя бы пару слов."; t.focus(); return; }
+  const b = $("fbSend"); b.disabled = true; msg.textContent = "Отправляю…";
+  fbPost({ note }).then(s => {
+    b.disabled = false;
+    if(s === "ok"){ t.value = ""; msg.textContent = "Спасибо! Отзыв отправлен."; }
+    else if(s === "net"){ if(!(TESTMODE && !window.__nbForce)) fbQueueSet(fbQueue().concat([{ note }])); msg.textContent = "Не отправилось — нет связи. Отзыв сохранён и уйдёт сам, когда появится интернет."; }
+    else msg.textContent = "Не отправилось: слишком много отзывов за сутки. Попробуйте завтра.";
+  });
+};
 function setMode(m){
   try { if(location.hash.slice(1) !== m) history.replaceState(null, "", "#" + m); } catch(e){}
   if(listening) stopListening();

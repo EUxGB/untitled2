@@ -2747,6 +2747,45 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(/сначала/i.test(conf[0]) && conf[1], 'подтверждение: ' + conf[0]); eq(after, [null, 'X', true], 'прогресс стёрт, настройки устройства на месте');
     ok(/Поделиться/.test(ios) && /Домой/.test(ios), 'iPhone: инструкция — ' + ios.slice(0, 80)); eq(errs, []);
   });
+  await test('Отзывы (2026-10-16): ответ «Хочется продолжить?» и «Чего не хватает?» уходят в Supabase (simit_feedback) с номером устройства; без сети — очередь и повтор; пустой текст не уходит', async () => {
+    const q = await openPage(browser); const rpc = []; let net = true;
+    await q.route('**/rest/v1/rpc/**', r => { if(!net) return r.abort(); const u = r.request().url(); rpc.push([u.split('/rpc/')[1], JSON.parse(r.request().postData() || '{}')]); return r.fulfill({ json: u.includes('simit_feedback') ? true : null }); });
+    await q.evaluate(() => { window.__nbForce = true; });
+    const fb = () => rpc.filter(x => x[0] === 'simit_feedback').map(x => x[1]);
+    // итог недели: выбор ответа уходит сразу, «Чего не хватает?» ведёт к полю отзыва
+    await q.click('#tab-city'); await q.waitForTimeout(100);
+    await q.evaluate(() => cityWeekSummary()); await q.waitForTimeout(100);
+    const sec = await q.evaluate(() => document.getElementById('modalSecondary').hidden ? '' : document.getElementById('modalSecondary').textContent);
+    await q.click('#modalChoices .ms-choice:nth-child(2)'); await q.waitForTimeout(150);
+    const week = await q.evaluate(() => campWeek());
+    const a1 = fb(); await q.click('#modalSecondary'); await q.waitForTimeout(250);
+    const focus = await q.evaluate(() => [document.body.dataset.mode || location.hash, document.activeElement && document.activeElement.id]);
+    // пустой текст — не уходит
+    await q.click('#fbSend'); await q.waitForTimeout(100);
+    const empty = [fb().length, await q.textContent('#fbMsg')];
+    // текст уходит, поле очищается
+    await q.fill('#fbText', 'Не хватает сцен про рынок'); await q.click('#fbSend'); await q.waitForTimeout(150);
+    const sent = [fb().slice(-1)[0], await q.textContent('#fbMsg'), await q.inputValue('#fbText')];
+    // без сети — остаётся в поле и в очереди, потом уходит
+    net = false; await q.fill('#fbText', 'Без сети'); await q.click('#fbSend'); await q.waitForTimeout(200);
+    const off = [await q.textContent('#fbMsg'), await q.inputValue('#fbText'), await q.evaluate(() => JSON.parse(localStorage.getItem('soyle-fbq') || '[]').length)];
+    net = true; await q.evaluate(() => fbFlush()); await q.waitForTimeout(200);
+    const flushed = [fb().slice(-1)[0].p_note, await q.evaluate(() => localStorage.getItem('soyle-fbq'))];
+    const dev = await q.evaluate(() => [localStorage.getItem('soyle-uid'), BK_DEVICE_KEYS.includes('soyle-fbq')]);
+    const errs = q.errors; await q.context().close();
+    // в тестах без __nbForce ничего не отправляется
+    const t = await openPage(browser); let any = 0; await t.route('**/rest/v1/rpc/**', r => { any++; return r.fulfill({ json:true }); });
+    await t.click('#tab-progress'); await t.fill('#fbText', 'x'); await t.click('#fbSend'); await t.waitForTimeout(100); await t.context().close();
+    eq(sec, 'Чего не хватает?', 'в итоге недели — кнопка «Чего не хватает?»');
+    eq(a1.length, 1, 'ответ ушёл сразу'); eq([a1[0].p_answer, a1[0].p_week, a1[0].p_note], ['так себе', week, null]);
+    ok(/^[0-9a-f-]{36}$/.test(a1[0].p_id) && a1[0].p_id === dev[0], 'с номером устройства');
+    ok(/progress/.test(focus[0]) && focus[1] === 'fbText', '«Чего не хватает?» → поле отзыва: ' + focus);
+    eq(empty[0], 1, 'пустой текст не уходит'); ok(/напишите/i.test(empty[1]), 'подсказка: ' + empty[1]);
+    eq([sent[0].p_note, sent[0].p_answer], ['Не хватает сцен про рынок', null]); ok(/спасибо/i.test(sent[1]), sent[1]); eq(sent[2], '', 'поле очищено');
+    ok(/не отправ/i.test(off[0]), 'без сети: ' + off[0]); eq([off[1], off[2]], ['Без сети', 1], 'текст остался, в очереди');
+    eq(flushed, ['Без сети', '[]'], 'очередь ушла при появлении сети'); eq(dev[1], true, 'очередь не идёт в резервную копию');
+    eq(any, 0, 'в тестах без __nbForce — без сети'); eq(errs, []);
+  });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
     const GEN = ['Evet, öyle.', 'Hı hı.'];
