@@ -119,6 +119,10 @@ jobs:
             echo "в манифесте: $(echo "$MAN" | python3 -c "import sys,json;print(len(json.load(sys.stdin)['items']))") текстов"
             while read -r f; do curl -fsS -o /dev/null "$URL/tts/$f?v=$GITHUB_SHA" || { echo "::error::нет файла озвучки tts/$f"; exit 1; }; done < /tmp/ttsf
           fi
+      # IndexNow: адреса из sitemap.xml — Яндексу и Bing (сайт уже отдаёт новую сборку и файл-ключ); сбой — только предупреждение
+      - uses: actions/checkout@v4
+      - name: Сообщить поисковикам о новых страницах (IndexNow)
+        run: node tests/indexnow.js
   # Снимки живого сайта во всех разделах → ветка `screens` (чтобы показать пользователю, как сайт выглядит на самом деле)
   screens:
     needs: verify

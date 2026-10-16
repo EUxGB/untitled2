@@ -3073,6 +3073,18 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     if(!/cp -r [^\n]*\bfrazy\b/.test(wf) || !/cp -r [^\n]*\bllms\.txt\b/.test(wf)) bad.push('публикация не копирует frazy/ и llms.txt');
     eq(bad, []);
   });
+  await test('IndexNow (2026-10-16): после публикации адреса из sitemap.xml уходят в Яндекс и Bing с ключом сайта', async () => {
+    const { execFileSync } = require('child_process'), root = path.join(__dirname, '..');
+    const keyFile = fs.readdirSync(root).find(f => /^indexnow-[0-9a-f]{32}\.txt$/.test(f)); ok(keyFile, 'нет файла-ключа indexnow-<ключ>.txt');
+    const key = keyFile.slice(9, -4); eq(fs.readFileSync(path.join(root, keyFile), 'utf8').trim(), key);
+    const out = JSON.parse(execFileSync(process.execPath, [path.join(__dirname, 'indexnow.js'), '--dry'], { encoding:'utf8' }));
+    const locs = [...fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8').matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+    eq(out.body, { host:'www.simitci.ru', key, keyLocation:'https://www.simitci.ru/' + keyFile, urlList:locs });
+    eq(out.endpoints, ['https://yandex.com/indexnow', 'https://api.indexnow.org/indexnow']);
+    const wf = fs.readFileSync(path.join(root, '.github', 'workflows', 'tests.yml'), 'utf8'), v = wf.slice(wf.indexOf('  verify:'), wf.indexOf('  screens:'));
+    ok(/node tests\/indexnow\.js/.test(v), 'задача verify не отправляет адреса в IndexNow');
+    ok(v.indexOf('node tests/indexnow.js') > v.indexOf('Сайт отдаёт новую сборку'), 'IndexNow должен идти после проверки сайта');
+  });
   await test('страницы ситуаций для поиска: на 320 и 360 px без прокрутки вбок, кнопки ≥ 44 px, свои шрифты, WCAG 2.1 AA в светлой и тёмной теме, кнопка играет запись', async () => {
     const pg = path.join(__dirname, '..', 'frazy', 'u-vracha', 'index.html'); ok(fs.existsSync(pg), 'нет frazy/u-vracha');
     const bad = [];
