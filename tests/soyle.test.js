@@ -2793,7 +2793,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const URL = 'https://pay.cloudtips.ru/p/6001d006';
     const look = async q => q.evaluate(() => { const b = document.getElementById('spBox'), a = document.getElementById('spLink'), qr = document.getElementById('spQr');
       return { shown: !!b && !b.hidden && b.offsetHeight > 0, href: a && a.getAttribute('href'), target: a && a.getAttribute('target'), rel: a && a.getAttribute('rel'), txt: a && a.textContent.trim(),
-        h: a ? a.getBoundingClientRect().height : 0, qr: !!qr && qr.getBoundingClientRect().height > 0, qrUrl: qr && qr.dataset.url, inScene: !!document.querySelector('#cityCard a[href*="cloudtips"]') }; });
+        h: a ? a.getBoundingClientRect().height : 0, qr: !!qr && qr.getBoundingClientRect().height > 0, qrUrl: qr && qr.dataset.url, inScene: !!document.querySelector('#cityCard a[href*="cloudtips"]'), heart: (() => { const h = document.querySelector('#spTitle .sp-heart use'); return !!h && h.getAttribute('href') === '#i-heart' && document.querySelector('#spTitle .sp-heart').getBoundingClientRect().width >= 16; })(),
+        aboveQuest: !!b && !!(b.compareDocumentPosition(document.getElementById('gbQuest')) & Node.DOCUMENT_POSITION_FOLLOWING) && b.getBoundingClientRect().bottom <= document.getElementById('gbQuest').getBoundingClientRect().top }; });
     // первый день: блока нет
     const q = await openPage(browser); await q.click('#tab-progress'); await q.waitForTimeout(80);
     const day1 = await look(q);
@@ -2811,6 +2812,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(/noopener/.test(day2.rel || ''), 'rel=noopener'); ok(day2.h >= 44, 'кнопка ≥ 44 px: ' + day2.h);
     ok(day2.qr, 'на ПК — QR'); eq(day2.qrUrl, URL, 'QR сделан из той же ссылки');
     ok(phone.shown && phone.h >= 44, 'на телефоне — кнопка'); eq(phone.qr, false, 'на телефоне QR не показывается (свой экран не отсканировать)');
+    ok(day2.aboveQuest, 'выше «Задания дня» (просьба 2026-10-16 19:11)');
+    ok(day2.heart, 'у заголовка «Поддержать автора» — сердечко (SVG-иконка i-heart, не эмодзи)');
     eq(city.inScene, false, 'в «Городе» ссылки нет'); eq(errs, []);
   });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
