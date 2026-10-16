@@ -2786,6 +2786,32 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(flushed, ['Без сети', '[]'], 'очередь ушла при появлении сети'); eq(dev[1], true, 'очередь не идёт в резервную копию');
     eq(any, 0, 'в тестах без __nbForce — без сети'); eq(errs, []);
   });
+  // Решение пользователя 2026-10-12 (§5 «Согласованных решений»): только добровольная поддержка, CloudTips; 2026-10-16 18:23 — «включи сейчас» плитку в «Прогрессе»
+  // (строка в итоге недели — вместе с неделей 2). Не в первый день, без окон, ничего не открывает; телефон — кнопка, широкий экран — ещё и QR.
+  await test('Поддержка автора (2026-10-16): «Угостить автора бубликом simit» в «Прогрессе» — со второго дня, ссылка CloudTips без target=_blank, на телефоне без QR, на ПК с QR; не в сценах', async () => {
+    const URL = 'https://pay.cloudtips.ru/p/6001d006';
+    const look = async q => q.evaluate(() => { const b = document.getElementById('spBox'), a = document.getElementById('spLink'), qr = document.getElementById('spQr');
+      return { shown: !!b && !b.hidden && b.offsetHeight > 0, href: a && a.getAttribute('href'), target: a && a.getAttribute('target'), rel: a && a.getAttribute('rel'), txt: a && a.textContent.trim(),
+        h: a ? a.getBoundingClientRect().height : 0, qr: !!qr && qr.getBoundingClientRect().height > 0, qrUrl: qr && qr.dataset.url, inScene: !!document.querySelector('#cityCard a[href*="cloudtips"]') }; });
+    // первый день: блока нет
+    const q = await openPage(browser); await q.click('#tab-progress'); await q.waitForTimeout(80);
+    const day1 = await look(q);
+    // второй день использования: блок есть
+    await q.evaluate(() => { game.days = ['2026-10-14', '2026-10-15']; renderGame(); }); await q.waitForTimeout(80);
+    const day2 = await look(q);
+    await q.click('#tab-city'); await q.waitForTimeout(80); const city = await look(q); const errs = q.errors; await q.context().close();
+    // телефон (pointer: coarse): кнопка, QR не показывается
+    const ctx = await browser.newContext({ viewport:{ width:360, height:640 }, isMobile:true, hasTouch:true });
+    const m = await ctx.newPage(); await m.addInitScript(() => { window.SOYLE_TEST = true; localStorage.setItem('soyle-game', JSON.stringify({ days:['2026-10-14','2026-10-15'] })); });
+    await m.route(u => /^https?:/.test(u.href), r => r.abort()); await m.goto('file://' + require('path').resolve(process.argv[2] || 'index.html'));
+    await m.evaluate(() => document.getElementById('tab-progress').click()); await m.waitForTimeout(100); const phone = await look(m); await ctx.close();
+    eq(day1.shown, false, 'в первый день блока нет');
+    ok(day2.shown, 'со второго дня блок виден'); eq([day2.href, day2.target, day2.txt], [URL, null, 'Угостить автора бубликом simit']);
+    ok(/noopener/.test(day2.rel || ''), 'rel=noopener'); ok(day2.h >= 44, 'кнопка ≥ 44 px: ' + day2.h);
+    ok(day2.qr, 'на ПК — QR'); eq(day2.qrUrl, URL, 'QR сделан из той же ссылки');
+    ok(phone.shown && phone.h >= 44, 'на телефоне — кнопка'); eq(phone.qr, false, 'на телефоне QR не показывается (свой экран не отсканировать)');
+    eq(city.inScene, false, 'в «Городе» ссылки нет'); eq(errs, []);
+  });
   await test('Светская реплика (2026-10-10 10:03): на вопрос — свои ответы по смыслу, а не «Да, так и есть»/«Угу»; «Merhaba, kolay gelsin» и свой ответ («İki yıldır buradayım») понимаются — и без выбора карточки, и когда выбрана другая', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__char = 'bakkal'; });
     const GEN = ['Evet, öyle.', 'Hı hı.'];
