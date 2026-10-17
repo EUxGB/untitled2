@@ -2080,23 +2080,29 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.here, 'нажмите, чтобы позвонить'); ok(/^звонок · /.test(r.away), 'издалека: ' + r.away); ok(!/вы здесь/.test(r.here + r.away + r.bakkalHere), 'нет «вы здесь»');
     await q.context().close();
   });
-  // Жалоба 2026-10-17 09:56: «Итоги дня перемести вниз, кнопка не должна скакать» — кубик пропадал, и список дел с подсказкой уезжали вверх на ~60 px,
-  // «Итоги дня» вставала посередине. Теперь место кубика сохраняется, кнопка — внизу, на месте строки «Taksi çağır / Eve dön».
-  await test('Город (2026-10-17 09:56): «Итоги дня» внизу, на месте «Taksi çağır / Eve dön»; дела и подсказка не сдвигаются, когда всё сделано (320–412)', async () => {
+  // Жалобы 2026-10-17 09:56 «Итоги дня перемести вниз, кнопка не должна скакать» и 11:02 «кнопка перемещается при нажатии Люди, Дела и т. д.»:
+  // строка «Taksi çağır / Eve dön» (и «Итоги дня» на её месте) прижата к низу поля — на одной высоте на всех вкладках и до/после всех дел.
+  await test('Город (2026-10-17 09:56, 11:02): «Итоги дня» внизу поля, на одной высоте на вкладках Дела/Люди/Умения и на месте строки такси/домой; подсказка не обрезана (320–412)', async () => {
     const q = await openCity(); const bad = [];
     for(const [w, h] of [[320, 568], [360, 640], [390, 844], [412, 915]]){
-      await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { city.done = []; cityRender(); }); await q.waitForTimeout(150);
+      await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { city.done = []; cityInnerTab('tasks'); cityRender(); }); await q.waitForTimeout(150);
       const pos = () => q.evaluate(() => { const r = id => { const x = document.getElementById(id); return x && !x.hidden && x.offsetParent ? Math.round(x.getBoundingClientRect().top) : null; };
-        const hb = document.querySelector('.ct-homebtns'); return { tasks:r('ctTasks'), day:r('ctDay'), intro:r('ctIntro'), end:r('ctDayEnd'), rowTop: hb && hb.offsetParent ? Math.round(hb.getBoundingClientRect().top) : null,
-          endH: (document.getElementById('ctDayEnd') || { offsetHeight:0 }).offsetHeight, tasksBottom: Math.round(document.getElementById('ctTasks').getBoundingClientRect().bottom) }; });
+        const hb = document.querySelector('.ct-homebtns'), intro = document.getElementById('ctIntro');
+        return { tasks:r('ctTasks'), day:r('ctDay'), end:r('ctDayEnd'), rowTop: hb && hb.offsetParent ? Math.round(hb.getBoundingClientRect().top) : null,
+          endH:(document.getElementById('ctDayEnd') || { offsetHeight:0 }).offsetHeight, tasksBottom:Math.round(document.getElementById('ctTasks').getBoundingClientRect().bottom),
+          introBottom: intro.offsetParent ? Math.round(intro.getBoundingClientRect().bottom) : null }; });
       const a = await pos();
       await q.evaluate(() => { cityPlanIds().forEach(id => city.done.push({ id, kind:'ok', short:'получилось' })); cityRender(); }); await q.waitForTimeout(150);
       const b = await pos();
-      // список дел может стать на строку выше/ниже (текст «· получилось» другой длины) — это не прыжок; меряем от его конца
-      for(const k of ['tasks', 'day']) if(Math.abs(a[k] - b[k]) > 2) bad.push(`${w}: ${k} сдвинулось ${a[k]} → ${b[k]}`);
-      if(b.end === null) bad.push(`${w}: нет «Итоги дня»`);
-      else { if(Math.abs((b.end - b.tasksBottom) - (a.rowTop - a.tasksBottom)) > 2) bad.push(`${w}: «Итоги дня» не на месте строки такси/домой (${b.end - b.tasksBottom} против ${a.rowTop - a.tasksBottom} от конца дел)`);
-        if(Math.abs((b.intro - b.end) - (a.intro - a.rowTop)) > 2) bad.push(`${w}: подсказка под кнопкой сдвинулась (${b.intro - b.end} против ${a.intro - a.rowTop})`); if(b.end < b.tasksBottom) bad.push(`${w}: «Итоги дня» выше конца списка дел`); if(b.endH < 44) bad.push(`${w}: кнопка ниже 44 px`); }
+      // кубик после всех дел убирается (список дел поднимается) — двигаться не должна кнопка; подсказка не обрезается
+      const clip = await q.evaluate(() => { const i = document.getElementById('ctIntro'); return i.scrollHeight - i.clientHeight; }); if(clip > 1) bad.push(`${w}: подсказка обрезана на ${clip} px`);
+      if(b.end === null){ bad.push(`${w}: нет «Итоги дня»`); continue; }
+      if(Math.abs(b.end - a.rowTop) > 2) bad.push(`${w}: «Итоги дня» не на месте строки такси/домой (${b.end} против ${a.rowTop})`);
+      if(b.end < b.tasksBottom) bad.push(`${w}: «Итоги дня» выше конца списка дел`); if(b.introBottom !== null && b.introBottom > b.end + 1) bad.push(`${w}: подсказка залезла под кнопку`);
+      if(b.endH < 44) bad.push(`${w}: кнопка ниже 44 px`);
+      const tabs = await q.evaluate(async () => { const o = []; for(const t of ['people', 'skills', 'tasks']){ cityInnerTab(t); await new Promise(r => requestAnimationFrame(r));
+        const e = document.getElementById('ctDayEnd'), inner = document.getElementById('ctInner'); o.push([t, Math.round(e.getBoundingClientRect().top), Math.round(e.getBoundingClientRect().bottom) <= Math.round(inner.getBoundingClientRect().bottom) + 1]); } return o; });
+      tabs.forEach(([t, top, inside]) => { if(Math.abs(top - b.end) > 2) bad.push(`${w}: на вкладке ${t} «Итоги дня» на ${top}, а на «Делах» на ${b.end}`); if(!inside) bad.push(`${w}: на вкладке ${t} кнопка вылезла за поле`); });
     }
     eq(bad, []); eq(q.errors, []); await q.context().close();
   });
@@ -2128,10 +2134,18 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await p.evaluate(() => [wordGloss('kadar').ctx, wordGloss('hepsi').ctx]);
     ok(/столько/.test(r[0]) && /bu kadar/.test(r[0]), r[0]); ok(/hepsi bu kadar/.test(r[1]), r[1]);   // на карточке выбора — короткое «Это всё.», дословный разбор — по нажатию на слово
   });
-  await test('Город (08:51): заголовок дома — «Mahalle (квартал) · …», без «города»', async () => {
-    const q = await openCity();
-    const s = await q.evaluate(() => { cityRender(); return document.getElementById('ctPlace').textContent; }); await q.context().close();
-    ok(/^Mahalle \(квартал\) · /.test(s) && !/города/.test(s), s);
+  // 2026-10-17 11:01 «Да, İstanbul», «на турецком»: сверху — турецкий адрес квартала и город (вместо «Mahalle (квартал)»). Квартал — на европейском берегу:
+  // в сценах герой ездит в Кадыкёй на пароме, поэтому не Moda/Kadıköy, а Sinanpaşa (Beşiktaş, у пристани).
+  await test('Город (2026-10-17 11:01): заголовок дома — «Sinanpaşa Mahallesi · Beşiktaş, İstanbul · день недели, день N» по-турецки, помещается на 320–412 без обрезки', async () => {
+    const q = await openCity(); const out = [];
+    for(const w of [320, 360, 390, 412]){ await q.setViewportSize({ width:w, height:700 }); await q.waitForTimeout(200);
+      out.push(await q.evaluate(w => { cityRender(); autofit(); const el = document.getElementById('ctPlace');
+        return { w, s:el.textContent, fs:parseFloat(getComputedStyle(el).fontSize), cut:el.scrollWidth > el.clientWidth + 1, lang:el.querySelector('[lang="tr"]') ? el.querySelector('[lang="tr"]').getAttribute('translate') : null }; }, w)); }
+    await q.context().close();
+    for(const o of out){ ok(/Sinanpaşa/.test(o.s) && /İstanbul/.test(o.s) && /день \d+/.test(o.s), JSON.stringify(o)); ok(!/квартал\)|города/.test(o.s), o.s);
+      eq(o.cut, false, o.w + ': не обрезано'); ok(o.fs >= 10, o.w + ': шрифт ' + o.fs); eq(o.lang, 'no', o.w + ': турецкий адрес — translate="no"'); }
+    for(const o of out) ok(/Sinanpaşa Mah(\.|allesi)/.test(o.s), o.w + ': слово «Mahalle» на месте: ' + o.s);
+    console.log('    шапка: ' + out.map(o => o.w + ' «' + o.s + '» ' + o.fs + 'px').join(' | '));
   });
   await test('«Память» (22:03): сохранённые карточки со старым «çok güzel» про еду заменяются на «çok lezzetli»', async () => {
     const q = await openPage(browser, { storage:{ 'soyle-srs': JSON.stringify([{ tr:'Ellerinize sağlık, çok güzel.', ru:'x', side:'rec', state:2, step:null, s:3, d:5, due:0, last:0, reps:2, seen:true }]) } });

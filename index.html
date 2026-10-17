@@ -634,7 +634,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 /* «Город»: день в квартале — задачи, сцена-разговор, ресурсы */
 .city{gap:calc(8px * var(--fit))}
 .ct-head{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; color:var(--muted)}
-.ct-place{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.ct-place{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap} .ct-place.two{white-space:normal; line-height:1.2}
 .ct-res{display:flex; align-items:center; gap:10px; flex:none; font-variant-numeric:tabular-nums; color:var(--ink)}
 .ct-res .ct-money{font:700 15px var(--display)}
 .ct-res .ct-time{display:inline-flex; align-items:center; gap:3px} .ct-res .ct-time .ic{width:14px; height:14px}
@@ -669,7 +669,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-char:hover{background:var(--surface)} .ct-char i{flex:none; width:24px; height:24px; border-radius:50%; background:var(--accent); color:var(--on-accent); display:grid; place-items:center; font:700 12px var(--display); font-style:normal}
 .ct-char.lv0 i{background:var(--line); color:var(--ink)} .ct-char.lv2 i{background:var(--ink)}
 .ct-char b{font-weight:700; min-width:0; overflow-wrap:anywhere; line-height:1.15} .ct-char-lvl{margin-left:auto; color:var(--muted); font-size:.9em; flex:none}
-.ct-skills{display:flex; flex-direction:column; gap:6px} .ct-skill{display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:center; gap:2px 6px; font-size:max(11px, calc(12px * var(--fit)))} .ct-skill > span:first-child{grid-column:1 / -1; color:var(--muted); line-height:1.2}
+.ct-skills{display:flex; flex-direction:column; gap:6px; min-height:0; overflow:auto} .ct-skill{display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:center; gap:2px 6px; font-size:max(11px, calc(12px * var(--fit)))} .ct-skill > span:first-child{grid-column:1 / -1; color:var(--muted); line-height:1.2}
 .ct-skill .bar{height:5px; border-radius:3px; background:var(--line); overflow:hidden} .ct-skill .bar i{display:block; height:100%; background:var(--accent)} .ct-skill b{min-width:1.2em; text-align:right}
 .pv-tile-btn{cursor:pointer; text-align:left; font:inherit; color:inherit} .pv-tile-btn:hover{border-color:var(--accent)}
 .ct-day{margin:0; font:700 max(13px, calc(15px * var(--fit)))/1.2 var(--display); text-align:left}
@@ -684,7 +684,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-roll:not(:disabled):hover .die{transform:translateY(-1px)} .ct-roll:disabled{cursor:default} .ct-roll:disabled .die{stroke:var(--muted); filter:none} .ct-roll:disabled .die circle{fill:var(--ink)}
 .ct-roll.rolling .die{animation:dieShake .14s ease-in-out infinite alternate} @keyframes dieShake{from{transform:rotate(-14deg) translateY(-2px)} to{transform:rotate(12deg) translateY(2px)}}
 .ct-dice-hint{font-size:12px; color:var(--muted); line-height:1.25}
-.ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-decoration:none; line-height:1.15} .ct-homebtns .linkbtn span{text-decoration:underline} .ct-homebtns .linkbtn small{font-size:11px; color:var(--muted)} .ct-homebtns #ctHomeBtn{align-items:flex-end}
+.ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px; order:10; margin-top:auto; flex:none} .ct-intro{order:9; min-height:0; overflow:hidden}   /* строка такси/домой и «Итоги дня» — у низа поля на любой вкладке (2026-10-17 11:02), подсказка — над ней */ .ct-homebtns .linkbtn{min-height:44px; padding:0 4px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-decoration:none; line-height:1.15} .ct-homebtns .linkbtn span{text-decoration:underline} .ct-homebtns .linkbtn small{font-size:11px; color:var(--muted)} .ct-homebtns #ctHomeBtn{align-items:flex-end}
 .ct-task.go{cursor:pointer; min-height:44px; display:flex; align-items:center; flex-wrap:wrap; gap:0 4px; padding:2px 8px; border:1.5px solid var(--accent); border-radius:10px; background:var(--surface)} .ct-task.go span{color:var(--accent); font-weight:700}
 #ctDayEnd{flex:1; width:100%; height:44px; min-height:44px; padding:0 12px; font-size:16px}
 .ct-rent{display:block; font-weight:600; color:var(--ink-2)} .ct-week{display:block; font-weight:700; color:var(--accent-ink)}
@@ -1411,8 +1411,8 @@ function fitBtn(b){ if(!b.getClientRects().length) return; b.classList.remove("n
   let fs = parseFloat(getComputedStyle(b).fontSize); while(fs > 11 && over()){ fs -= .5; b.style.fontSize = fs + "px"; } }
 function fitLabels(){ document.querySelectorAll(".main-row .pill").forEach(fitPill); document.querySelectorAll(".btngrid .btn").forEach(fitBtn);
   document.querySelectorAll(".bd-cell").forEach(c => { if(c.getClientRects().length) c.querySelectorAll(".bd-tr, .bd-ru").forEach(e => fitText(e, c, 6.5)); });
-  const pl = document.getElementById("ctPlace"); if(pl && pl.getClientRects().length){ if(pl.dataset.full) pl.textContent = pl.dataset.full; fitText(pl, null, 11);
-    if(pl.scrollWidth > pl.clientWidth && pl.dataset.short){ pl.textContent = pl.dataset.short; fitText(pl, null, 10); } } }
+  const pl = document.getElementById("ctPlace"); if(pl && pl.getClientRects().length){ pl.classList.remove("two"); if(pl.dataset.full) pl.innerHTML = pl.dataset.full; fitText(pl, null, 11);
+    for(const k of ["short", "tiny", "two"]) if(pl.scrollWidth > pl.clientWidth && pl.dataset[k]){ pl.innerHTML = pl.dataset[k]; pl.classList.toggle("two", k === "two"); fitText(pl, null, 10); } } }   // самый узкий экран — адрес и день в две строки
 function setIc(el, name){ const u = el.querySelector(".ring use, :scope > svg use"); if(u) u.setAttribute("href", "#i-" + name); }
 function esc(s){ return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -3696,6 +3696,7 @@ function trNumWords(n){ n = Math.round(n); if(n <= 0) return "sıfır"; const pa
   const h = Math.floor(n / 100) % 10, t = Math.floor(n / 10) % 10, o = n % 10, th = Math.floor(n / 1000);
   if(th) parts.push(th === 1 ? "bin" : TR_ONES[th] + " bin"); if(h) parts.push(h === 1 ? "yüz" : TR_ONES[h] + " yüz"); if(t) parts.push(TR_TENS[t]); if(o) parts.push(TR_ONES[o]);
   return parts.join(" "); }
+const CITY_ADDR = { full:"Sinanpaşa Mahallesi · Beşiktaş, İstanbul", mid:"Sinanpaşa Mah. · Beşiktaş, İstanbul", short:"Sinanpaşa Mah. · İstanbul" };   // «Mah.» — так сокращают в турецких адресах   // адрес квартала в шапке (2026-10-17)
 const cap = t => t ? t[0].toLocaleUpperCase("tr-TR") + t.slice(1) : t;
 // Персонажи квартала (спек §8, §4а): у каждого свой голос, терпение, характер (виден в репликах) и то, за что он прибавляет отношение.
 // На одном месте — разные люди (`pool` у сцены): кто встретится — случай с весом 1 + отношения; в тестах — window.__char или первый.
@@ -5068,8 +5069,11 @@ function cityRender(){
   if(home && mode === "city" && city.camp && city.camp.old && !city.camp.told && (!TESTMODE || window.__prologue)){ city.camp.told = true; citySave();
     showModal({ ic:"Kampanya", title:"Кампания «Первый месяц»", text:"Вы здесь уже освоились: деньги, знакомые и умения — с вами. Кампания начинается с недели 1: у каждой недели своя цель, в воскресенье — итог.", primary:{ label:"Дальше" } }); }
   ctEl("ctHome").hidden = !home; ctEl("ctScene").hidden = home;
-  ctEl("ctPlace").textContent = home ? `Mahalle (квартал) · ${DOW_RU[cityDow()]}, день ${city.day}` : ct.scene.place;
-  ctEl("ctPlace").dataset.full = ctEl("ctPlace").textContent; ctEl("ctPlace").dataset.short = home ? `Mahalle · ${DOW_RU[cityDow()]}, день ${city.day}` : "";   // узкий экран: без «(квартал)»
+  // Шапка дома — турецкий адрес квартала (2026-10-17 11:01 «Да, İstanbul», «на турецком»): европейский берег, у пристани Бешикташа (в сценах герой ездит в Кадыкёй на пароме).
+  // Узкий экран: сначала уменьшается шрифт, потом «Mahallesi» → «Mah.», потом без района.
+  { const pl = ctEl("ctPlace"), day = `${DOW_RU[cityDow()]}, день ${city.day}`, tr = t => `<span lang="tr" translate="no">${t}</span>`;
+    if(home){ pl.dataset.full = `${tr(CITY_ADDR.full)} · ${day}`; pl.dataset.short = `${tr(CITY_ADDR.mid)} · ${day}`; pl.dataset.tiny = `${tr(CITY_ADDR.short)} · ${day}`; pl.dataset.two = `${tr(CITY_ADDR.short)}<br>${day}`; pl.innerHTML = pl.dataset.full; }
+    else { pl.textContent = ct.scene.place; pl.dataset.full = ""; pl.dataset.short = ""; pl.dataset.tiny = ""; pl.dataset.two = ""; } }
   cityRes();
   if(home) cityBoard();
   scheduleFit();
@@ -5096,7 +5100,7 @@ function cityBoard(){
   ctEl("ctTasks").querySelectorAll(".ct-task.go").forEach(li => { const run = () => cityStart(li.dataset.scene); li.onclick = run; li.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); run(); } }; });
   cityInnerTab(cityTab); ctEl("ctChars").innerHTML = cityCharsHtml(); ctEl("ctSkills").innerHTML = citySkillsHtml();
   ctEl("ctChars").querySelectorAll(".ct-char").forEach(b => b.onclick = () => openChar(b.dataset.char));
-  ctEl("ctDice").hidden = false; ctEl("ctDice").style.visibility = allDone ? "hidden" : "";   // место кубика держится: иначе дела и подсказка уезжали вверх, когда всё сделано (жалоба 2026-10-17 09:56)
+  ctEl("ctDice").hidden = allDone;   // всё сделано — кубик не нужен; кнопка «Итоги дня» при этом не двигается: строка кнопок прижата к низу поля (2026-10-17 11:02)
   ctEl("ctHomeBtn").hidden = allDone; ctEl("ctTaxi").hidden = allDone || !!city.roll || city.min >= DAY_END;   // после 21:00 такси некуда — день кончился
   let de = ctEl("ctDayEnd"); if(allDone && !de){ de = document.createElement("button"); de.className = "btn primary big"; de.id = "ctDayEnd"; de.textContent = "Итоги дня"; de.onclick = cityDayEnd; ctEl("ctHomeBtn").parentElement.appendChild(de); }   // «Итоги дня» — внизу, в строке «Taksi çağır / Eve dön» (они в это время скрыты), той же высоты
   else if(!allDone && de) de.remove();
