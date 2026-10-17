@@ -2080,6 +2080,26 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.here, 'нажмите, чтобы позвонить'); ok(/^звонок · /.test(r.away), 'издалека: ' + r.away); ok(!/вы здесь/.test(r.here + r.away + r.bakkalHere), 'нет «вы здесь»');
     await q.context().close();
   });
+  // Жалоба 2026-10-17 09:56: «Итоги дня перемести вниз, кнопка не должна скакать» — кубик пропадал, и список дел с подсказкой уезжали вверх на ~60 px,
+  // «Итоги дня» вставала посередине. Теперь место кубика сохраняется, кнопка — внизу, на месте строки «Taksi çağır / Eve dön».
+  await test('Город (2026-10-17 09:56): «Итоги дня» внизу, на месте «Taksi çağır / Eve dön»; дела и подсказка не сдвигаются, когда всё сделано (320–412)', async () => {
+    const q = await openCity(); const bad = [];
+    for(const [w, h] of [[320, 568], [360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { city.done = []; cityRender(); }); await q.waitForTimeout(150);
+      const pos = () => q.evaluate(() => { const r = id => { const x = document.getElementById(id); return x && !x.hidden && x.offsetParent ? Math.round(x.getBoundingClientRect().top) : null; };
+        const hb = document.querySelector('.ct-homebtns'); return { tasks:r('ctTasks'), day:r('ctDay'), intro:r('ctIntro'), end:r('ctDayEnd'), rowTop: hb && hb.offsetParent ? Math.round(hb.getBoundingClientRect().top) : null,
+          endH: (document.getElementById('ctDayEnd') || { offsetHeight:0 }).offsetHeight, tasksBottom: Math.round(document.getElementById('ctTasks').getBoundingClientRect().bottom) }; });
+      const a = await pos();
+      await q.evaluate(() => { cityPlanIds().forEach(id => city.done.push({ id, kind:'ok', short:'получилось' })); cityRender(); }); await q.waitForTimeout(150);
+      const b = await pos();
+      // список дел может стать на строку выше/ниже (текст «· получилось» другой длины) — это не прыжок; меряем от его конца
+      for(const k of ['tasks', 'day']) if(Math.abs(a[k] - b[k]) > 2) bad.push(`${w}: ${k} сдвинулось ${a[k]} → ${b[k]}`);
+      if(b.end === null) bad.push(`${w}: нет «Итоги дня»`);
+      else { if(Math.abs((b.end - b.tasksBottom) - (a.rowTop - a.tasksBottom)) > 2) bad.push(`${w}: «Итоги дня» не на месте строки такси/домой (${b.end - b.tasksBottom} против ${a.rowTop - a.tasksBottom} от конца дел)`);
+        if(Math.abs((b.intro - b.end) - (a.intro - a.rowTop)) > 2) bad.push(`${w}: подсказка под кнопкой сдвинулась (${b.intro - b.end} против ${a.intro - a.rowTop})`); if(b.end < b.tasksBottom) bad.push(`${w}: «Итоги дня» выше конца списка дел`); if(b.endH < 44) bad.push(`${w}: кнопка ниже 44 px`); }
+    }
+    eq(bad, []); eq(q.errors, []); await q.context().close();
+  });
   await test('Город (21:56): дело на клетке, где вы стоите, запускается нажатием на строку (раньше «звоните отсюда» не нажималось); у кнопок «Taksi çağır»/«Eve dön» есть перевод; симитчи объяснён', async () => {
     const q = await openCity();
     const r = await q.evaluate(() => { city.plan = ['su', 'bakkal']; city.done = []; city.pos = cellOfScene('su'); city.roll = null; cityRender();
