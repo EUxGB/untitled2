@@ -1536,6 +1536,22 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(r.paras.every(n => n >= 2), 'в каждой карточке содержимое: ' + JSON.stringify(r.paras)); eq(r.over, 0); ok(r.long <= 200, 'абзацы короткие: ' + r.long);
     eq(q.errors, []); await q.context().close();
   });
+  // Жалоба 2026-10-17 09:50: «Вопросительные слова — тема запутывается, сделай проще, раздели на блоки». Навык writing-clearly-and-concisely (Strunk: абзац — одна мысль,
+  // сначала главное, убрать лишнее): четыре карточки, короткие абзацы, без таблицы-дубля и без посторонних тем (-siniz, «урок 1»); каждое слово упражнений объяснено в тексте.
+  await test('грамматика (2026-10-17 09:50): «Вопросительные слова» — четыре карточки с номерами, короткие абзацы, без таблицы-дубля и лишних тем; слова упражнений объяснены', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    await q.evaluate(() => document.querySelector('[data-rule="qwords"]').click());
+    const r = await q.evaluate(() => { const g = GRAMMAR.find(x => x.id === 'qwords'), cs = [...document.querySelectorAll('#gramView .gm-sec')];
+      const all = g.txt.join(' '), words = new Set((all.match(/\{([^}]+)\}/g) || []).flatMap(x => x.slice(1, -1).toLocaleLowerCase('tr').split(/[\s?.!,]+/)).filter(Boolean));
+      const exWords = g.ex.flatMap(e => e.o.concat(e.q)).flatMap(s => s.replace(/\{|\}/g, '').toLocaleLowerCase('tr').split(/[\s?.!,…()]+/)).filter(w => /^[a-zçğıöşü]+$/.test(w) && !/^(oraa)$/.test(w));
+      return { n:cs.length, heads:cs.map(c => (c.querySelector('h3') || {}).textContent || ''), filled:cs.map(c => c.querySelectorAll('.gm-p, .gm-tiles, .gm-map, .gm-rows, .gm-chips').length),
+        tbl:!!g.tbl, long:Math.max(...g.txt.filter(t => !/^## /.test(t)).map(t => t.length)), noise:/siniz|урок 1|Соединительные/.test(all),
+        unexplained:[...new Set(exWords.filter(w => !words.has(w)))], over:cs.filter(c => c.scrollWidth > c.clientWidth + 1).length }; });
+    eq(r.n, 4, 'четыре карточки'); ok(r.heads.every((h, i) => h.startsWith((i + 1) + '. ')), 'заголовки с номерами: ' + JSON.stringify(r.heads));
+    ok(r.filled.every(n => n >= 1), 'в каждой карточке есть содержимое: ' + JSON.stringify(r.filled));
+    eq(r.tbl, false, 'нет таблицы-дубля'); ok(r.long <= 160, 'абзацы короткие: ' + r.long); eq(r.noise, false, 'без посторонних тем');
+    eq(r.unexplained, [], 'слова из упражнений объяснены в тексте урока'); eq(r.over, 0); eq(q.errors, []); await q.context().close();
+  });
   await test('грамматика (2026-10-14 09:52): после ответа «Дальше» видна без прокрутки — все уроки, все вопросы, верный и неверный ответ, 320–412', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[320, 568], [360, 640], [390, 844], [412, 915]]){
