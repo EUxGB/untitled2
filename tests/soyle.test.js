@@ -1720,6 +1720,18 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const foundAt = [...new Set(lesson.match(/(?:üç|beş|dört|iki|altı|yedi|sekiz|dokuz|on)(?:te|ta|de|da)(?![a-zçğıöşü])/g) || [])].filter(w => w !== 'onda' || true);
     ok(foundAt.length >= 7, 'в уроке форм времени: ' + foundAt.length); eq(foundAt.filter(w => !okAt.has(w)), [], 'неверные формы времени (кроме неверных вариантов ответа)');
   });
+  await test('«Гармония гласных» по навыку writing-clearly-and-concisely (2026-10-18 11:35): карточки по одной теме, короткие абзацы, правило — первым, все слова упражнений объяснены, термины падежей на месте', async () => {
+    const r = await p.evaluate(() => { const g = GRAMMAR.find(x => x.id === 'harmony'), body = g.txt.filter(t => !/^## /.test(t));
+      const lat = s => (String(s).match(/[A-Za-zÇĞİÖŞÜçğıöşü]+/g) || []).map(w => w.toLocaleLowerCase('tr'));
+      const known = new Set(lat(JSON.stringify([g.txt, g.tbl]).replace(/([a-zçğıöşü])-(?=[a-zçğıöşü])/g, '$1')));
+      const miss = []; g.ex.forEach((e, i) => [e.q, e.o[e.a]].forEach(x => lat(x).forEach(w => { if(w.length > 1 && !known.has(w)) miss.push((i + 1) + ': ' + w); })));
+      return { heads:g.txt.filter(t => /^## /.test(t)), long:body.filter(t => t.replace(/[{}]/g, '').length > 220).map(t => t.slice(0, 40)),
+        sent:Math.max(...body.map(t => (t.match(/[.!?](\s|$)/g) || []).length)), miss, all:JSON.stringify(g.txt) }; });
+    ok(r.heads.length >= 4 && r.heads.every((h, i) => h.startsWith('## ' + (i + 1) + '. ')), 'карточки с номерами: ' + JSON.stringify(r.heads));
+    eq(r.long, [], 'абзацы не длиннее 220 знаков'); ok(r.sent <= 3, 'в абзаце не больше 3 предложений: ' + r.sent);
+    eq(r.miss, [], 'каждое слово упражнений объяснено в уроке');
+    ['винительный', 'дательный', 'родительный'].forEach(w => ok(r.all.includes(w), 'термин «' + w + '» объяснён (на него опирается урок soft)'));
+  });
   await test('урок «Когда меняется последняя буква» (18:20): формы «куда?» собраны по правилам (независимый расчёт) и стоят в тексте/таблице, неверных (kitapa, ağaça…) нет; урок идёт сразу после «Гармонии»', async () => {
     const r = await p.evaluate(() => { const ids = GRAMMAR.map(g => g.id), g = GRAMMAR.find(x => x.id === 'soft'); return { ids, lesson: g ? JSON.stringify([g.txt, g.tbl, g.ex.map(e => e.o[e.a])]) : '' }; });
     ok(r.lesson, 'урок soft есть'); eq(r.ids[r.ids.indexOf('harmony') + 1], 'soft', 'после гармонии');
