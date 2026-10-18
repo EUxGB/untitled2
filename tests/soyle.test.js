@@ -1732,6 +1732,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.miss, [], 'каждое слово упражнений объяснено в уроке');
     ['винительный', 'дательный', 'родительный'].forEach(w => ok(r.all.includes(w), 'термин «' + w + '» объяснён (на него опирается урок soft)'));
   });
+  await test('грамматика (2026-10-18 13:40, «делай для всех уроков»): каждый урок — карточки «## 1.», «## 2.»…, абзац — одна мысль (≤ 220 знаков, ≤ 3 предложений; перечень-плитки — до 400)', async () => {
+    const r = await p.evaluate(() => GRAMMAR.map(g => { const heads = g.txt.filter(t => /^## /.test(t)), body = g.txt.filter(t => !/^## /.test(t));
+      const isList = t => (t.match(/\}\s*(—|→)\s*/g) || []).length >= 3 || (t.match(/—\s*\{/g) || []).length >= 3;
+      return { id:g.id, first:/^## 1\. /.test(g.txt[0] || ''), num:heads.length >= 2 && heads.every((h, i) => h.startsWith('## ' + (i + 1) + '. ')),
+        long:body.filter(t => { const n = t.replace(/[{}\[\]]/g, '').length; return n > (isList(t) ? 400 : 220); }).map(t => t.slice(0, 30)),
+        sent:body.filter(t => !isList(t) && (t.match(/[.!?](\s|$)/g) || []).length > 3).map(t => t.slice(0, 30)) }; }));
+    const bad = r.filter(x => !x.first || !x.num || x.long.length || x.sent.length);
+    eq(bad, [], 'уроки не по карточкам или с длинными абзацами');
+  });
   await test('урок «Когда меняется последняя буква» (18:20): формы «куда?» собраны по правилам (независимый расчёт) и стоят в тексте/таблице, неверных (kitapa, ağaça…) нет; урок идёт сразу после «Гармонии»', async () => {
     const r = await p.evaluate(() => { const ids = GRAMMAR.map(g => g.id), g = GRAMMAR.find(x => x.id === 'soft'); return { ids, lesson: g ? JSON.stringify([g.txt, g.tbl, g.ex.map(e => e.o[e.a])]) : '' }; });
     ok(r.lesson, 'урок soft есть'); eq(r.ids[r.ids.indexOf('harmony') + 1], 'soft', 'после гармонии');
