@@ -3292,6 +3292,42 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       await c.close(); }
     eq(bad, []);
   });
+  // Макеты вида B S11–S12 (2026-10-20): фразы — одна белая карточка с разделителями; «Вопросы» — одна карточка, строки 48 px, без треугольника;
+  // общая страница — строка темы: название и пример слева, «N фраз» и стрелка (из рамок) справа
+  await test('страницы ситуаций, вид B (2026-10-20): фразы и «Вопросы» — по одной карточке с разделителями, строки вопросов 48 px без треугольника, строка темы: название и пример слева, число и стрелка справа — 320/360, светлая и тёмная', async () => {
+    const root = path.join(__dirname, '..'), bad = [];
+    for(const scheme of ['light', 'dark']){
+      const c = await browser.newContext({ colorScheme:scheme }); const q = await c.newPage(); await q.route('https://**', r => r.abort()); await q.addInitScript(INIT);
+      for(const w of [320, 360]){ await q.setViewportSize({ width:w, height:700 });
+        await q.goto('file://' + path.join(root, 'frazy', 'v-kafe', 'index.html')); await q.evaluate(() => document.fonts.ready);
+        const r = await q.evaluate(() => { const out = [], cs = (e, k) => getComputedStyle(e)[k], tr = 'rgba(0, 0, 0, 0)';
+          const surf = (() => { const d = document.createElement('div'); d.style.background = 'var(--surface)'; document.body.appendChild(d); const v = getComputedStyle(d).backgroundColor; d.remove(); return v; })();
+          const list = document.querySelector('.list'), ph = [...list.querySelectorAll('.ph')];
+          if(cs(list, 'backgroundColor') !== surf) out.push('список фраз не белая карточка'); if(parseFloat(cs(list, 'borderTopLeftRadius')) < 12) out.push('у карточки фраз нет скругления');
+          if(ph.some(x => cs(x, 'backgroundColor') !== tr)) out.push('у фраз свои карточки');
+          if(ph.slice(0, -1).some(x => cs(x, 'borderBottomStyle') !== 'solid')) out.push('нет разделителей между фразами');
+          if(ph.length > 1 && Math.round(ph[1].getBoundingClientRect().top - ph[0].getBoundingClientRect().bottom) !== 0) out.push('между фразами зазор вместо разделителя');
+          const faq = [...document.querySelectorAll('details')], box = faq[0] && faq[0].parentElement;
+          if(!faq.length || faq.some(d => d.parentElement !== box) || cs(box, 'backgroundColor') !== surf) out.push('«Вопросы» не одной карточкой');
+          if(faq.some(d => cs(d, 'backgroundColor') !== tr)) out.push('у вопросов свои карточки');
+          faq.forEach(d => { const s = d.querySelector('summary'), h = s.getBoundingClientRect().height; if(h < 47.5) out.push('строка вопроса ' + Math.round(h) + ' px');
+            if(cs(s, 'display') === 'list-item' || cs(s, 'listStyleType') !== 'none') out.push('у вопроса треугольник'); });
+          if(faq.slice(0, -1).some(d => cs(d, 'borderBottomStyle') !== 'solid')) out.push('нет разделителей между вопросами');
+          return out; });
+        r.forEach(x => bad.push(scheme + ' ' + w + ' тема: ' + x));
+        await q.goto('file://' + path.join(root, 'frazy', 'index.html')); await q.evaluate(() => document.fonts.ready);
+        const r2 = await q.evaluate(() => { const out = [];
+          document.querySelectorAll('.topic').forEach((a, i) => { const b = a.querySelector('b').getBoundingClientRect(), ex = a.querySelector('i').getBoundingClientRect(), n = a.querySelector('span').getBoundingClientRect(), ar = a.getBoundingClientRect();
+            const af = getComputedStyle(a, '::after');
+            if(!(ex.top >= b.bottom - 1 && Math.abs(ex.left - b.left) < 2)) out.push(i + ': пример не под названием');
+            if(!(n.left > b.right - 1 && n.left > ex.right - 1 && n.right > ar.right - 60)) out.push(i + ': «N фраз» не справа');
+            if(af.content !== '""' || af.borderRightStyle !== 'solid') out.push(i + ': нет стрелки');
+            if(a.scrollWidth > a.clientWidth + 1) out.push(i + ': не помещается'); });
+          return out; });
+        r2.forEach(x => bad.push(scheme + ' ' + w + ' общая: ' + x)); }
+      await c.close(); }
+    eq(bad, []);
+  });
   await test('за весь прогон на странице не было JS-ошибок', async () => eq(p.errors, []));
 
   await browser.close();
