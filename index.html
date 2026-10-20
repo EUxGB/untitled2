@@ -963,11 +963,6 @@ body:has(#tab-memory[aria-pressed="true"]) .mem-title{display:block}
 .ct-res{gap:6px} .ct-res .ct-money, .ct-res .ct-time{display:inline-flex; align-items:center; gap:4px; min-height:30px; padding:0 10px; border-radius:10px; background:var(--surface); box-shadow:var(--shadow); font:700 14px var(--body); color:var(--ink)}
 @media (max-width:380px){ .ct-res{gap:4px} .ct-res .ct-money, .ct-res .ct-time{padding:0 7px; font-size:13px; min-height:28px} .ct-res .ct-time .ic{width:12px; height:12px} }   /* узкий экран: адресу — место (он ужимается сам, см. fitLabels) */
 /* цель недели (полоса «N из M» — campWeekTasks) и аренда — над вкладками, на всех трёх */
-.ct-wkbox{display:flex; flex-direction:column; gap:calc(6px * var(--fit)); flex:none}
-.ct-wk{display:flex; flex-direction:column; gap:2px; padding:8px 12px; border-radius:14px; background:var(--surface); box-shadow:var(--shadow); text-align:left}
-.ct-wk-cap{font:600 11px/1.2 var(--body); color:var(--muted)} .ct-wk-goal{font:700 max(12.5px, calc(14px * var(--fit)))/1.25 var(--body); color:var(--ink)}
-.ct-wk-row{display:flex; align-items:center; gap:8px; margin-top:4px} .ct-wk-bar{flex:1; height:5px; border-radius:3px; background:var(--seg); overflow:hidden} .ct-wk-bar i{display:block; height:100%; background:var(--accent)}
-.ct-wk-n{font-size:11px; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums}
 .ct-rent{display:flex; align-items:center; gap:8px; margin:0; padding:7px 12px; border-radius:14px; background:var(--near-soft); color:var(--near); font:700 12.5px/1.2 var(--body); text-align:left} .ct-rent .ic{width:16px; height:16px; flex:none}
 /* дела — белая карточка со строками; значок состояния: галочка (сделано), кольцо с точкой (можно начать здесь), пустой круг */
 .ct-tasks{gap:0; background:var(--surface); border-radius:14px; box-shadow:var(--shadow)}
@@ -2399,14 +2394,14 @@ function renderGame(){
   { const sp = $("spBox"); if(sp) sp.hidden = (game.days || []).length < 2; }   // поддержка автора — не в первый день использования (решение 2026-10-12, §5)
   if(typeof city !== "undefined" && city){ const okN = Object.values(city.played || {}).reduce((a, p) => a + (p.ok || 0), 0), n = Object.values(city.played || {}).reduce((a, p) => a + (p.n || 0), 0);
     // вид B (2026-10-20): «5 из 13 · дел недели 1» — те же числа, что на карточке «Цель недели» в квартале (campWeekTasks); день, деньги и знакомые — в подсказке плитки
-    const wt = typeof campWeekTasks === "function" ? campWeekTasks() : { done:0, total:0, w:1 };
+    const wt = campWeekTasks();
     $("gbCity").textContent = `${wt.done} из ${wt.total}`; $("gbCitySub").textContent = `дел недели ${wt.w}${(() => { const f = Object.entries(city.feedback || {}).sort((a, b) => b[0] - a[0])[0]; return f ? ` · продолжить: ${f[1]}` : ""; })()}`;
     $("gbCityTile").title = `${cityWeekLine()} · День ${city.day} · дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}`; }
   { const m = memStats(); $("gbMem").textContent = m.strong; $("gbMemSub").textContent = `прочно (3+ нед.) · всего ${m.total} · сегодня ${m.today}`; }
   $("gbBlitzSub").textContent = "фраз за минуту";
   $("gbFreeze").textContent = game.freezes;
   // вид B (2026-10-20, решение пользователя): неделя — календарная, пн–вс; сделано — галочка, заморозка — снежинка, сегодня — кольцо, будущие дни пустые
-  const wd = ["пн","вт","ср","чт","пт","сб","вс"], dow = (new Date().getDay() + 6) % 7;
+  const wd = ["пн","вт","ср","чт","пт","сб","вс"], dow = (new Date().getUTCDay() + 6) % 7;   // по UTC, как dayStr и серия дней (ревью 2026-10-20)
   $("gbWeek").innerHTML = Array.from({ length:7 }, (_, i) => {
     const ds = dayStr(new Date(Date.now() + (i - dow) * 864e5));
     const cls = i > dow ? "future" : game.days.includes(ds) ? "done" : game.frozenDays.includes(ds) ? "frozen" : "";
@@ -5340,8 +5335,6 @@ function cityRes(){
   ctEl("ctRes").innerHTML = `<span class="ct-money">${fmtMoney(city.money)}</span><span class="ct-time"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg>${fmtClock(city.min)}</span>`
     + (ct ? `<span class="ct-pat" aria-label="Терпение собеседника: ${pat} из ${max}" title="Терпение собеседника">${Array.from({ length:max }, (_, i) => `<i${i < pat ? ' class="on"' : ""}></i>`).join("")}</span>` : "");
 }
-function cityWeekParts(){ const w = campWeek(), ln = cityWeekLine(), k = ln.indexOf(": ");   // [подпись, цель] для карточки «Цель недели»
-  return k > 0 ? [`${ln.slice(0, k)} · цель`, ln.slice(k + 2).replace(/^./, c => c.toLocaleUpperCase("ru"))] : [w > 4 ? "Месяц" : "Цель недели", ln]; }
 function cityWeekLine(){ const w = campWeek();
   return w > 4 ? "Месяц прожит — свободная игра" : campReady(w) ? `Неделя ${w} из 4: ${CAMPAIGN[w - 1].goal}${city.camp && city.camp.old && w === 1 ? " (вы здесь уже освоились)" : ""}` : `Неделя ${w - 1} пройдена · неделя ${w} — скоро`; }
 function cityRender(){
@@ -5580,7 +5573,7 @@ function openChar(id){
 function openCityStats(){
   const total = Object.keys(SCENES).filter(id => !SCENES[id].event).length, played = Object.keys(city.played).filter(id => SCENES[id] && !SCENES[id].event).length;
   const met = metChars(), own = met.filter(c => relLevel(city.rel[c] || 0) === 2).length;
-  showModal({ ic:"Mahalle", title:`Город: день ${city.day}, неделя ${cityWeek()}`, text:`Сцен пройдено: ${played} из ${total}. Знакомых: ${met.length}, из них свои: ${own}. Долг: ${city.debt} ₺.`,
+  showModal({ ic:"Mahalle", title:`Город: день ${city.day}, неделя ${cityWeek()}`, text:`${cityWeekLine()}. Сцен пройдено: ${played} из ${total}. Знакомых: ${met.length}, из них свои: ${own}. Долг: ${city.debt} ₺.`,
     stats:[["₺", city.money], ["дней прожито", city.days], ["фраз сказано", city.said]], primary:{ label:"Закрыть" } });
 }
 // Кубик: грань с точками; при броске — короткая «тряска» случайных граней и звук катящегося кубика (WebAudio, без файлов)
