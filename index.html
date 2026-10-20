@@ -886,6 +886,51 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
 .ls-opt{border:0; box-shadow:inset 0 0 0 1px var(--line); border-radius:18px}
 .ls-opt.right{border:0; box-shadow:inset 0 0 0 2px var(--accent)} .ls-opt.wrong{border:0; box-shadow:inset 0 0 0 2px var(--tulip)}
 #intent{border-radius:14px; border:1px solid var(--line)}
+/* --- пакет A (2026-10-20, сверка с макетами S01–S03, S07): общие кнопки, результат, тренировка --- */
+/* нижние кнопки «Сравнить/Дальше» (и «Показать/Дальше», «Текст/Пропустить») — равные, 52 px, значок, если помещается (fitPill убирает его сам) */
+.main-row{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:12px}
+.main-row .pill{width:100%; justify-self:stretch !important; height:max(44px, calc(52px * min(1, var(--fit)))); border-radius:16px; padding:0 10px; font:600 16px var(--body); background:var(--surface)}
+.main-row .pill .ic{display:inline-block}
+.main-row .pill.noic .ic{display:none}
+#card .main-row, #freeCard .main-row{margin-top:auto}
+.mic{width:max(56px, calc(72px * min(1, var(--fit)))); height:max(56px, calc(72px * min(1, var(--fit))))}
+.mic .ic{width:calc(28px * max(.8, min(1, var(--fit)))); height:calc(28px * max(.8, min(1, var(--fit))))}
+/* круглые действия — 48 px, белые, все одинаковые */
+.act{font:600 13px var(--body); color:var(--ink)}
+.act .ring, .act.native .ring{width:max(44px, calc(48px * min(1, var(--fit)))); height:max(44px, calc(48px * min(1, var(--fit)))); border:1px solid var(--line); background:var(--surface); color:var(--accent); box-shadow:var(--shadow)}
+.act .ring .ic{width:20px; height:20px}
+/* блок результата — БЕЛЫЙ во всех состояниях (решение 2026-10-20 п. 3); цвет оценки — в круге */
+.result, .result.info, .result.ok, .result.near, .result.bad{background:var(--surface); box-shadow:var(--shadow)}
+.result .verdict{font-weight:700}
+.score{width:max(56px, calc(64px * min(1, var(--fit)))); height:max(56px, calc(64px * min(1, var(--fit)))); border:0; border-radius:50%; gap:2px}
+.score b{font:700 24px/1 var(--display)} .score small{font-size:10px; font-weight:600; color:var(--ink-2)}
+.score.g-ok{background:var(--ok-soft)} .score.g-near{background:var(--near-soft)} .score.g-bad{background:var(--bad-soft)}
+.res-head{align-items:center; gap:14px}
+/* «?» — в круге (значок с кругом в спрайте) */
+.qbtn .ic{width:24px; height:24px}
+/* «Фразы», «Память»: фраза — в белой карточке */
+.ph-card{flex:none; display:flex; flex-direction:column; gap:calc(6px * var(--fit)); padding:calc(16px * var(--fit)) 18px calc(14px * var(--fit)); border-radius:20px; background:var(--surface); box-shadow:var(--shadow); text-align:left}
+#card .ph-card .target{flex:none; justify-content:flex-start; text-align:left}
+#card .ph-card .meaning{justify-content:flex-start; text-align:left; min-height:0}
+#card .ph-card .partner{text-align:left; min-height:0}
+#card .ph-card .partner:empty{display:none}
+.mem-title{display:none; margin:2px 2px 0; font:700 28px/1.1 var(--display); letter-spacing:-.02em; text-transform:none; color:var(--ink); text-align:left}
+body:has(#tab-memory[aria-pressed="true"]) .mem-title{display:block}
+@media (max-height:700px){ .mem-title{font-size:22px} }
+/* «На слух»: «послушать» слева, вопрос справа; варианты друг под другом во всю ширину, с номером */
+#listenCard .ls-top{flex-direction:row; align-items:center; gap:16px; padding-top:4px}
+#listenCard .round-xl{flex:none; width:max(56px, calc(84px * min(1, var(--fit)))); height:max(56px, calc(84px * min(1, var(--fit)))); box-shadow:none}
+#listenCard .round-xl .ic{width:calc(32px * max(.7, min(1, var(--fit)))); height:calc(32px * max(.7, min(1, var(--fit))))}
+#listenCard .ls-q{flex:1; min-width:0; min-height:0; display:block; text-align:left; font:700 20px/1.25 var(--body); color:var(--ink)}
+#listenCard .ls-options{grid-template-columns:1fr; grid-template-rows:none; flex:none}
+#listenCard .ls-opt, #listenCard.phr .ls-opt{min-height:0; align-items:flex-start; justify-content:flex-start; text-align:left; padding:12px 16px; background:var(--surface); gap:2px}
+#listenCard .ls-opt::before{content:attr(data-k); font:600 12px/1 var(--body); color:var(--muted)}
+#listenCard .ls-opt.right{background:var(--surface)} #listenCard .ls-opt.wrong{background:var(--surface)}
+#listenCard .pill-row{margin-top:auto}
+/* «Свободно»: заголовок 22 px слева, подпись поля 13/600, поле 52 px белое */
+#freeCard .free-title{font:700 calc(22px * max(.85, min(1, var(--fit))))/1.25 var(--display); text-align:left}
+#freeCard .freeField{font:600 13px var(--body); color:var(--ink-2)}
+#freeCard #intent{height:52px; min-height:52px; background:var(--surface); font-size:17px}
 /* нижняя панель: без точки, активный — цвет */
 .tabbar .tab::after{display:none}
 .tabbar .tab[aria-pressed="true"]{font-weight:700}
@@ -900,9 +945,19 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
 .ct-itab[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
 .ct-task.go{border:0; background:var(--accent-soft); box-shadow:inset 0 0 0 1.5px var(--accent)}
 .ct-bubble{background:var(--surface); border:0; box-shadow:var(--shadow)}
-.ct-opt-main{border:0; box-shadow:inset 0 0 0 1px var(--line); border-radius:16px}
-.ct-opt-main[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--accent); background:var(--surface)}
-.ct-ear{border-radius:16px; border:0; box-shadow:inset 0 0 0 1px var(--line)}
+/* сцена (пакет A, макет S08): «Цель:» жирным, лицо 60 px, роль обычными буквами, реплика крупнее, «послушать» — за чертой внутри карточки ответа */
+.ct-goal{font-size:14px; color:var(--ink-2)} .ct-goal b{color:var(--ink); font-weight:700}
+.ct-face, .ct-face .avatar{width:max(52px, calc(60px * min(1, var(--fit)))); height:max(52px, calc(60px * min(1, var(--fit))))}
+.ct-npc{gap:12px; align-items:center}
+.ct-who{text-transform:none; letter-spacing:0; font-size:13px; font-weight:600; color:var(--muted)}
+.ct-tr{font-size:max(19px, calc(var(--fit) * clamp(21px, 3.2vh, 26px)))}
+.ct-ru{font-size:14px}
+.ct-opt{gap:0; border-radius:16px; background:var(--surface); box-shadow:inset 0 0 0 1px var(--line)}
+.ct-opt:has(.ct-opt-main[aria-pressed="true"]){box-shadow:inset 0 0 0 2px var(--accent)}
+.ct-opt-main{border:0; box-shadow:none; border-radius:16px 0 0 16px; background:transparent}
+.ct-opt-main[aria-pressed="true"]{box-shadow:none; background:transparent}
+.ct-opt-main[aria-pressed="true"] .ct-say{color:var(--accent-ink)}
+.ct-ear{border:0; border-left:1px solid var(--line); border-radius:0 16px 16px 0; box-shadow:none; background:transparent; border-radius:0 16px 16px 0}
 .ct-cost{color:var(--tulip-ink); font-weight:600}
 /* «Грамматика»: список — группы-карточки со строками, урок — карточки */
 .gm-group{gap:0}
@@ -950,7 +1005,7 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
     <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-6-4-6 4z"/></symbol>
     <symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/></symbol>
     <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-8.5z"/></symbol>
-    <symbol id="i-help" viewBox="0 0 24 24"><path d="M9.2 9a3 3 0 0 1 5.6 1c0 2-2.8 2.4-2.8 4"/><path d="M12 18h.01"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.4"/><path d="M12 17.2h.01"/></symbol>
     <symbol id="i-quote" viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4z"/><path d="M8 10h8M8 13h5"/></symbol>
     <symbol id="i-cards" viewBox="0 0 24 24"><rect x="4" y="7" width="13" height="13" rx="2"/><path d="M8 4h10a2 2 0 0 1 2 2v10"/><path d="M8 13.5l2.2 2.2L14 11"/></symbol>
     <symbol id="i-bubble" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-6 4z"/></symbol>
@@ -1091,9 +1146,12 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
     </section>
 
     <section class="card" id="card">
-      <p class="target" id="target" lang="tr" translate="no"></p>
-      <p class="meaning" id="meaning"></p>
-      <p class="partner" id="partner"></p>
+      <h2 class="mem-title" id="memTitle">Память</h2>
+      <div class="ph-card" id="phCard">
+        <p class="target" id="target" lang="tr" translate="no"></p>
+        <p class="meaning" id="meaning"></p>
+        <p class="partner" id="partner"></p>
+      </div>
       <p class="hint hintable" id="nativeStatus"></p>
       <p class="tip hintable" id="tip"></p>
       <div class="result info" id="result" aria-live="polite">
@@ -5427,7 +5485,7 @@ function cityStart(id, opts){
   if(char) (city.met || (city.met = {}))[char] = city.day;
   ct = { id, scene, char, dm:!!scene.dm, dmCap:!!scene.dm && city.dmDay[char] === city.day, dest, taxiFrom:city.pos, rel0:(city.rel[char] || 0), seed:TESTMODE ? (+window.__seed || 0) : Math.floor(Math.random() * 1000), alts:{}, node:null, tries:0, patience:pat, lines:[], ok:0, n:0, bought:new Set(), spent:0, startMin:city.min, change:0, revealed:false, resolved:false, pendingGo:null, phoned:false, pick:null, peeked:false, opts:[] };
   const goal = dest !== null ? `Доехать до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}. Не переплатить.` : ctNm(scene.goal);
-  ctEl("ctGoal").textContent = "Цель: " + goal; ctEl("ctGoal").title = goal; ctEl("ctWho").textContent = ctWho();
+  ctEl("ctGoal").innerHTML = "<b>Цель:</b> " + esc(String(goal)); ctEl("ctGoal").title = goal; ctEl("ctWho").textContent = ctWho();
   cityRender();
   const small = ctSmalltalk(scene);
   if(small){ scene.nodes._chat = small; cityNode("_chat"); } else cityNode(scene.start);

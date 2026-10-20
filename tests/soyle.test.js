@@ -942,7 +942,46 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     }
     const infoBg = await q.evaluate(() => { setMode('phrases'); next(); return getComputedStyle(document.getElementById('result')).backgroundColor; });
     await q.context().close();
-    eq(bad, []); eq(infoBg, 'rgb(255, 241, 214)');   // песочный; вид B (2026-10-20) — светлее: #FFF1D6 (было #F3E8CF)
+    eq(bad, []); eq(infoBg, 'rgb(255, 255, 255)');   // решение пользователя 2026-10-20 ~10:40 (п. 3): пояснение — БЕЛОЕ, как в макете (было песочное #FFF1D6 / #F3E8CF)
+  });
+  await test('вид B, пакет A (2026-10-20): белые блоки результата, круг оценки с заливкой, равные «Сравнить/Дальше», микрофон 72, круги 48, «Память», «На слух», сцена', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:390, height:844 }); const bad = [];
+    const r = await q.evaluate(async () => { const out = {}; const W = 'rgb(255, 255, 255)';
+      const cs = (e, k) => getComputedStyle(e)[k]; const box = e => e.getBoundingClientRect();
+      setMode('phrases'); next(); await new Promise(z => setTimeout(z, 120)); autofit();
+      // все блоки результата — белые, в любом состоянии; цвет оценки — в круге
+      for(const k of ['info', 'ok', 'near', 'bad']){ setResult(k, 'x', '', k === 'info' ? undefined : (k === 'ok' ? 95 : k === 'near' ? 75 : 50)); out['res-' + k] = cs(document.getElementById('result'), 'backgroundColor'); }
+      setResult('near', 'Почти', '', 78); const sc = document.querySelector('#result .score'); out.score = [Math.round(box(sc).width), cs(sc, 'backgroundColor')];
+      setMode('free'); setFree('bad', 'x', '', 50); out.free = cs(document.getElementById('freeResult'), 'backgroundColor');
+      setMode('listen'); out.ls = cs(document.getElementById('lsResult'), 'backgroundColor');
+      const pl = box(document.getElementById('lsPlay')), lq = box(document.querySelector('#listenCard .ls-q')), a = box(document.getElementById('lsA')), b = box(document.getElementById('lsB'));
+      out.lsRow = pl.right <= lq.left && Math.abs((pl.top + pl.bottom) / 2 - (lq.top + lq.bottom) / 2) < pl.height / 2;   // «послушать» слева, вопрос справа
+      out.lsStack = b.top >= a.bottom - 1 && Math.abs(a.width - b.width) < 2;                                             // варианты друг под другом во всю ширину
+      out.lsNum = getComputedStyle(document.getElementById('lsA'), '::before').content;
+      setMode('phrases'); await new Promise(z => setTimeout(z, 50)); autofit();
+      const c = box(document.getElementById('compare')), n = box(document.getElementById('next')), m = box(document.getElementById('speak'));
+      out.pills = [Math.abs(c.width - n.width) < 1, Math.abs(c.height - n.height) < 1, c.height >= 44];
+      out.pillIc = ['compare', 'next'].map(id => { const e = document.getElementById(id); return e.classList.contains('noic') || getComputedStyle(e.querySelector('.ic')).display !== 'none'; });
+      out.mic = Math.round(m.width); out.ring = Math.round(box(document.querySelector('#card .act .ring')).width);
+      out.phCard = cs(document.getElementById('target').parentElement, 'backgroundColor');                                 // фраза — в белой карточке
+      out.qIc = document.querySelector('#i-help circle') !== null;                                                          // «?» в круге
+      out.memT = [getComputedStyle(document.getElementById('memTitle')).display]; setMode('memory'); await new Promise(z => setTimeout(z, 50));
+      out.memT.push(getComputedStyle(document.getElementById('memTitle')).display, document.getElementById('memTitle').textContent);
+      setMode('city'); cityStart('firin'); await new Promise(z => setTimeout(z, 150));
+      const g = document.getElementById('ctGoal'); out.goal = [!!g.querySelector('b') && g.querySelector('b').textContent, g.textContent.startsWith('Цель: ')];
+      out.face = Math.round(box(document.getElementById('ctReplay')).width); out.who = cs(document.getElementById('ctWho'), 'textTransform');
+      out.ct = cs(document.getElementById('ctResult'), 'backgroundColor');
+      return [out, W]; });
+    const [o, W] = r; await q.context().close();
+    for(const k of ['res-info', 'res-ok', 'res-near', 'res-bad', 'free', 'ls', 'ct', 'phCard']) if(o[k] !== W) bad.push(k + ' не белый: ' + o[k]);
+    if(o.score[0] < 56 || o.score[0] > 64) bad.push('круг оценки ' + o.score[0]); if(o.score[1] !== 'rgb(255, 241, 214)') bad.push('заливка оценки «почти» ' + o.score[1]);
+    if(!o.lsRow) bad.push('«На слух»: кнопка не слева от вопроса'); if(!o.lsStack) bad.push('«На слух»: варианты не друг под другом'); if(o.lsNum !== '"1"') bad.push('нет номера ' + o.lsNum);
+    if(o.pills.join() !== 'true,true,true') bad.push('Сравнить/Дальше не равные ' + o.pills); if(o.pillIc.join() !== 'true,true') bad.push('значки скрыты без нехватки места');
+    if(o.mic < 68 || o.mic > 76) bad.push('микрофон ' + o.mic); if(o.ring < 46 || o.ring > 52) bad.push('круг действия ' + o.ring);
+    if(!o.qIc) bad.push('«?» без круга');
+    if(o.memT.join('|') !== 'none|block|Память') bad.push('заголовок «Память» ' + o.memT.join('|'));
+    if(o.goal.join() !== 'Цель:,true') bad.push('цель ' + o.goal); if(o.face < 56 || o.face > 64) bad.push('лицо ' + o.face); if(o.who !== 'none') bad.push('ПЕКАРЬ заглавными');
+    eq(bad, []);
   });
 
   console.log('Видео и перевод — внутри приложения, без перехода');
@@ -1957,7 +1996,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       city.rel = { sofor:3 }; city.met = { sofor:1 }; city.contacts = { sofor:1 }; cityRender(); document.getElementById('ctTabPeople').click(); out.row = !!document.querySelector('#ctChars .ct-char[data-char="sofor"] i svg.avatar');
       document.querySelector('#ctChars .ct-char[data-char="sofor"]').click(); out.dm = !!document.querySelector('#dmIc svg.avatar'); document.getElementById('dmClose').click();
       cityStart('taxi'); out.face = !!document.querySelector('#ctInitial svg.avatar'); const f = document.getElementById('ctReplay').getBoundingClientRect(); out.faceSize = [Math.round(f.width), Math.round(f.height)]; return out; });
-    eq([r.all, r.uniq, r.emoji, r.row, r.dm, r.face], [true, true, false, true, true, true]); eq(r.faceSize, [44, 44]); eq(q.errors, []); await q.context().close();
+    eq([r.all, r.uniq, r.emoji, r.row, r.dm, r.face], [true, true, false, true, true, true]); ok(r.faceSize[0] === r.faceSize[1] && r.faceSize[0] >= 52 && r.faceSize[0] <= 64, 'лицо ' + r.faceSize);   // вид B (2026-10-20, макет S08): лицо 56–64 px (на низком экране не меньше 52), было 44 eq(q.errors, []); await q.context().close();
   });
   await test('биографии (просьба 09:16): у каждого из 18 персонажей есть своя мини-биография (40–400 знаков, без эмодзи, все разные), она видна в окне человека и помещается на 3 размерах', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
