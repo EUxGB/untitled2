@@ -683,10 +683,10 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-roll:not(:disabled):hover .die{transform:translateY(-1px)} .ct-roll:disabled{cursor:default} .ct-roll:disabled .die{stroke:var(--muted); filter:none} .ct-roll:disabled .die circle{fill:var(--ink)}
 .ct-roll.rolling .die{animation:dieShake .14s ease-in-out infinite alternate} @keyframes dieShake{from{transform:rotate(-14deg) translateY(-2px)} to{transform:rotate(12deg) translateY(2px)}}
 .ct-dice-hint{font-size:12px; color:var(--muted); line-height:1.25}
-.ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px; order:10; margin-top:auto; flex:none} .ct-intro{order:9; min-height:0; overflow:hidden}   /* строка такси/домой и «Итоги дня» — у низа поля на любой вкладке (2026-10-17 11:02), подсказка — над ней */ .ct-homebtns .linkbtn{min-height:44px; padding:0 4px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-decoration:none; line-height:1.15} .ct-homebtns .linkbtn span{text-decoration:underline} .ct-homebtns .linkbtn small{font-size:11px; color:var(--muted)} .ct-homebtns #ctHomeBtn{align-items:flex-end}
+.ct-foot{margin-top:auto; flex:none; display:flex; flex-direction:column; gap:calc(6px * var(--fit))}   /* подсказка хода, кубик, такси/домой и «Итоги дня» — у низа поля на любой вкладке (2026-10-17 11:02; вид B 2026-10-20: кубик — над строкой такси) */
+.ct-homebtns{display:flex; gap:14px; justify-content:space-between; font-size:13px; flex:none} .ct-intro{min-height:0; overflow:hidden} .ct-intro:empty{display:none} .ct-homebtns .linkbtn{min-height:44px; padding:0 4px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-decoration:none; line-height:1.15} .ct-homebtns .linkbtn span{text-decoration:underline} .ct-homebtns .linkbtn small{font-size:11px; color:var(--muted)} .ct-homebtns #ctHomeBtn{align-items:flex-end}
 .ct-task.go{cursor:pointer; min-height:44px; display:flex; align-items:center; flex-wrap:wrap; gap:0 4px; padding:2px 8px; border:1.5px solid var(--accent); border-radius:10px; background:var(--surface)} .ct-task.go span{color:var(--accent); font-weight:700}
 #ctDayEnd{flex:1; width:100%; height:44px; min-height:44px; padding:0 12px; font-size:16px}
-.ct-rent{display:block; font-weight:600; color:var(--ink-2)} .ct-week{display:block; font-weight:700; color:var(--accent-ink)}
 .ms-choices{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:6px 0 2px} .ms-choice{min-height:44px; min-width:72px; padding:0 14px; border-radius:22px; border:1px solid var(--line); background:var(--surface); font:600 15px var(--body); color:var(--ink)} .ms-choice[aria-pressed="true"]{background:var(--accent); color:var(--on-accent); border-color:var(--accent)}
 .ct-intro{text-align:left; margin:0; font-size:11.5px; line-height:1.3; color:var(--muted)}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
@@ -904,6 +904,64 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
 .ct-opt-main[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--accent); background:var(--surface)}
 .ct-ear{border-radius:16px; border:0; box-shadow:inset 0 0 0 1px var(--line)}
 .ct-cost{color:var(--tulip-ink); font-weight:600}
+/* «Город», поле по макету V2 (2026-10-20): шапка — адрес слева, деньги и время белыми плашками справа */
+.ct-res{gap:6px} .ct-res .ct-money, .ct-res .ct-time{display:inline-flex; align-items:center; gap:4px; min-height:30px; padding:0 10px; border-radius:10px; background:var(--surface); box-shadow:var(--shadow); font:700 14px var(--body); color:var(--ink)}
+@media (max-width:380px){ .ct-res{gap:4px} .ct-res .ct-money, .ct-res .ct-time{padding:0 7px; font-size:13px; min-height:28px} .ct-res .ct-time .ic{width:12px; height:12px} }   /* узкий экран: адресу — место (он ужимается сам, см. fitLabels) */
+/* цель недели (полоса «N из M» — campWeekTasks) и аренда — над вкладками, на всех трёх */
+.ct-wkbox{display:flex; flex-direction:column; gap:calc(6px * var(--fit)); flex:none}
+.ct-wk{display:flex; flex-direction:column; gap:2px; padding:8px 12px; border-radius:14px; background:var(--surface); box-shadow:var(--shadow); text-align:left}
+.ct-wk-cap{font:600 11px/1.2 var(--body); color:var(--muted)} .ct-wk-goal{font:700 max(12.5px, calc(14px * var(--fit)))/1.25 var(--body); color:var(--ink)}
+.ct-wk-row{display:flex; align-items:center; gap:8px; margin-top:4px} .ct-wk-bar{flex:1; height:5px; border-radius:3px; background:var(--seg); overflow:hidden} .ct-wk-bar i{display:block; height:100%; background:var(--accent)}
+.ct-wk-n{font-size:11px; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums}
+.ct-rent{display:flex; align-items:center; gap:8px; margin:0; padding:7px 12px; border-radius:14px; background:var(--near-soft); color:var(--near); font:700 12.5px/1.2 var(--body); text-align:left} .ct-rent .ic{width:16px; height:16px; flex:none}
+/* дела — белая карточка со строками; значок состояния: галочка (сделано), кольцо с точкой (можно начать здесь), пустой круг */
+.ct-tasks{gap:0; background:var(--surface); border-radius:14px; box-shadow:var(--shadow)}
+.ct-task{display:grid; grid-template-columns:20px minmax(0, 1fr); column-gap:10px; align-items:center; min-height:40px; padding:3px 12px; border-bottom:1px solid var(--line); line-height:1.2}
+.ct-task:last-child{border-bottom:0} .ct-task b{grid-column:2; font-size:max(12.5px, calc(14px * var(--fit)))} .ct-task span{grid-column:2; white-space:normal; font-size:max(11px, calc(12px * var(--fit)))} .ct-task span::before{content:none}
+.ct-task i{grid-row:1 / span 2; width:18px; height:18px; margin:0; border-radius:50%; background:none; border:2px solid var(--muted); transform:none; display:grid; place-items:center; box-sizing:border-box}
+.ct-task.closed i{background:none; border-style:dashed}
+.ct-task.done i{border:0} .ct-task.done.ok i, .ct-task.done.near i, .ct-task.done.bad i{background:none} .ct-task.done i .ic{width:20px; height:20px; fill:none; stroke-width:2.4}
+.ct-task.done.ok i .ic{stroke:var(--ok)} .ct-task.done.near i .ic{stroke:var(--near)} .ct-task.done.bad i .ic{stroke:var(--bad)} .ct-task.done b{text-decoration:none}
+.ct-task.next, .ct-task.go{background:var(--accent-soft)} .ct-task.next i, .ct-task.go i{border-color:var(--accent); box-shadow:inset 0 0 0 3px var(--accent-soft), inset 0 0 0 7px var(--accent)}
+.ct-task.go{display:grid; border:0; border-radius:0; box-shadow:none; padding:3px 12px; min-height:44px} .ct-task.go:first-child{border-radius:14px 14px 0 0} .ct-task.go:last-child{border-radius:0 0 14px 14px} .ct-task.go:only-child{border-radius:14px}
+.ct-task.go:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+.ct-day{font:600 11px/1.2 var(--body); color:var(--muted)}
+/* клетка с делом дня — обводка (у .reach ещё и заливка) */
+.bd-cell.pin{outline:2px solid var(--accent); outline-offset:-2px}
+/* кубик — кнопка во всю ширину: грань с выпавшим числом и подпись; нажимается вся полоса (::before кнопки растянут на #ctDice) */
+.ct-dice{position:relative; justify-content:center; gap:8px; min-height:46px; border-radius:14px; background:var(--accent); color:var(--on-accent); box-shadow:0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent)}
+.ct-roll{width:46px; height:46px; border-radius:12px} .ct-roll::before{content:""; position:absolute; inset:0; border-radius:14px}
+.ct-roll .die{width:32px; height:32px; fill:var(--surface); stroke:none; filter:none} .ct-roll .die circle{fill:var(--accent)}
+.ct-roll:disabled .die{stroke:none} .ct-roll:disabled .die circle{fill:var(--ink)}
+.ct-dice-hint{font:700 15px/1.2 var(--body); color:inherit; pointer-events:none; margin-left:-6px}
+.ct-dice:has(.ct-roll:disabled){background:var(--seg); color:var(--ink); box-shadow:none}
+.ct-dice:has(.ct-roll:focus-visible){outline:2px solid var(--ink); outline-offset:2px} .ct-roll:focus-visible{outline:none}
+/* «Taksi çağır» / «Eve dön» — две равные кнопки 44 px с рамкой; «Итоги дня» — на их месте */
+.ct-homebtns{gap:6px} .ct-homebtns .linkbtn{flex:1 1 0; min-width:0; align-items:center; border:1px solid var(--line); border-radius:12px; padding:0 6px; color:var(--ink)}
+.ct-homebtns .linkbtn span{text-decoration:none; font-weight:700; font-size:13px} .ct-homebtns #ctHomeBtn{align-items:center} .ct-homebtns .linkbtn small{font-size:10.5px}
+.ct-homebtns .linkbtn:hover{border-color:var(--accent)}
+/* «Люди»: белые строки — портрет, имя и значок номера, роль и уровень, 6 точек отношений */
+.ct-chars{gap:4px} .ct-char{gap:8px; padding:4px 8px; background:var(--surface); border-radius:12px; box-shadow:var(--shadow); flex:none}
+.ct-char:hover{background:var(--surface); box-shadow:inset 0 0 0 1px var(--accent)}
+.ct-char > i:has(.avatar){width:30px; height:30px} .ct-char > i .avatar{width:30px; height:30px}
+.ct-char-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px} .ct-char-name{display:flex; align-items:center; gap:4px; min-width:0}
+.ct-char .ct-num{margin-left:0; width:14px; height:14px} .ct-char .ct-num + .ct-char-lvl{margin-left:0}
+.ct-char-role{font-size:11px; color:var(--muted); line-height:1.2} .ct-char-lvl{margin-left:0; font-size:inherit} .ct-char-role .ct-char-lvl:not(:empty)::before{content:" · "} .ct-char-role:empty{display:none}
+.ct-dots{display:flex; gap:2px; flex:none} .ct-dots span{width:6px; height:6px; border-radius:50%; background:var(--seg)} .ct-dots span.on{background:var(--accent)}
+.ct-tab-note{margin:2px 0 0; font-size:11px; line-height:1.3; text-align:left}
+/* «Умения»: одна строка — название · полоса 70 px · уровень */
+.ct-skills{gap:2px} .ct-skill{grid-template-columns:minmax(0, 1fr) 70px minmax(14px, auto); gap:6px; min-height:30px; padding-right:2px} .ct-skill > span:first-child{grid-column:auto; color:var(--ink)} .ct-skill .bar{height:6px}
+@media (max-height:700px){
+  /* 360×640: в центре поля ~314 px — цель и аренда одной карточкой, строки дел 32 px (кроме «нажмите, чтобы начать» — 44), пояснения «Людей»/«Умений» — по «?» */
+  .ct-wkbox{gap:0; border-radius:14px; background:var(--surface); box-shadow:var(--shadow); padding:6px 10px} .ct-wk{padding:0; box-shadow:none; background:none; border-radius:0}
+  .ct-wk-cap{display:none} .ct-wk-goal{font-size:12px} .ct-wk-row{margin-top:3px} .ct-rent{padding:2px 0 0; background:none; font-size:11px; border-radius:0} .ct-rent .ic{width:13px; height:13px}
+  .ct-day{display:none}   /* «Дела на сегодня — N из M» видно по строкам дел; на низком экране не помещается */
+  .ct-task{min-height:32px; padding:1px 10px} .ct-task span{font-size:10.5px} .ct-task b{font-size:12px; line-height:1.15}
+  .ct-dice{min-height:44px} .ct-roll{width:44px; height:44px} .ct-roll .die{width:28px; height:28px}
+  .ct-tab-note{display:none} body.hints .ct-tab-note{display:block}
+  #ctInner{gap:4px; padding-top:4px; padding-bottom:4px} .ct-wkbox{padding:5px 10px} .ct-itab{min-height:30px} .ct-itabs{padding:1px}
+  .ct-skill{min-height:26px; font-size:12px} .ct-char{min-height:44px; padding:2px 8px}
+}
 /* «Грамматика»: список — группы-карточки со строками, урок — карточки */
 .gm-group{gap:0}
 .gm-group h3{margin:14px 4px 6px}
@@ -926,8 +984,37 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
 .backup, .help{border:0; border-radius:18px}
 .pv-quest{border:0; background:var(--surface); box-shadow:inset 4px 0 0 var(--accent)}
 .pv-quest.done{background:var(--ok-soft); box-shadow:inset 4px 0 0 var(--ok)}
+/* «Прогресс» по макету S09 (2026-10-20): уровень и неделя — белые карточки; неделя пн–вс: сделано — галочка, заморозка — снежинка, сегодня — кольцо */
+.pv-hero{background:var(--surface); border-radius:18px; padding:16px; box-shadow:var(--shadow)} .pv-hero .pv-lvl{left:16px}
+.pv-weekcard{background:var(--surface); border-radius:18px; padding:12px 14px 10px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px}
+.pv-weekhead b{font-size:14px} .pv-weekhead{font-size:13px}
+.pv-week{gap:2px} .pv-day{gap:4px; font-size:11px}
+.pv-dot{width:32px; height:32px; border:0; border-radius:50%; background:var(--seg); color:var(--ink); font-size:0}
+.pv-dot .ic{width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2.4}
+.pv-dot.done{background:var(--accent); color:var(--on-accent)} .pv-dot.frozen{background:var(--accent-soft); color:var(--accent); border:0}
+.pv-dot.future{background:var(--seg); opacity:.7}
+.pv-day.today .pv-dot{box-shadow:none; outline:none} .pv-day.today .pv-dot:not(.done){background:var(--surface); box-shadow:inset 0 0 0 2px var(--accent)}
+.pv-day.today{color:var(--ink); font-weight:700}
+.pv-tile{box-shadow:var(--shadow)} .pv-tile .pv-tsub{font-size:12px}
+/* медали: 3 в ряд, сначала 9 — остальные по кнопке */
+.badge-grid{grid-template-columns:repeat(3, minmax(0, 1fr))} .badge-grid.short .badge:nth-child(n+10){display:none}
+.badge-more{width:100%; min-height:44px; background:var(--surface); border:1px solid var(--line); color:var(--ink); font:600 14px var(--body)}
+/* статистика — одной колонкой: название слева, число справа, полоса ниже; одна белая карточка */
+.stats{grid-template-columns:1fr; gap:0; background:var(--surface); border-radius:18px; padding:4px 14px; box-shadow:var(--shadow)}
+.stat{display:grid; grid-template-columns:minmax(0, 1fr) auto; column-gap:10px; row-gap:6px; align-items:baseline; border-top:1px solid var(--line); padding:10px 0}
+.stat:first-child{border-top:0} .stat .lab{font:500 14px/1.25 var(--body)} .stat .num{margin-top:0; text-align:right; font-weight:700; color:var(--ink); font-size:13px} .stat .bar{grid-column:1 / -1}
+.stats > .hint{padding:10px 0}
+/* голос — в карточке; кнопки разделов — поровну, 52 px */
+.progress .opt.pv-voice{background:var(--surface); border-radius:18px; padding:10px 14px; min-height:60px; box-shadow:var(--shadow); justify-content:space-between; color:var(--ink)}
+.backup .btngrid.two{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.backup .btn, .backup label.btn{min-height:52px; padding:0 10px}
 /* окна-листы */
 .modal-box{border-radius:24px 24px 0 0}
+/* окна (макет S10, 2026-10-20): итог недели — плитки; «да / так себе / нет» и кнопки окна — поровну */
+.modal-stats{gap:8px} .ms{border-radius:14px; padding:10px 6px; display:flex; flex-direction:column; gap:2px; align-items:center} .ms b{font:700 20px/1.15 var(--body); white-space:nowrap} .ms span{font-size:12px; color:var(--muted); line-height:1.2}
+.ms-choices{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px} .ms-choices[aria-label]::before{content:attr(aria-label); grid-column:1 / -1; font:600 14px/1.3 var(--body); color:var(--ink)} .ms-choices[hidden]{display:none} .ms-choice{min-width:0; padding:0 6px}
+.ms-choice[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--surface)}
+.modal-box .btngrid.two{grid-template-columns:repeat(2, minmax(0, 1fr))} .modal-box .btngrid .btn{min-height:52px}
 </style>
 </head>
 <body>
@@ -1035,8 +1122,9 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
       <div class="ct-home" id="ctHome">
         <div class="bd" id="ctBoard" role="group" aria-label="Квартал: клетки поля">
           <div class="bd-inner" id="ctInner">
-            <div class="ct-dice" id="ctDice">
-              <button class="ct-roll" id="ctRoll" aria-label="Бросить кубик"></button><span class="ct-dice-hint" id="ctDiceHint" aria-live="polite"></span>
+            <div class="ct-wkbox">
+              <div class="ct-wk" id="ctWeek"></div>
+              <p class="ct-rent" id="ctRent"></p>
             </div>
             <div class="ct-itabs" id="ctInnerTabs" role="group" aria-label="Внутри квартала">
               <button class="ct-itab" id="ctTabTasks" aria-pressed="true">Дела</button><button class="ct-itab" id="ctTabPeople" aria-pressed="false">Люди</button><button class="ct-itab" id="ctTabSkills" aria-pressed="false">Умения</button>
@@ -1045,8 +1133,13 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
             <ul class="ct-tasks" id="ctTasks"></ul>
             <div class="ct-chars" id="ctChars" hidden></div>
             <div class="ct-skills" id="ctSkills" hidden></div>
-            <div class="ct-homebtns"><button class="linkbtn" id="ctTaxi"><span lang="tr" translate="no">Taksi çağır</span><small>вызвать такси</small></button><button class="linkbtn" id="ctHomeBtn"><span lang="tr" translate="no">Eve dön</span><small>вернуться домой</small></button></div>
-            <p class="hint ct-intro" id="ctIntro"></p>
+            <div class="ct-foot">
+              <p class="hint ct-intro" id="ctIntro"></p>
+              <div class="ct-dice" id="ctDice">
+                <button class="ct-roll" id="ctRoll" aria-label="Бросить кубик"></button><span class="ct-dice-hint" id="ctDiceHint" aria-live="polite"></span>
+              </div>
+              <div class="ct-homebtns"><button class="linkbtn" id="ctTaxi"><span lang="tr" translate="no">Taksi çağır</span><small>вызвать такси</small></button><button class="linkbtn" id="ctHomeBtn"><span lang="tr" translate="no">Eve dön</span><small>вернуться домой</small></button></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1123,10 +1216,12 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
           <span class="pv-xp" id="gbXp">0 / 50 XP</span>
         </div>
       </div>
-      <div class="pv-weekhead"><b><span id="gbStreak">0</span> дн. подряд</b><span>заморозок: <span id="gbFreeze">0</span></span></div>
-      <div class="pv-week" id="gbWeek" aria-label="Занятия за 7 дней"></div>
+      <div class="pv-weekcard">
+        <div class="pv-weekhead"><b><span id="gbStreak">0</span> дн. подряд</b><span>заморозок: <span id="gbFreeze">0</span></span></div>
+        <div class="pv-week" id="gbWeek" aria-label="Занятия на этой неделе, пн–вс"></div>
+      </div>
       <div class="pv-tiles">
-        <div class="pv-tile"><span>Цель дня</span><b id="gbGoalTxt">0 / 20</b><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
+        <div class="pv-tile"><span>Цель дня</span><b id="gbGoalTxt">0 / 20</b><span class="pv-tsub">ответов</span><span class="bar"><i id="gbGoalBar" style="width:0%"></i></span></div>
         <div class="pv-tile"><span>Память</span><b id="gbMem">0</b><span id="gbMemSub">фраз прочно</span></div>
         <button class="pv-tile pv-tile-btn" id="gbCityTile" type="button"><span>Город</span><b id="gbCity">день 1</b><span id="gbCitySub"></span></button>
         <div class="pv-tile" id="gbNbTile" title="Сколько устройств открывали Simit за 30 дней (анонимно)"><span>Соседи</span><b id="gbNb">—</b><span id="gbNbSub">за 30 дней</span></div>
@@ -1143,7 +1238,8 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
 
       <div class="pv-head"><h2>Достижения</h2><span id="badgeCount">0 / 0</span></div>
       <p class="badge-next" id="badgeNext" hidden></p>
-      <div class="badge-grid" id="badgeGrid"></div>
+      <div class="badge-grid short" id="badgeGrid"></div>
+      <button class="btn badge-more" id="badgeMore" type="button" aria-controls="badgeGrid" aria-expanded="false" hidden>Показать ещё</button>
 
       <div class="pv-head"><h2>Статистика</h2></div>
       <div class="stats" id="stats"></div>
@@ -1184,7 +1280,7 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
         <button class="btn" id="rsStart"><svg class="ic" aria-hidden="true"><use href="#i-restore"/></svg>Начать сначала</button>
       </section>
 
-      <label class="opt">Голос телефона (запасной): <select id="voice"></select></label>
+      <label class="opt pv-voice">Голос телефона (запасной): <select id="voice"></select></label>
 
       <details class="help">
         <summary>Как пользоваться</summary>
@@ -2210,20 +2306,32 @@ function renderGame(){
   $("gbBlitz").textContent = game.blitzBestPh || 0;
   { const sp = $("spBox"); if(sp) sp.hidden = (game.days || []).length < 2; }   // поддержка автора — не в первый день использования (решение 2026-10-12, §5)
   if(typeof city !== "undefined" && city){ const okN = Object.values(city.played || {}).reduce((a, p) => a + (p.ok || 0), 0), n = Object.values(city.played || {}).reduce((a, p) => a + (p.n || 0), 0);
-    $("gbCity").textContent = `день ${city.day}`; $("gbCitySub").textContent = `неделя ${Math.ceil(city.day / 7)} · дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}${(() => { const f = Object.entries(city.feedback || {}).sort((a, b) => b[0] - a[0])[0]; return f ? ` · продолжить: ${f[1]}` : ""; })()}`; }
+    // вид B (2026-10-20): «5 из 13 · дел недели 1» — те же числа, что на карточке «Цель недели» в квартале (campWeekTasks); день, деньги и знакомые — в подсказке плитки
+    const wt = typeof campWeekTasks === "function" ? campWeekTasks() : { done:0, total:0, w:1 };
+    $("gbCity").textContent = `${wt.done} из ${wt.total}`; $("gbCitySub").textContent = `дел недели ${wt.w}${(() => { const f = Object.entries(city.feedback || {}).sort((a, b) => b[0] - a[0])[0]; return f ? ` · продолжить: ${f[1]}` : ""; })()}`;
+    $("gbCityTile").title = `День ${city.day} · дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}`; }
   { const m = memStats(); $("gbMem").textContent = m.strong; $("gbMemSub").textContent = `прочно (3+ нед.) · всего ${m.total} · сегодня ${m.today}`; }
   $("gbBlitzSub").textContent = "фраз за минуту";
   $("gbFreeze").textContent = game.freezes;
-  const wd = ["вс","пн","вт","ср","чт","пт","сб"];
+  // вид B (2026-10-20, решение пользователя): неделя — календарная, пн–вс; сделано — галочка, заморозка — снежинка, сегодня — кольцо, будущие дни пустые
+  const wd = ["пн","вт","ср","чт","пт","сб","вс"], dow = (new Date().getDay() + 6) % 7;
   $("gbWeek").innerHTML = Array.from({ length:7 }, (_, i) => {
-    const d = new Date(Date.now() - (6 - i) * 864e5), ds = dayStr(d);
-    const cls = game.days.includes(ds) ? "done" : game.frozenDays.includes(ds) ? "frozen" : "";
-    return `<div class="pv-day${i === 6 ? " today" : ""}"><span class="pv-dot ${cls}">${cls === "frozen" ? '<svg class="ic" aria-hidden="true"><use href="#i-snow"/></svg>' : ""}</span>${wd[d.getDay()]}</div>`;
+    const ds = dayStr(new Date(Date.now() + (i - dow) * 864e5));
+    const cls = i > dow ? "future" : game.days.includes(ds) ? "done" : game.frozenDays.includes(ds) ? "frozen" : "";
+    const ic = cls === "done" ? "i-check" : cls === "frozen" ? "i-snow" : "";
+    return `<div class="pv-day${i === dow ? " today" : ""}"><span class="pv-dot ${cls}">${ic ? `<svg class="ic" aria-hidden="true"><use href="#${ic}"/></svg>` : ""}</span>${wd[i]}</div>`;
   }).join("");
   $("tbStreak").textContent = streak; $("tbLevel").textContent = L;
   $("tbRing").style.strokeDashoffset = 94.25 * (1 - Math.min(1, todayOk / GOAL));
   $("gbGoalTxt").textContent = `${Math.min(todayOk, GOAL)} / ${GOAL}`;
   $("gbGoalBar").style.width = Math.min(100, todayOk / GOAL * 100) + "%";
+}
+// медали: сначала 9, кнопка «Показать ещё N» раскрывает остальные (вид B, 2026-10-20); формы по редкости не меняются — лишние только скрыты CSS (.badge-grid.short)
+const BADGES_SHORT = 9;
+function badgeMoreSync(){
+  const g = $("badgeGrid"), m = $("badgeMore"); if(!g || !m) return; const extra = g.querySelectorAll(".badge").length - BADGES_SHORT, open = !g.classList.contains("short");
+  m.hidden = extra <= 0; m.textContent = open ? "Свернуть" : `Показать ещё ${extra}`; m.setAttribute("aria-expanded", String(open));
+  m.onclick = () => { g.classList.toggle("short"); badgeMoreSync(); };
 }
 // уведомления идут очередью — достижение не перекрывает новый уровень
 const toastQueue = []; let toastBusy = false;
@@ -2447,6 +2555,7 @@ function renderBadges(){
     return `<button class="badge${on ? "" : " locked"}" data-b="${b.id}" aria-label="${esc(b.t)}: ${on ? "получено" : `${cur} из ${b.n}`}">${medalHtml(b, on)}<b>${b.t}</b><small>${on ? TIER_NAME[b.tier] : `${cur} / ${b.n}`}</small></button>`;
   }).join("");
   $("badgeGrid").querySelectorAll(".badge").forEach(el => el.onclick = () => openBadge(el.dataset.b));
+  badgeMoreSync();
 }
 function openBadge(id){
   const b = BADGES.find(x => x.id === id); if(!b) return;
@@ -3614,6 +3723,14 @@ const FIRST_DAYS = [["bakkal", "firin", "simit"], ["market", "lokanta", "cay"], 
 const campWeekRaw = () => Math.ceil(city.day / 7) - ((city.camp && city.camp.w0) || 0);   // у старого сохранения до ближайшего понедельника — 0 (неделя ещё не началась)
 const campWeek = () => Math.max(1, campWeekRaw());
 const campReady = w => w <= 1 || (WEEK_SETS[w - 1] || []).some(id => SCENES[id] && !SCENES[id].event);   // у недели есть свои сцены
+// Сколько дел недели кампании сделано (вид B, 2026-10-20: «5 из 13» на поле и в «Прогрессе»). Считается как медаль «Все дела недели»: дело недели, сыгранное
+// хотя бы раз (city.played[id].n, исход любой). Неделя — текущая неделя кампании; если у неё ещё нет сцен («Неделя 2 — скоро») или месяц прожит —
+// последняя неделя со сценами. city.played не хранит, на какой неделе дело сыграно, поэтому засчитываются и дела, сыгранные раньше (как у медали).
+function campWeekTasks(){
+  let w = Math.min(campWeek(), WEEK_SETS.length); while(w > 1 && !campReady(w)) w--;
+  const ids = (WEEK_SETS[w - 1] || []).filter(id => SCENES[id] && !SCENES[id].event), pl = city.played || {};
+  return { done:ids.filter(id => pl[id] && pl[id].n).length, total:ids.length, w };
+}
 const cityMasteredN = () => Object.values(city.mastery || {}).filter(v => v >= 3).length;
 const SND_LETTERS = "çşıöüğ";
 function cityStatSnd(line, score){             // оценка слов с трудными звуками по неделям кампании — для итога недели («ç: 55 → 78»)
@@ -3627,9 +3744,12 @@ function citySndGrowth(w){                      // первая половина
 function cityWeekSummary(){
   const w = campWeek(), snap = city.wk || { m:0, rel:{} }, grow = citySndGrowth(w), dm = cityMasteredN() - (snap.m || 0);
   const newFriends = Object.entries(city.rel).filter(([k, v]) => v >= 3 && ((snap.rel || {})[k] || 0) < 3).map(([k]) => CHARS[k] ? (CHARS[k].short || CHARS[k].name) : k);
-  const text = `Звуки за неделю (начало → конец): ${grow.length ? grow.join(", ") : "мало данных — говорите по карточкам"}. Освоено реплик: +${Math.max(0, dm)} (всего ${cityMasteredN()}).`
-    + ` ${newFriends.length ? "Стали знакомыми: " + newFriends.join(", ") + "." : "Новых знакомых пока нет — попробуйте «kolay gelsin»."} Хочется продолжить?`;
-  showModal({ ic:"Hafta!", title: w <= 4 ? `Неделя ${w} из 4 пройдена` : "Неделя пройдена", text,
+  // вид B (2026-10-20, макет S10): три плитки вместо абзаца — рост звука (больше всех выросший), освоено реплик за неделю, новых знакомых; остальные звуки и имена — короткой строкой
+  const gv = grow.map(g => { const m = g.match(/^(.+): (\d+) → (\d+)$/); return m ? { c:m[1], a:+m[2], b:+m[3] } : null; }).filter(Boolean).sort((x, y) => (y.b - y.a) - (x.b - x.a)), top = gv[0];
+  const stats = [[top ? `звук ${top.c}` : "звуки: мало данных", top ? `${top.a} → ${top.b}` : "—"], ["реплик освоено", `+${Math.max(0, dm)}`], ["новых знакомых", newFriends.length]];
+  const text = [gv.length > 1 ? `Звуки: ${grow.join(", ")}.` : top ? "" : "Говорите по карточкам — появится рост звуков.",
+    newFriends.length ? `Стали знакомыми: ${newFriends.join(", ")}.` : "Новых знакомых пока нет — попробуйте «kolay gelsin»."].filter(Boolean).join(" ");
+  showModal({ ic:"Hafta!", title: w <= 4 ? `Неделя ${w} из 4 пройдена` : "Неделя пройдена", text, stats,
     choices:{ label:"Хочется продолжить?", items:["да", "так себе", "нет"], value:(city.feedback || {})[w], fn:v => { (city.feedback || (city.feedback = {}))[w] = v; citySave(); fbSend({ week:w, answer:v }); } },
     primary:{ label:"Дальше" }, secondary:{ label:"Чего не хватает?", fn:fbGo } });
 }
@@ -5128,6 +5248,8 @@ function cityRes(){
   ctEl("ctRes").innerHTML = `<span class="ct-money">${fmtMoney(city.money)}</span><span class="ct-time"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg>${fmtClock(city.min)}</span>`
     + (ct ? `<span class="ct-pat" aria-label="Терпение собеседника: ${pat} из ${max}" title="Терпение собеседника">${Array.from({ length:max }, (_, i) => `<i${i < pat ? ' class="on"' : ""}></i>`).join("")}</span>` : "");
 }
+function cityWeekParts(){ const w = campWeek(), ln = cityWeekLine(), k = ln.indexOf(": ");   // [подпись, цель] для карточки «Цель недели»
+  return k > 0 ? [`${ln.slice(0, k)} · цель`, ln.slice(k + 2).replace(/^./, c => c.toLocaleUpperCase("ru"))] : [w > 4 ? "Месяц" : "Цель недели", ln]; }
 function cityWeekLine(){ const w = campWeek();
   return w > 4 ? "Месяц прожит — свободная игра" : campReady(w) ? `Неделя ${w} из 4: ${CAMPAIGN[w - 1].goal}${city.camp && city.camp.old && w === 1 ? " (вы здесь уже освоились)" : ""}` : `Неделя ${w - 1} пройдена · неделя ${w} — скоро`; }
 function cityRender(){
@@ -5154,17 +5276,19 @@ function cityBoard(){
   const pins = {}; plan.forEach(id => { const i = cellOfScene(id); if(i < 0) return; const d = city.done.find(x => x.id === id); pins[i] = d ? "done" : cityOpenNow(id).open ? "" : "closed"; });
   const bd = ctEl("ctBoard"); bd.querySelectorAll(".bd-cell").forEach(e => e.remove());
   BOARD.forEach((c, i) => { const [x, y] = boardXY(i), b = document.createElement("button"); b.type = "button"; b.dataset.i = i;
-    b.className = `bd-cell ${c.kind}${reach.has(i) ? " reach" : ""}`; b.style.gridArea = `${y + 1} / ${x + 1}`; b.disabled = !reach.has(i);
+    b.className = `bd-cell ${c.kind}${reach.has(i) ? " reach" : ""}${pins[i] === "" ? " pin" : ""}`;   /* pin — обводка клетки с несделанным открытым делом (вид B) */ b.style.gridArea = `${y + 1} / ${x + 1}`; b.disabled = !reach.has(i);
     b.setAttribute("aria-label", `${c.title}${i === city.pos ? " — вы здесь" : ""}${pins[i] !== undefined ? ", дело дня" : ""}${reach.has(i) ? ", можно пойти" : ""}`);
     b.innerHTML = `<svg class="bd-ic" aria-hidden="true"><use href="#${c.ic}"/></svg><span class="bd-tr" lang="tr" translate="no">${esc(c.short)}</span><span class="bd-ru">${esc(c.ru)}</span>`
       + `${i === city.pos ? '<span class="bd-token" aria-hidden="true"></span>' : ""}${pins[i] !== undefined ? `<span class="bd-pin ${pins[i]}" aria-hidden="true"></span>` : ""}`;
     b.onclick = () => cityMoveTo(i); bd.insertBefore(b, ctEl("ctInner")); });
   const left = plan.filter(id => !cityDoneId(id)).length;
   ctEl("ctDay").textContent = allDone ? "Все дела сделаны — домой." : `Дела на сегодня — ${left} из ${plan.length}`;
+  // вид B: ближайшее открытое несделанное дело — строка с фоном accent-soft (класс next); значок состояния — в <i> (галочка у сделанного, кольцо/круг — CSS)
+  const nextId = (plan.filter(id => !cityDoneId(id) && cityOpenNow(id).open && cellOfScene(id) >= 0).sort((a, b) => boardDist(city.pos, cellOfScene(a)) - boardDist(city.pos, cellOfScene(b)))[0]) || null;
   ctEl("ctTasks").innerHTML = plan.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id), i = cellOfScene(id), op = cityOpenNow(id), dist = i < 0 ? 0 : boardDist(city.pos, i);
     const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? (s.phone ? "звоните отсюда" : "дело здесь") : s.phone ? `звонок · ${BOARD[i].ru}, ${dist} ${plural(dist, "клетка", "клетки", "клеток")}` : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
     const go = !d && op.open && i >= 0 && i === city.pos && !ct && !city.roll, w2 = go ? (s.phone ? "нажмите, чтобы позвонить" : "нажмите, чтобы начать") : where;
-    return `<li class="ct-task${d ? " done " + d.kind : !op.open ? " closed" : ""}${go ? " go" : ""}" data-scene="${id}"${go ? ' role="button" tabindex="0"' : ""}><i aria-hidden="true"></i><b>${esc(s.title)}</b><span>${w2}</span></li>`; }).join("");
+    return `<li class="ct-task${d ? " done " + d.kind : !op.open ? " closed" : ""}${go ? " go" : ""}${!go && id === nextId ? " next" : ""}" data-scene="${id}"${go ? ' role="button" tabindex="0"' : ""}><i aria-hidden="true">${d ? '<svg class="ic"><use href="#i-check"/></svg>' : ""}</i><b>${esc(s.title)}</b><span>${w2}</span></li>`; }).join("");
   ctEl("ctTasks").querySelectorAll(".ct-task.go").forEach(li => { const run = () => cityStart(li.dataset.scene); li.onclick = run; li.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); run(); } }; });
   cityInnerTab(cityTab); ctEl("ctChars").innerHTML = cityCharsHtml(); ctEl("ctSkills").innerHTML = citySkillsHtml();
   ctEl("ctChars").querySelectorAll(".ct-char").forEach(b => b.onclick = () => openChar(b.dataset.char));
@@ -5174,12 +5298,15 @@ function cityBoard(){
   else if(!allDone && de) de.remove();
   { const b = ctEl("ctRoll"); b.disabled = !!city.roll || rolling || city.min >= DAY_END; b.innerHTML = dieSvg(city.face); b.dataset.n = String(city.face);
     b.setAttribute("aria-label", city.roll ? `Выпало ${city.roll} — выберите клетку` : city.min >= DAY_END ? "День окончен" : `Бросить кубик (на кубике ${city.face})`);
-    ctEl("ctDiceHint").textContent = city.roll ? "Выберите клетку" : city.min >= DAY_END ? "21:00 — пора домой" : "Нажмите кубик"; }
+    ctEl("ctDiceHint").textContent = city.roll ? "Выберите клетку" : city.min >= DAY_END ? "21:00 — пора домой" : "Бросить кубик"; }
   const toRent = (8 - cityDow()) % 7 || 7;   // дней до понедельника (в сам понедельник аренда уже списана — до следующей 7)
-  // строка аренды — в подсказке под делами (в заголовке дел в CI шрифт шире — названия дел обрезались, 2026-10-11); «Отношения: …» убраны отсюда —
-  // они есть во вкладке «Люди», а лишняя строка не помещалась на 360×640. Во время хода — только подсказка хода.
-  ctEl("ctIntro").innerHTML = city.roll ? esc(`Нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.`)
-    : `<span class="ct-week">${esc(cityWeekLine())}</span><span class="ct-rent">до аренды ${toRent} дн. · ${RENT} ₺${city.debt ? ` · долг ${city.debt} ₺` : ""}</span>`;
+  // Вид B (2026-10-20, макет V2): цель недели с полосой «N из M» (campWeekTasks) и плашка аренды — над вкладками, видны на всех трёх (раньше были в подсказке под делами).
+  // В подсказке #ctIntro теперь только подсказка хода.
+  { const wt = campWeekTasks(), [cap, goal] = cityWeekParts(), pct = wt.total ? Math.round(wt.done / wt.total * 100) : 0;
+    ctEl("ctWeek").innerHTML = `<span class="ct-wk-cap">${esc(cap)}</span><b class="ct-wk-goal">${esc(goal)}</b>`
+      + `<span class="ct-wk-row"><span class="ct-wk-bar" role="img" aria-label="${wt.done} из ${wt.total}"><i style="width:${pct}%"></i></span><span class="ct-wk-n">${wt.done} из ${wt.total} дел недели ${wt.w}</span></span>`;
+    ctEl("ctRent").innerHTML = `<svg class="ic" aria-hidden="true"><use href="#i-city"/></svg><span>До аренды ${toRent} дн. · ${RENT} ₺${city.debt ? ` · долг ${city.debt} ₺` : ""}</span>`; }
+  ctEl("ctIntro").textContent = city.roll ? `Нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.` : "";
 }
 // Вкладки внутри кольца: дела дня · люди (персонажи с уровнем отношений) · умения (способности)
 let cityTab = (() => { try { return ["tasks", "people", "skills"].includes(localStorage.getItem("soyle-city-tab")) ? localStorage.getItem("soyle-city-tab") : "tasks"; } catch(e){ return "tasks"; } })();
@@ -5187,16 +5314,28 @@ function cityInnerTab(t){
   cityTab = t; try { localStorage.setItem("soyle-city-tab", t); } catch(e){}
   ctEl("ctTabTasks").setAttribute("aria-pressed", t === "tasks"); ctEl("ctTabPeople").setAttribute("aria-pressed", t === "people"); ctEl("ctTabSkills").setAttribute("aria-pressed", t === "skills");
   ctEl("ctDay").hidden = t !== "tasks"; ctEl("ctTasks").hidden = t !== "tasks"; ctEl("ctChars").hidden = t !== "people"; ctEl("ctSkills").hidden = t !== "skills"; ctEl("ctIntro").hidden = t !== "tasks";
+  ctEl("ctInner").dataset.tab = t;
 }
 const relLevel = v => v >= 6 ? 2 : v >= 3 ? 1 : 0, REL_NAME = ["", "знакомый", "свой"];
 const metChars = () => Object.keys(CHARS).filter(c => city.rel[c] !== undefined || (city.met || {})[c]).sort((a, b) => (city.rel[b] || 0) - (city.rel[a] || 0));
 function cityCharsHtml(){
   const list = metChars(); if(!list.length) return `<p class="hint" style="margin:0">Пока никого не встретили. Поговорите с кем-нибудь в квартале.</p>`;
-  return list.map(c => { const v = city.rel[c] || 0, lv = relLevel(v); return `<button class="ct-char lv${lv}" data-char="${c}"><i aria-hidden="true">${charAvatar(c) || esc(CHARS[c].initial)}</i><b>${esc(CHARS[c].name)}</b>${city.contacts[c] ? '<svg class="ic ct-num" aria-label="номер есть"><use href="#i-phone"/></svg>' : ""}<span class="ct-char-lvl">${REL_NAME[lv] || (v ? `+${v}` : "")}</span></button>`; }).join("");
+  // вид B (макет V2): портрет · имя (+ значок номера) · под именем роль (место из сцен человека) и уровень · справа 6 точек отношений; внизу — пояснение (на низких экранах — по «?»)
+  return list.map(c => { const v = city.rel[c] || 0, lv = relLevel(v), n = Math.max(0, Math.min(6, v)), role = charRole(c);
+    return `<button class="ct-char lv${lv}" data-char="${c}"><i aria-hidden="true">${charAvatar(c) || esc(CHARS[c].initial)}</i><span class="ct-char-main"><span class="ct-char-name"><b>${esc(CHARS[c].name)}</b>${city.contacts[c] ? '<svg class="ic ct-num" aria-label="номер есть"><use href="#i-phone"/></svg>' : ""}</span>`
+      + `<span class="ct-char-role">${esc(role)}<span class="ct-char-lvl">${REL_NAME[lv] || (v ? `+${v}` : "")}</span></span></span>`
+      + `<span class="ct-dots" role="img" aria-label="отношения ${n} из 6">${Array.from({ length:6 }, (_, k) => `<span${k < n ? ' class="on"' : ""}></span>`).join("")}</span></button>`; }).join("")
+    + `<p class="hint ct-tab-note">Знакомый с 3 — скидки и долг; свой с 6. Нажмите на имя с номером — позвонить.</p>`;
+}
+// роль человека — место, где он встречается: первая сцена с ним (char или pool) → клетка поля → её название по-русски («лавка», «соседка»)
+function charRole(c){
+  for(const [id, sc] of Object.entries(SCENES)){ if(sc.char !== c && !(sc.pool || []).includes(c)) continue; let i = cellOfScene(id); if(i < 0 && id.startsWith("visit_")) i = BOARD.findIndex(x => x.id === id.slice(6)); if(i >= 0) return BOARD[i].ru; }   // заход «visit_<клетка>» — клетка по id
+  return "";
 }
 function citySkillsHtml(){
   return Object.entries(SKILLS).map(([id, sk]) => { const n = (city.skill[id] || {}).n || 0, lvl = skillLvl(id), next = SKILL_LVLS[lvl] || SKILL_LVLS[SKILL_LVLS.length - 1], pct = lvl >= 5 ? 100 : Math.round(n / next * 100);
-    return `<div class="ct-skill" data-skill="${id}"><span>${esc(sk.name)} · ${esc(sk.ru)}</span><span class="bar" aria-label="${n} из ${next}"><i style="width:${pct}%"></i></span><b>${lvl}</b></div>`; }).join("");
+    return `<div class="ct-skill" data-skill="${id}"><span><strong lang="tr" translate="no">${esc(sk.name)}</strong> · ${esc(sk.ru)}</span><span class="bar" role="img" aria-label="${n} из ${next}"><i style="width:${pct}%"></i></span><b>${lvl}</b></div>`; }).join("")
+    + `<p class="hint ct-tab-note">Растут от чисто сказанных реплик; каждый уровень что-то открывает.</p>`;
 }
 // ---- портреты персонажей: свои SVG (рисуются кодом из признаков), без внешних картинок ----
 const AVATARS = {

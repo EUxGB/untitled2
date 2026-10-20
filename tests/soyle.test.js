@@ -380,7 +380,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('неделя серии на экране «Прогресс»: 7 дней, сегодня отмечено, заморозка видна', async () => {
     const r = await p.evaluate(r => { eval(r); const y = new Date(Date.now() - 864e5).toISOString().slice(0,10); game.frozenDays = [y]; award(1, 'o'); setMode('progress');
-      const dots = [...document.querySelectorAll('#gbWeek .pv-dot')]; const out = [dots.length, dots[6].className.includes('done'), dots[5].className.includes('frozen')]; setMode('phrases'); return out; }, RESET);
+      // вид B (2026-10-20, решение пользователя): неделя календарная пн–вс — «сегодня» стоит на своём дне недели, а не последним; вчера в понедельник — уже прошлая неделя
+      const dots = [...document.querySelectorAll('#gbWeek .pv-dot')], dow = (new Date().getDay() + 6) % 7; const out = [dots.length, dots[dow].className.includes('done'), dow === 0 || dots[dow - 1].className.includes('frozen')]; setMode('phrases'); return out; }, RESET);
     eq(r, [7, true, true]);
   });
   await test('блиц: праздники (новый уровень) не прерывают блиц, а показываются после итогов', async () => {
@@ -2557,7 +2558,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.tabs, ['Дела', 'Люди', 'Умения']); eq(r.people, [['sofor', 'свой'], ['bakkal', 'знакомый']]); eq(r.visible, [true, false]);
     eq(r.card[0], 'Шофёр Али'); ok(/Разговорчивый/.test(r.card[1]) && /Такси до Таксима/.test(r.card[1]) && /свой/.test(r.card[1]), r.card[1]);
     eq(r.skills, [['kulak', '0', '0%'], ['dil', '1', '50%'], ['pazarlik', '0', '0%'], ['nezaket', '0', '0%']]);   // полоса — доля до следующего порога: dil 4 из 8
-    eq(r.back, [false, 'tasks']); eq(r.tile, ['день 1', 'неделя 1 · дел хорошо 2 из 2 · 1700 ₺ · знакомых 2']);   /* 21:40: неделя — во второй строке, иначе плитка в 2 строки сбивала соседнюю */   // 2026-10-11: старт 1700; played: taxi n 2, ok 2
+    eq(r.back, [false, 'tasks']); eq(r.tile, ['1 из 13', 'дел недели 1']);   /* вид B (2026-10-20, решение пользователя): плитка — «N из M · дел недели W» (campWeekTasks: taxi сыгран → 1 из 13); день, деньги, знакомые — в title плитки */   /* 21:40: неделя — во второй строке, иначе плитка в 2 строки сбивала соседнюю */   // 2026-10-11: старт 1700; played: taxi n 2, ok 2
     eq(r.badges.slice(0, 2), [true, true]); eq(errs, []);   // 2026-10-11: эта проверка была случайно закомментирована (стояла после «//»); число медалей проверяет тест «медали»
   });
   await test('Сцены недели 1: аптека — дозировка числом на слух (Zeynep ≥3 — два варианта, ≥6 — без вопроса о рецепте, после 19:00 — дежурная), звонок за водой (#num адрес), Айше-тейзе (терпение 4, чай/отказ), уста — «elinize sağlık» ценит, ≥3 чай угощение', async () => {
@@ -2642,7 +2643,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
   });
   await test('Этап 1, публикация Б (2026-10-11): аренда каждый понедельник (RENT, подобрана ботом; первая неделя оплачена при въезде — старт 1700), не хватает — долг, не минус; строка «до аренды N дн.»; провал любого дела недели 1 чего-то стоит', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; });
-    const r = await q.evaluate(() => { const out = {}; const t = () => document.getElementById('ctIntro').textContent;
+    const r = await q.evaluate(() => { const out = {}; const t = () => document.getElementById('ctRent').textContent;   // вид B (2026-10-20): аренда — плашка #ctRent над вкладками (была в подсказке #ctIntro)
       out.rent = typeof RENT === 'number' ? RENT : null;
       out.line1 = t();
       city.day = 7; city.money = 1000; city.debt = 0; cityNewDay(); out.d8 = [city.day, cityDow(), city.money, city.debt]; out.line8 = t();   // пн недели 2: +3500 −аренда
@@ -2653,8 +2654,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return out; });
     const errs = q.errors; await q.context().close();
     ok(r.rent >= 1500 && r.rent <= 2000, 'аренда ' + r.rent);
-    ok(/до аренды \d+ дн/.test(r.line1), 'строка аренды: ' + r.line1);
-    eq(r.d8, [8, 1, 1000 + 3500 - r.rent, 0]); ok(/до аренды 7 дн/.test(r.line8), r.line8);
+    ok(/до аренды \d+ дн/i.test(r.line1), 'строка аренды: ' + r.line1);
+    eq(r.d8, [8, 1, 1000 + 3500 - r.rent, 0]); ok(/до аренды 7 дн/i.test(r.line8), r.line8);
     eq(r.d2, [500], 'вторник — без аренды');
     eq(r.short, [0, r.rent - 500], 'нехватка — в долг');
     eq(r.fails, [], 'провал без цены'); eq(r.neg, [0, 30], 'деньги не уходят в минус — остаток в долг'); eq(errs, []);
@@ -2687,7 +2688,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await q.evaluate(() => { const out = {}, M = () => !document.getElementById('modal').hidden, T = () => document.getElementById('modalTitle').textContent;
       city.camp = null; cityNormalize(); cityRender(); out.pro1 = [M(), T()]; if(M()) closeModal();
       cityRender(); out.pro2 = M();
-      out.intro = document.getElementById('ctIntro').textContent;
+      out.intro = document.getElementById('ctWeek').textContent;   // вид B (2026-10-20): цель недели — карточка #ctWeek над вкладками (была в подсказке #ctIntro)
       out.week = [typeof campWeek === 'function' ? campWeek() : null];
       // первые три дня
       out.plans = [city.plan.slice()]; for(let d = 0; d < 2; d++){ city.carry = []; city.done = []; city.plan.forEach(id => city.done.push({ id, kind:'ok', short:'', ok:1, n:1, took:1, spent:0 })); cityNewDay(); if(M()) closeModal(); out.plans.push(city.plan.slice()); }
@@ -2702,28 +2703,31 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return out; });
     await q.waitForTimeout(250);
     const wk = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden, T = () => document.getElementById('modalTitle').textContent;
-      const out = { t:T(), text:document.getElementById('modalText').textContent, ch:[...document.querySelectorAll('#modal .ms-choice')].map(b => b.textContent) };
+      const out = { t:T(), text:document.getElementById('modalText').textContent, stats:[...document.querySelectorAll('#modalStats .ms')].map(m => [m.querySelector('b').textContent, m.querySelector('span').textContent]), ch:[...document.querySelectorAll('#modal .ms-choice')].map(b => b.textContent),
+        chw:[...document.querySelectorAll('#modal .ms-choice')].map(b => Math.round(b.getBoundingClientRect().width)) };
       const b = [...document.querySelectorAll('#modal .ms-choice')].find(x => /так себе/.test(x.textContent)); b && b.click(); out.fb = (city.feedback || {})[1];
       document.getElementById('modalPrimary').click(); return out; });
     await q.waitForTimeout(250);
     const again = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; for(let k = 0; k < 3 && M(); k++) closeModal(); cityDayEnd(); closeModal(); return new Promise(r => setTimeout(() => r(M() ? document.getElementById('modalTitle').textContent : ''), 300)); });
     const d8 = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; if(M()) closeModal(); city.day = 7; cityNewDay(); const out = { soon:[M(), document.getElementById('modalTitle').textContent], plan:city.plan.length };
-      if(M()) closeModal(); cityRender(); out.intro = document.getElementById('ctIntro').textContent; setMode('progress'); out.tile = document.getElementById('gbCitySub').textContent; setMode('city'); return out; });
+      if(M()) closeModal(); cityRender(); out.intro = document.getElementById('ctWeek').textContent; setMode('progress'); out.tile = document.getElementById('gbCitySub').textContent; setMode('city'); return out; });
     const fits = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){ await q.setViewportSize({ width:w, height:h }); await q.waitForTimeout(80);
-      fits.push(await q.evaluate(() => { cityRender(); const i = document.getElementById('ctIntro'), b = i.getBoundingClientRect(), inner = document.getElementById('ctInner').getBoundingClientRect(); return b.height > 0 && b.bottom <= inner.bottom + 1 && i.scrollWidth <= i.clientWidth + 1; })); }
+      fits.push(await q.evaluate(() => { cityRender(); const i = document.getElementById('ctWeek'), b = i.getBoundingClientRect(), inner = document.getElementById('ctInner').getBoundingClientRect(); return b.height > 0 && b.bottom <= inner.bottom + 1 && i.scrollWidth <= i.clientWidth + 1; })); }
     const errs = q.errors; await q.context().close();
     eq(r.pro1, [true, r.pro1[1]]); ok(/Стамбул/.test(r.pro1[1]) || true, r.pro1[1]); eq(r.pro2, false, 'пролог — один раз');
     ok(/Неделя 1 из 4/.test(r.intro) && /купить всё нужное/i.test(r.intro), r.intro); eq(r.week, [1]);
     eq(r.plans.map(p => p.slice().sort()), [['bakkal', 'firin', 'simit'], ['cay', 'lokanta', 'market'], ['dolmus', 'istanbulkart', 'taxi']]);
-    ok(/Неделя 1 из 4/.test(wk.t), wk.t); ok(/ç: 51 → 81/.test(wk.text) && /ü: 51 → 81/.test(wk.text), wk.text);   // «Üç» тоже с ç: [50,51,52 | 80,81,82] eq(wk.ch, ['да', 'так себе', 'нет']); eq(wk.fb, 'так себе');
+    ok(/Неделя 1 из 4/.test(wk.t), wk.t); // вид B (2026-10-20): итог недели — три плитки (рост звука, освоено реплик, новых знакомых) вместо абзаца; остальные звуки — строкой
+    eq(wk.stats.length, 3, JSON.stringify(wk.stats)); eq(wk.stats[0][0], '51 → 81'); ok(/^звук [çü]$/.test(wk.stats[0][1]), wk.stats[0][1]); ok(/реплик освоено/.test(wk.stats[1][1]) && /^\+\d+$/.test(wk.stats[1][0]), JSON.stringify(wk.stats[1])); ok(/знакомых/.test(wk.stats[2][1]), JSON.stringify(wk.stats[2]));
+    ok(/ç: 51 → 81/.test(wk.text) && /ü: 51 → 81/.test(wk.text), wk.text); ok(!/Освоено реплик|Хочется продолжить/.test(wk.text), 'абзац вместо плиток: ' + wk.text); ok(Math.max(...wk.chw) - Math.min(...wk.chw) <= 1, '«да / так себе / нет» поровну: ' + wk.chw);   // «Üç» тоже с ç: [50,51,52 | 80,81,82] eq(wk.ch, ['да', 'так себе', 'нет']); eq(wk.fb, 'так себе');
     eq(d8.soon, [true, d8.soon[1]]); ok(/Неделя 2 — скоро/.test(d8.soon[1]), d8.soon[1]); ok(d8.plan >= 3, 'дела есть'); ok(/скоро/.test(d8.intro), d8.intro); ok(/так себе/.test(d8.tile), d8.tile);
     eq(fits, [true, true, true], 'строка недели помещается'); eq(r.mumble, 0, 'бормотание не растит Pazarlık'); ok(!/Неделя 1 из 4/.test(again), 'итог недели — один раз: ' + again); eq(errs, []);
   });
   await test('Этап 1, публикация Г: старое сохранение (день 20) — деньги, отношения, умения, освоение на месте; кампания с «Недели 1» без пролога, с пометкой «освоились»', async () => {
     const old = { ver:2, day:20, days:19, money:999, rel:{ bakkal:4, sofor:7 }, mastery:{ 'Ekmek lütfen.':3 }, skill:{ dil:{ n:9, lvl:2 } }, plan:['bakkal'], done:[], carry:[] };
     const q = await openCity({ storage:{ 'soyle-city':JSON.stringify(old) } }); await q.evaluate(() => { window.__prologue = true; cityRender(); });
-    const r = await q.evaluate(() => ({ money:city.money, rel:city.rel, m:city.mastery['Ekmek lütfen.'], dil:city.skill.dil.lvl, w:campWeek(), old:!!(city.camp && city.camp.old), modal:!document.getElementById('modal').hidden ? document.getElementById('modalTitle').textContent : '', intro:document.getElementById('ctIntro').textContent }));
+    const r = await q.evaluate(() => ({ money:city.money, rel:city.rel, m:city.mastery['Ekmek lütfen.'], dil:city.skill.dil.lvl, w:campWeek(), old:!!(city.camp && city.camp.old), modal:!document.getElementById('modal').hidden ? document.getElementById('modalTitle').textContent : '', intro:document.getElementById('ctWeek').textContent }));   // вид B: цель недели — #ctWeek
     r.sunday = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; for(let k = 0; k < 3 && M(); k++) closeModal(); city.day = 21; cityDayEnd(); closeModal(); return new Promise(res => setTimeout(() => res(M() ? document.getElementById('modalTitle').textContent.replace(/^День.*/, '') : ''), 300)); });
     const errs = q.errors; await q.context().close();
     eq([r.money, r.rel, r.m, r.dil, r.w, r.old], [999, { bakkal:4, sofor:7 }, 3, 2, 1, true]); eq(r.sunday, '', 'старое сохранение: итог недели — не в первый же вечер'); ok(!/Стамбул/.test(r.modal), 'без пролога: ' + r.modal); ok(/освоились/.test(r.intro + r.modal), r.intro + ' | ' + r.modal); eq(errs, []);
@@ -2982,6 +2986,60 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     }
     await q.context().close(); eq(bad, []);
   });
+  // Вид B (решения пользователя 2026-10-20 ~10:40, макет V2): шапка поля — адрес слева, деньги и время белыми плашками справа; карточка «Цель недели»
+  // с полосой «N из M» (campWeekTasks) и плашка аренды — над вкладками, видны на всех трёх; дела — белая карточка со строками и значком состояния;
+  // кубик — кнопка во всю ширину над «Taksi çağır / Eve dön» (две равные кнопки 44 px с рамкой); клетки с делом — обводка; «Люди» — роль и 6 точек отношений;
+  // «Умения» — одна строка. Всё помещается на 360×640 (центр поля ~314 px), 390×844, 412×915.
+  await test('Вид B (2026-10-20): поле «Города» как в макете V2 — цель недели «N из M» и аренда на всех вкладках, строки дел, кубик, такси/домой поровну, люди с ролью и точками, умения в строку; помещается на 3 размерах', async () => {
+    const q = await openCity(); const bad = [];
+    const fn = await q.evaluate(() => { const a = typeof campWeekTasks === 'function' ? campWeekTasks() : null; city.played = { bakkal:{ n:1, ok:1 }, taxi:{ n:2, ok:0 }, su:{ n:0 }, visit_bakkal:{ n:3 } }; const b = typeof campWeekTasks === 'function' ? campWeekTasks() : null; city.played = {}; cityRender(); return [a, b]; });
+    eq(fn, [{ done:0, total:13, w:1 }, { done:2, total:13, w:1 }], 'campWeekTasks: дела недели 1, сделанные хотя бы раз (как медаль «Все дела недели»)');
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h });
+      await q.evaluate(() => { city.rel = { bakkal:4, komsu:3, sofor:6, kapici:1, usta:0 }; city.met = { eczaci:1, berber:1 }; city.contacts = { komsu:1 }; city.skill = { dil:{ n:4, lvl:1 } }; city.played = { bakkal:{ n:1, ok:1 } }; city.roll = null; city.done = []; city.pos = 0; cityInnerTab('tasks'); cityRender(); autofit(); });
+      await q.waitForTimeout(150);
+      const r = await q.evaluate(() => { const inner = document.getElementById('ctInner'), ib = inner.getBoundingClientRect(), out = { tabs:{} };
+        const inside = e => { if(!e || !e.offsetParent) return false; const b = e.getBoundingClientRect(); return b.height > 0 && b.top >= ib.top - 1 && b.bottom <= ib.bottom + 1 && b.left >= ib.left - 1 && b.right <= ib.right + 1; };
+        const bg = e => getComputedStyle(e).backgroundColor, clear = c => c === 'rgba(0, 0, 0, 0)' || c === 'transparent';
+        out.money = !clear(bg(document.querySelector('#ctRes .ct-money'))); out.time = !clear(bg(document.querySelector('#ctRes .ct-time')));
+        const hd = document.querySelector('.ct-head').getBoundingClientRect(), pl = document.getElementById('ctPlace').getBoundingClientRect(), rs = document.getElementById('ctRes').getBoundingClientRect(); out.headOrder = pl.left < rs.left && rs.right <= hd.right + 1;
+        for(const t of ['tasks', 'people', 'skills']){ cityInnerTab(t); const wk = document.getElementById('ctWeek'), rent = document.getElementById('ctRent');
+          out.tabs[t] = { week: inside(wk) && wk.scrollHeight <= wk.clientHeight + 1, rent: inside(rent) && rent.scrollWidth <= rent.clientWidth + 1, cut: inner.scrollHeight > inner.clientHeight + 1, roll: inside(document.getElementById('ctRoll')),
+            list: [...inner.querySelectorAll('#ctTasks, #ctChars, #ctSkills')].filter(e => e.offsetParent).every(inside) }; }
+        cityInnerTab('tasks');
+        const wk = document.getElementById('ctWeek'), bar = wk.querySelector('[role="img"]');
+        out.week = [/Неделя 1 из 4/.test(wk.textContent), /купить всё нужное/i.test(wk.textContent), /1 из 13/.test(wk.textContent), bar ? bar.getAttribute('aria-label') : null];
+        out.rent = [/до аренды \d+ дн/i.test(document.getElementById('ctRent').textContent), !!document.querySelector('#ctRent svg')];
+        out.intro = document.getElementById('ctIntro').textContent;
+        const ul = document.getElementById('ctTasks'), lis = [...ul.querySelectorAll('.ct-task')];
+        out.tasks = [!clear(bg(ul)), lis.length, lis.every(li => li.querySelector(':scope > i') && li.querySelector(':scope > b') && li.querySelector(':scope > span')), lis.filter(li => !li.classList.contains('go')).every(li => li.getBoundingClientRect().height >= 31.5)];
+        const plan = cityPlanIds().filter(id => SCENES[id] && cityOpenNow(id).open && !cityDoneId(id)).map(cellOfScene).filter(i => i >= 0);
+        const cells = [...document.querySelectorAll('.bd-cell.pin')].map(b => +b.dataset.i).sort((a, b) => a - b);
+        out.pins = [JSON.stringify(cells) === JSON.stringify([...new Set(plan)].sort((a, b) => a - b)), cells.every(i => getComputedStyle(document.querySelector(`.bd-cell[data-i="${i}"]`)).outlineStyle !== 'none')];
+        const tx = document.getElementById('ctTaxi').getBoundingClientRect(), hm = document.getElementById('ctHomeBtn').getBoundingClientRect();
+        out.home = [Math.abs(tx.width - hm.width) <= 1, tx.height >= 44 && hm.height >= 44, Math.abs(tx.top - hm.top) <= 1, parseFloat(getComputedStyle(document.getElementById('ctTaxi')).borderTopWidth) >= 1];
+        const dice = document.getElementById('ctDice').getBoundingClientRect(), roll = document.getElementById('ctRoll').getBoundingClientRect();
+        out.dice = [dice.width > ib.width * .8, roll.height >= 44, document.getElementById('ctDice').contains(document.getElementById('ctDiceHint')), !!document.querySelector('#ctRoll .die'), dice.bottom <= tx.top + 1];
+        cityInnerTab('people'); const rows = [...document.querySelectorAll('#ctChars .ct-char')];
+        out.people = rows.map(b => [b.dataset.char, (b.querySelector('.ct-char-role') || {}).textContent || '', b.querySelectorAll('.ct-dots > *').length, (b.querySelector('.ct-dots') || { getAttribute:() => null }).getAttribute('role'), !!b.querySelector(':scope > i svg.avatar'), !!b.querySelector('.ct-char-lvl')]);
+        out.pnote = /Знакомый с 3/.test(document.getElementById('ctChars').textContent);
+        cityInnerTab('skills'); out.skills = [...document.querySelectorAll('#ctSkills .ct-skill')].map(s => { const c = [...s.children].map(e => { const b = e.getBoundingClientRect(); return b.top + b.height / 2; }); return Math.max(...c) - Math.min(...c) <= 4 && s.querySelector('.bar').getAttribute('role') === 'img'; });
+        out.snote = /Растут от чисто сказанных/.test(document.getElementById('ctSkills').textContent);
+        cityInnerTab('tasks'); city.pos = cellOfScene('bakkal'); cityRender(); out.goCut = [!!document.querySelector('.ct-task.go'), inner.scrollHeight > inner.clientHeight + 1]; city.pos = 0; cityRender(); return out; });   // стоим на клетке дела — строка «нажмите, чтобы начать» 44 px тоже помещается
+      const tag = `${w}×${h}`; if(!r.goCut[0] || r.goCut[1]) bad.push(`${tag}: строка «нажмите, чтобы начать» ${JSON.stringify(r.goCut)}`);
+      if(!r.money || !r.time || !r.headOrder) bad.push(`${tag}: шапка ${JSON.stringify([r.money, r.time, r.headOrder])}`);
+      for(const [t, v] of Object.entries(r.tabs)) if(!v.week || !v.rent || v.cut || !v.roll || !v.list) bad.push(`${tag} ${t}: ${JSON.stringify(v)}`);
+      if(JSON.stringify(r.week) !== JSON.stringify([true, true, true, '1 из 13'])) bad.push(`${tag}: цель недели ${JSON.stringify(r.week)}`);
+      if(!r.rent[0] || !r.rent[1]) bad.push(`${tag}: аренда ${JSON.stringify(r.rent)}`); if(/аренд|Неделя/.test(r.intro)) bad.push(`${tag}: в подсказке хода осталась неделя/аренда`);
+      if(!r.tasks[0] || r.tasks[1] !== 3 || !r.tasks[2] || !r.tasks[3]) bad.push(`${tag}: дела ${JSON.stringify(r.tasks)}`);
+      if(!r.pins[0] || !r.pins[1]) bad.push(`${tag}: обводка клеток с делом ${JSON.stringify(r.pins)}`);
+      if(r.home.some(x => !x)) bad.push(`${tag}: такси/домой ${JSON.stringify(r.home)}`); if(r.dice.some(x => !x)) bad.push(`${tag}: кубик ${JSON.stringify(r.dice)}`);
+      const bk = r.people.find(x => x[0] === 'bakkal'); if(!bk || !/лавка/.test(bk[1])) bad.push(`${tag}: роль Хасана ${JSON.stringify(bk)}`);
+      if(r.people.length < 7 || r.people.some(x => !x[1] || x[2] !== 6 || x[3] !== 'img' || !x[4] || !x[5])) bad.push(`${tag}: люди ${JSON.stringify(r.people)}`);
+      if(!r.pnote || !r.snote) bad.push(`${tag}: нет пояснения людей/умений`); if(r.skills.length !== 4 || r.skills.some(x => !x)) bad.push(`${tag}: умения не в строку ${JSON.stringify(r.skills)}`);
+    }
+    eq(bad, []); eq(q.errors, []); await q.context().close();
+  });
   await test('Город помещается на 360×640, 390×844 и 412×915 без прокрутки страницы: дом, сцена с карточками, промах с оценкой, оплата', async () => {
     const q = await openPage(browser); const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
@@ -3129,10 +3187,46 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.evaluate(() => { ['ct', 'gram', 'mem-rec', 'mem-prod', 'listenph', 'ph-hotel', 'w-shop', 'free', 'ph-health'].forEach((id, i) => stats[id] = { t:19 + i, ok:10 + i }); renderStats(); setMode('progress'); });
     for(const w of [320, 360, 390, 412]){ await q.setViewportSize({ width:w, height:800 }); await q.waitForTimeout(150);
       const rows = await q.evaluate(() => { const m = {}; document.querySelectorAll('#stats .stat').forEach(s => { const top = Math.round(s.getBoundingClientRect().top); (m[top] = m[top] || []).push([s.querySelector('.lab').textContent, s.querySelector('.num').getBoundingClientRect().top, s.querySelector('.bar').getBoundingClientRect().top]); }); return Object.values(m); });
-      if(w >= 360 && !rows.some(r => r.length > 1)) bad.push(w + ': нет строк из двух ячеек');   // на 320 — одна колонка
+      // вид B (2026-10-20, решение пользователя): статистика — одной колонкой: название слева, число справа в той же строке, полоса ниже
+      if(rows.some(r => r.length > 1)) bad.push(w + ': статистика не в одну колонку');
+      const inrow = await q.evaluate(() => [...document.querySelectorAll('#stats .stat')].filter(s => { const l = s.querySelector('.lab').getBoundingClientRect(), n = s.querySelector('.num').getBoundingClientRect(), b = s.querySelector('.bar').getBoundingClientRect(); return !(n.left > l.left && Math.abs(n.top - l.top) <= 4 && b.top >= Math.max(l.bottom, n.bottom) - 1); }).map(s => s.querySelector('.lab').textContent));
+      if(inrow.length) bad.push(w + ': число не справа от названия или полоса не ниже: ' + inrow.join(', '));
       const tiles = await q.evaluate(() => { const m = {}; document.querySelectorAll('.pv-tile').forEach(t => { if(!t.offsetParent) return; const top = Math.round(t.getBoundingClientRect().top), k = t.children; (m[top] = m[top] || []).push([k[0].textContent, k[1].getBoundingClientRect().top, k[1].getBoundingClientRect().height, k[2] ? k[2].getBoundingClientRect().top : 0]); }); return Object.values(m); });
       tiles.forEach(r => { const v = r.map(x => x[1]), hh = r.map(x => x[2]), sub = r.map(x => x[3]); if(Math.max(...v) - Math.min(...v) > 1 || Math.max(...hh) - Math.min(...hh) > 1 || Math.max(...sub) - Math.min(...sub) > 1) bad.push(w + ' плитки: ' + r.map(x => x[0]).join(' / ')); });
       rows.forEach(r => { const n = r.map(x => x[1]), b = r.map(x => x[2]); if(Math.max(...n) - Math.min(...n) > 1 || Math.max(...b) - Math.min(...b) > 1) bad.push(w + ': ' + r.map(x => x[0]).join(' / ')); }); }
+    eq(bad, []); eq(q.errors, []); await q.context().close();
+  });
+  // Вид B (решения 2026-10-20 ~10:40, макет S09): «Прогресс» — уровень в белой карточке; дни подряд и неделя — одна карточка, неделя календарная пн–вс
+  // (сделано — галочка i-check, заморозка — снежинка, сегодня — кольцо); «Цель дня» — с подписью «ответов»; «Город» — «N из M» и «дел недели W» (campWeekTasks);
+  // медали — 9 и кнопка «ещё N» (раскрывает остальные; формы по редкости не меняются); голос — в карточке; кнопки разделов — поровну, 52 px.
+  await test('Вид B (2026-10-20): «Прогресс» — неделя пн–вс с галочкой, снежинкой и кольцом «сегодня»; «Цель дня» — ответов; «Город» — «N из M · дел недели W»; медали: 9 и «ещё N»; голос в карточке; кнопки 52 px', async () => {
+    const q = await openPage(browser); const bad = [];
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h });
+      const r = await q.evaluate(r => { eval(r); const dow = (new Date().getDay() + 6) % 7, y = dayStr(new Date(Date.now() - 864e5)); game.frozenDays = [y]; award(1, 'o');
+        city.played = { bakkal:{ n:1, ok:1 } }; setMode('progress'); const out = {}, clear = c => c === 'rgba(0, 0, 0, 0)' || c === 'transparent', bg = e => getComputedStyle(e).backgroundColor;
+        const days = [...document.querySelectorAll('#gbWeek .pv-day')];
+        out.labels = days.map(d => d.textContent.trim()); out.today = days.findIndex(d => d.classList.contains('today')) === dow;
+        out.done = !!days[dow].querySelector('.pv-dot.done use[href="#i-check"]'); out.frozen = dow === 0 || !!days[dow - 1].querySelector('.pv-dot.frozen use[href="#i-snow"]');
+        out.future = days.slice(dow + 1).every(d => !d.querySelector('.pv-dot.done, .pv-dot.frozen'));
+        out.hero = !clear(bg(document.querySelector('.pv-hero'))); const wk = document.getElementById('gbWeek').parentElement; out.weekCard = wk.contains(document.getElementById('gbStreak')) && !clear(bg(wk));
+        out.goal = document.getElementById('gbGoalTxt').parentElement.textContent.includes('ответов');
+        out.city = [document.getElementById('gbCity').textContent, document.getElementById('gbCitySub').textContent];
+        const vis = () => [...document.querySelectorAll('#badgeGrid .badge')].filter(b => b.offsetParent).length, more = document.getElementById('badgeMore');
+        out.badges = [document.querySelectorAll('#badgeGrid .badge').length, vis(), more ? more.textContent : null, more ? more.getAttribute('aria-expanded') : null];
+        if(more){ more.click(); out.badges.push(vis(), more.getAttribute('aria-expanded'), more.textContent); more.click(); out.badges.push(vis()); }
+        out.voice = !clear(bg(document.getElementById('voice').closest('.opt')));
+        const H = id => Math.round(document.getElementById(id).getBoundingClientRect().height), W = id => Math.round(document.getElementById(id).getBoundingClientRect().width);
+        out.btns = ['bkCopy', 'bkFile', 'bkPick', 'bkRestore', 'fbSend', 'rsStart'].map(H); out.eqw = [Math.abs(W('bkCopy') - W('bkFile')) <= 1, Math.abs(W('bkPick') - W('bkRestore')) <= 1];
+        setMode('phrases'); return out; }, RESET);
+      const tag = `${w}×${h}`;
+      if(JSON.stringify(r.labels) !== JSON.stringify(['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'])) bad.push(`${tag}: дни ${r.labels}`);
+      if(!r.today || !r.done || !r.frozen || !r.future) bad.push(`${tag}: неделя ${JSON.stringify([r.today, r.done, r.frozen, r.future])}`);
+      if(!r.hero || !r.weekCard || !r.goal || !r.voice) bad.push(`${tag}: карточки ${JSON.stringify([r.hero, r.weekCard, r.goal, r.voice])}`);
+      if(r.city[0] !== '1 из 13' || !/^дел недели 1/.test(r.city[1])) bad.push(`${tag}: Город ${JSON.stringify(r.city)}`);
+      if(JSON.stringify(r.badges) !== JSON.stringify([28, 9, 'Показать ещё 19', 'false', 28, 'true', 'Свернуть', 9])) bad.push(`${tag}: медали ${JSON.stringify(r.badges)}`);
+      if(r.btns.some(x => Math.abs(x - 52) > 1) || r.eqw.some(x => !x)) bad.push(`${tag}: кнопки ${JSON.stringify([r.btns, r.eqw])}`);
+    }
     eq(bad, []); eq(q.errors, []); await q.context().close();
   });
   await test('перевод в вопросах упражнений (2026-10-13 08:58: «Нажмите на ПОСЛЕДНЮЮ гласную в слове kitap — в скобках пиши перевод, если не указано, во всех подобных случаях»)', async () => {
