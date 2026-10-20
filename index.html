@@ -977,6 +977,25 @@ body:has(#tab-memory[aria-pressed="true"]) .mem-title{display:block}
 .gm-opt, .gm-let, .gm-cue-btn{border:0; box-shadow:inset 0 0 0 1px var(--line); border-radius:14px}
 .gm-opt.ok, .gm-let.ok{box-shadow:inset 0 0 0 2px var(--ok)} .gm-opt.bad, .gm-let.bad{box-shadow:inset 0 0 0 2px var(--near)}
 .gm-chip{border-radius:14px}
+/* «Грамматика» по макетам S04–S06 (2026-10-20): заголовки 30 px, стрелка в строке — из рамок (не символ), плашки статусов, слова урока — плашками,
+   «Упражнения» прилипает к низу во всю ширину над нижней панелью (решение п. 5), вопрос в карточке, «Подсказка» песочная во всю ширину, варианты 60 px */
+.gm-head h2, .gm-title{font-size:30px; line-height:1.15; letter-spacing:-.01em}
+.gm-sub{font-size:14px; color:var(--muted)}
+.gm-lead2{font:400 16px/1.4 var(--body); color:var(--muted)}
+.gm-row{grid-template-columns:minmax(0,1fr) auto 8px; column-gap:10px}
+.gm-row::after{content:""; grid-column:3; grid-row:1 / span 2; align-self:center; justify-self:start; width:7px; height:7px; border:0 solid var(--muted); border-width:2px 2px 0 0; transform:rotate(45deg); margin-left:-2px}
+.gm-st{max-width:none; white-space:nowrap; font-size:11.5px; color:var(--muted)}
+.gm-row.next{border-bottom-color:var(--line)} .gm-row.next .gm-st{background:var(--accent-soft); color:var(--accent-ink); padding-left:0; padding-right:0}
+.gm-row.done .gm-st{background:var(--ok-soft); color:var(--ok)}
+@media (max-width:370px){ .gm-st{white-space:normal; max-width:84px} }
+.gram .gm-p b.tr:not(.sfx), .gram .gm-lead b.tr:not(.sfx), .gram .gm-lead2 b.tr:not(.sfx), .gram .gm-sub b.tr:not(.sfx), .gram .gm-fb b.tr:not(.sfx){padding:0 4px; border-radius:6px; background:var(--accent-soft); color:var(--accent-ink); -webkit-box-decoration-break:clone; box-decoration-break:clone}
+.gm-actions.gm-stick{margin-top:auto} .gram{scroll-padding-bottom:90px}   /* полоса стала выше (кнопка 52 px): пояснение не уходит под неё */
+.gm-stick .btn{flex:1 1 100%; min-height:52px; border:0; border-radius:16px; background:var(--accent); color:var(--on-accent); font:700 16px var(--body)}
+.gm-q{background:var(--surface); border-radius:18px; padding:14px 16px; margin:2px 0 0}
+.gm-cue-btn{align-self:stretch; min-height:48px; box-shadow:none; background:var(--near-soft); color:var(--near); font:700 14px var(--body); text-align:center}
+.gm-opt{min-height:60px; border-radius:16px}
+.gm-segs i.cur{background:var(--accent); outline:0} .gm-segs i.ok{background:var(--ok)} .gm-segs i.bad{background:var(--tulip)}
+.gm-fb.ok, .gm-fb.bad{background:var(--surface)} .gm-fb.ok b:first-child{color:var(--ok)} .gm-fb.bad b:first-child{color:var(--near)}
 /* «Прогресс» */
 .backup, .help{border:0; border-radius:18px}
 .pv-quest{border:0; background:var(--surface); box-shadow:inset 4px 0 0 var(--accent)}
@@ -8426,7 +8445,8 @@ function gramRuleHtml(r, inSheet){
   if(r.tbl) h += `<div class="gm-tw"><table class="gm-t gm-stack"><thead><tr>${r.tbl.head.map(c => `<th scope="col">${gmFmt(c)}</th>`).join("")}</tr></thead><tbody>${r.tbl.rows.map(row => `<tr>${row.map((c, k) => `<td data-h="${esc(gmPlain(r.tbl.head[k] || ""))}">${gmFmt(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
   const ph = gramPhrases(r);
   if(ph.length) h += `<h3 class="gm-h3">Из ваших фраз</h3><p class="gm-hint">Нажмите на слово — увидите его разбор по частям.</p><ul class="gm-ph">${ph.map(p => `<li><span class="gm-tr" lang="tr" translate="no">${wordsHtml(p.tr)}</span><span class="gm-ru">${esc(p.ru)}</span>${gramBreak(p.tr, r)}</li>`).join("")}</ul>`;
-  return h + `<div class="gm-actions"><button class="btn native gm-go" data-act="quiz" data-rule="${r.id}">Упражнения</button></div>`;
+  // вид B (2026-10-20, решение п. 5): «Упражнения» прилипает к низу раздела во всю ширину (в окне #sheet — обычной кнопкой)
+  return h + `<div class="gm-actions${inSheet ? "" : " gm-stick gm-go-bar"}"><button class="btn native gm-go" data-act="quiz" data-rule="${r.id}">Упражнения</button></div>`;
 }
 // ---- раздел «Грамматика» ----
 let gram = { view:"list", rule:null, qs:[], i:0, ok:0, done:false };

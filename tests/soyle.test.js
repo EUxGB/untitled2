@@ -1618,6 +1618,48 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     }
     if(bad.length) console.log("ВСЕГО " + bad.length + "\n" + [...new Set(bad.map(x => x.split(" ")[0] + " " + x.split(": ")[1].split(" (")[0]))].join("\n")); eq(bad.slice(0, 15), []); eq(q.errors, []); await q.context().close();
   });
+  // Макеты вида B S04–S06 (решение пользователя 2026-10-20 ~10:40, п. 5: «Упражнения» — прилипшая кнопка во всю ширину над нижней панелью; нижняя панель остаётся)
+  await test('грамматика, вид B (2026-10-20): заголовки 30 px, стрелка в строках, плашки статусов, слова плашками, прилипшая «Упражнения», вопрос в карточке, варианты 60 px, «Дальше» во всю ширину — 320/360/412', async () => {
+    const q = await openPage(browser); await q.click('#tab-train'); await tap(q, 'tab-grammar'); const bad = [];
+    for(const [w, h] of [[320, 568], [360, 640], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h }); await q.waitForTimeout(200);
+      const r = await q.evaluate(async () => { const out = [], fr = () => new Promise(z => requestAnimationFrame(() => requestAnimationFrame(z)));
+        const col = v => { const d = document.createElement('div'); d.style.background = `var(${v})`; document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; };
+        const cs = (el, k) => el ? getComputedStyle(el)[k] : 'нет элемента', pcs = (el, k) => el ? getComputedStyle(el, '::after')[k] : 'нет элемента';
+        const keep = JSON.stringify(gstate.r.cubes || null); gstate.r.cubes = { n:8, ok:8, last:[1,1,1,1,1,1,1,1] };
+        gram = { view:'list', rule:null, qs:[], i:0, ok:0, done:false }; gramRender(); await fr();
+        const v = document.getElementById('gramView'), gv = v.getBoundingClientRect();
+        if(cs(v.querySelector('.gm-head h2'), 'fontSize') !== '30px') out.push('заголовок списка ' + cs(v.querySelector('.gm-head h2'), 'fontSize'));
+        const row = v.querySelector('.gm-row'); if(pcs(row, 'content') !== '""' || pcs(row, 'borderRightStyle') !== 'solid') out.push('нет стрелки-рамки в строке: ' + pcs(row, 'content'));
+        if(/[›>→]/.test(row.textContent)) out.push('стрелка символом');
+        if(cs(v.querySelector('.gm-row.done .gm-st'), 'backgroundColor') !== col('--ok-soft')) out.push('плашка «освоено» не ok-soft');
+        if(cs(v.querySelector('.gm-row.next'), 'backgroundColor') !== col('--accent-soft')) out.push('строка «начните с этого» не accent-soft');
+        if(v.scrollWidth > v.clientWidth + 1) out.push('список шире экрана');
+        gram = { view:'rule', rule:'harmony', qs:[], i:0, ok:0, done:false }; gramRender(); await fr();
+        if(cs(v.querySelector('.gm-title'), 'fontSize') !== '30px') out.push('заголовок урока ' + cs(v.querySelector('.gm-title'), 'fontSize'));
+        const l2 = v.querySelector('.gm-lead2'); if(cs(l2, 'fontSize') !== '16px' || cs(l2, 'color') === col('--accent-ink').replace('rgb', 'rgb')) out.push('подзаголовок ' + cs(l2, 'fontSize') + ' ' + cs(l2, 'color'));
+        const wb = v.querySelector('.gm-sec .gm-p b.tr:not(.sfx)'); if(cs(wb, 'backgroundColor') !== col('--accent-soft')) out.push('слово урока не плашкой: ' + cs(wb, 'backgroundColor'));
+        const go = v.querySelector('.gm-go'), gr = go.getBoundingClientRect(), hit = document.elementFromPoint(gr.left + gr.width / 2, gr.top + gr.height / 2);
+        if(gr.bottom > gv.bottom + 1 || gr.top < gv.top || !hit || !go.contains(hit)) out.push(`«Упражнения» не видна сразу (${Math.round(gr.top)}–${Math.round(gr.bottom)}, раздел до ${Math.round(gv.bottom)})`);
+        if(gr.width < gv.width - 40) out.push('«Упражнения» не во всю ширину: ' + Math.round(gr.width) + ' из ' + Math.round(gv.width));
+        if(cs(go, 'backgroundColor') !== col('--accent')) out.push('«Упражнения» не зелёная');
+        const tb = document.querySelector('.tabbar'); if(!tb || tb.getBoundingClientRect().height < 40 || getComputedStyle(tb).display === 'none') out.push('нижняя панель пропала');
+        v.scrollTop = v.scrollHeight; await fr(); const gr2 = go.getBoundingClientRect(); if(gr2.bottom > gv.bottom + 1) out.push('«Упражнения» уходит при прокрутке');
+        go.click(); await fr();
+        const qc = v.querySelector('.gm-q'); if(cs(qc, 'backgroundColor') !== col('--surface')) out.push('вопрос не в белой карточке');
+        const cue = v.querySelector('.gm-cue-btn'); if(cue && (cue.getBoundingClientRect().width < gv.width - 40 || cs(cue, 'backgroundColor') !== col('--near-soft'))) out.push('«Подсказка» не во всю ширину/не песочная');
+        const x = gram.qs[gram.i]; if(x.type === 'mc'){ const o = v.querySelector('.gm-opt'); if(o.getBoundingClientRect().height < 59.5) out.push('вариант ' + Math.round(o.getBoundingClientRect().height) + ' px'); }
+        if(cs(v.querySelector('.gm-segs i.cur'), 'backgroundColor') !== col('--accent')) out.push('текущее деление не accent');
+        if(x.type === 'mc') v.querySelector(`[data-act="opt"][data-i="${x.a}"]`).click(); else if(x.type === 'tap') v.querySelector(`[data-act="let"][data-i="${x.a}"]`).click();
+        await fr();
+        if(x.type !== 'build' && cs(v.querySelector('.gm-segs i.ok'), 'backgroundColor') !== col('--ok')) out.push('верное деление не ok');
+        const nb = v.querySelector('.gm-next'); if(nb.getBoundingClientRect().width < gv.width - 40 || cs(nb, 'backgroundColor') !== col('--accent')) out.push('«Дальше» не зелёная во всю ширину');
+        gstate.r.cubes = JSON.parse(keep); if(!gstate.r.cubes) delete gstate.r.cubes;
+        gram = { view:'list', rule:null, qs:[], i:0, ok:0, done:false }; gramRender(); return out; });
+      r.forEach(x => bad.push(w + ': ' + x));
+    }
+    eq(bad, []); eq(q.errors, []); await q.context().close();
+  });
   await test('микроуроки для новичка (просьба 09:16 и 12:09): 5 уроков первыми, без записей «-(ı)yor», последняя гласная подсвечена, глухие/звонкие согласные различимы, упражнение «нажмите на гласную», образец в первой сборке фразы', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
     await q.evaluate(() => { let x = 11; window.__grnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648); }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
@@ -3286,6 +3328,42 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       if(!/audio\/cv\/\d+\.mp3$/.test(played)) bad.push('кнопка не играет запись: ' + played);
       if(AXE){ await q.addScriptTag({ content:AXE }); const v = await q.evaluate(async () => (await axe.run(document, { runOnly:['wcag2a', 'wcag2aa', 'wcag21aa'] })).violations.map(x => x.id + ':' + x.nodes.length)); if(v.length) bad.push(scheme + ' axe: ' + v.join(', ')); }
       if(errs.length) bad.push(scheme + ' ошибки JS: ' + errs.join('; '));
+      await c.close(); }
+    eq(bad, []);
+  });
+  // Макеты вида B S11–S12 (2026-10-20): фразы — одна белая карточка с разделителями; «Вопросы» — одна карточка, строки 48 px, без треугольника;
+  // общая страница — строка темы: название и пример слева, «N фраз» и стрелка (из рамок) справа
+  await test('страницы ситуаций, вид B (2026-10-20): фразы и «Вопросы» — по одной карточке с разделителями, строки вопросов 48 px без треугольника, строка темы: название и пример слева, число и стрелка справа — 320/360, светлая и тёмная', async () => {
+    const root = path.join(__dirname, '..'), bad = [];
+    for(const scheme of ['light', 'dark']){
+      const c = await browser.newContext({ colorScheme:scheme }); const q = await c.newPage(); await q.route('https://**', r => r.abort()); await q.addInitScript(INIT);
+      for(const w of [320, 360]){ await q.setViewportSize({ width:w, height:700 });
+        await q.goto('file://' + path.join(root, 'frazy', 'v-kafe', 'index.html')); await q.evaluate(() => document.fonts.ready);
+        const r = await q.evaluate(() => { const out = [], cs = (e, k) => getComputedStyle(e)[k], tr = 'rgba(0, 0, 0, 0)';
+          const surf = (() => { const d = document.createElement('div'); d.style.background = 'var(--surface)'; document.body.appendChild(d); const v = getComputedStyle(d).backgroundColor; d.remove(); return v; })();
+          const list = document.querySelector('.list'), ph = [...list.querySelectorAll('.ph')];
+          if(cs(list, 'backgroundColor') !== surf) out.push('список фраз не белая карточка'); if(parseFloat(cs(list, 'borderTopLeftRadius')) < 12) out.push('у карточки фраз нет скругления');
+          if(ph.some(x => cs(x, 'backgroundColor') !== tr)) out.push('у фраз свои карточки');
+          if(ph.slice(0, -1).some(x => cs(x, 'borderBottomStyle') !== 'solid')) out.push('нет разделителей между фразами');
+          if(ph.length > 1 && Math.round(ph[1].getBoundingClientRect().top - ph[0].getBoundingClientRect().bottom) !== 0) out.push('между фразами зазор вместо разделителя');
+          const faq = [...document.querySelectorAll('details')], box = faq[0] && faq[0].parentElement;
+          if(!faq.length || faq.some(d => d.parentElement !== box) || cs(box, 'backgroundColor') !== surf) out.push('«Вопросы» не одной карточкой');
+          if(faq.some(d => cs(d, 'backgroundColor') !== tr)) out.push('у вопросов свои карточки');
+          faq.forEach(d => { const s = d.querySelector('summary'), h = s.getBoundingClientRect().height; if(h < 47.5) out.push('строка вопроса ' + Math.round(h) + ' px');
+            if(cs(s, 'display') === 'list-item' || cs(s, 'listStyleType') !== 'none') out.push('у вопроса треугольник'); });
+          if(faq.slice(0, -1).some(d => cs(d, 'borderBottomStyle') !== 'solid')) out.push('нет разделителей между вопросами');
+          return out; });
+        r.forEach(x => bad.push(scheme + ' ' + w + ' тема: ' + x));
+        await q.goto('file://' + path.join(root, 'frazy', 'index.html')); await q.evaluate(() => document.fonts.ready);
+        const r2 = await q.evaluate(() => { const out = [];
+          document.querySelectorAll('.topic').forEach((a, i) => { const b = a.querySelector('b').getBoundingClientRect(), ex = a.querySelector('i').getBoundingClientRect(), n = a.querySelector('span').getBoundingClientRect(), ar = a.getBoundingClientRect();
+            const af = getComputedStyle(a, '::after');
+            if(!(ex.top >= b.bottom - 1 && Math.abs(ex.left - b.left) < 2)) out.push(i + ': пример не под названием');
+            if(!(n.left > b.right - 1 && n.left > ex.right - 1 && n.right > ar.right - 60)) out.push(i + ': «N фраз» не справа');
+            if(af.content !== '""' || af.borderRightStyle !== 'solid') out.push(i + ': нет стрелки');
+            if(a.scrollWidth > a.clientWidth + 1) out.push(i + ': не помещается'); });
+          return out; });
+        r2.forEach(x => bad.push(scheme + ' ' + w + ' общая: ' + x)); }
       await c.close(); }
     eq(bad, []);
   });
