@@ -99,18 +99,31 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
   async function playScene(q, id, policy, seed = 0){
     await q.evaluate(([id, seed]) => { cityLeave(); ct = null; if(!document.getElementById('modal').hidden) closeModal(); city = Object.assign({}, CITY_START, { money:3000 }); cityNormalize(); window.__silent = false; window.__seed = seed; cityStart(id); }, [id, seed]);
     const t0 = await q.evaluate(() => [city.money, city.min]);
-    for(let i = 0; i < 60; i++){
-      const st = await q.evaluate(() => ({ ended: !ct, modal: !document.getElementById('modal').hidden, resolved: !!(ct && ct.resolved), pay: !!(ct && ct.node && ct.node.pay), code: !!(ct && ct.node && ct.node.code),
-        veil: !!document.querySelector('#ctTr.veil'), notes: [...document.querySelectorAll('#ctPay .ct-note:not([disabled])')].map(b => +b.dataset.v), price: ct && ct.node && ct.node.pay ? ct.node.pay.price : 0 }));
-      if(st.modal){ await q.click('#modalPrimary'); await q.waitForTimeout(40); if(await q.evaluate(() => !ct)) break; continue; }
-      if(st.ended) break;
-      if(st.veil){ await q.waitForTimeout(60); continue; }
-      if(st.resolved){ await q.click('#ctNext'); await q.waitForTimeout(40); continue; }
-      if(st.pay){ const v = policy === 'fail' ? Math.min(...st.notes) : policy === 'last' ? Math.max(...st.notes) : Math.min(...st.notes.filter(n => n >= st.price)); await q.evaluate(v => cityPay(v), v); await q.waitForTimeout(40); continue; }
-      if(st.code){ await q.evaluate(p => cityCode(p === 'fail' ? '__wrong__' : ct.node.code.value), policy); await q.waitForTimeout(40); continue; }
-      if(policy === 'phone'){ await q.evaluate(() => { const b = document.querySelector('#ctOpts .ct-opt-main'); b && b.click(); cityPhone(); }); await q.waitForTimeout(40); continue; }
-      await q.evaluate(p => { const all = document.querySelectorAll('#ctOpts .ct-opt-main'), b = p === 'last' ? all[all.length - 1] : all[0]; b && b.click(); const m = ct.pick || ctMoves(ct.node)[0]; window.__silent = p === 'fail'; window.__say = p === 'fail' ? '' : m.say[0]; }, policy);   // last — последний видимый ход (вторые ветки: «завтра приду», две штуки, самая крупная купюра)
-      await q.click('#ctSpeak'); await q.waitForTimeout(140);
+    // Шаг — ОДИН вызов в странице: прочитать состояние и сразу действовать (2026-10-20). Раньше чтение и действие шли двумя вызовами,
+    // и под нагрузкой сцена успевала измениться между ними: ct уже null («reading 'pick'») или «Сказать» снова выключена (30 с ожидания клика).
+    // Теперь, если действовать нельзя (собеседник говорит, кнопка выключена, идёт распознавание), шаг — «ждать», а не ошибка.
+    let waits = 0;
+    for(let i = 0; i < 60 && waits < 200; ){
+      if(process.env.BOT_LAG) await q.waitForTimeout(+process.env.BOT_LAG);
+      const act = await q.evaluate(p => {
+        const M = document.getElementById('modal'), en = id => { const e = document.getElementById(id); return e && !e.disabled; };
+        if(!M.hidden){ const b = document.getElementById('modalPrimary'); if(b && !b.disabled){ b.click(); return 'modal'; } return 'wait'; }
+        if(!ct) return 'ended';
+        if(listening || document.querySelector('#ctTr.veil')) return 'wait';
+        if(ct.resolved){ if(!en('ctNext')) return 'wait'; document.getElementById('ctNext').click(); return 'next'; }
+        const n = ct.node;
+        if(n && n.pay){ const notes = [...document.querySelectorAll('#ctPay .ct-note:not([disabled])')].map(b => +b.dataset.v); if(!notes.length) return 'wait';
+          const fit = notes.filter(v => v >= n.pay.price); cityPay(p === 'fail' ? Math.min(...notes) : p === 'last' ? Math.max(...notes) : Math.min(...(fit.length ? fit : notes))); return 'pay'; }
+        if(n && n.code){ cityCode(p === 'fail' ? '__wrong__' : n.code.value); return 'code'; }
+        if(p === 'phone'){ if(!en('ctShow')) return 'wait'; const b = document.querySelector('#ctOpts .ct-opt-main'); b && b.click(); cityPhone(); return 'phone'; }
+        if(!en('ctSpeak')) return 'wait';
+        const all = document.querySelectorAll('#ctOpts .ct-opt-main'), b = p === 'last' ? all[all.length - 1] : all[0]; b && b.click();   // last — последний видимый ход (вторые ветки, две штуки, крупная купюра)
+        const m = ct.pick || ctMoves(n)[0]; window.__silent = p === 'fail'; window.__say = p === 'fail' ? '' : (m ? m.say[0] : '');
+        document.getElementById('ctSpeak').click(); return 'speak'; }, policy);
+      if(act === 'ended') break;
+      if(act === 'wait'){ waits++; await q.waitForTimeout(60); continue; }
+      i++; await q.waitForTimeout(40);
+      if(act === 'modal' && await q.evaluate(() => !ct)) break;
     }
     for(let k = 0; k < 4; k++){ await q.waitForTimeout(220); if(await q.evaluate(() => !document.getElementById('modal').hidden)) await q.click('#modalPrimary'); else break; }   // очередь окон после итога (новый контакт, уровни) — закрыть, иначе она перекроет следующую сцену
     const r = await q.evaluate(t0 => ({ ended: !ct && document.getElementById('modal').hidden, done: city.done.map(d => d.kind), money: t0[0] - city.money, min: city.min - t0[1] }), t0);
