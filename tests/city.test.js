@@ -56,7 +56,9 @@ function cityGraphCheck(sc, nodeForms){
 const SIZES = [[360, 640], [390, 844], [412, 915]];
 (async () => {
   const browser = await chromium.launch();
-  const open = async (w = 360, h = 640) => { const q = await openPage(browser); await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { trVoices = []; trVoice = null; }); await q.click('#tab-city'); await q.waitForTimeout(80); return q; };
+  const open = async (w = 360, h = 640) => { const q = await openPage(browser); await q.setViewportSize({ width:w, height:h }); await q.evaluate(() => { trVoices = []; trVoice = null; }); await q.click('#tab-city'); await q.waitForTimeout(80);
+    if(process.env.BOT_CPU){ const c = await q.context().newCDPSession(q); await c.send('Emulation.setCPUThrottlingRate', { rate:+process.env.BOT_CPU }); }   // проверка устойчивости: медленный телефон / нагруженная машина CI
+    return q; };
 
   console.log('Сцены «Города»: граф и содержимое');
   await test('граф каждой сцены (все формы узлов с alt): старт есть, все go ведут в узлы, у не-конечных again/ru, из каждого узла достижим end, концовок ≥ 3 видов, развилка по смыслу', async () => {
