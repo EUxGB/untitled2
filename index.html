@@ -1008,15 +1008,33 @@ body:has(#tab-memory[aria-pressed="true"]) .mem-title{display:block}
 .ct-skills{gap:2px} .ct-skill{grid-template-columns:minmax(0, 1fr) 70px minmax(14px, auto); gap:6px; min-height:30px; padding-right:2px} .ct-skill > span:first-child{grid-column:auto; color:var(--ink)} .ct-skill .bar{height:6px}
 @media (max-height:700px){
   /* 360×640: в центре поля ~314 px — цель и аренда одной карточкой, строки дел 32 px (кроме «нажмите, чтобы начать» — 44), пояснения «Людей»/«Умений» — по «?» */
-  .ct-wkbox{gap:0; border-radius:14px; background:var(--surface); box-shadow:var(--shadow); padding:6px 10px} .ct-wk{padding:0; box-shadow:none; background:none; border-radius:0}
-  .ct-wk-cap{display:none} .ct-wk-goal{font-size:12px} .ct-wk-row{margin-top:3px} .ct-rent{padding:2px 0 0; background:none; font-size:11px; border-radius:0} .ct-rent .ic{width:13px; height:13px}
+  .ct-rent{padding:5px 10px; font-size:11.5px} .ct-rent .ic{width:13px; height:13px}
   .ct-day{display:none}   /* «Дела на сегодня — N из M» видно по строкам дел; на низком экране не помещается */
   .ct-task{min-height:32px; padding:1px 10px} .ct-task span{font-size:10.5px} .ct-task b{font-size:12px; line-height:1.15}
   .ct-dice{min-height:44px} .ct-roll{width:44px; height:44px} .ct-roll .die{width:28px; height:28px}
   .ct-tab-note{display:none} body.hints .ct-tab-note{display:block}
-  #ctInner{gap:4px; padding-top:4px; padding-bottom:4px} .ct-wkbox{padding:5px 10px} .ct-itab{min-height:30px} .ct-itabs{padding:1px}
+  #ctInner{gap:4px; padding-top:4px; padding-bottom:4px} .ct-itab{min-height:30px} .ct-itabs{padding:1px}
   .ct-skill{min-height:26px; font-size:12px} .ct-char{min-height:44px; padding:2px 8px}
 }
+/* ---- неподвижные вкладки и кнопки (просьба 2026-10-20 12:38; тест «случайные нажатия (2026-10-20)»): высота нижней панели, «Сравнить / Сказать / Дальше»
+   и кубик не зависят от автоподгонки (--fit) и от длины подписи — раньше сдвигались на 2–16 px при смене фразы, ответа или подсказки ---- */
+.tabbar .tab{min-height:60px}
+.main-row{padding-top:8px; padding-bottom:8px}
+.main-row .pill{height:52px}
+.mic{width:72px; height:72px} .mic .ic{width:28px; height:28px}
+@media (max-height:700px){ .tabbar .tab{min-height:52px} .main-row{padding-top:6px; padding-bottom:6px} .main-row .pill{height:44px} .mic{width:60px; height:60px} .mic .ic{width:26px; height:26px} }
+.ct-dice{justify-content:flex-start; padding-left:6px} .ct-dice-hint{margin-left:2px}
+.screen{padding-bottom:10px}
+.topbar{min-height:60px; padding-top:10px; padding-bottom:6px}
+@media (max-height:700px){ .topbar{min-height:52px; padding-top:6px; padding-bottom:4px} }
+.ct-foot{position:relative}
+.ct-foot #ctIntro{position:absolute; left:0; right:0; bottom:100%; margin:0 0 4px; padding:6px 10px; border-radius:10px; background:var(--surface); box-shadow:var(--shadow); z-index:2}
+.ct-foot #ctIntro:empty{display:none}
+/* замечания второй проверки (2026-10-20) */
+.ct-face{border-radius:50%; background:var(--accent-soft)}
+.ct-task span{font-size:11px; font-weight:500; color:var(--muted)}
+#listenCard.phr .ls-opt b{font-size:min(22px, max(17px, calc(var(--fit) * clamp(19px, 3vh, 25px))))}
+@media (max-height:700px){ .gm-head h2, .gm-title{font-size:22px} .gm-stick .btn{min-height:44px; height:44px} }
 /* «Грамматика»: список — группы-карточки со строками, урок — карточки */
 .gm-group{gap:0}
 .gm-group h3{margin:14px 4px 6px}
@@ -1196,10 +1214,7 @@ body:has(#tab-memory[aria-pressed="true"]) .mem-title{display:block}
       <div class="ct-home" id="ctHome">
         <div class="bd" id="ctBoard" role="group" aria-label="Квартал: клетки поля">
           <div class="bd-inner" id="ctInner">
-            <div class="ct-wkbox">
-              <div class="ct-wk" id="ctWeek"></div>
-              <p class="ct-rent" id="ctRent"></p>
-            </div>
+            <p class="ct-rent" id="ctRent"></p>
             <div class="ct-itabs" id="ctInnerTabs" role="group" aria-label="Внутри квартала">
               <button class="ct-itab" id="ctTabTasks" aria-pressed="true">Дела</button><button class="ct-itab" id="ctTabPeople" aria-pressed="false">Люди</button><button class="ct-itab" id="ctTabSkills" aria-pressed="false">Умения</button>
             </div>
@@ -2386,7 +2401,7 @@ function renderGame(){
     // вид B (2026-10-20): «5 из 13 · дел недели 1» — те же числа, что на карточке «Цель недели» в квартале (campWeekTasks); день, деньги и знакомые — в подсказке плитки
     const wt = typeof campWeekTasks === "function" ? campWeekTasks() : { done:0, total:0, w:1 };
     $("gbCity").textContent = `${wt.done} из ${wt.total}`; $("gbCitySub").textContent = `дел недели ${wt.w}${(() => { const f = Object.entries(city.feedback || {}).sort((a, b) => b[0] - a[0])[0]; return f ? ` · продолжить: ${f[1]}` : ""; })()}`;
-    $("gbCityTile").title = `День ${city.day} · дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}`; }
+    $("gbCityTile").title = `${cityWeekLine()} · День ${city.day} · дел хорошо ${okN} из ${n} · ${city.money} ₺ · знакомых ${typeof metChars === "function" ? metChars().length : 0}`; }
   { const m = memStats(); $("gbMem").textContent = m.strong; $("gbMemSub").textContent = `прочно (3+ нед.) · всего ${m.total} · сегодня ${m.today}`; }
   $("gbBlitzSub").textContent = "фраз за минуту";
   $("gbFreeze").textContent = game.freezes;
@@ -5379,9 +5394,7 @@ function cityBoard(){
   const toRent = (8 - cityDow()) % 7 || 7;   // дней до понедельника (в сам понедельник аренда уже списана — до следующей 7)
   // Вид B (2026-10-20, макет V2): цель недели с полосой «N из M» (campWeekTasks) и плашка аренды — над вкладками, видны на всех трёх (раньше были в подсказке под делами).
   // В подсказке #ctIntro теперь только подсказка хода.
-  { const wt = campWeekTasks(), [cap, goal] = cityWeekParts(), pct = wt.total ? Math.round(wt.done / wt.total * 100) : 0;
-    ctEl("ctWeek").innerHTML = `<span class="ct-wk-cap">${esc(cap)}</span><b class="ct-wk-goal">${esc(goal)}</b>`
-      + `<span class="ct-wk-row"><span class="ct-wk-bar" role="img" aria-label="${wt.done} из ${wt.total}"><i style="width:${pct}%"></i></span><span class="ct-wk-n">${wt.done} из ${wt.total} дел недели ${wt.w}</span></span>`;
+  {
     ctEl("ctRent").innerHTML = `<svg class="ic" aria-hidden="true"><use href="#i-city"/></svg><span>До аренды ${toRent} дн. · ${RENT} ₺${city.debt ? ` · долг ${city.debt} ₺` : ""}</span>`; }
   ctEl("ctIntro").textContent = city.roll ? `Нажмите клетку, до которой дойдёте (можно ближе). Шаг — ${STEP_MIN} минут.` : "";
 }

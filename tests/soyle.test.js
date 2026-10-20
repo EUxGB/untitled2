@@ -513,6 +513,46 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     for(const [k, tab] of tabs.entries()){ await goTab(tab); bad.push(...(await monkey(q, tabs, 120, 7 + k * 101)).map(b => tab + ' ' + b)); }
     const errs = q.errors; await q.context().close(); eq(bad, []); eq(errs, []);
   });
+  // Просьба 2026-10-20 12:38: «напиши тест, который будет манки нажимать и смотреть, чтобы кнопки и вкладки не двигались».
+  // После КАЖДОГО случайного нажатия снимаем положение «опорных» кнопок; в одном и том же экране (раздел, подвкладка, дом/сцена) они не должны сдвинуться больше чем на 1 px.
+  const ANCHORS = () => {
+    const vis = e => !!e && e.offsetParent !== null && !e.hidden, r = e => { const b = e.getBoundingClientRect(); return [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)]; };
+    const scr = mode === 'city' ? (ct ? 'scene' : 'home') : mode, out = {};
+    const add = (sel, all) => (all ? [...document.querySelectorAll(sel)] : [document.querySelector(sel)]).forEach((e, k) => { if(vis(e)) out[sel + '#' + k] = r(e); });
+    add('.tabbar .tab', true); add('#subtabs .chip.seg', true);
+    if(scr === 'home'){ add('#ctInnerTabs .ct-itab', true); add('#ctRoll'); add('.ct-head'); }
+    if(scr === 'scene'){ add('#ctShow'); add('#ctSpeak'); add('#ctNext'); }
+    if(['phrases', 'memory'].includes(scr)){ add('#compare'); add('#speak'); add('#next'); }
+    if(scr === 'free') add('#freeSpeak');
+    return { scr, anchors: out };
+  };
+  await test('случайные нажатия (2026-10-20): вкладки и главные кнопки не двигаются — нижняя панель, подвкладки, Дела/Люди/Умения, кубик, Сравнить/Сказать/Дальше (360×640, 412×915)', async () => {
+    for(const [w, h] of [[360, 640], [412, 915]]){
+      const q = await openPage(browser); await q.setViewportSize({ width:w, height:h });
+      await q.evaluate(() => { trVoice = { name:'Test Türkçe', lang:'tr-TR' }; trVoices = [trVoice]; BLITZ_SEC = 8; });
+      const tabs = ['#tab-city','#tab-memory','#tab-train','#tab-progress'], base = {}, moved = [];
+      let x = 20261020 + w; const rnd = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+      for(let i = 0; i < 260; i++){
+        if(await q.isVisible('#modal') && rnd() < 0.7) await q.click('#modal button:visible >> nth=-1').catch(() => {});
+        if(await q.isVisible('#sheet')) await q.click('#sheetClose').catch(() => {});
+        const said = ['__T__', 'yanlış bir şey', '', '__SILENT__'][Math.floor(rnd() * 4)];
+        await q.evaluate(s => { window.__silent = s === '__SILENT__'; window.__say = s === '__T__' ? (mode === 'city' && ct && ct.node && !ct.node.end && !ct.node.pay ? (ct.pick || ctMoves(ct.node)[0] || { say:['merhaba'] }).say[0] : (item && item.target) || (ls && ls.answer) || 'merhaba') : s; }, said);
+        let name;
+        if(rnd() < 0.1){ const t = tabs[Math.floor(rnd() * tabs.length)]; await q.click(t, { timeout:3000 }).catch(() => {}); name = t; }
+        else name = await q.evaluate(k => { const list = [...document.querySelectorAll('#modal:not([hidden]) button, .screen > section:not([hidden]) button, .chips:not([hidden]) button')]
+            .filter(b => b.offsetParent && !b.disabled && !b.closest('.backup') && !['bkYes', 'updateApp', 'rsStart'].includes(b.id));
+          if(!list.length) return ''; const e = list[Math.floor(k * list.length)]; const nm = e.id || e.textContent.trim().slice(0, 20); e.click(); return nm; }, rnd());
+        await q.waitForTimeout(30 + Math.floor(rnd() * 60));
+        for(let t = 0; t < 120 && await q.evaluate(() => listening); t++) await q.waitForTimeout(50);
+        const a = await q.evaluate(ANCHORS);
+        for(const [k, v] of Object.entries(a.anchors)){ const key = a.scr + ' ' + k;
+          if(!base[key]) base[key] = { v, after:name }; else if(v.some((n, j) => Math.abs(n - base[key].v[j]) > 1)) moved.push(`${w}×${h} шаг ${i} после «${name}»: ${key} ${JSON.stringify(base[key].v)} → ${JSON.stringify(v)}`); }
+        if(moved.length > (process.env.ALL_MOVES ? 400 : 6)) break;
+      }
+      const errs = q.errors; await q.context().close();
+      eq(moved, []); eq(errs, []);
+    }
+  });
   await test('прохождение по нажатиям: «Память» — 12 фраз подряд с микрофоном в каждой фазе; «Фразы» и «На слух» идут дальше', async () => {
     const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 });
     await q.click('#tab-memory'); const seen = new Set(), steps = [];
@@ -2769,7 +2809,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const r = await q.evaluate(() => { const out = {}, M = () => !document.getElementById('modal').hidden, T = () => document.getElementById('modalTitle').textContent;
       city.camp = null; cityNormalize(); cityRender(); out.pro1 = [M(), T()]; if(M()) closeModal();
       cityRender(); out.pro2 = M();
-      out.intro = document.getElementById('ctWeek').textContent;   // вид B (2026-10-20): цель недели — карточка #ctWeek над вкладками (была в подсказке #ctIntro)
+      out.intro = (setMode('progress'), document.getElementById('gbCityTile').title); setMode('city');   // 2026-10-20 12:38: карточку цели недели с поля убрали («не помещается») — цель в подсказке плитки «Город» в «Прогрессе»
+      out.noCard = !document.getElementById('ctWeek');
       out.week = [typeof campWeek === 'function' ? campWeek() : null];
       // первые три дня
       out.plans = [city.plan.slice()]; for(let d = 0; d < 2; d++){ city.carry = []; city.done = []; city.plan.forEach(id => city.done.push({ id, kind:'ok', short:'', ok:1, n:1, took:1, spent:0 })); cityNewDay(); if(M()) closeModal(); out.plans.push(city.plan.slice()); }
@@ -2791,10 +2832,10 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.waitForTimeout(250);
     const again = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; for(let k = 0; k < 3 && M(); k++) closeModal(); cityDayEnd(); closeModal(); return new Promise(r => setTimeout(() => r(M() ? document.getElementById('modalTitle').textContent : ''), 300)); });
     const d8 = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; if(M()) closeModal(); city.day = 7; cityNewDay(); const out = { soon:[M(), document.getElementById('modalTitle').textContent], plan:city.plan.length };
-      if(M()) closeModal(); cityRender(); out.intro = document.getElementById('ctWeek').textContent; setMode('progress'); out.tile = document.getElementById('gbCitySub').textContent; setMode('city'); return out; });
+      if(M()) closeModal(); cityRender(); setMode('progress'); out.intro = document.getElementById('gbCityTile').title; out.tile = document.getElementById('gbCitySub').textContent; setMode('city'); return out; });
     const fits = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){ await q.setViewportSize({ width:w, height:h }); await q.waitForTimeout(80);
-      fits.push(await q.evaluate(() => { cityRender(); const i = document.getElementById('ctWeek'), b = i.getBoundingClientRect(), inner = document.getElementById('ctInner').getBoundingClientRect(); return b.height > 0 && b.bottom <= inner.bottom + 1 && i.scrollWidth <= i.clientWidth + 1; })); }
+      fits.push(await q.evaluate(() => { cityRender(); const i = document.getElementById('ctRent'), b = i.getBoundingClientRect(), inner = document.getElementById('ctInner').getBoundingClientRect(); return b.height > 0 && b.bottom <= inner.bottom + 1 && i.scrollWidth <= i.clientWidth + 1; })); }
     const errs = q.errors; await q.context().close();
     eq(r.pro1, [true, r.pro1[1]]); ok(/Стамбул/.test(r.pro1[1]) || true, r.pro1[1]); eq(r.pro2, false, 'пролог — один раз');
     ok(/Неделя 1 из 4/.test(r.intro) && /купить всё нужное/i.test(r.intro), r.intro); eq(r.week, [1]);
@@ -2803,12 +2844,12 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(wk.stats.length, 3, JSON.stringify(wk.stats)); eq(wk.stats[0][0], '51 → 81'); ok(/^звук [çü]$/.test(wk.stats[0][1]), wk.stats[0][1]); ok(/реплик освоено/.test(wk.stats[1][1]) && /^\+\d+$/.test(wk.stats[1][0]), JSON.stringify(wk.stats[1])); ok(/знакомых/.test(wk.stats[2][1]), JSON.stringify(wk.stats[2]));
     ok(/ç: 51 → 81/.test(wk.text) && /ü: 51 → 81/.test(wk.text), wk.text); ok(!/Освоено реплик|Хочется продолжить/.test(wk.text), 'абзац вместо плиток: ' + wk.text); ok(Math.max(...wk.chw) - Math.min(...wk.chw) <= 1, '«да / так себе / нет» поровну: ' + wk.chw);   // «Üç» тоже с ç: [50,51,52 | 80,81,82] eq(wk.ch, ['да', 'так себе', 'нет']); eq(wk.fb, 'так себе');
     eq(d8.soon, [true, d8.soon[1]]); ok(/Неделя 2 — скоро/.test(d8.soon[1]), d8.soon[1]); ok(d8.plan >= 3, 'дела есть'); ok(/скоро/.test(d8.intro), d8.intro); ok(/так себе/.test(d8.tile), d8.tile);
-    eq(fits, [true, true, true], 'строка недели помещается'); eq(r.mumble, 0, 'бормотание не растит Pazarlık'); ok(!/Неделя 1 из 4/.test(again), 'итог недели — один раз: ' + again); eq(errs, []);
+    eq(fits, [true, true, true], 'строка аренды помещается'); eq(r.noCard, true, 'карточки цели недели на поле нет (2026-10-20 12:38)'); eq(r.mumble, 0, 'бормотание не растит Pazarlık'); ok(!/Неделя 1 из 4/.test(again), 'итог недели — один раз: ' + again); eq(errs, []);
   });
   await test('Этап 1, публикация Г: старое сохранение (день 20) — деньги, отношения, умения, освоение на месте; кампания с «Недели 1» без пролога, с пометкой «освоились»', async () => {
     const old = { ver:2, day:20, days:19, money:999, rel:{ bakkal:4, sofor:7 }, mastery:{ 'Ekmek lütfen.':3 }, skill:{ dil:{ n:9, lvl:2 } }, plan:['bakkal'], done:[], carry:[] };
     const q = await openCity({ storage:{ 'soyle-city':JSON.stringify(old) } }); await q.evaluate(() => { window.__prologue = true; cityRender(); });
-    const r = await q.evaluate(() => ({ money:city.money, rel:city.rel, m:city.mastery['Ekmek lütfen.'], dil:city.skill.dil.lvl, w:campWeek(), old:!!(city.camp && city.camp.old), modal:!document.getElementById('modal').hidden ? document.getElementById('modalTitle').textContent : '', intro:document.getElementById('ctWeek').textContent }));   // вид B: цель недели — #ctWeek
+    const r = await q.evaluate(() => ({ money:city.money, rel:city.rel, m:city.mastery['Ekmek lütfen.'], dil:city.skill.dil.lvl, w:campWeek(), old:!!(city.camp && city.camp.old), modal:!document.getElementById('modal').hidden ? document.getElementById('modalTitle').textContent : '', intro:cityWeekLine() }));   // 2026-10-20 12:38: карточку цели недели с поля убрали — проверяем строку недели (она в подсказке плитки «Город»)   // вид B: цель недели — #ctWeek
     r.sunday = await q.evaluate(() => { const M = () => !document.getElementById('modal').hidden; for(let k = 0; k < 3 && M(); k++) closeModal(); city.day = 21; cityDayEnd(); closeModal(); return new Promise(res => setTimeout(() => res(M() ? document.getElementById('modalTitle').textContent.replace(/^День.*/, '') : ''), 300)); });
     const errs = q.errors; await q.context().close();
     eq([r.money, r.rel, r.m, r.dil, r.w, r.old], [999, { bakkal:4, sofor:7 }, 3, 2, 1, true]); eq(r.sunday, '', 'старое сохранение: итог недели — не в первый же вечер'); ok(!/Стамбул/.test(r.modal), 'без пролога: ' + r.modal); ok(/освоились/.test(r.intro + r.modal), r.intro + ' | ' + r.modal); eq(errs, []);
@@ -3084,12 +3125,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         const bg = e => getComputedStyle(e).backgroundColor, clear = c => c === 'rgba(0, 0, 0, 0)' || c === 'transparent';
         out.money = !clear(bg(document.querySelector('#ctRes .ct-money'))); out.time = !clear(bg(document.querySelector('#ctRes .ct-time')));
         const hd = document.querySelector('.ct-head').getBoundingClientRect(), pl = document.getElementById('ctPlace').getBoundingClientRect(), rs = document.getElementById('ctRes').getBoundingClientRect(); out.headOrder = pl.left < rs.left && rs.right <= hd.right + 1;
-        for(const t of ['tasks', 'people', 'skills']){ cityInnerTab(t); const wk = document.getElementById('ctWeek'), rent = document.getElementById('ctRent');
-          out.tabs[t] = { week: inside(wk) && wk.scrollHeight <= wk.clientHeight + 1, rent: inside(rent) && rent.scrollWidth <= rent.clientWidth + 1, cut: inner.scrollHeight > inner.clientHeight + 1, roll: inside(document.getElementById('ctRoll')),
+        for(const t of ['tasks', 'people', 'skills']){ cityInnerTab(t); const rent = document.getElementById('ctRent');
+          out.tabs[t] = { rent: inside(rent) && rent.scrollWidth <= rent.clientWidth + 1, cut: inner.scrollHeight > inner.clientHeight + 1, roll: inside(document.getElementById('ctRoll')),
             list: [...inner.querySelectorAll('#ctTasks, #ctChars, #ctSkills')].filter(e => e.offsetParent).every(inside) }; }
         cityInnerTab('tasks');
-        const wk = document.getElementById('ctWeek'), bar = wk.querySelector('[role="img"]');
-        out.week = [/Неделя 1 из 4/.test(wk.textContent), /купить всё нужное/i.test(wk.textContent), /1 из 13/.test(wk.textContent), bar ? bar.getAttribute('aria-label') : null];
+        out.week = [!document.getElementById('ctWeek'), campWeekTasks().total];   // карточка цели недели убрана с поля (2026-10-20 12:38); счёт дел — в «Прогрессе»
         out.rent = [/до аренды \d+ дн/i.test(document.getElementById('ctRent').textContent), !!document.querySelector('#ctRent svg')];
         out.intro = document.getElementById('ctIntro').textContent;
         const ul = document.getElementById('ctTasks'), lis = [...ul.querySelectorAll('.ct-task')];
@@ -3109,8 +3149,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         cityInnerTab('tasks'); city.pos = cellOfScene('bakkal'); cityRender(); out.goCut = [!!document.querySelector('.ct-task.go'), inner.scrollHeight > inner.clientHeight + 1]; city.pos = 0; cityRender(); return out; });   // стоим на клетке дела — строка «нажмите, чтобы начать» 44 px тоже помещается
       const tag = `${w}×${h}`; if(!r.goCut[0] || r.goCut[1]) bad.push(`${tag}: строка «нажмите, чтобы начать» ${JSON.stringify(r.goCut)}`);
       if(!r.money || !r.time || !r.headOrder) bad.push(`${tag}: шапка ${JSON.stringify([r.money, r.time, r.headOrder])}`);
-      for(const [t, v] of Object.entries(r.tabs)) if(!v.week || !v.rent || v.cut || !v.roll || !v.list) bad.push(`${tag} ${t}: ${JSON.stringify(v)}`);
-      if(JSON.stringify(r.week) !== JSON.stringify([true, true, true, '1 из 13'])) bad.push(`${tag}: цель недели ${JSON.stringify(r.week)}`);
+      for(const [t, v] of Object.entries(r.tabs)) if(!v.rent || v.cut || !v.roll || !v.list) bad.push(`${tag} ${t}: ${JSON.stringify(v)}`);
+      if(JSON.stringify(r.week) !== JSON.stringify([true, 13])) bad.push(`${tag}: карточка цели недели на поле или счёт дел ${JSON.stringify(r.week)}`);
       if(!r.rent[0] || !r.rent[1]) bad.push(`${tag}: аренда ${JSON.stringify(r.rent)}`); if(/аренд|Неделя/.test(r.intro)) bad.push(`${tag}: в подсказке хода осталась неделя/аренда`);
       if(!r.tasks[0] || r.tasks[1] !== 3 || !r.tasks[2] || !r.tasks[3]) bad.push(`${tag}: дела ${JSON.stringify(r.tasks)}`);
       if(!r.pins[0] || !r.pins[1]) bad.push(`${tag}: обводка клеток с делом ${JSON.stringify(r.pins)}`);
