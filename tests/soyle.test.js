@@ -603,7 +603,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(man.display, 'standalone');
     const sizes = man.icons.map(i => i.sizes); ok(sizes.includes('192x192') && sizes.includes('512x512'));
     man.icons.forEach(i => ok(fs.existsSync(path.join(dir, i.src)), 'нет файла ' + i.src));
-    eq(await p.evaluate(() => [!!document.querySelector('link[rel=manifest]'), document.querySelector('meta[name=theme-color]').content, getComputedStyle(document.body).backgroundColor]), [true, '#EEF2F0', 'rgb(238, 242, 240)']); // цвет панели = фон страницы
+    eq(await p.evaluate(() => [!!document.querySelector('link[rel=manifest]'), document.querySelector('meta[name=theme-color]').content, getComputedStyle(document.body).backgroundColor]), [true, '#F2F5F6', 'rgb(242, 245, 246)']); // цвет панели = фон страницы (вид B, 2026-10-20)
     // Иконка Simit (2026-10-09, вариант A «кольцо-поле», выбран пользователем 13:09): фон «вода Босфора», кольцо из клеток «туман», фишка «тюльпан».
     // iPhone закрашивает прозрачные углы чёрным — для него отдельная непрозрачная 180×180; maskable — без прозрачности (Android сам обрезает).
     const apple = await p.evaluate(() => { const l = document.querySelector('link[rel="apple-touch-icon"]'); return { href:l.getAttribute('href'), sizes:l.getAttribute('sizes') }; });
@@ -942,7 +942,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     }
     const infoBg = await q.evaluate(() => { setMode('phrases'); next(); return getComputedStyle(document.getElementById('result')).backgroundColor; });
     await q.context().close();
-    eq(bad, []); eq(infoBg, 'rgb(243, 232, 207)');   // песочный, как на выбранном экране (#F3E8CF)
+    eq(bad, []); eq(infoBg, 'rgb(255, 241, 214)');   // песочный; вид B (2026-10-20) — светлее: #FFF1D6 (было #F3E8CF)
   });
 
   console.log('Видео и перевод — внутри приложения, без перехода');
@@ -2617,7 +2617,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const cost = [];
     for(const w of [320, 360, 412]){ await q.setViewportSize({ width:w, height:640 });
       cost.push(await q.evaluate(() => { cityStart('bakkal'); const b = document.getElementById('ctShow'), c = b.querySelector('.ct-cost'); const r = c ? [c.textContent, c.getBoundingClientRect().width > 0, c.scrollWidth <= c.clientWidth + 1, b.getBoundingClientRect().height <= document.getElementById('ctNext').getBoundingClientRect().height + 1] : null; cityLeave(); ct = null; return r; })); }
-    eq(cost, Array(3).fill(['без опыта и отношений', true, true, true]), 'подпись под «Показать»');
+    eq(cost, Array(3).fill(['без опыта', true, true, true]), 'подпись под «Показать»');   // 2026-10-20 00:22: «укажи без опыта, а то на три строки»
+    eq(await q.evaluate(() => document.getElementById('ctShow').getAttribute('aria-label')), 'Показать на телефоне — без опыта и отношений', 'полная цена — для экранного диктора');
     await q.setViewportSize({ width:360, height:640 });
     const lv = await q.evaluate(() => SKILLS.pazarlik.lv.join(' | '));
     ok(!/портн|парикмах|парковк/.test(lv) && /5 ₺/.test(lv) && /ikram/.test(lv), lv);
@@ -3225,6 +3226,12 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(/node tests\/indexnow\.js/.test(v), 'задача verify не отправляет адреса в IndexNow');
     ok(v.indexOf('node tests/indexnow.js') > v.indexOf('Сайт отдаёт новую сборку'), 'IndexNow должен идти после проверки сайта');
   });
+  await test('справка «Как пользоваться» (2026-10-20): число уроков и уроков «С чего начать» — как в данных грамматики', async () => {
+    const r = await p.evaluate(() => { const li = [...document.querySelectorAll('.help li')].find(l => /Грамматика/.test(l.textContent)).textContent;
+      const words = { 'пять':5, 'шесть':6, 'семь':7 }; const m = /—\s*(\d+)\s+корот[а-я]+ урок[а-я]*: сначала (\S+) «С чего начать»/.exec(li);
+      return [m ? +m[1] : li, m ? words[m[2]] : null, GRAMMAR.length, GRAMMAR.filter(g => g.grp === 'С чего начать').length]; });
+    eq([r[0], r[1]], [r[2], r[3]]);
+  });
   await test('страницы ситуаций для поиска: на 320 и 360 px без прокрутки вбок, кнопки ≥ 44 px, свои шрифты, WCAG 2.1 AA в светлой и тёмной теме, кнопка играет запись', async () => {
     const pg = path.join(__dirname, '..', 'frazy', 'u-vracha', 'index.html'); ok(fs.existsSync(pg), 'нет frazy/u-vracha');
     const bad = [];
@@ -3235,7 +3242,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         const r = await q.evaluate(() => ({ x:document.documentElement.scrollWidth > innerWidth, small:[...document.querySelectorAll('button,a.open,.cta a,summary')].filter(e => { const b = e.getBoundingClientRect(); return b.height < 44 || (e.tagName === 'BUTTON' && b.width < 44); }).length,
           fonts:[...document.fonts].filter(f => f.status === 'loaded').map(f => f.family) }));
         if(r.x) bad.push(scheme + ' ' + w + ': прокрутка вбок'); if(r.small) bad.push(scheme + ' ' + w + ': мелких кнопок ' + r.small);
-        if(!r.fonts.includes('Soyle Serif') || !r.fonts.includes('Soyle Sans')) bad.push(scheme + ': шрифты ' + r.fonts); }
+        if(!r.fonts.includes('Simit Sans')) bad.push(scheme + ': шрифты ' + r.fonts); }
       await q.click('.play'); await q.waitForTimeout(50); const played = await q.evaluate(() => (window.__played || []).slice(-1)[0] || '');
       if(!/audio\/cv\/\d+\.mp3$/.test(played)) bad.push('кнопка не играет запись: ' + played);
       if(AXE){ await q.addScriptTag({ content:AXE }); const v = await q.evaluate(async () => (await axe.run(document, { runOnly:['wcag2a', 'wcag2aa', 'wcag21aa'] })).violations.map(x => x.id + ':' + x.nodes.length)); if(v.length) bad.push(scheme + ' axe: ' + v.join(', ')); }

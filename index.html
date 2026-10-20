@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="soyle-build" content="__BUILD__">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<meta name="theme-color" content="#EEF2F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#F2F5F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E1719" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,27 +24,26 @@
 <meta property="og:image" content="https://www.simitci.ru/icon-512.png">
 <meta property="og:locale" content="ru_RU">
 <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebSite", "name": "Simit", "url": "https://www.simitci.ru/", "inLanguage": "ru"}, {"@context": "https://schema.org", "@type": "WebApplication", "name": "Simit", "url": "https://www.simitci.ru/", "description": "Говорите по-турецки вслух: игра-квартал Стамбула, где дела в магазине, банке и такси решаются фразой. Оценка произношения, записи носителей, бесплатно.", "applicationCategory": "EducationalApplication", "operatingSystem": "Web", "inLanguage": "ru", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "RUB"}}]</script>
-<!-- шрифты лежат рядом с приложением (fonts/), а не на Google Fonts: вид не зависит от доступа к чужому серверу -->
-<link rel="preload" href="fonts/LiberationSerif-Bold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/DejaVuSans.woff2" as="font" type="font/woff2" crossorigin>
+<!-- шрифт лежит рядом с приложением (fonts/), а не на Google Fonts: вид не зависит от доступа к чужому серверу -->
+<link rel="preload" href="fonts/onest-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/onest-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-/* Шрифты как на одобренном пользователем экране: Liberation Serif (турецкие слова, OFL 1.1) и DejaVu Sans (интерфейс,
-   свободная лицензия Bitstream Vera). Подмножества: латиница с турецкими буквами, кириллица, знаки препинания. */
-@font-face{font-family:'Soyle Serif'; font-style:normal; font-weight:400; font-display:swap; src:url(fonts/LiberationSerif-Regular.woff2) format('woff2')}
-@font-face{font-family:'Soyle Serif'; font-style:normal; font-weight:700; font-display:swap; src:url(fonts/LiberationSerif-Bold.woff2) format('woff2')}
-@font-face{font-family:'Soyle Sans'; font-style:normal; font-weight:400; font-display:swap; src:url(fonts/DejaVuSans.woff2) format('woff2')}
-@font-face{font-family:'Soyle Sans'; font-style:normal; font-weight:700; font-display:swap; src:url(fonts/DejaVuSans-Bold.woff2) format('woff2')}
+/* Шрифт вида B (выбор пользователя 2026-10-20): Onest — переменный (100–900), OFL 1.1, файлы @fontsource-variable/onest 5.3.1,
+   три подмножества: латиница (ç ö ü), расширенная латиница (ş ğ ı İ), кириллица. Лицензия — fonts/LICENSES.txt. */
+@font-face{font-family:'Simit Sans'; font-style:normal; font-weight:100 900; font-display:swap; src:url(fonts/onest-latin-wght-normal.woff2) format('woff2'); unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Simit Sans'; font-style:normal; font-weight:100 900; font-display:swap; src:url(fonts/onest-latin-ext-wght-normal.woff2) format('woff2'); unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Simit Sans'; font-style:normal; font-weight:100 900; font-display:swap; src:url(fonts/onest-cyrillic-wght-normal.woff2) format('woff2'); unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
 
 :root{
   /* «туман над Босфором», «вода Босфора», «тюльпан», «чернила» */
-  --bg:#EEF2F0; --surface:#FBFCFB; --line:#CAD6D2; --ink:#14262B; --ink-2:#3C4E52; --muted:#55676B;
-  --accent:#0F5C5A; --accent-ink:#0B4644; --accent-soft:#DCEBE8; --tulip:#C62F35; --tulip-ink:#9E2328; --tulip-soft:#F7E1E0;
-  --ok:#0B4644; --ok-soft:#DCEBE8; --bad:#9E2328; --bad-soft:#F7E1E0; --near:#7A5200; --near-soft:#F3E8CF;
-  --on-accent:#FBFCFB;
+  --bg:#F2F5F6; --surface:#FFFFFF; --line:#DDE5E7; --ink:#12262B; --ink-2:#3A4F54; --muted:#4E6468;
+  --accent:#0F7C74; --accent-ink:#0A5E58; --accent-soft:#E8F4F2; --tulip:#C62F35; --tulip-ink:#9E2328; --tulip-soft:#F7E1E0;
+  --ok:#0A5E58; --ok-soft:#E3F1EE; --bad:#9E2328; --bad-soft:#F7E1E0; --near:#7A4A00; --near-soft:#FFF1D6;
+  --on-accent:#FFFFFF; --seg:#E1E8EA; --shadow:0 1px 3px rgba(18,38,43,.12);
   --gold:#B8892B; --gold-ink:#3A2A06;   /* позолота — только легендарные достижения */
-  --display:"Soyle Serif", "Liberation Serif", "Times New Roman", serif;
-  --body:"Soyle Sans", "DejaVu Sans", Verdana, sans-serif;
-  --mono:"Soyle Sans", "DejaVu Sans", Verdana, sans-serif;
+  --display:"Simit Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --body:"Simit Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"Simit Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
@@ -52,7 +51,7 @@
     --bg:#0E1719; --surface:#162124; --line:#2A3B3F; --ink:#E4EDEB; --ink-2:#BCCBCA; --muted:#98ACAD;
     --accent:#5DB3AA; --accent-ink:#8ED3CB; --accent-soft:#16332F; --tulip:#F0676C; --tulip-ink:#F59A9E; --tulip-soft:#3A1D1F;
     --ok:#8ED3CB; --ok-soft:#16332F; --bad:#F59A9E; --bad-soft:#3A1D1F; --near:#E7BB5C; --near-soft:#3A3018;
-    --on-accent:#0E1719;
+    --on-accent:#0E1719; --seg:#22313A; --shadow:0 1px 3px rgba(0,0,0,.45);
     --gold:#D9AE4E; --gold-ink:#2A1E04;
     color-scheme:dark;
   }
@@ -651,7 +650,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .bd-cell.event .bd-tr{font-size:14px}
 @media (min-width:400px){ .bd-tr{font-size:10.5px} .bd-ru{font-size:8.5px} }
 .bd-cell.place{border-color:color-mix(in srgb, var(--accent) 45%, var(--line))}
-.bd-cell.event{background:#F3E8CF; color:var(--ink)}
+.bd-cell.event{background:var(--near-soft); color:var(--ink)}
 .bd-cell.home{background:var(--ink); color:var(--bg); border-color:var(--ink)}
 .bd-cell.reach{cursor:pointer; outline:2px solid var(--accent); outline-offset:-2px; background:color-mix(in srgb, var(--accent) 14%, var(--surface))}
 .bd-cell.reach:hover{background:color-mix(in srgb, var(--accent) 24%, var(--surface))}
@@ -688,7 +687,7 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-task.go{cursor:pointer; min-height:44px; display:flex; align-items:center; flex-wrap:wrap; gap:0 4px; padding:2px 8px; border:1.5px solid var(--accent); border-radius:10px; background:var(--surface)} .ct-task.go span{color:var(--accent); font-weight:700}
 #ctDayEnd{flex:1; width:100%; height:44px; min-height:44px; padding:0 12px; font-size:16px}
 .ct-rent{display:block; font-weight:600; color:var(--ink-2)} .ct-week{display:block; font-weight:700; color:var(--accent-ink)}
-.ms-choices{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:6px 0 2px} .ms-choice{min-height:44px; min-width:72px; padding:0 14px; border-radius:22px; border:1px solid var(--line); background:var(--surface); font:600 15px var(--body); color:var(--ink)} .ms-choice[aria-pressed="true"]{background:var(--accent); color:#fff; border-color:var(--accent)}
+.ms-choices{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:6px 0 2px} .ms-choice{min-height:44px; min-width:72px; padding:0 14px; border-radius:22px; border:1px solid var(--line); background:var(--surface); font:600 15px var(--body); color:var(--ink)} .ms-choice[aria-pressed="true"]{background:var(--accent); color:var(--on-accent); border-color:var(--accent)}
 .ct-intro{text-align:left; margin:0; font-size:11.5px; line-height:1.3; color:var(--muted)}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
 .ct-goal{margin:0; font-size:13px; color:var(--muted); text-align:left; display:flex; gap:8px; align-items:baseline} .ct-goal > span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
@@ -849,7 +848,7 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
 .gm-snd{display:inline-flex; align-items:center; gap:3px; font-weight:700; color:var(--accent); border-bottom:1.5px dotted var(--accent); cursor:pointer; padding:0 1px; line-height:1.3} .gm-snd .ic{width:.75em; height:.75em; flex:none} .gm-snd:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px} .gm-snd.on{background:var(--accent-soft, rgba(15,92,90,.12)); border-radius:4px}
 .gm-listen{align-self:flex-start; min-height:48px; display:inline-flex; align-items:center; gap:8px}
 .gm-cue-btn{align-self:flex-start; min-height:44px; padding:6px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--accent); font:600 13px var(--body); cursor:pointer}
-.gm-cue{background:#F3E8CF; color:#14262B; border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.4} .gm-cue p{margin:0 0 6px} .gm-cue p:last-child{margin:0} .gm-cue b{font-weight:700} .gm-steps{opacity:.92}
+.gm-cue{background:var(--near-soft); color:var(--ink); border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.4} .gm-cue p{margin:0 0 6px} .gm-cue p:last-child{margin:0} .gm-cue b{font-weight:700} .gm-steps{opacity:.92}
 .gm-done{display:flex; flex-direction:column; gap:10px} .gm-score{font:700 34px var(--display); color:var(--ink)}
 .wm{display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start}
 .wm-c{display:inline-flex; flex-direction:column; align-items:center; text-align:center; padding:3px 7px; border-radius:8px; background:color-mix(in srgb, currentColor 12%, transparent); max-width:132px}
@@ -860,6 +859,75 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
 .wm-rule{min-height:44px; padding:6px 12px; border-radius:999px; border:1px solid color-mix(in srgb, var(--bg) 45%, transparent); background:transparent; color:var(--bg); font:600 12.5px/1.2 var(--body); text-align:left}
 .wordpop .wm-c{color:var(--bg)} .wordpop .wm-c b{color:var(--bg)}
 .subtabs{gap:4px; padding-left:12px; padding-right:12px} .subtabs .chip.seg{padding:4px 10px; font-size:12.5px}
+
+/* ===================== ВИД B (холст Claude Design, вариант «B · Список дел», одобрен 2026-10-20) =====================
+   Только оформление: разметка, id и классы не меняются. Откат — ветка vid-do-B-2026-10-20. */
+body{font-feature-settings:"ss01" 0}
+h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
+.tb-stats{border:0; background:var(--surface); box-shadow:var(--shadow)}
+.topbar .qbtn{border:0; background:var(--surface); box-shadow:var(--shadow)}
+/* подвкладки тренировки — сегментный переключатель */
+.subtabs{margin:0 16px 6px; padding:2px; gap:2px; background:var(--seg); border-radius:12px; overflow:visible}
+.subtabs .chip.seg{flex:1 1 auto; min-width:0; min-height:44px; padding:0 6px; border:0; border-radius:10px; background:transparent; color:var(--muted); font:600 13px var(--body)}
+.subtabs .chip.seg[aria-pressed="true"]{background:var(--surface); color:var(--ink); border:0; box-shadow:var(--shadow)}
+/* наборы — «пилюли»: выбранная — тёмная */
+.chip.set{min-height:44px; padding:0 14px; margin-right:0; border:1px solid var(--line); border-bottom:1px solid var(--line); border-radius:22px; background:var(--surface); color:var(--ink); font:600 14px var(--body)}
+.chip.set[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--surface)}
+/* круглые действия, кнопки, микрофон */
+.act .ring{background:var(--surface); border:1px solid var(--line); color:var(--accent)}
+.pill{border-radius:16px; border:0; box-shadow:inset 0 0 0 1px var(--line)}
+.btn{border-radius:16px}
+.mic{box-shadow:0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent)}
+.mic.listening{box-shadow:0 0 0 6px color-mix(in srgb, var(--tulip) 25%, transparent); animation:micpulseB 1.2s ease-in-out infinite}
+@keyframes micpulseB{50%{box-shadow:0 0 0 12px color-mix(in srgb, var(--tulip) 18%, transparent)}}
+@media (max-height:700px){ .mic{box-shadow:0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent)} .mic.listening{box-shadow:0 0 0 4px color-mix(in srgb, var(--tulip) 25%, transparent)} }
+@media (prefers-reduced-motion: reduce){ .mic.listening{animation:none} }
+.result{border-radius:18px}
+.ls-opt{border:0; box-shadow:inset 0 0 0 1px var(--line); border-radius:18px}
+.ls-opt.right{border:0; box-shadow:inset 0 0 0 2px var(--accent)} .ls-opt.wrong{border:0; box-shadow:inset 0 0 0 2px var(--tulip)}
+#intent{border-radius:14px; border:1px solid var(--line)}
+/* нижняя панель: без точки, активный — цвет */
+.tabbar .tab::after{display:none}
+.tabbar .tab[aria-pressed="true"]{font-weight:700}
+/* «Память» */
+.grade{border:0; box-shadow:inset 0 0 0 1px var(--line); border-radius:14px}
+.grade.g1{background:var(--tulip-soft)} .grade.g2{background:var(--near-soft)}
+.grade.suggest{border:0; box-shadow:inset 0 0 0 2px var(--accent); background:var(--surface)}
+/* «Город»: поле и центр */
+.bd-inner{background:transparent}
+.ct-itabs{gap:2px; padding:2px; background:var(--seg); border-radius:10px}
+.ct-itab{flex:1 1 auto; min-height:32px; border:0; border-radius:8px; background:transparent; color:var(--muted); font:600 12px var(--body)}
+.ct-itab[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
+.ct-task.go{border:0; background:var(--accent-soft); box-shadow:inset 0 0 0 1.5px var(--accent)}
+.ct-bubble{background:var(--surface); border:0; box-shadow:var(--shadow)}
+.ct-opt-main{border:0; box-shadow:inset 0 0 0 1px var(--line); border-radius:16px}
+.ct-opt-main[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--accent); background:var(--surface)}
+.ct-ear{border-radius:16px; border:0; box-shadow:inset 0 0 0 1px var(--line)}
+.ct-cost{color:var(--tulip-ink); font-weight:600}
+/* «Грамматика»: список — группы-карточки со строками, урок — карточки */
+.gm-group{gap:0}
+.gm-group h3{margin:14px 4px 6px}
+.gm-row{border:0; border-radius:0; border-bottom:1px solid var(--line); background:var(--surface); padding:12px 14px}
+.gm-group > .gm-row:first-of-type{border-radius:16px 16px 0 0}
+.gm-group > .gm-row:last-child{border-radius:0 0 16px 16px; border-bottom:0}
+.gm-group > .gm-row:first-of-type:last-child{border-radius:16px}
+.gm-row.next{box-shadow:none; background:var(--accent-soft)}
+.gm-row.done{background:var(--surface)}
+.gm-st{justify-self:end; padding:3px 8px; border-radius:8px; background:var(--bg); font-weight:700}
+.gm-row.done .gm-st{background:var(--ok-soft)}
+.gm-row.next .gm-st{background:var(--surface); color:var(--accent-ink)}
+.gm-sec{border:0; border-radius:18px; padding:14px 16px}
+.gm-sec-h{color:var(--ink); font-size:17px}
+.gm-tw, .gm-ph li{border:0; border-radius:14px}
+.gm-opt, .gm-let, .gm-cue-btn{border:0; box-shadow:inset 0 0 0 1px var(--line); border-radius:14px}
+.gm-opt.ok, .gm-let.ok{box-shadow:inset 0 0 0 2px var(--ok)} .gm-opt.bad, .gm-let.bad{box-shadow:inset 0 0 0 2px var(--near)}
+.gm-chip{border-radius:14px}
+/* «Прогресс» */
+.backup, .help{border:0; border-radius:18px}
+.pv-quest{border:0; background:var(--surface); box-shadow:inset 4px 0 0 var(--accent)}
+.pv-quest.done{background:var(--ok-soft); box-shadow:inset 4px 0 0 var(--ok)}
+/* окна-листы */
+.modal-box{border-radius:24px 24px 0 0}
 </style>
 </head>
 <body>
@@ -997,7 +1065,7 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
         <div class="result info" id="ctResult" aria-live="polite"></div>
         <div class="ct-pay" id="ctPay" hidden></div>
         <div class="main-row">
-          <button class="pill ct-showbtn" id="ctShow" disabled title="Показать фразу на экране телефона: поймут, но без разговора" aria-label="Показать на телефоне — без опыта и отношений"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><span class="ct-show2"><span class="lbl">Показать</span><small class="ct-cost">без опыта и отношений</small></span></button>
+          <button class="pill ct-showbtn" id="ctShow" disabled title="Показать фразу на экране телефона: поймут, но без разговора" aria-label="Показать на телефоне — без опыта и отношений"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><span class="ct-show2"><span class="lbl">Показать</span><small class="ct-cost">без опыта</small></span></button>
           <button class="mic" id="ctSpeak" aria-label="Сказать" disabled><svg class="ic on" aria-hidden="true"><use href="#i-mic"/></svg><svg class="ic off" aria-hidden="true"><use href="#i-stop"/></svg><span class="sr lbl">Сказать</span></button>
           <button class="pill" id="ctNext" disabled><span class="lbl">Дальше</span><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg></button>
         </div>
@@ -1125,7 +1193,7 @@ b.tr.sfx{padding:0 4px; border-radius:6px; background:var(--accent-soft); color:
           <li><b>Память</b> — всё, что сказали в «Городе» и тренировке, возвращается по расписанию FSRS: сначала вспомнить, потом ответ.</li>
           <li><b>Тренировка</b> — трудный звук (ö, ü, ı, ç, ş) в слове выделен цветом; разбор ошибок после «Сказать» показывает, какой звук спутан. Трудный звук выделен красным.</li>
           <li><b>Тренировка → Фразы</b> — отель, ресторан, транспорт, магазин, аптека, общение, экстренное; «слова» — слова темы с примером.</li>
-          <li><b>Тренировка → Грамматика</b> — 31 короткий урок: сначала пять «С чего начать» (слово из кубиков, глагол, последняя гласная, куда/где/откуда, сборка фразы из блоков), затем падежи, времена, «быть», вопрос, словообразование, с примерами из ваших фраз и упражнениями. Нажмите на любое турецкое слово: под переводом — разбор по частям (корень + окончания) и кнопка «Правило».</li>
+          <li><b>Тренировка → Грамматика</b> — 34 коротких урока: сначала шесть «С чего начать» (слово из кубиков, глагол, последняя гласная, глухие и звонкие, куда/где/откуда, сборка фразы из блоков), затем падежи, времена, «быть», вопрос, словообразование, с примерами из ваших фраз и упражнениями. Нажмите на любое турецкое слово: под переводом — разбор по частям (корень + окончания) и кнопка «Правило».</li>
           <li><b>Носитель</b> — живая запись, ещё раз — другой голос. <b>Синтез</b> — компьютерный голос, ещё раз — медленно. <b>Примеры</b> — фразы носителей с этим словом: перевод и живая запись; там же видео (YouGlish, до 20 поисков в день).</li>
           <li><b>Сравнить</b> — если вы ещё не говорили это слово: образец, вы, оценка, затем образец и ваша запись подряд; если уже сказали — образец и ваша запись.</li>
           <li><b>На слух</b> — звучит одна из двух похожих фраз, выберите какая. <b>Блиц</b> — сколько различите за 60 секунд.</li>

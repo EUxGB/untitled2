@@ -109,7 +109,7 @@ jobs:
             [ "$i" = 40 ] && { echo "::error::Через 10 минут сайт всё ещё отдаёт старую сборку"; exit 1; }
             sleep 15
           done
-          for f in fonts/DejaVuSans.woff2 fonts/DejaVuSans-Bold.woff2 fonts/LiberationSerif-Regular.woff2 fonts/LiberationSerif-Bold.woff2 manifest.json audio/cv/index.json audio/cv/001.mp3 llms.txt frazy/ frazy/u-vracha/; do
+          for f in fonts/onest-latin-wght-normal.woff2 fonts/onest-latin-ext-wght-normal.woff2 fonts/onest-cyrillic-wght-normal.woff2 manifest.json audio/cv/index.json audio/cv/001.mp3 llms.txt frazy/ frazy/u-vracha/; do
             curl -fsS -o /dev/null "$URL/$f?v=$GITHUB_SHA" || { echo "::error::нет файла $f на сайте"; exit 1; }
           done
           # озвучка Piper: манифест и 20 случайных файлов отдаются сайтом

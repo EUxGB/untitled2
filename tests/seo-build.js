@@ -32,39 +32,39 @@ async function data(browser){
   await q.context().close(); return r;
 }
 
-const CSS = `@font-face{font-family:'Soyle Serif'; font-weight:700; font-display:swap; src:url(__R__fonts/LiberationSerif-Bold.woff2) format('woff2')}
-@font-face{font-family:'Soyle Sans'; font-weight:400; font-display:swap; src:url(__R__fonts/DejaVuSans.woff2) format('woff2')}
-@font-face{font-family:'Soyle Sans'; font-weight:700; font-display:swap; src:url(__R__fonts/DejaVuSans-Bold.woff2) format('woff2')}
-:root{--bg:#EEF2F0; --surface:#FBFCFB; --line:#CAD6D2; --ink:#14262B; --ink-2:#3C4E52; --muted:#55676B;
-  --accent:#0F5C5A; --accent-ink:#0B4644; --accent-soft:#DCEBE8; --on-accent:#FBFCFB;
-  --display:"Soyle Serif","Liberation Serif","Times New Roman",serif; --body:"Soyle Sans","DejaVu Sans",Verdana,sans-serif; color-scheme:light}
+const CSS = `@font-face{font-family:'Simit Sans'; font-weight:100 900; font-display:swap; src:url(__R__fonts/onest-latin-wght-normal.woff2) format('woff2'); unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Simit Sans'; font-weight:100 900; font-display:swap; src:url(__R__fonts/onest-latin-ext-wght-normal.woff2) format('woff2'); unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Simit Sans'; font-weight:100 900; font-display:swap; src:url(__R__fonts/onest-cyrillic-wght-normal.woff2) format('woff2'); unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+:root{--bg:#F2F5F6; --surface:#FFFFFF; --line:#DDE5E7; --ink:#12262B; --ink-2:#3A4F54; --muted:#4E6468;
+  --accent:#0F7C74; --accent-ink:#0A5E58; --accent-soft:#E8F4F2; --on-accent:#FFFFFF;
+  --display:"Simit Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --body:"Simit Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:light}
 @media (prefers-color-scheme: dark){:root{--bg:#0E1719; --surface:#162124; --line:#2A3B3F; --ink:#E4EDEB; --ink-2:#BCCBCA; --muted:#98ACAD;
   --accent:#5DB3AA; --accent-ink:#8ED3CB; --accent-soft:#16332F; --on-accent:#0E1719; color-scheme:dark}}
 *{box-sizing:border-box}
 body{margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 var(--body); -webkit-text-size-adjust:100%}
 .wrap{max-width:680px; margin:0 auto; padding:16px 16px 48px}
 header{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px}
-.brand{font:700 22px var(--display); color:var(--ink); text-decoration:none; display:inline-flex; align-items:center; min-height:44px}
+.brand{font:700 24px var(--display); letter-spacing:-.02em; color:var(--ink); text-decoration:none; display:inline-flex; align-items:center; min-height:44px}
 .open{display:inline-flex; align-items:center; min-height:44px; padding:0 16px; border-radius:22px; background:var(--accent); color:var(--on-accent); font-weight:700; font-size:14px; text-decoration:none}
 .crumbs{font-size:13px; color:var(--muted); margin:4px 0 18px} .crumbs a{color:var(--accent-ink)}
 h1{font:700 clamp(26px,7vw,34px)/1.15 var(--display); margin:0 0 10px}
 .lead{color:var(--ink-2); margin:0 0 6px} .upd{font-size:13px; color:var(--muted); margin:0 0 20px}
 h2{font:700 21px/1.25 var(--display); margin:30px 0 10px}
 .list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
-.ph{display:flex; gap:12px; align-items:flex-start; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px}
-.play{flex:none; width:44px; height:44px; border-radius:50%; border:1.5px solid var(--accent); background:transparent; color:var(--accent); display:grid; place-items:center; cursor:pointer; touch-action:manipulation}
+.ph{display:flex; gap:12px; align-items:flex-start; background:var(--surface); border:0; border-radius:16px; padding:14px}
+.play{flex:none; width:44px; height:44px; border-radius:50%; border:0; background:var(--accent-soft); color:var(--accent); display:grid; place-items:center; cursor:pointer; touch-action:manipulation}
 .play svg{width:20px; height:20px; fill:currentColor} .play.on{background:var(--accent); color:var(--on-accent)}
 .play:focus-visible,.open:focus-visible,.cta a:focus-visible,.topic:focus-visible,summary:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .ph-t p{margin:0} .tr{font:700 19px/1.3 var(--display)} .rd{font-size:14px; color:var(--muted)} .ru{margin-top:2px !important} .nt{font-size:13px; color:var(--ink-2); margin-top:4px !important}
-.cta{margin:22px 0 0; background:var(--accent-soft); border-radius:16px; padding:16px} .cta p{margin:0 0 12px}
-.cta a{display:inline-flex; align-items:center; min-height:48px; padding:0 20px; border-radius:24px; background:var(--accent); color:var(--on-accent); font-weight:700; text-decoration:none}
-details{background:var(--surface); border:1px solid var(--line); border-radius:12px; margin-bottom:8px}
+.cta{margin:22px 0 0; background:var(--accent-soft); border-radius:18px; padding:16px} .cta p{margin:0 0 12px}
+.cta a{display:flex; justify-content:center; align-items:center; min-height:52px; padding:0 20px; border-radius:16px; background:var(--accent); color:var(--on-accent); font-weight:700; text-decoration:none}
+details{background:var(--surface); border:0; border-radius:16px; margin-bottom:8px}
 summary{cursor:pointer; padding:12px 14px; font-weight:700; min-height:44px; list-style-position:inside}
 details p{margin:0; padding:0 14px 14px; color:var(--ink-2)}
-.next{display:flex; flex-wrap:wrap; gap:8px} .next a{display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border:1px solid var(--line); border-radius:999px; font-size:14px; color:var(--accent-ink); text-decoration:none; background:var(--surface)}
+.next{display:flex; flex-wrap:wrap; gap:8px} .next a{display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border:1px solid var(--line); border-radius:22px; font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; background:var(--surface)}
 .topics{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
-.topic{display:block; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; color:var(--ink); text-decoration:none}
-.topic b{font:700 19px/1.3 var(--display); display:block} .topic span{font-size:14px; color:var(--muted)} .topic i{font-style:normal; display:block; font-size:14px; color:var(--ink-2); margin-top:2px}
+.topic{display:block; background:var(--surface); border:0; border-radius:16px; padding:14px 16px; color:var(--ink); text-decoration:none}
+.topic b{font:700 19px/1.3 var(--display); display:block} .topic span{font-size:14px; color:var(--muted)} .topic i{font-style:normal; display:block; font-size:14px; color:var(--accent-ink); margin-top:2px}
 footer{margin-top:32px; font-size:12px; color:var(--muted)}`;
 const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
 const JS = `<script>
@@ -91,9 +91,9 @@ const page = ({ R, title, desc, canon, ld, body }) => `<!doctype html>
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${canon}">
 <meta property="og:type" content="article"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${canon}"><meta property="og:image" content="${SITE}icon-512.png">
-<meta name="theme-color" content="#EEF2F0">
+<meta name="theme-color" content="#F2F5F6">
 <link rel="icon" href="${R}icon-192.png">
-<link rel="preload" href="${R}fonts/LiberationSerif-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="${R}fonts/onest-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 ${CSS.replace(/__R__/g, R)}
 </style>

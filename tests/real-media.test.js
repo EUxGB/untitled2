@@ -24,9 +24,9 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
     const r = await p.evaluate(async () => { const m = await fetch('manifest.json').then(r => r.json()); const i = await fetch(m.icons[0].src); return [m.display, i.ok, i.headers.get('content-type')]; });
     ok(r[0] === 'standalone' && r[1] && r[2] === 'image/png', JSON.stringify(r));
   });
-  await test('шрифты Soyle Serif и Soyle Sans (как на одобренном экране) грузятся с того же сайта, без Google Fonts; номер версии и кнопка обновления', async () => {
-    const r = await p.evaluate(async () => { await document.fonts.ready; await Promise.all([document.fonts.load('700 40px "Soyle Serif"', 'böl'), document.fonts.load('400 16px "Soyle Sans"', 'Сказать')]);
-      return [document.fonts.check('700 40px "Soyle Serif"', 'böl'), document.fonts.check('400 16px "Soyle Sans"', 'Сказать'),
+  await test('шрифт Simit Sans (Onest, вид B 2026-10-20) грузится с того же сайта, без Google Fonts, с турецкими буквами и кириллицей; номер версии и кнопка обновления', async () => {
+    const r = await p.evaluate(async () => { await document.fonts.ready; await Promise.all([document.fonts.load('700 40px "Simit Sans"', 'şğıİçöü'), document.fonts.load('400 16px "Simit Sans"', 'Сказать')]);
+      return [document.fonts.check('700 40px "Simit Sans"', 'şğıİçöü'), document.fonts.check('400 16px "Simit Sans"', 'Сказать'),
         performance.getEntriesByType('resource').filter(e => /woff2/.test(e.name)).every(e => e.name.startsWith(location.origin)),
         !!document.querySelector('link[href*="googleapis"]'), document.getElementById('appVersion').textContent, !!document.getElementById('updateApp')]; });
     ok(r[0] && r[1] && r[2] && !r[3] && r[4].length > 3 && r[5], JSON.stringify(r));
@@ -38,7 +38,7 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
     for(const sel of ['#target', '#next .lbl', '#meaning']){
       const { nodeId } = await c.send('DOM.querySelector', { nodeId: root.nodeId, selector: sel });
       out[sel] = (await c.send('CSS.getPlatformFontsForNode', { nodeId })).fonts.map(f => f.familyName + (f.isCustomFont ? '*' : '')).join(','); }
-    ok(out['#target'] === 'Liberation Serif*' && out['#next .lbl'] === 'DejaVu Sans*' && out['#meaning'] === 'DejaVu Sans*', JSON.stringify(out));
+    ok(Object.values(out).every(v => /^Onest[^,]*\*$/.test(v)), JSON.stringify(out));   // вид B: всё — Onest из fonts/ (не системный шрифт)
   });
   await test('микрофон открывается, MediaRecorder пишет настоящий звук', async () => {
     const r = await p.evaluate(async () => {
