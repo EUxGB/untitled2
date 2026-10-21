@@ -925,6 +925,7 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
 #card .ctx-n{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #card .result.info:has(> .verdict:empty:only-child){display:none}
 #card > .acts{margin-top:auto; padding-top:4px}
+#card > .ph-card{flex:1 0 auto}   /* 2026-10-21 22:07: белая карточка занимает всё место над кнопками — её край не прыгает от слова к слову, слово прижато к верху */
 #card > .acts + .main-row{margin-top:calc(8px - 8px * var(--fit, 1))}   /* зазор над нижним рядом — ровно 8 px при любом --fit (общий gap карточки растёт с --fit) */
 #card .act{gap:6px} #card .act .ring{width:48px; height:48px}   /* размер не зависит от --fit: ряд не ездит от слова к слову */
 @media (max-height: 700px){ #card .act{gap:4px} #card .act .ring{width:44px; height:44px} }
@@ -1406,6 +1407,7 @@ body:has(#tab-memory[aria-pressed="true"]) .mem-title{display:block}
         <span>Версия <b id="appVersion" translate="no">__BUILD__</b></span>
         <button class="pill" id="updateApp" title="Загрузить самую свежую версию, минуя сохранённую копию">Обновить приложение</button>
       </div>
+      <p class="hint" id="updMsg" role="status" aria-live="polite"></p>
     </section>
   </main>
 
@@ -2242,7 +2244,7 @@ function ctxRender(){
     const tb = el.querySelector("[data-tr]"); if(tb) tb.onclick = () => openTranslate(item.target);
     scheduleFit(); return;
   }
-  const more = !ctx.loaded ? "ищу ещё примеры…" : n > 1 ? `пример ${ctx.i + 1} из ${n} · нажмите — следующий` : "других примеров с переводом не нашлось";
+  const more = !ctx.loaded ? "ищу ещё примеры…" : n > 1 ? `пример ${ctx.i + 1} из ${n} · нажмите` : "других примеров нет";   // 2026-10-21 22:07: длинная подпись обрезалась многоточием
   el.innerHTML = `<span class="ctx">${x.own || x.audio ? `<button class="ctx-play" id="ctxPlay" aria-label="Слушать пример"><svg class="ic" aria-hidden="true"><use href="#i-speaker"/></svg></button>` : `<span class="ctx-play ctx-ph" aria-hidden="true"></span>`}`
     + `<button class="ctx-ex" id="ctxMore" aria-label="Пример: ${esc(x.tr)} — ${esc(x.ru)}. ${more}"><span class="ctx-tr" lang="tr" translate="no">${ctxMark(x.tr)}</span><span class="ctx-ru">${esc(x.ru)}</span><span class="ctx-n">${more}</span></button></span>`;
   $("ctxMore").onclick = ctxNext;
@@ -8817,7 +8819,17 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleFit
 const BUILD = (document.querySelector('meta[name="soyle-build"]') || {}).content || "";
 function freshUrl(){ return location.pathname + "?v=" + Date.now() + location.hash; }
 $("appVersion").textContent = BUILD.startsWith("__") ? "без номера (не с GitHub Pages)" : BUILD;
-$("updateApp").onclick = () => location.replace(freshUrl());
+// 2026-10-21 22:13 «нажимаю «Обновить» — ничего не происходит»: кнопка молча перезагружала ту же версию. Теперь сверяет версию с сайтом и пишет, что произошло.
+window.__updGo = window.__updGo || (u => location.replace(u));
+$("updateApp").onclick = async () => {
+  const msg = $("updMsg"); msg.textContent = "Проверяю версию на сайте…";
+  try {
+    const html = await (await fetch(location.pathname, { cache:"no-store" })).text();
+    const m = html.match(/name="soyle-build" content="([^"]+)"/), site = m ? m[1] : "";
+    if(site && site !== BUILD){ msg.textContent = `Загружаю новую версию: ${site}…`; window.__updGo(freshUrl()); }
+    else msg.textContent = `У вас последняя версия${BUILD.startsWith("__") ? "" : ": " + BUILD}.`;
+  } catch(e){ msg.textContent = "Нет связи с сайтом — обновить сейчас нельзя. Приложение работает с тем, что уже загружено."; }
+};
 async function checkUpdate(){
   if(TESTMODE || BUILD.startsWith("__") || !/^https?:/.test(location.protocol)) return;
   try {

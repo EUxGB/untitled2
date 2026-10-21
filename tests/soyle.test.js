@@ -1283,12 +1283,12 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       { id:3, text:'Yastığım nerede?', translations:[[{ lang:'rus', text:'Где моя подушка?' }]], audios:[] },
       { id:4, text:'Bu yastık çok yumuşak.', translations:[[{ lang:'rus', text:'Эта подушка очень мягкая.' }]], audios:[{ id:9, license:'CC BY 4.0' }] },
       { id:5, text:'Havlu yok mu?', translations:[[{ lang:'rus', text:'Полотенца нет?' }]], audios:[] } ] };   // без записи — у примера нет кнопки динамика
-    for(const [w, h] of [[360, 640], [412, 915]]){
+    for(const [w, h] of [[360, 640], [360, 760], [412, 915]]){   // 360×760 — телефон в браузере: подпись под примером видна, а карточка узкая
       const q = await openPage(browser); let release; const gate = new Promise(z => release = z);
       await q.route('**/api.tatoeba.org/**', async r => { if(/showtrans/.test(r.request().url())) await gate; r.fulfill({ json:T }); });
       await q.setViewportSize({ width:w, height:h });
       const pos = () => q.evaluate(() => { const b = s => { const e = document.querySelector(s); if(!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top)]; };
-        const res = document.getElementById('result'); return { acts:b('#native'), tr:b('#partner .ctx-tr'), n:document.querySelector('#partner .ctx-n'),
+        const res = document.getElementById('result'), ph = document.getElementById('phCard').getBoundingClientRect(), n = document.querySelector('#partner .ctx-n'); return { phBottom:Math.round(ph.bottom), nCut:!!n && n.offsetParent !== null && n.scrollWidth > n.clientWidth + 1, acts:b('#native'), tr:b('#partner .ctx-tr'), n:document.querySelector('#partner .ctx-n'),
           resShown:!!res.offsetParent && res.getBoundingClientRect().height > 0, resText:res.textContent.trim() }; });
       await q.evaluate(() => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips(); wordPool('hotel').items.forEach(x => x.seen = x.tr === 'yastık' ? 0 : 1); lastKey = ''; next(); });
       await q.waitForTimeout(150); const loading = await pos();
@@ -1305,11 +1305,29 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       ok(bottom <= 16, w + ': кнопки Носитель/Примеры/Синтез прижаты к нижнему ряду, зазор ' + bottom);
       eq(loaded.tr && loaded.tr[0], loading.tr && loading.tr[0], w + ': текст примера не сдвинулся вбок при загрузке'); eq(other.tr && other.tr[0], loaded.tr && loaded.tr[0], w + ': … и на другом слове');
       eq(nLines, 1, w + ': подпись «пример N из M» в одну строку');
+      // 2026-10-21 22:07: белая карточка со словом не прыгает; подпись под примером не обрезается многоточием
+      eq([loaded.phBottom, other.phBottom], [loading.phBottom, loading.phBottom], w + ': край белой карточки на месте');
+      eq([loading.nCut, loaded.nCut, other.nCut], [false, false, false], w + ': подпись под примером видна целиком');
       eq(q.errors, []); await q.context().close();
     }
   });
   // Жалоба 2026-10-21 10:56: «daire — квартира», пример «Bir daire çiz. — Нарисуйте круг.» — слово то же, значение другое (омоним).
   // Пример берётся, только если в его русском переводе есть значение слова с карточки (у существительных и прилагательных; глаголы по-русски спрягаются неправильно).
+  // Жалоба 2026-10-21 22:13: «нажимаю «Обновить» — ничего не происходит в приложении». Кнопка молча перезагружала страницу:
+  // если версия та же, ничего не менялось. Теперь кнопка сверяет версию с сайтом и пишет, что произошло.
+  await test('«Обновить приложение» (2026-10-21 22:13): пишет, последняя ли версия, загружает новую, без сети — говорит об этом', async () => {
+    const q = await openPage(browser);
+    const r = await q.evaluate(async () => { setMode('progress'); const out = []; const msg = () => document.getElementById('updMsg').textContent;
+      const real = window.fetch; window.__go = null; window.__updGo = u => { window.__go = u; };
+      window.fetch = async () => ({ text:async () => `<meta name="soyle-build" content="${BUILD}">` }); document.getElementById('updateApp').click(); await new Promise(z => setTimeout(z, 50)); out.push(msg(), window.__go);
+      window.fetch = async () => ({ text:async () => '<meta name="soyle-build" content="2099-01-01 · abc1234">' }); document.getElementById('updateApp').click(); await new Promise(z => setTimeout(z, 50)); out.push(msg(), !!window.__go);
+      window.__go = null; window.fetch = async () => { throw new TypeError('offline'); }; document.getElementById('updateApp').click(); await new Promise(z => setTimeout(z, 50)); out.push(msg(), window.__go);
+      window.fetch = real; return out; });
+    ok(/последняя версия/.test(r[0]) && r[1] === null, 'та же версия: ' + r[0]);
+    ok(/2099-01-01 · abc1234/.test(r[2]) && r[3], 'новая версия загружается: ' + r[2]);
+    ok(/нет связи|без интернета/i.test(r[4]) && r[5] === null, 'без сети: ' + r[4]);
+    eq(q.errors, []); await q.context().close();
+  });
   await test('слово в контексте (2026-10-21 10:56): пример с тем же значением, что на карточке (daire — квартира, не круг)', async () => {
     const q = await openPage(browser);
     const T = { data:[
@@ -1348,7 +1366,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return bad; });
     const errs = q.errors; await q.context().close(); eq(long, []);
     eq(r, ['istemek', 'Bir oda istiyorum.', 'istiyorum.', 'Мне нужен номер.', true]); eq(before, 3);                       // первый пример — без обращения к сети
-    eq(r2, [['Bir oda istiyorum.', 'Ne istiyorsun?', 'Seninle konuşmak istiyorum.'], 'Ne istiyorsun?', 'istiyorsun?', 'пример 2 из 3 · нажмите — следующий',
+    eq(r2, [['Bir oda istiyorum.', 'Ne istiyorsun?', 'Seninle konuşmak istiyorum.'], 'Ne istiyorsun?', 'istiyorsun?', 'пример 2 из 3 · нажмите',
       'https://api.tatoeba.org/v1/audios/55/file', 'Seninle konuşmak istiyorum.', 'Bir oda istiyorum.', true, true]); eq(errs, []);
   });
   await test('слово без своей фразы: пример ищется сразу; примеров нет или нет сети — та же рамка «Примеров не нашлось», ничего не прыгает', async () => {
