@@ -35,7 +35,10 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
     await p.evaluate(() => setMode('phrases')); await p.waitForTimeout(200);   // стартовый экран — «Город»; шрифты проверяем на карточке слова
     const c = await p.context().newCDPSession(p); await c.send('DOM.enable'); await c.send('CSS.enable');
     const { root } = await c.send('DOM.getDocument'); const out = {};
-    for(const sel of ['#target', '#next .lbl', '#meaning']){
+    // у фразы слова лежат во вложенных span.wd, и у самого #target своего текста нет — CDP отвечает пустой строкой (2026-10-21):
+    // шрифт меряем у первого слова, если оно есть
+    const tsel = (await p.evaluate(() => !!document.querySelector('#target .wd'))) ? '#target .wd' : '#target';
+    for(const sel of [tsel, '#next .lbl', '#meaning']){
       const { nodeId } = await c.send('DOM.querySelector', { nodeId: root.nodeId, selector: sel });
       out[sel] = (await c.send('CSS.getPlatformFontsForNode', { nodeId })).fonts.map(f => f.familyName + (f.isCustomFont ? '*' : '')).join(','); }
     ok(Object.values(out).every(v => /^Onest[^,]*\*$/.test(v)), JSON.stringify(out));   // вид B: всё — Onest из fonts/ (не системный шрифт)

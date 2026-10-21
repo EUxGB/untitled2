@@ -915,6 +915,19 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
 #card .ph-card .meaning{justify-content:flex-start; text-align:left; min-height:0}
 #card .ph-card .partner{text-align:left; min-height:0}
 #card .ph-card .partner:empty{display:none}
+/* 2026-10-21 10:31: пример во всю ширину, место под динамик всегда (значок и текст не скачут вбок), подпись в одну строку;
+   пустой блок результата у слова скрыт; Носитель/Примеры/Синтез прижаты к нижнему ряду */
+#card .ctx{display:flex; justify-content:flex-start; width:100%}
+#card .ctx-ex{flex:1 1 auto; min-height:50px; justify-content:center}   /* запас под округление строк: высота не меняется между загрузкой и примером */
+#card .ctx-wait{color:var(--muted); justify-content:center; cursor:default}
+#card .ctx-wait .ctx-tr{font-weight:500; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}   /* размер строки — как у примера, чтобы высота не менялась */
+#card .ctx-ph{visibility:hidden}
+#card .ctx-n{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+#card .result.info:has(> .verdict:empty:only-child){display:none}
+#card > .acts{margin-top:auto; padding-top:4px}
+#card > .acts + .main-row{margin-top:calc(8px - 8px * var(--fit, 1))}   /* зазор над нижним рядом — ровно 8 px при любом --fit (общий gap карточки растёт с --fit) */
+#card .act{gap:6px} #card .act .ring{width:48px; height:48px}   /* размер не зависит от --fit: ряд не ездит от слова к слову */
+@media (max-height: 700px){ #card .act{gap:4px} #card .act .ring{width:44px; height:44px} }
 .mem-title{display:none; margin:2px 2px 0; font:700 28px/1.1 var(--display); letter-spacing:-.02em; text-transform:none; color:var(--ink); text-align:left}
 body:has(#tab-memory[aria-pressed="true"]) .mem-title{display:block}
 @media (max-height:700px){ .mem-title{font-size:22px} }
@@ -2189,29 +2202,48 @@ function pickPhrase(){
 let ctx = null;
 function ctxInit(it){
   const w = it.target, pw = (wordPool(it.topic).items.find(x => x.tr === w)) || {}, d = PHRASE_DICT[w];
-  ctx = { word:w, forms:new Set([nphr(w), ...(d ? d[1].split(" ") : [])]), list: pw.ex ? [{ tr:pw.ex, ru:pw.exRu || "", own:true }] : [],
+  ctx = { word:w, forms:new Set([nphr(w), ...(d ? d[1].split(" ") : [])]), ruStems:ctxRuStems(w, it.meaning), list: pw.ex ? [{ tr:pw.ex, ru:pw.exRu || "", own:true }] : [],
     i:0, loaded:false, loading:false, fallback:$("partner").innerHTML };
   ctxRender();
   // остальные примеры подгружаются в фоне, пока вы читаете первый (было: после нажатия ждали дольше 4 с)
   const c = ctx; if(c.list.length) setTimeout(() => { if(ctx === c) ctxLoad(); }, TESTMODE ? 0 : 700); else ctxLoad();
 }
-function ctxMark(tr){                                                // слово (в любой его форме) в примере выделено
-  const base = nphr(ctx.word), verb = /m[ae]k$/.test(base) && base.length > 4, stem = verb ? base.slice(0, -3) : base;
-  const hit = k => ctx.forms.has(k) || (stem.length >= 4 && k.startsWith(stem))
+// слово (в любой его форме) есть в примере. Жалоба 2026-10-21 10:31: у «yastık» Tatoeba принесла «Yastayım» (траур) и «O yasadır» (закон) —
+// поиск идёт по началу слова; поэтому пример берём, только если в нём есть само слово: форма из фраз, слово целиком с окончанием
+// или со смягчённой последней буквой (yastık → yastığım, kitap → kitabı), у глагола — основа (iste- → istiyor, git- → gidiyor)
+function ctxHit(k, c){
+  const base = nphr(c.word), verb = /m[ae]k$/.test(base) && base.length > 4, stem = verb ? base.slice(0, -3) : base;
+  const soft = !verb && base.length >= 4 && /[pçtk]$/.test(base) ? base.slice(0, -1) + { p:"b", ç:"c", t:"d", k:"ğ" }[base.slice(-1)] : "";
+  return c.forms.has(k) || (stem.length >= 3 && k.startsWith(stem)) || (soft && k.startsWith(soft))
     || (verb && /[aeıioöuü]$/.test(stem) && k.startsWith(stem.slice(0, -1)) && /^[ıiuü]yor/.test(k.slice(stem.length - 1)))   // iste- → istiyor
     || (verb && stem.length >= 3 && stem.endsWith("t") && k.startsWith(stem.slice(0, -1) + "d"));                              // git- → gidiyor
-  return tr.split(/(\s+)/).map(t => { const k = nphr(t); return k && hit(k) ? `<b>${esc(t)}</b>` : esc(t); }).join("");
+}
+// Жалоба 2026-10-21 10:56: «daire — квартира», а пример «Bir daire çiz. — Нарисуйте круг» (то же слово, другое значение).
+// Поэтому у существительных и прилагательных пример берём, только если в его русском переводе есть значение с карточки
+// (начало русского слова: «квартира» → «кварти», ловит «квартиру», «квартире»). Глаголы не проверяем: по-русски они спрягаются
+// неправильно (хотеть → хочешь), и у них слово уже проверено по основе.
+const CTX_RU_STOP = new Set(["ещё", "еще", "для", "или", "это", "как", "что", "при", "под", "над", "без", "так", "тот", "кто", "чем"]);
+function ctxRuStems(w, meaning){
+  if(/m[ae]k$/.test(nphr(w)) || !meaning) return null;
+  const st = (String(meaning).toLowerCase().match(/[а-яё]{3,}/g) || []).filter(x => !CTX_RU_STOP.has(x)).map(x => x.length <= 4 ? x : x.slice(0, Math.max(4, x.length - 2)));
+  return st.length ? [...new Set(st)] : null;
+}
+const ctxRuOk = (ru, c) => !c.ruStems || (String(ru).toLowerCase().match(/[а-яё]+/g) || []).some(x => c.ruStems.some(st => x.startsWith(st)));
+const ctxHas = (tr, c) => tr.split(/\s+/).some(t => { const k = nphr(t); return k && ctxHit(k, c); });
+function ctxMark(tr){                                                // слово (в любой его форме) в примере выделено
+  return tr.split(/(\s+)/).map(t => { const k = nphr(t); return k && ctxHit(k, ctx) ? `<b>${esc(t)}</b>` : esc(t); }).join("");
 }
 function ctxRender(){
   if(!ctx || !item || item.target !== ctx.word) return;
   const el = $("partner"), n = ctx.list.length, x = ctx.list[ctx.i];
   if(!x){
-    el.innerHTML = ctx.loading ? "Ищу пример в контексте…" : ctx.fallback;
+    // 2026-10-21 10:59: и «ищу», и «не нашлось» — в той же рамке той же высоты: значок и текст не прыгают (раньше «не нашлось» показывало прежнюю строку другого вида)
+    el.innerHTML = `<span class="ctx"><span class="ctx-play ctx-ph" aria-hidden="true"></span><span class="ctx-ex ctx-wait"><span class="ctx-tr">${ctx.loading ? "Ищу пример в контексте…" : "Примеров не нашлось"}</span><span class="ctx-ru" aria-hidden="true">&nbsp;</span><span class="ctx-n" aria-hidden="true">&nbsp;</span></span></span>`;   /* та же высота, что у примера с переводом: ниже ничего не сдвигается */
     const tb = el.querySelector("[data-tr]"); if(tb) tb.onclick = () => openTranslate(item.target);
     scheduleFit(); return;
   }
   const more = !ctx.loaded ? "ищу ещё примеры…" : n > 1 ? `пример ${ctx.i + 1} из ${n} · нажмите — следующий` : "других примеров с переводом не нашлось";
-  el.innerHTML = `<span class="ctx">${x.own || x.audio ? `<button class="ctx-play" id="ctxPlay" aria-label="Слушать пример"><svg class="ic" aria-hidden="true"><use href="#i-speaker"/></svg></button>` : ""}`
+  el.innerHTML = `<span class="ctx">${x.own || x.audio ? `<button class="ctx-play" id="ctxPlay" aria-label="Слушать пример"><svg class="ic" aria-hidden="true"><use href="#i-speaker"/></svg></button>` : `<span class="ctx-play ctx-ph" aria-hidden="true"></span>`}`
     + `<button class="ctx-ex" id="ctxMore" aria-label="Пример: ${esc(x.tr)} — ${esc(x.ru)}. ${more}"><span class="ctx-tr" lang="tr" translate="no">${ctxMark(x.tr)}</span><span class="ctx-ru">${esc(x.ru)}</span><span class="ctx-n">${more}</span></button></span>`;
   $("ctxMore").onclick = ctxNext;
   const pb = $("ctxPlay"); if(pb) pb.onclick = () => ctxPlay(x);
@@ -2226,7 +2258,7 @@ async function ctxLoad(){
   if(ctx !== c) return;
   const seen = new Set(c.list.map(x => nphr(x.tr))), found = [];
   res.flatMap(r => r.data || []).forEach(x => {
-    const ru = ruFrom(x), k = nphr(x.text); if(!ru || seen.has(k) || x.text.split(" ").length > 8) return;
+    const ru = ruFrom(x), k = nphr(x.text); if(!ru || seen.has(k) || x.text.split(" ").length > 8 || !ctxHas(x.text, c) || !ctxRuOk(ru, c)) return;
     const lic = (x.audios || []).find(a => a.license); seen.add(k); found.push({ tr:x.text, ru, audio: lic ? tatoebaAudio(lic.id) : "" });
   });
   found.sort((a, b) => (!!b.audio - !!a.audio) || a.tr.length - b.tr.length);          // сначала с записью носителя, потом короткие
@@ -2275,7 +2307,7 @@ function next(){
   prefetchNative();
   $("meaning").textContent = item.meaning; scheduleFit();
   $("tip").textContent = item.tip;
-  setResult("info", item.word ? "Нажмите «Сказать» и произнесите слово." : "Нажмите «Сказать» и прочитайте фразу целиком. Нажатие на слово — его звучание и перевод.");
+  setResult("info", item.word ? "" : "Нажмите «Сказать» и прочитайте фразу целиком. Нажатие на слово — его звучание и перевод.");
   $("compare").disabled = false; synthSlow = false; echoPending = false;
 }
 
@@ -8763,7 +8795,8 @@ function autofitHeight(){
     // обрезанный текст внутри блока (фраза, перевод, пояснение) — тоже переполнение (было: перевод длинной фразы обрезался)
     if([...card.querySelectorAll("#target, #meaning, #partner, .result, .free-title")].some(e => e.offsetParent && e.scrollHeight > e.clientHeight + 1)) return true;
     return [...card.querySelectorAll(".ls-opt")].some(e => e.scrollHeight > e.clientHeight + 1 || e.getBoundingClientRect().bottom > (e.parentElement.getBoundingClientRect().bottom + 1)); };
-  const over = () => card.scrollHeight - card.clientHeight > 1 || document.documentElement.scrollHeight - innerHeight > 1 || overlap();
+  const over = () => card.scrollHeight - card.clientHeight > 0 ||   // без допуска: иначе нижние кнопки (прижаты margin-top:auto) ездят на 1 px от слова к слову (2026-10-21)
+    document.documentElement.scrollHeight - innerHeight > 1 || overlap();
   let lo = .6, hi = 1.15;
   set(hi); if(!over()) return;
   set(lo); if(over()) return;                  // совсем низкий экран: минимальный размер, карточка прокручивается

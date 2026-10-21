@@ -1274,6 +1274,58 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     { id:2, text:'Ne istiyorsun?', translations:[[{ lang:'rus', text:'Чего ты хочешь?' }]], audios:[{ id:55, author:'x', license:'CC BY 4.0' }] },
     { id:3, text:'Seninle konuşmak istiyorum.', translations:[[{ lang:'rus', text:'Я хочу с тобой поговорить.' }]], audios:[] },
     { id:4, text:'İstemek başarmanın yarısıdır.', translations:[], audios:[] } ] };                                         // без перевода — не показывается
+  // Жалоба 2026-10-21 10:31 (yastık): примеры «Yastayım — Я в трауре», «O yasadır — Это закон» — чужие слова (Tatoeba ищет по началу «yas»);
+  // «Нажмите «Сказать» и произнесите слово» — убрать, занимает место; Носитель/Примеры/Синтез — привязать к низу; значок динамика и текст примера скачут.
+  await test('слово в контексте (2026-10-21 10:31): только примеры с этим словом, без лишней строки, кнопки внизу и на месте, пример не скачет', async () => {
+    const T = { data:[
+      { id:1, text:'Yastayım.', translations:[[{ lang:'rus', text:'Я в трауре.' }]], audios:[] },
+      { id:2, text:'O yasadır.', translations:[[{ lang:'rus', text:'Это закон.' }]], audios:[] },
+      { id:3, text:'Yastığım nerede?', translations:[[{ lang:'rus', text:'Где моя подушка?' }]], audios:[] },
+      { id:4, text:'Bu yastık çok yumuşak.', translations:[[{ lang:'rus', text:'Эта подушка очень мягкая.' }]], audios:[{ id:9, license:'CC BY 4.0' }] },
+      { id:5, text:'Havlu yok mu?', translations:[[{ lang:'rus', text:'Полотенца нет?' }]], audios:[] } ] };   // без записи — у примера нет кнопки динамика
+    for(const [w, h] of [[360, 640], [412, 915]]){
+      const q = await openPage(browser); let release; const gate = new Promise(z => release = z);
+      await q.route('**/api.tatoeba.org/**', async r => { if(/showtrans/.test(r.request().url())) await gate; r.fulfill({ json:T }); });
+      await q.setViewportSize({ width:w, height:h });
+      const pos = () => q.evaluate(() => { const b = s => { const e = document.querySelector(s); if(!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top)]; };
+        const res = document.getElementById('result'); return { acts:b('#native'), tr:b('#partner .ctx-tr'), n:document.querySelector('#partner .ctx-n'),
+          resShown:!!res.offsetParent && res.getBoundingClientRect().height > 0, resText:res.textContent.trim() }; });
+      await q.evaluate(() => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips(); wordPool('hotel').items.forEach(x => x.seen = x.tr === 'yastık' ? 0 : 1); lastKey = ''; next(); });
+      await q.waitForTimeout(150); const loading = await pos();
+      release(); await q.waitForFunction(() => ctx && ctx.loaded); await q.waitForTimeout(150); const loaded = await pos();
+      const list = await q.evaluate(() => ctx.list.map(x => x.tr));
+      const nLines = await q.evaluate(() => { const n = document.querySelector('#partner .ctx-n'); if(!n || !n.offsetParent) return 1; return Math.round(n.getBoundingClientRect().height / parseFloat(getComputedStyle(n).lineHeight)); });
+      // другое слово без примеров с записью — значок и текст на тех же местах
+      await q.evaluate(() => { wordPool('hotel').items.forEach(x => x.seen = x.tr === 'havlu' ? 0 : 1); lastKey = ''; next(); }); await q.waitForFunction(() => ctx && ctx.loaded); await q.waitForTimeout(150);
+      const other = await pos();
+      const bottom = await q.evaluate(() => { const a = document.querySelector('#card .acts').getBoundingClientRect(), m = document.querySelector('#card .main-row').getBoundingClientRect(); return Math.round(m.top - a.bottom); });
+      eq(list, ['Bu yastık çok yumuşak.', 'Yastığım nerede?'], w + ': только примеры с этим словом (с записью носителя — первым)');
+      eq([loading.resShown, loading.resText], [false, ''], w + ': строки «Нажмите «Сказать»…» на карточке слова нет');
+      eq(loaded.acts, loading.acts, w + ': Носитель/Примеры/Синтез не сдвинулись, когда пришли примеры'); eq(other.acts, loading.acts, w + ': … и на другом слове');
+      ok(bottom <= 16, w + ': кнопки Носитель/Примеры/Синтез прижаты к нижнему ряду, зазор ' + bottom);
+      eq(loaded.tr && loaded.tr[0], loading.tr && loading.tr[0], w + ': текст примера не сдвинулся вбок при загрузке'); eq(other.tr && other.tr[0], loaded.tr && loaded.tr[0], w + ': … и на другом слове');
+      eq(nLines, 1, w + ': подпись «пример N из M» в одну строку');
+      eq(q.errors, []); await q.context().close();
+    }
+  });
+  // Жалоба 2026-10-21 10:56: «daire — квартира», пример «Bir daire çiz. — Нарисуйте круг.» — слово то же, значение другое (омоним).
+  // Пример берётся, только если в его русском переводе есть значение слова с карточки (у существительных и прилагательных; глаголы по-русски спрягаются неправильно).
+  await test('слово в контексте (2026-10-21 10:56): пример с тем же значением, что на карточке (daire — квартира, не круг)', async () => {
+    const q = await openPage(browser);
+    const T = { data:[
+      { id:31, text:'Bir daire çiz.', translations:[[{ lang:'rus', text:'Нарисуйте круг.' }]], audios:[] },
+      { id:32, text:'Daire üçüncü katta.', translations:[[{ lang:'rus', text:'Квартира на третьем этаже.' }]], audios:[] },
+      { id:33, text:'Bu daireyi kiraladım.', translations:[[{ lang:'rus', text:'Я снял эту квартиру.' }]], audios:[] } ] };
+    await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json:T }));
+    const r = await q.evaluate(async () => { setMode('phrases'); setKind(true);
+      const topic = PHRASE_SETS.map(g => g.id).find(id => { try { return wordPool(id).items.some(x => x.tr === 'daire'); } catch(e){ return false; } });
+      setId = topic; renderChips(); wordPool(topic).items.forEach(x => x.seen = x.tr === 'daire' ? 0 : 1); lastKey = ''; next();
+      for(let t = 0; t < 60 && !(ctx && ctx.loaded); t++) await new Promise(z => setTimeout(z, 50));
+      return [item.target, item.meaning, ctx.list.map(x => x.tr)]; });
+    eq(r[0], 'daire'); ok(/квартир/.test(r[1]), r[1]);
+    eq(r[2].sort(), ['Bu daireyi kiraladım.', 'Daire üçüncü katta.'], 'пример «Нарисуйте круг» отсеян');
+    eq(q.errors, []); await q.context().close();
+  });
   await test('слово в контексте: на карточке слова — фраза тренажёра с переводом (без сети), слово выделено; «ещё» — примеры Tatoeba с переводом', async () => {
     const q = await openPage(browser); const net = [];
     await q.route('**/api.tatoeba.org/**', r => { if(/showtrans/.test(r.request().url())) net.push(r.request().url()); r.fulfill({ json:CTX_TATO }); });   // считаем только запросы примеров
@@ -1299,9 +1351,14 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r2, [['Bir oda istiyorum.', 'Ne istiyorsun?', 'Seninle konuşmak istiyorum.'], 'Ne istiyorsun?', 'istiyorsun?', 'пример 2 из 3 · нажмите — следующий',
       'https://api.tatoeba.org/v1/audios/55/file', 'Seninle konuşmak istiyorum.', 'Bir oda istiyorum.', true, true]); eq(errs, []);
   });
-  await test('слово без своей фразы: пример ищется сразу; примеров нет или нет сети — на карточке остаётся прежняя строка', async () => {
+  await test('слово без своей фразы: пример ищется сразу; примеров нет или нет сети — та же рамка «Примеров не нашлось», ничего не прыгает', async () => {
     const q = await openPage(browser);
-    await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json:CTX_TATO }));
+    // 2026-10-21: примеры только с этим словом — «Bu yastık…» (чужое слово) отсеивается
+    const LOBI = { data:[
+      { id:21, text:'Lobide bekliyorum.', translations:[[{ lang:'rus', text:'Я жду в лобби.' }]], audios:[] },
+      { id:22, text:'Lobi nerede?', translations:[[{ lang:'rus', text:'Где лобби?' }]], audios:[{ id:7, license:'CC BY 4.0' }] },
+      { id:23, text:'Bu yastık çok yumuşak.', translations:[[{ lang:'rus', text:'Эта подушка очень мягкая.' }]], audios:[] } ] };
+    await q.route('**/api.tatoeba.org/**', r => r.fulfill({ json:LOBI }));
     const r = await q.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
       const pool = wordPool('hotel'); pool.items.push({ tr:'lobi', ru:'лобби', seen:0 }); pool.items.forEach(x => x.seen = x.tr === 'lobi' ? 0 : 1); lastKey = ''; next();
       for(let t = 0; t < 40 && !(ctx && ctx.loaded); t++) await new Promise(z => setTimeout(z, 50));
@@ -1309,10 +1366,14 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const q2 = await openPage(browser);
     const r2 = await q2.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
       const pool = wordPool('hotel'); pool.items.push({ tr:'lobi', ru:'лобби', seen:0 }); pool.items.forEach(x => x.seen = x.tr === 'lobi' ? 0 : 1); lastKey = ''; next();
+      const box = () => { const e = document.querySelector('#partner .ctx-ex'); if(!e) return null; const b = e.getBoundingClientRect(), t = e.querySelector('.ctx-tr').getBoundingClientRect(); return [Math.round(b.left), Math.round(b.height), Math.round(t.left)]; };
+      const wait = box();
       for(let t = 0; t < 60 && !(ctx && ctx.loaded); t++) await new Promise(z => setTimeout(z, 50));
-      return [ctx.loaded, ctx.list.length, !!document.querySelector('#partner .ctx'), /перевод/.test(document.getElementById('partner').textContent)]; });
+      return [ctx.loaded, ctx.list.length, document.querySelector('#partner .ctx-tr') && document.querySelector('#partner .ctx-tr').textContent, JSON.stringify(wait) === JSON.stringify(box())]; });
     const errs = [...q.errors, ...q2.errors]; await q.context().close(); await q2.context().close();
-    eq(r, ['lobi', 3, 'Чего ты хочешь?']);   // первым — пример с записью носителя eq(r2, [true, 0, false, true]); eq(errs, []);
+    eq(r, ['lobi', 2, 'Где лобби?']);   // первым — пример с записью носителя; «Bu yastık…» отсеян
+    // 2026-10-21 10:59: «если не находит — строка увеличивается и скачет влево значок динамика и текст»: та же рамка той же высоты, текст на том же месте
+    eq(r2, [true, 0, 'Примеров не нашлось', true]); eq(errs, []);
   });
   await test('слово не из словаря и без статьи в Викисловаре: машинный перевод помечен как приблизительный', async () => {
     const r = await p.evaluate(async () => { const t0 = translateTr, g0 = enGloss; enGloss = async () => ''; translateTr = async () => 'кошка'; ruMeanCache.clear();
