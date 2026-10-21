@@ -274,6 +274,11 @@
    "f": "-ma/-me",
    "n": "отглагольное имя: «идти» как действие (gitmem gerek — мне нужно идти)",
    "rule": "inf"
+  },
+  "place3s": {
+   "f": "-(s)ı",
+   "n": "«это / то место» как подлежащее: Burası güzel — это место красивое",
+   "rule": "poss"
   }
  },
  "roots": {
@@ -288,7 +293,7 @@
   "bitmek": "заканчиваться",
   "boğaz": "горло",
   "bulanmak": "мутиться (тошнить)",
-  "bura": "это место, здесь",
+  "bura": "это место",
   "büyümek": "расти",
   "çocuk": "ребёнок",
   "daire": "квартира",
@@ -318,7 +323,7 @@
   "nere": "где",
   "okumak": "читать",
   "olmak": "быть, становиться",
-  "ora": "то место (там, туда)",
+  "ora": "то место",
   "orta": "середина",
   "ön": "перёд, перед",
   "ateş": "температура, жар",
@@ -549,7 +554,7 @@
   "bulurum": "bul=bulmak ur=aor um=v1s",
   "bunun": "bu nun=gen",
   "burada": "bura da=loc",
-  "burası": "bura sı=poss3s",
+  "burası": "bura sı=place3s",
   "buyurun": "buyur=buyurmak un=imp2p",
   "büyüdüm": "büyü=büyümek dü=past m=v1s",
   "bırakabilir": "bırak=bırakmak abil=can ir=aor",
@@ -844,7 +849,7 @@
   "olursa": "ol=olmak ur=aor sa=cond",
   "onu": "o n=bn u=acc",
   "orada": "ora da=loc",
-  "orası": "ora sı=poss3s",
+  "orası": "ora sı=place3s",
   "oraya": "ora ya=dat",
   "ortada": "orta da=loc",
   "otobüsü": "otobüs ü=acc",

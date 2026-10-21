@@ -1623,7 +1623,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await q.evaluate(() => document.querySelector('[data-rule="qwords"]').click());
     const r = await q.evaluate(() => { const g = GRAMMAR.find(x => x.id === 'qwords'), cs = [...document.querySelectorAll('#gramView .gm-sec')];
       const all = g.txt.join(' '), words = new Set((all.match(/\{([^}]+)\}/g) || []).flatMap(x => x.slice(1, -1).toLocaleLowerCase('tr').split(/[\s?.!,]+/)).filter(Boolean));
-      const exWords = g.ex.flatMap(e => e.o.concat(e.q)).flatMap(s => s.replace(/\{|\}/g, '').toLocaleLowerCase('tr').split(/[\s?.!,…()]+/)).filter(w => /^[a-zçğıöşü]+$/.test(w) && !/^(oraa)$/.test(w));
+      const exWords = g.ex.flatMap(e => e.o.concat(e.q)).flatMap(s => s.replace(/\{|\}/g, '').toLocaleLowerCase('tr').split(/[\s?.!,…()]+/)).filter(w => /^[a-zçğıöşü]+$/.test(w));
       return { n:cs.length, heads:cs.map(c => (c.querySelector('h3') || {}).textContent || ''), filled:cs.map(c => c.querySelectorAll('.gm-p, .gm-tiles, .gm-map, .gm-rows, .gm-chips').length),
         tbl:!!g.tbl, long:Math.max(...g.txt.filter(t => !/^## /.test(t)).map(t => t.length)), noise:/siniz|урок 1|Соединительные/.test(all),
         unexplained:[...new Set(exWords.filter(w => !words.has(w)))], over:cs.filter(c => c.scrollWidth > c.clientWidth + 1).length }; });
@@ -1631,6 +1631,35 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(r.filled.every(n => n >= 1), 'в каждой карточке есть содержимое: ' + JSON.stringify(r.filled));
     eq(r.tbl, false, 'нет таблицы-дубля'); ok(r.long <= 160, 'абзацы короткие: ' + r.long); eq(r.noise, false, 'без посторонних тем');
     eq(r.unexplained, [], 'слова из упражнений объяснены в тексте урока'); eq(r.over, 0); eq(q.errors, []); await q.context().close();
+  });
+  // Жалоба 2026-10-21 09:15: «Во сколько (в котором часу)?» — «путаница, ответ на разных строчках, неправильно ставится вопрос, переделай проще»;
+  // «Туда (куда?): ora + …» с вариантом «oraa» — тоже; «burası и burada — одинаковый перевод, не понятно».
+  await test('грамматика (2026-10-21 09:15): вопросы «во сколько / который час», «туда / отсюда» — простые, без слов-ловушек, пояснение по строке на слово; burası ≠ burada', async () => {
+    const q = await openPage(browser); await q.setViewportSize({ width:360, height:640 }); await q.click('#tab-train'); await tap(q, 'tab-grammar');
+    const r = await q.evaluate(async () => { const g = GRAMMAR.find(x => x.id === 'qwords'), txt = g.txt.join(' ');
+      const inText = new Set((txt.match(/\{([^}]+)\}/g) || []).map(x => x.slice(1, -1).toLocaleLowerCase('tr')));
+      const opts = g.ex.flatMap(e => e.o).filter(o => /^[a-zçğıöşü ?]+$/i.test(o));
+      const out = { notWords:[...new Set(opts.filter(o => !inText.has(o.toLocaleLowerCase('tr'))))], riddles:g.ex.filter(e => /…|\+/.test(e.q)).map(e => e.q), fb:{} };
+      for(const want of ['Saat kaçta?', 'Saat kaç?', 'oraya', 'buradan']){
+        const e = g.ex.find(x => x.o[x.a] === want); if(!e){ out.fb[want] = 'нет упражнения'; continue; }
+        const qq = { type:'mc', q:gmFmt(gmQ(e.q, e.o[e.a])), html:true, o:e.o, a:e.a, lang:'tr', w:gmFmt(e.w) }; qq.order = e.o.map((_, i) => i);
+        setMode('grammar'); gram = { view:'quiz', rule:'qwords', qs:[qq], i:0, ok:0, done:false }; gramRender();
+        document.querySelector('.gm-opt[data-i="' + e.o.findIndex((_, i) => i !== e.a) + '"]').click(); await new Promise(z => setTimeout(z, 60));
+        const ls = [...document.querySelectorAll('.gm-fb .gm-fb-l')];
+        // строка пояснения: одно слово с переводом; турецкая плашка не разорвана между строками
+        out.fb[want] = { q:e.q, lines:ls.length, wrapped:ls.filter(l => l.getBoundingClientRect().height > 34).map(l => l.textContent), broken:[...document.querySelectorAll('.gm-fb b.tr')].filter(b => b.getClientRects().length > 1).map(b => b.textContent) };
+      }
+      out.gl = ['burası', 'burada', 'orası', 'orada'].map(w => (wordGloss(w) || {}).ctx || '');
+      out.part = morphOf('burası').parts.map(p => p.n || '').join(' | '); out.lessonHas = /\{burası\}/.test(txt) && /\{burada\}/.test(txt);
+      out.long = Math.max(...g.txt.filter(t => !/^## /.test(t)).map(t => t.length));
+      return out; });
+    eq(r.notWords, [], 'каждый вариант ответа — настоящее слово из урока (без «oraa»)'); eq(r.riddles, [], 'вопрос без «ora + …» — просто «как сказать …»');
+    for(const [k, v] of Object.entries(r.fb)){ ok(typeof v === 'object', k + ': ' + v); ok(v.lines >= 2, k + ': пояснение по строке на слово: ' + JSON.stringify(v)); eq(v.broken, [], k + ': плашка слова разорвана'); eq(v.wrapped, [], k + ': строка пояснения перенеслась на 360 px'); }
+    ok(!/[«(]в котором часу|\(в котором/.test(r.fb['Saat kaçta?'].q || ''), 'вопрос без двойной формулировки: ' + r.fb['Saat kaçta?'].q);
+    ok(r.gl[0] !== r.gl[1] && r.gl[2] !== r.gl[3], 'переводы различаются: ' + JSON.stringify(r.gl));
+    ok(/это место/.test(r.gl[0]) && !/^здесь/.test(r.gl[0]) && /где\?/.test(r.gl[1]), 'burası — «это место», burada — «где?»: ' + JSON.stringify(r.gl));
+    ok(!/его, её/.test(r.part), 'в разборе burası нет «его, её»: ' + r.part); ok(r.lessonHas, 'в уроке объяснено burası и burada'); ok(r.long <= 160, 'абзацы короткие: ' + r.long);
+    eq(q.errors, []); await q.context().close();
   });
   await test('грамматика (2026-10-14 09:52): после ответа «Дальше» видна без прокрутки — все уроки, все вопросы, верный и неверный ответ, 320–412', async () => {
     const q = await openPage(browser); const bad = [];
