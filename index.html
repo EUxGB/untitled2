@@ -1353,6 +1353,13 @@ body:has(#tab-memory[aria-pressed="true"]) .mem-title{display:block}
       <div class="pv-head"><h2>Статистика</h2></div>
       <div class="stats" id="stats"></div>
 
+      <section class="backup" id="offBox" aria-labelledby="offTitle" hidden>
+        <h2 id="offTitle">Без интернета</h2>
+        <p class="bk-note">Скачайте записи носителей и озвучку (около 16 МБ) — тогда «Город», «Грамматика», «Память» и фразы будут работать без сети. Без интернета не работают оценка произношения (распознавание речи идёт через Google), примеры из Tatoeba, перевод и видео.</p>
+        <p class="bk-note" id="offIos" hidden>На iPhone скачивайте в приложении, открытом с экрана «Домой»: у Safari и у приложения разные хранилища.</p>
+        <button class="btn primary" id="offGet"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span class="lbl">Скачать для офлайна</span></button>
+        <p class="bk-msg" id="offMsg" role="status" aria-live="polite"></p>
+      </section>
       <section class="backup" aria-labelledby="bkTitle">
         <h2 id="bkTitle">Резервная копия прогресса</h2>
         <p class="bk-note">Прогресс хранится только в этом браузере. Сохраните копию — и перенесёте его на другой телефон или вернёте после очистки браузера.</p>
@@ -3677,7 +3684,7 @@ function compareWithFreshRecording(){
 
 // ---------- резервная копия прогресса ----------
 // В копию идёт всё «soyle-*», кроме настроек конкретного устройства (голос, обход микрофона)
-const BK_DEVICE_KEYS = ["soyle-rec-conflict", "soyle-voice", "soyle-uid", "soyle-ping-day", "soyle-fbq"];   // номер устройства для счётчика «соседей» — не переносится копией
+const BK_DEVICE_KEYS = ["soyle-rec-conflict", "soyle-voice", "soyle-uid", "soyle-ping-day", "soyle-fbq", "soyle-offline"];   // номер устройства для счётчика «соседей» — не переносится копией
 function bkCollect(){
   const data = {};
   try {
@@ -8849,6 +8856,62 @@ async function checkUpdate(){
   } catch(e){ /* нет сети — работаем с тем, что есть */ }
 }
 setTimeout(checkUpdate, 1500);
+// ---------- без интернета (2026-10-22; спек docs/superpowers/specs/2026-10-22-offline-design.md, навык service-worker) ----------
+// sw.js: страница — сначала сеть (обновления приходят сразу), шрифты/записи/озвучка — из кэша. Регистрация — только на своём домене
+// (на githack кэш и так бывает старым) и в тестах (window.__sw). Записи и озвучку скачивает кнопка в «Прогрессе».
+const OFF_KEY = "soyle-offline";
+let offBusy = false;
+const offState = () => { try { return JSON.parse(localStorage.getItem(OFF_KEY) || "null"); } catch(e){ return null; } };
+const offMb = b => (b / 1048576).toFixed(b < 10485760 ? 1 : 0).replace(".", ",");
+function offRender(){
+  const box = $("offBox"); if(!box) return;
+  const on = "serviceWorker" in navigator && !!navigator.serviceWorker.controller || !!window.__swReady;
+  box.hidden = !on; if(!on || offBusy) return;
+  const st = offState();
+  setLbl($("offGet"), st ? "Докачать и обновить" : "Скачать для офлайна");
+  $("offMsg").textContent = st ? `Сохранено для офлайна: ${st.n} файлов, ${offMb(st.bytes)} МБ (${new Date(st.at).toLocaleDateString("ru-RU")}).` : "";
+  $("offIos").hidden = !IS_IOS;
+  // браузер мог стереть сохранённое (Safari, нехватка места): сверяем с тем, что реально лежит в кэше (ревью 2026-10-22, п. 9)
+  if(st && window.caches) caches.open("simit-media").then(c => c.keys()).then(k => { if(!offBusy && k.length < st.n * 0.9) $("offMsg").textContent = `Часть сохранённого удалена или устарела (осталось ${k.length} из ${st.n}). Нажмите «Докачать и обновить».`; }).catch(() => {});
+}
+async function offList(){
+  // только записи и озвучка: страница, списки, шрифты и значки service worker сохраняет сам (ревью 2026-10-22, п. 7)
+  const out = [];
+  const j = u => fetch(u, { cache:"no-cache" }).then(r => r.ok ? r.json() : null).catch(() => null);
+  const [cv, tts] = await Promise.all([j("audio/cv/index.json"), j("tts/manifest.json")]);
+  if(cv && cv.phrases) Object.values(cv.phrases).forEach(l => l.forEach(x => out.push("audio/cv/" + x.file)));
+  if(tts && tts.items) Object.values(tts.items).forEach(f => out.push("tts/" + f));
+  return [...new Set(out)];
+}
+async function offDownload(){
+  if(offBusy) return; offBusy = true; const btn = $("offGet"), msg = $("offMsg"); btn.disabled = true;
+  try {
+    msg.textContent = "Собираю список файлов…";
+    const list = await offList(), cache = await caches.open("simit-media");
+    let done = 0, bytes = 0, fail = 0, i = 0;
+    const one = async u => {
+      const abs = new URL(u, location.href).href;
+      let r = await caches.match(abs, { ignoreSearch:true });
+      if(!r){ try { const net = await fetch(abs, { cache:"no-cache" }); if(net.ok){ await cache.put(abs, net.clone()); r = net; } } catch(e){} }
+      if(r){ done++; try { bytes += (await r.clone().blob()).size; } catch(e){} } else fail++;
+      msg.textContent = `Скачано ${done + fail} из ${list.length}…`;
+    };
+    await Promise.all(Array.from({ length:6 }, async () => { while(i < list.length) await one(list[i++]); }));
+    // лишнее (озвучка и записи, которых больше нет в списках) — удалить (ревью 2026-10-22, п. 8)
+    if(list.length){ const want = new Set(list.map(u => new URL(u, location.href).href));
+      await Promise.all((await cache.keys()).filter(q => !want.has(q.url.split(/[?#]/)[0])).map(q => cache.delete(q))); }
+    try { if(navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch(e){}
+    localStorage.setItem(OFF_KEY, JSON.stringify({ n:done, bytes, at:Date.now() }));
+    offBusy = false; offRender();
+    if(fail) msg.textContent += ` Не скачалось ${fail} — нажмите ещё раз, когда будет хорошая связь.`;
+  } catch(e){ msg.textContent = "Не получилось сохранить файлы: " + (e && e.message || e); }
+  finally { offBusy = false; btn.disabled = false; }
+}
+$("offGet").onclick = offDownload;
+if("serviceWorker" in navigator && (/(^|\.)simitci\.ru$/.test(location.hostname) || window.__sw)){
+  navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready).then(() => { window.__swReady = true; offRender(); }).catch(() => {});
+}
+setTimeout(offRender, 0);   // после загрузки всего скрипта: offRender читает IS_IOS, объявленный ниже (иначе ошибка до объявления обрывала скрипт)
 if(!TESTMODE) ttsLoad();            // озвучка Piper: манифест рядом с сайтом (tts/manifest.json); нет — голос телефона
 
 // ---------- окно внутри приложения: видео носителей и перевод без перехода на другие сайты ----------

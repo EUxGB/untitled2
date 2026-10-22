@@ -10,7 +10,8 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
 
 (async () => {
   const types = { '.html':'text/html; charset=utf-8', '.json':'application/manifest+json', '.png':'image/png', '.js':'text/javascript', '.wav':'audio/wav', '.woff2':'font/woff2', '.mp3':'audio/mpeg' };
-  const server = http.createServer((q, r) => { const f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0]) === '/' ? 'index.html' : decodeURIComponent(q.url.split('?')[0])); if(!f.startsWith(ROOT) || !fs.existsSync(f)){ r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': types[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r); }).listen(0);
+  let down = false;   // «нет сети» по-настоящему: сервер обрывает соединения (setOffline Playwright не действует на запросы service worker — проверено 2026-10-22)
+  const server = http.createServer((q, r) => { if(down){ q.socket.destroy(); return; } let f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0]) === '/' ? 'index.html' : decodeURIComponent(q.url.split('?')[0])); if(fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');   /* папка → её index.html, как на GitHub Pages (frazy/…) */ if(!f.startsWith(ROOT) || !fs.existsSync(f)){ r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': types[path.extname(f)] || 'application/octet-stream', 'Cache-Control':'no-store' });   /* без HTTP-кэша: без сети страница может прийти только из service worker (иначе тест офлайна проходил и на ошибке) */ fs.createReadStream(f).pipe(r); }).listen(0);
   const URL = `http://localhost:${server.address().port}/index.html`;
   const browser = await chromium.launch({ args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',`--use-file-for-fake-audio-capture=${WAV}`,'--autoplay-policy=no-user-gesture-required'] });
   const ctx = await browser.newContext({ permissions:['microphone'], viewport:{ width:390, height:844 } });
@@ -123,6 +124,68 @@ const ok = (v, m) => { if(!v) throw new Error(m || 'условие не выпо
       const a = new Audio(first.url); const ok = await new Promise(z => { a.oncanplaythrough = () => z(a.duration); a.onerror = () => z('error'); setTimeout(() => z('timeout'), 8000); a.load(); });
       return [first.url, first.who, ok, Object.keys(CV_INDEX).length]; });
     ok(/^audio\/cv\/\d+\.mp3$/.test(r[0]) && r[1] === 'носитель (Common Voice)' && typeof r[2] === 'number' && r[2] > 0.5 && r[3] >= 10, JSON.stringify(r));
+  });
+  // Офлайн (2026-10-22, спек docs/superpowers/specs/2026-10-22-offline-design.md): «Прогресс» → «Без интернета» → «Скачать для офлайна»;
+  // без сети страница открывается из сохранённой копии, записи носителей играют, «Обновить приложение» честно говорит, что связи нет.
+  await test('офлайн (2026-10-22): скачать в «Прогрессе» → без сети приложение открывается, записи на месте, «Обновить» говорит, что связи нет', async () => {
+    const oc = await browser.newContext({ viewport:{ width:390, height:844 } }); const op = await oc.newPage(); const oerr = []; op.on('pageerror', e => oerr.push(e.message));
+    await op.addInitScript(() => { window.__sw = true; });
+    await op.goto(URL); const swOk = await op.evaluate(() => Promise.race([navigator.serviceWorker.ready.then(() => true), new Promise(z => setTimeout(() => z(false), 5000))])); ok(swOk, 'service worker не запустился'); await op.waitForTimeout(300);
+    await op.evaluate(() => setMode('progress')); await op.waitForTimeout(200);
+    const before = await op.evaluate(() => [!document.getElementById('offBox').hidden, document.getElementById('offGet').textContent.trim()]);
+    ok(before[0] && /Скачать/.test(before[1]), 'раздел и кнопка видны: ' + JSON.stringify(before));
+    await op.evaluate(() => document.getElementById('offGet').click());   // нажатие из страницы: раздел в прокручиваемом «Прогрессе»
+    await op.waitForFunction(() => /Сохранено/.test(document.getElementById('offMsg').textContent), null, { timeout:60000 });
+    const msg = await op.evaluate(() => document.getElementById('offMsg').textContent);
+    const n = +(/(\d+)\s+файл/.exec(msg) || [])[1]; ok(n >= 400, 'сохранено мало файлов: ' + msg);   // записи Common Voice — 429 файлов
+    await oc.setOffline(true); down = true;
+    await op.goto(URL.replace('index.html', '') + '?v=offline-check'); await op.waitForTimeout(800);
+    const off = await op.evaluate(async () => { const r = await fetch('audio/cv/001.mp3').then(x => x.ok).catch(() => false);
+      setMode('progress'); document.getElementById('updateApp').click(); await new Promise(z => setTimeout(z, 300));
+      return [!!document.getElementById('appVersion'), r, document.getElementById('updMsg').textContent, !document.getElementById('offBox').hidden && document.getElementById('offMsg').textContent]; });
+    await oc.setOffline(false); down = false;
+    ok(off[0], 'без сети страница не открылась'); ok(off[1], 'без сети запись носителя не играет');
+    ok(/Нет связи/.test(off[2]), '«Обновить» без сети: ' + off[2]); ok(/Сохранено/.test(off[3]), 'без сети раздел помнит, что скачано: ' + off[3]);
+    ok(oerr.length === 0, oerr.join('; ')); await oc.close();
+  });
+  // Ревью отдельным агентом (2026-10-22): 1) переход на frazy/ подменял сохранённое приложение; 2) после пересборки записей (номера 001.mp3…
+  // раздаются заново) старая запись играла бы чужую фразу; 3) <audio> шлёт Range — Safari нужен ответ 206; 4) лишние файлы не удалялись.
+  await test('офлайн, ревью (2026-10-22): frazy/ не подменяет приложение, Range → 206, новый список записей сбрасывает старые, лишнее удаляется', async () => {
+    const oc = await browser.newContext({ viewport:{ width:390, height:844 } }); const op = await oc.newPage();
+    await op.addInitScript(() => { window.__sw = true; });
+    await op.goto(URL); ok(await op.evaluate(() => Promise.race([navigator.serviceWorker.ready.then(() => true), new Promise(z => setTimeout(() => z(false), 5000))])), 'service worker не запустился');
+    await op.reload(); await op.waitForTimeout(300);
+    // лишний файл в кэше записей — после скачивания его быть не должно
+    await op.evaluate(async () => { const c = await caches.open('simit-media'); await c.put(new URL('tts/zzz-old.mp3', location.href).href, new Response('old')); });
+    await op.evaluate(() => { setMode('progress'); document.getElementById('offGet').click(); });
+    await op.waitForFunction(() => /Сохранено/.test(document.getElementById('offMsg').textContent), null, { timeout:60000 });
+    const pruned = await op.evaluate(async () => !(await caches.match(new URL('tts/zzz-old.mp3', location.href).href)));
+    // пересборка записей: в кэше «старый» список и «старый» 001.mp3 — свежий список с сайта должен сбросить старые записи
+    const real = await op.evaluate(async () => (await (await fetch('audio/cv/001.mp3')).blob()).size);
+    await op.evaluate(async () => { const u = p => new URL(p, location.href).href;
+      await (await caches.open('simit-shell')).put(u('audio/cv/index.json'), new Response('{"phrases":{}}'));
+      await (await caches.open('simit-media')).put(u('audio/cv/001.mp3'), new Response('wrong-phrase')); });
+    await op.evaluate(() => fetch('audio/cv/index.json', { cache:'no-cache' }).then(r => r.text())); await op.waitForTimeout(300);
+    const after = await op.evaluate(async () => (await (await fetch('audio/cv/001.mp3')).blob()).size);
+    // сброс записей виден в разделе и чинится повторным скачиванием
+    await op.evaluate(() => { offRender(); }); await op.waitForTimeout(300);
+    const stale = await op.evaluate(() => document.getElementById('offMsg').textContent);
+    await op.evaluate(() => document.getElementById('offGet').click());
+    await op.waitForFunction(() => /Сохранено/.test(document.getElementById('offMsg').textContent), null, { timeout:60000 });
+    // переход на страницу ситуаций, потом без сети — приложение, а не frazy
+    await op.goto(URL.replace('index.html', 'frazy/u-vracha/')); await op.waitForTimeout(300);
+    await oc.setOffline(true); down = true;
+    await op.goto(URL.replace('index.html', '')); await op.waitForTimeout(600);
+    const app = await op.evaluate(() => !!document.getElementById('appVersion') && !!document.getElementById('offBox'));
+    const rng = await op.evaluate(async () => { const r = await fetch('audio/cv/001.mp3', { headers:{ Range:'bytes=0-99' } }); return [r.status, (await r.blob()).size, r.headers.get('Content-Range')]; });
+    const play = await op.evaluate(() => new Promise(z => { const a = new Audio('audio/cv/002.mp3'); a.muted = true; a.onplaying = () => z(true); a.onerror = () => z('error'); a.play().catch(e => z(String(e))); setTimeout(() => z('timeout'), 4000); }));
+    await oc.setOffline(false); down = false; await oc.close();
+    ok(pruned, 'лишний файл не удалён после скачивания');
+    ok(/устарела/.test(stale), 'раздел не сказал, что записи надо докачать: ' + stale);
+    ok(after === real, `после нового списка записей играет старая запись: ${after} байт вместо ${real}`);
+    ok(app, 'без сети после перехода на frazy/ открылась не программа');
+    ok(rng[0] === 206 && rng[1] === 100 && /^bytes 0-99\//.test(rng[2] || ''), 'Range без сети: ' + JSON.stringify(rng));
+    ok(play === true, 'без сети <audio> не играет сохранённую запись: ' + play);
   });
   await test('за прогон нет JS-ошибок', async () => ok(errors.length === 0, errors.join('; ')));
 

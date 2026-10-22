@@ -43,6 +43,12 @@
       "skillPath": "skills/programmatic-seo/SKILL.md",
       "computedHash": "e40eee11a367397e56e304fd646d582e276751ffd6f7275c64ea74b046cf5c22"
     },
+    "progressive-web-app": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "skillPath": "skills/progressive-web-app/SKILL.md",
+      "computedHash": "68bd88015fb5818a3d1f08845d6adaf13bdc0547bc231a7f656155913fbdbd63"
+    },
     "requesting-code-review": {
       "source": "obra/superpowers",
       "sourceType": "github",
@@ -66,6 +72,12 @@
       "sourceType": "github",
       "skillPath": "skills/seo-audit/SKILL.md",
       "computedHash": "6cc692cab02f5a7ae863fee10ffa9d93d8a63cbe7762b7f6c50e04b7283a1d43"
+    },
+    "service-worker": {
+      "source": "thedaviddias/front-end-checklist",
+      "sourceType": "github",
+      "skillPath": "skills/service-worker/SKILL.md",
+      "computedHash": "41f8a5a477eb987bdbb76641b1732e88d59d4085421658c4df15ea1c9dc656fc"
     },
     "subagent-driven-development": {
       "source": "obra/superpowers",

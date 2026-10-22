@@ -77,14 +77,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Собрать сайт (только файлы приложения)
         run: |
-          mkdir _site && cp -r index.html manifest.json robots.txt sitemap.xml llms.txt yandex_*.html indexnow-*.txt icon-*.png fonts audio frazy _site/
+          mkdir _site && cp -r index.html sw.js manifest.json robots.txt sitemap.xml llms.txt yandex_*.html indexnow-*.txt icon-*.png fonts audio frazy _site/
           # озвучка Piper из ветки tts-audio (нет ветки — сайт говорит голосом телефона)
           if git clone -q --depth 1 -b tts-audio "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" /tmp/tta; then
             mkdir -p _site/tts && cp /tmp/tta/manifest.json /tmp/tta/*.mp3 _site/tts/ && echo "озвучка: $(ls _site/tts/*.mp3 | wc -l) файлов"
           fi
           # номер сборки: приложение сверяет его с сайтом и само подтягивает свежую версию
           BUILD="$(date -u +%Y-%m-%d) · ${GITHUB_SHA::7}"
-          sed -i "s/__BUILD__/$BUILD/g" _site/index.html
+          sed -i "s/__BUILD__/$BUILD/g" _site/index.html _site/sw.js   # sw.js с номером сборки меняется при каждой публикации — браузер обновляет service worker
           grep -c "$BUILD" _site/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
@@ -109,7 +109,7 @@ jobs:
             [ "$i" = 40 ] && { echo "::error::Через 10 минут сайт всё ещё отдаёт старую сборку"; exit 1; }
             sleep 15
           done
-          for f in fonts/onest-latin-wght-normal.woff2 fonts/onest-latin-ext-wght-normal.woff2 fonts/onest-cyrillic-wght-normal.woff2 manifest.json audio/cv/index.json audio/cv/001.mp3 llms.txt frazy/ frazy/u-vracha/; do
+          for f in sw.js fonts/onest-latin-wght-normal.woff2 fonts/onest-latin-ext-wght-normal.woff2 fonts/onest-cyrillic-wght-normal.woff2 manifest.json audio/cv/index.json audio/cv/001.mp3 llms.txt frazy/ frazy/u-vracha/; do
             curl -fsS -o /dev/null "$URL/$f?v=$GITHUB_SHA" || { echo "::error::нет файла $f на сайте"; exit 1; }
           done
           # озвучка Piper: манифест и 20 случайных файлов отдаются сайтом
