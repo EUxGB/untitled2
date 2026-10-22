@@ -1329,6 +1329,19 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(q.errors, []); await q.context().close();
   });
   // Просьба 2026-10-22 07:09: «в словах перевод и примеры — зафиксировать в нижней части белого поля, чтобы не подскакивали, когда листаю дальше».
+  // Жалоба 2026-10-22 08:59: «Угостить автора — надпись не по центру» (a.btn{display:inline-block} перебивал .sp-link{display:flex}: текст прижат к верху).
+  await test('«Угостить автора» (2026-10-22 08:59): надпись по центру кнопки — по вертикали и по горизонтали, 320–412', async () => {
+    const q = await openPage(browser); const bad = [];
+    for(const [w, h] of [[320, 568], [360, 640], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h });
+      const r = await q.evaluate(() => { game.days = ['2026-10-20', '2026-10-21']; setMode('progress'); renderGame(); const a = document.getElementById('spLink'); a.scrollIntoView();
+        const g = document.createRange(); g.selectNodeContents(a); const t = g.getBoundingClientRect(), b = a.getBoundingClientRect();
+        return { top:t.top - b.top, bottom:b.bottom - t.bottom, left:t.left - b.left, right:b.right - t.right, shown:!document.getElementById('spBox').hidden }; });
+      if(!r.shown) bad.push(w + ': раздел не показан');
+      else if(Math.abs(r.top - r.bottom) > 2 || Math.abs(r.left - r.right) > 2) bad.push(`${w}: сверху ${r.top.toFixed(1)}, снизу ${r.bottom.toFixed(1)}, слева ${r.left.toFixed(1)}, справа ${r.right.toFixed(1)}`);
+    }
+    eq(bad, []); eq(q.errors, []); await q.context().close();
+  });
   await test('слова (2026-10-22 07:09): перевод и пример прижаты к низу белой карточки — на месте при любом слове, 360–412', async () => {
     const bad = [];
     for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
