@@ -925,7 +925,14 @@ h1{font:700 28px/1 var(--display); letter-spacing:-.02em}
 #card .ctx-n{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #card .result.info:has(> .verdict:empty:only-child){display:none}
 #card > .acts{margin-top:auto; padding-top:4px}
-#card > .ph-card{flex:1 0 auto}   /* 2026-10-21 22:07: белая карточка занимает всё место над кнопками — её край не прыгает от слова к слову, слово прижато к верху */
+#card > .ph-card{flex:1 0 auto}
+/* 2026-10-22 07:09 «перевод и примеры зафиксировать в нижней части белого поля, чтобы не подскакивали, когда листаю дальше»:
+   у слова перевод и пример прижаты к низу карточки, под перевод — ровно две строки (длинный перевод не сдвигает пример) */
+#card .ph-card.wordcard #meaning{margin-top:auto; flex:none; height:calc(2 * 1.3em); line-height:1.3; align-items:flex-end; overflow:hidden}
+#card .ph-card.wordcard{margin-bottom:calc(8px - 8px * var(--fit, 1))}   /* зазор до кнопок — ровно 8 px при любом --fit (общий gap карточки растёт с --fit) */
+#card .ph-card.wordcard #meaning{font-size:18px}                          /* размер перевода не зависит от --fit: строки на одном месте */
+@media (max-height: 700px){ #card .ph-card.wordcard #meaning{font-size:15px} }
+#card .ctx-tr{line-height:20px} #card .ctx-ru{line-height:17px} #card .ctx-n{line-height:15px}   /* высота строк — в пикселях: рамка примера одной высоты при любом тексте */   /* 2026-10-21 22:07: белая карточка занимает всё место над кнопками — её край не прыгает от слова к слову, слово прижато к верху */
 #card > .acts + .main-row{margin-top:calc(8px - 8px * var(--fit, 1))}   /* зазор над нижним рядом — ровно 8 px при любом --fit (общий gap карточки растёт с --fit) */
 #card .act{gap:6px} #card .act .ring{width:48px; height:48px}   /* размер не зависит от --fit: ряд не ездит от слова к слову */
 @media (max-height: 700px){ #card .act{gap:4px} #card .act .ring{width:44px; height:44px} }
@@ -2294,6 +2301,7 @@ function next(){
     $("partner").hidden = true; $("tip").textContent = ""; return;
   }
   const t = $("target");
+  $("phCard").classList.toggle("wordcard", mode === "phrases" && !!item.word);   // 2026-10-22 07:09: у слова перевод и пример — внизу белой карточки
   t.classList.toggle("phrase", mode==="phrases" && (!item.native || /\s/.test(item.target) || item.target.length > 12));   // «живые фразы» — всегда шрифтом фраз (было: «Veganım.» огромным и с переносом)
   if(mode === "phrases" && !item.word) t.innerHTML = wordsHtml(item.target); else t.textContent = item.target;   // слова фразы — нажимаются (произношение и перевод в контексте)
   $("partner").innerHTML = item.native

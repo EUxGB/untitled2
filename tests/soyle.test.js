@@ -1328,6 +1328,27 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     ok(/нет связи|без интернета/i.test(r[4]) && r[5] === null, 'без сети: ' + r[4]);
     eq(q.errors, []); await q.context().close();
   });
+  // Просьба 2026-10-22 07:09: «в словах перевод и примеры — зафиксировать в нижней части белого поля, чтобы не подскакивали, когда листаю дальше».
+  await test('слова (2026-10-22 07:09): перевод и пример прижаты к низу белой карточки — на месте при любом слове, 360–412', async () => {
+    const bad = [];
+    for(const [w, h] of [[360, 640], [390, 844], [412, 915]]){
+      const q = await openPage(browser); await q.setViewportSize({ width:w, height:h });
+      const r = await q.evaluate(async () => { setMode('phrases'); setKind(true); setId = 'hotel'; renderChips();
+        const pool = wordPool('hotel').items, words = ['oda', 'yastık', 'havlu', pool.slice().sort((a, b) => (b.ru || '').length - (a.ru || '').length)[0].tr];
+        const out = [];
+        for(const wd of words){ pool.forEach(x => x.seen = x.tr === wd ? 0 : 1); lastKey = ''; next();
+          for(let k = 0; k < 40 && !(ctx && ctx.loaded); k++) await new Promise(z => setTimeout(z, 50)); await new Promise(z => setTimeout(z, 150));
+          const g = s => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top) : null; };
+          const ph = document.getElementById('phCard').getBoundingClientRect(), ex = document.querySelector('#partner .ctx-ex').getBoundingClientRect();
+          out.push({ w:item.target, ru:item.meaning, meaning:g('#meaning'), ex:Math.round(ex.top), gapBottom:Math.round(ph.bottom - ex.bottom) }); }
+        return out; });
+      const f = r[0];
+      r.forEach(x => { if(x.meaning !== f.meaning || x.ex !== f.ex) bad.push(`${w}×${h} ${x.w} («${x.ru}»): перевод ${x.meaning} / пример ${x.ex}, у «${f.w}» ${f.meaning} / ${f.ex}`);
+        if(x.gapBottom > 24) bad.push(`${w}×${h} ${x.w}: пример не у низа карточки (зазор ${x.gapBottom})`); });
+      if(q.errors.length) bad.push(w + ': ' + q.errors.join('; ')); await q.context().close();
+    }
+    eq(bad, []);
+  });
   await test('слово в контексте (2026-10-21 10:56): пример с тем же значением, что на карточке (daire — квартира, не круг)', async () => {
     const q = await openPage(browser);
     const T = { data:[
