@@ -3783,7 +3783,7 @@ try { setHints(localStorage.getItem("soyle-hints") === "1"); } catch(e){ setHint
 // Сцена: nodes[id] = { npc, ru, moves:[{ key:[слова, по которым узнаём ответ], say:[как сказать], ru, go, fx, hide }],
 //   again (переспрос), pay:{ price, notes }, end:{ kind, text, fx } }. fx: { money, min, rel, flag }.
 const CITY_START = { ver:2, day:1, money:1700,   // 3 500 зарплата − 1 800 аренда первой недели (уже оплачена при въезде; RENT ниже)
-  min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, pos:0, roll:null, visited:[], plan:null, contacts:{}, dmDay:{}, callback:null };
+  min:9 * 60, rel:{}, done:[], said:0, ok:0, days:0, played:{}, skill:{}, carry:[], todaySaid:[], debt:0, haggleWins:0, pos:0, roll:null, visited:[], plan:null, contacts:{}, dmDay:{}, callback:null, home:{ broken:{}, visit:null, fixed:[], soaked:false } };   // home — поломки дома (спек 2026-10-22-home-repairs)
 // Поле-настолка (спек §4а): кольцо из 24 клеток по периметру сетки 7×7 (по часовой от дома в левом верхнем углу), две срезки-улицы.
 // kind: home — дом (звонки, визиты мастеров), place — место со сценами, event — клетка «?» (карта из колоды). dat — дательный падеж для такси («Eczaneye lütfen»).
 const BOARD = [
@@ -3859,13 +3859,13 @@ const CAMPAIGN = [
 const FIRST_DAYS = [["bakkal", "firin", "simit"], ["market", "lokanta", "cay"], ["taxi", "dolmus", "istanbulkart"]];   // лавка → оплата и сдача → транспорт и числа
 const campWeekRaw = () => Math.ceil(city.day / 7) - ((city.camp && city.camp.w0) || 0);   // у старого сохранения до ближайшего понедельника — 0 (неделя ещё не началась)
 const campWeek = () => Math.max(1, campWeekRaw());
-const campReady = w => w <= 1 || (WEEK_SETS[w - 1] || []).some(id => SCENES[id] && !SCENES[id].event);   // у недели есть свои сцены
+const campReady = w => w <= 1 || (WEEK_SETS[w - 1] || []).some(id => SCENES[id] && !SCENES[id].event && !SCENES[id].repair);   // repair — вызов мастера, не дело недели   // у недели есть свои сцены
 // Сколько дел недели кампании сделано (вид B, 2026-10-20: «5 из 13» на поле и в «Прогрессе»). Считается как медаль «Все дела недели»: дело недели, сыгранное
 // хотя бы раз (city.played[id].n, исход любой). Неделя — текущая неделя кампании; если у неё ещё нет сцен («Неделя 2 — скоро») или месяц прожит —
 // последняя неделя со сценами. city.played не хранит, на какой неделе дело сыграно, поэтому засчитываются и дела, сыгранные раньше (как у медали).
 function campWeekTasks(){
   let w = Math.min(campWeek(), WEEK_SETS.length); while(w > 1 && !campReady(w)) w--;
-  const ids = (WEEK_SETS[w - 1] || []).filter(id => SCENES[id] && !SCENES[id].event), pl = city.played || {};
+  const ids = (WEEK_SETS[w - 1] || []).filter(id => SCENES[id] && !SCENES[id].event && !SCENES[id].repair), pl = city.played || {};
   return { done:ids.filter(id => pl[id] && pl[id].n).length, total:ids.length, w };
 }
 const cityMasteredN = () => Object.values(city.mastery || {}).filter(v => v >= 3).length;
@@ -3909,10 +3909,15 @@ function cityOpenNow(id, day = city.day, min = city.min){
 }
 function cityPlanFor(day){                       // воскресенье (и повтор после провала) — первым «Хозяин квартиры»
   const p = cityPlanBase(day), ev = SCENES.ev_sahibi && ((day - 1) % 7 + 1 === 7 || (city.flags && city.flags.evAgain));
-  return ev ? ["ev_sahibi", ...p.filter(id => id !== "ev_sahibi")].slice(0, Math.max(PLAN_SIZE, p.length)) : p;
+  const q = ev ? ["ev_sahibi", ...p.filter(id => id !== "ev_sahibi")].slice(0, Math.max(PLAN_SIZE, p.length)) : p;
+  const rep = homeBroken("musluk") && (city.home.visit ? "tesisatci_gel" : "tesisatci");   // поломка дома — первым делом: позвонить мастеру / дождаться его
+  return rep && SCENES[rep] ? [rep, ...q.filter(id => id !== rep)].slice(0, Math.max(PLAN_SIZE, q.length)) : q;
 }
+// Дом с поломками: city.home.broken[id] = { day } — что сломано и с какого дня; homeBreak ставит поломку (появление — в cityNewDay)
+const homeBroken = id => !!(city.home && city.home.broken && city.home.broken[id]);
+function homeBreak(id){ if(!homeBroken(id)) city.home.broken[id] = { day:city.day }; }
 function cityPlanBase(day){
-  const week = Math.ceil(day / 7), unlocked = WEEK_SETS.slice(0, Math.min(3, week)).flat().filter(id => SCENES[id] && !SCENES[id].event);
+  const week = Math.ceil(day / 7), unlocked = WEEK_SETS.slice(0, Math.min(3, week)).flat().filter(id => SCENES[id] && !SCENES[id].event && !SCENES[id].repair);
   const carry = (city.carry || []).filter(id => SCENES[id]), prev = new Set(city.prevPlan || []);
   const openToday = id => { const h = OPEN_HOURS[id]; return !h || h.days.includes((day - 1) % 7 + 1); };
   let pool = unlocked.filter(id => !carry.includes(id) && openToday(id));
@@ -4007,6 +4012,8 @@ function cityNewDay(){
   let rentShort = 0;
   if(payday){ city.money += SALARY; const back = Math.min(city.debt, city.money); city.money -= back; city.debt -= back;   // долг гасится из зарплаты, деньги не уходят в минус
     if(city.rentFor !== Math.ceil(city.day / 7)){ const pay = Math.min(RENT, city.money); city.money -= pay; rentShort = RENT - pay; city.debt += rentShort; } }   // отдали хозяину в воскресенье — не списывается   // аренда; не хватило — хозяин подождёт (долг)
+  // кран ломается со 2-й недели кампании, раз в неделю по вторникам (не в первую неделю; не дважды, пока не починен; не в неделю починки)
+  if(campWeek() >= 2 && cityDow() === 2 && !homeBroken("musluk") && !city.home.fixed.some(f => Math.ceil(f.day / 7) === Math.ceil(city.day / 7))) homeBreak("musluk");
   if(payday) city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) };   // начало недели: снимок для итога (до сохранения — ревью 2026-10-11)
   city.plan = cityPlanFor(city.day); city.carry = []; cityMorning(); citySave(); cityRender();
   toast(payday ? `Pazartesi: maaş +${SALARY} ₺, kira −${RENT} ₺` : `${DOW_RU[cityDow()]}, день ${city.day}`);
@@ -5344,6 +5351,9 @@ function cityNormalize(){
   if(!city.camp || typeof city.camp !== "object"){   // кампания: новая игра — с пролога; старое сохранение (день > 1) — с недели 1, всё накопленное на месте (§2б п. 4)
     city.camp = city.day <= 1 ? { w0:0 } : { w0:Math.ceil(city.day / 7), old:true, prologue:true };
     city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) }; }
+  { const h = city.home = (city.home && typeof city.home === "object" && !Array.isArray(city.home)) ? city.home : {};
+    if(!h.broken || typeof h.broken !== "object" || Array.isArray(h.broken)) h.broken = {}; if(!h.visit || typeof h.visit !== "object") h.visit = null;
+    if(!Array.isArray(h.fixed)) h.fixed = []; h.soaked = !!h.soaked; }
   if(!city.feedback || typeof city.feedback !== "object") city.feedback = {};
   if(fresh && !city.calDay) city.calDay = dayStr(new Date());                         // новая игра: день 1 — сегодня; у старых сохранений метки нет — новый день можно сразу
   if(!Array.isArray(city.plan)) city.plan = cityPlanFor(city.day);

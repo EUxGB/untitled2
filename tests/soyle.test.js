@@ -3047,6 +3047,38 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(failed.debt, 1800, 'провал — аренда в долг'); eq([failed.mon[0], failed.mon[1], failed.mon[2], failed.mon[3]], [1, true, 3000 + 3500 - 1800, 0], 'понедельник: долг погашен из зарплаты, аренда не дважды, хозяин снова в плане');
     eq(again, { node:'problem', pay:false }, 'повтор — без второй оплаты'); eq(errs, []);
   });
+  await test('Дом с поломками (2026-10-23): состояние и появление', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => {
+      const o = {}; const stash = { t:SCENES.tesisatci, g:SCENES.tesisatci_gel }, wk = WEEK_SETS.map(a => a.slice());
+      const closeAll = () => { for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal(); };
+      try {
+        SCENES.tesisatci = { repair:true, phone:true, title:'stub', nodes:{} }; SCENES.tesisatci_gel = { repair:true, phone:true, title:'stub', nodes:{} };
+        o.fresh = JSON.stringify(city.home);
+        delete city.home; cityNormalize(); o.migrated = JSON.stringify(city.home);
+        city.day = 1; cityNewDay(); closeAll(); o.w1 = [city.day, homeBroken('musluk')];            // день 2 — неделя 1
+        city.camp = { w0:0 }; city.day = 8; city.home = { broken:{}, visit:null, fixed:[], soaked:false }; cityNewDay(); closeAll();
+        o.tue = [city.day, cityDow(), homeBroken('musluk'), city.plan[0], city.home.broken.musluk && city.home.broken.musluk.day];
+        city.day = 15; cityNewDay(); closeAll(); o.tue2 = [city.day, city.plan.filter(x => x === 'tesisatci').length];   // второй вторник: не дублируется
+        city.home.visit = { id:'musluk', at:600, day:9, price:150 }; o.gel = cityPlanFor(16)[0];
+        city.home = { broken:{}, visit:null, fixed:[{ id:'musluk', day:15, price:150 }], soaked:false }; city.day = 15; cityNewDay(); closeAll(); o.fixedWeek = [city.day, homeBroken('musluk')];   // починили на этой неделе
+        // repair-сцена не считается делом недели и не попадает в случайный пул
+        WEEK_SETS.forEach((a, i) => { a.length = 0; if(i === 1) a.push('tesisatci'); });
+        o.ready = campReady(2); o.pool = cityPlanBase(8).includes('tesisatci');
+      } finally {
+        WEEK_SETS.forEach((a, i) => { a.length = 0; a.push(...wk[i]); });
+        if(stash.t) SCENES.tesisatci = stash.t; else delete SCENES.tesisatci; if(stash.g) SCENES.tesisatci_gel = stash.g; else delete SCENES.tesisatci_gel;
+      }
+      return o; });
+    const empty = '{"broken":{},"visit":null,"fixed":[],"soaked":false}';
+    eq(r.fresh, empty, 'новая игра'); eq(r.migrated, empty, 'сохранение без home');
+    eq(r.w1, [2, false], 'неделя 1 — поломки нет');
+    eq(r.tue, [9, 2, true, 'tesisatci', 9], 'вторник недели 2: кран сломан, мастер первым в плане');
+    eq(r.tue2, [16, 1], 'второй вторник не дублирует'); eq(r.gel, 'tesisatci_gel', 'мастер записан — ждём его');
+    eq(r.fixedWeek, [16, false], 'в неделю починки не ломается');
+    eq([r.ready, r.pool], [false, false], 'сцена repair — не дело недели и не в пуле');
+    await q.close();
+  });
   await test('Установка, «Начать сначала», соседи (2026-10-11 20:11–20:13): на телефоне в «Городе» вместо «?» — «Установить» (Android — окно браузера, iPhone — инструкция), на ПК и в тренировке — «?»; «Начать сначала» стирает прогресс после подтверждения; «Соседи: N» из Supabase, отметка устройства раз в день', async () => {
     // ПК: «?» на месте
     const pc = await openPage(browser); await pc.click('#tab-city');
