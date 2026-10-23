@@ -3161,6 +3161,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const ms = await q.evaluate(() => { city.pos = 0; cityArrive0(0); return { id:ct && ct.id, ic:document.getElementById('modalIc').textContent, v:city.home.visit, plan:city.plan.slice(), broken:homeBroken('musluk'), done:cityDoneId('tesisatci') }; });
     eq([ms.id, ms.ic, ms.v, ms.plan.includes('tesisatci'), ms.plan.includes('tesisatci_gel'), ms.broken, ms.done], [null, 'Olmadı.', null, true, false, true, false], 'вернулись в 11:40 — мастер ушёл, снова звонить');
     await closeAll();
+    // «Eve dön» (cityGoHome) — тоже приход домой: в окне часа мастер у двери, позже — «Olmadı.»; потом день заканчивается как обычно
+    await prep(630, 1);                                                          // с соседней клетки: +10 мин дороги → 10:40
+    const gh = await q.evaluate(() => { cityGoHome(); return { id:ct && ct.id, pos:city.pos, modal:document.getElementById('modal').hidden ? '' : document.getElementById('modalIc').textContent }; });
+    eq(gh, { id:'tesisatci_gel', pos:0, modal:'' }, '«Eve dön» в 10:40 — мастер у двери');
+    await prep(690, 1);                                                          // → 11:40
+    const gm = await q.evaluate(() => { cityGoHome(); const o = { id:ct && ct.id, ic:document.getElementById('modalIc').textContent, title:document.getElementById('modalTitle').textContent, v:city.home.visit };
+      for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal(); cityGoHome(); o.end = document.getElementById('modalTitle').textContent; return o; });
+    eq([gm.id, gm.ic, gm.title, gm.v, /прожит/.test(gm.end)], [null, 'Olmadı.', 'Мастер ушёл', null, true], '«Eve dön» в 11:40 — мастер ушёл, затем итоги дня');
+    await closeAll();
     // Review 3: всё время дома, уже 11:40 — нажатие строки начинает сцену (не «ушёл»)
     const h = await prep(700, 0); ok(/мастер у двери/.test(h.text), h.text);
     eq(await tap(), { id:'tesisatci_gel', min:701, modal:'' }, 'дома всё время — мастер у двери и после часа');

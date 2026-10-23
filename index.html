@@ -5766,7 +5766,9 @@ function cityVisit(i){
 }
 function cityGoHome(){
   if(ct) return;
-  city.min += STEP_MIN * boardDist(city.pos, 0); city.pos = 0; city.roll = null; citySave(); cityRender(); cityDayEnd();
+  city.min += STEP_MIN * boardDist(city.pos, 0); city.pos = 0; city.roll = null; citySave(); cityRender();
+  if(city.min < DAY_END){ const us = homeUstaState(); if(us === "door") return cityStart("tesisatci_gel"); if(us === "missed") return homeUstaMissed(); }   // «Eve dön» — тоже приход домой (ревью Task 4): мастер у двери / ушёл; итоги дня — следующим нажатием
+  cityDayEnd();
 }
 function cityTaxiTo(i){                                            // такси до клетки: разговор с водителем, цена по расстоянию; в конце сцены фишка переезжает
   if(ct || !BOARD[i] || BOARD[i].kind === "event" || i === city.pos) return;
