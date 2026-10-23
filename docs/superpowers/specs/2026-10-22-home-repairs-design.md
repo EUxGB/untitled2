@@ -90,13 +90,36 @@
 - Экономика: цена мастера 150 / 200 ₺ (точно / общими словами), торг −10 ₺. Бот-замер (`tests/city-bot.js`): запас недели ≈ 300 ₺ после аренды —
   одна починка в неделю помещается; проверить ботом после добавления.
 
-## 5. Реплики (черновик фазы 1, на проверку и одобрение)
+## 5. Реплики фазы 1 — одобрены пользователем 2026-10-23 13:40 («Да»)
 
-Игрок: «Mutfaktaki musluk damlıyor.» · «Su sorunu var.» · «Musluk. Damlıyor.» · «Tamam, bekliyorum.» · «Biraz indirim olur mu?» (уже есть в коде у водовоза в другой форме).
-Мастер: «Alo, buyurun?» · «Ne sorunu? Musluk mu, kombi mi?» · «Tamam, yarım saat içinde gelirim. Yüz elli lira.» ·
-«Bir saat içinde gelirim, önce bakmam lazım. İki yüz lira.» · «Peki, yüz kırk olsun.» · «Contayı değiştirdim, bitti.» ·
-«Efendim? Anlamadım.» · «Kusura bakmayın, müşterim var. Sonra arayın.»
-Каждое слово — в `PHRASE_DICT`/`FORM_GLOSS`/`FUNC_GLOSS` и `tests/morph.json` (тест покрытия упадёт иначе); числа — `trNumWords`.
+Проверка: две независимые проверки агентами (отчёты в `.superpowers/sdd/2026-10-23-home-repairs-phase1/task-1-report.md`, `task-1-recheck.md`, не в git):
+Zemberek (zeyrek) — все 56 слов разобраны; употребление — отзывы armut.com, новости, форумы; TDK и Tatoeba из среды недоступны — словарные статьи НЕ проверены,
+естественность — суждение агентов, носителем не подтверждена.
+
+Игрок:
+1. «Bir su sorunu var.» — Есть проблема с водой. (общими словами)
+2. «Mutfaktaki musluk damlıyor.» — Кран на кухне капает. (точно)
+3. «Musluk. Damlıyor.» — Кран. Капает. (ответ на уточнение)
+4. «Tamam, bekliyorum.» — Хорошо, жду.
+5. «Biraz indirim olur mu?» — Можно немного скидки? (`haggle:true`)
+6. «Buyurun usta, mutfakta.» — Проходите, мастер, (кран) на кухне.
+7. «Elinize sağlık.» — Здоровья вашим рукам (спасибо за работу).
+
+Мастер (Нихат-уста):
+8. «Alo, buyurun?» — Алло, слушаю.
+9. «Nasıl bir sorun? Musluk mu, kombi mi?» — Что за проблема? Кран или котёл? (только после реплики 1)
+10. «Tamam, yarım saat içinde gelirim. Yüz elli lira.» — Хорошо, приеду в течение получаса. Сто пятьдесят лир.
+11. «Bir saat içinde gelirim, önce bir bakmam lazım. İki yüz lira civarı.» — Приеду в течение часа, сначала надо посмотреть. Около двухсот лир.
+12. «Peki, yüz kırk olsun.» / «Peki, yüz doksan olsun.» — Ладно, пусть будет сто сорок / сто девяносто.
+13. «Merhaba, musluk için geldim.» — Здравствуйте, я по поводу крана.
+14. «Contayı değiştirdim, tamamdır.» — Поменял прокладку, готово.
+15. «Yüz elli lira.» «İki yüz lira.» «Yüz kırk lira.» «Yüz doksan lira.» — суммы при оплате.
+16. «Yarın sabah gelirim.» — Приеду завтра утром.
+17. «Efendim? Anlamadım.» — Простите? Не понял. (промах)
+18. «Kusura bakmayın, şu an işteyim. Biraz sonra arayın.» — Извините, я сейчас на работе. Перезвоните чуть позже. (кончилось терпение)
+
+Без глоссы на 2026-10-23 (добавить в `FORM_GLOSS`/`FUNC_GLOSS` и `tests/morph.json`): mutfaktaki, mutfakta, sorunu, içinde, bakmam, contayı, değiştirdim, arayın, civarı, işteyim, tamamdır
+(предложенные русские глоссы — в `task-1-report.md`). Цены — игровые (реальная замена прокладки по armut.com 750–3 000 TL; в игре — масштаб аренды 1 800 / зарплаты 3 500).
 
 ## 6. Тесты (что обязано падать без кода)
 
