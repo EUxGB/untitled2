@@ -2191,7 +2191,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       const r = await q.evaluate(() => ({ hint:document.getElementById('ctDiceHint').textContent, n:document.querySelector('#ctRoll .die').parentNode.dataset.n, dots:document.querySelectorAll('#ctRoll .die circle').length, text:document.getElementById('ctCard') ? '' : document.getElementById('cityCard').innerText }));
       ok(!/Выпало/i.test(r.hint + r.text), 'надпись про выпавшее число осталась: ' + r.hint); eq(r.dots, 4); await q.context().close(); }
   });
-  await test('больше персонажей (просьба 22:04): 18 человек, новые встречаются в местах своего пула, итог сцены называет их по имени, портреты все разные', async () => {
+  await test('больше персонажей (просьба 22:04; 2026-10-23 — 19-й, сантехник Нихат-уста): 19 человек, новые встречаются в местах своего пула, итог сцены называет их по имени, портреты все разные', async () => {
     const q = await openCity();
     const r = await q.evaluate(() => { const out = { n:Object.keys(CHARS).length, bad:[] };
       for(const sid of ['taxi', 'bakkal', 'visit_bakkal', 'mama', 'kapici', 'visit_kapici', 'cay', 'lokanta', 'visit_cay', 'visit_lokanta', 'eczane', 'visit_eczane', 'visit_berber', 'visit_pazar']){
@@ -2203,7 +2203,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
           if(c !== sc.pool[0] && CHARS[c].short && ctNm(g).includes(d)) out.bad.push(sid + ' ' + c + ': в цели осталось имя ' + d);
           ct = null; } }
       cityRender(); return out; });
-    eq(r.n, 18); eq(r.bad, []); eq(q.errors, []); await q.context().close();
+    eq(r.n, 19); eq(r.bad, []); eq(q.errors, []); await q.context().close();
   });
   await test('вместо буквы — портрет (просьба 07:30): у каждой сцены на лице собеседника SVG-портрет (у людей без имени — свой по роли), окно «Бакал Хасан» в «Людях» тоже с портретом, не с буквой', async () => {
     const q = await openCity(); await q.evaluate(() => { trVoices = []; window.__busy = ''; });
@@ -3078,6 +3078,58 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq(r.fixedWeek, [16, false], 'в неделю починки не ломается');
     eq([r.ready, r.pool], [false, false], 'сцена repair — не дело недели и не в пуле');
     await q.close();
+  });
+  await test('Дом с поломками (2026-10-23): звонок Нихату — точно дешевле и раньше, общими словами — переспрос, дороже и позже; торг −10 ₺; поздно — завтра в 9:30; звонить только из дома', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; });
+    const closeAll = () => q.evaluate(() => { for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal(); });
+    const prep = (min, pos = 0) => q.evaluate(([min, pos]) => { cityLeave(); ct = null; for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal();
+      city.home = { broken:{ musluk:{ day:city.day } }, visit:null, fixed:[], soaked:false }; city.done = []; city.carry = []; city.pos = pos; city.roll = null; city.min = min; city.haggleWins = 0; city.skill = {};
+      city.plan = cityPlanFor(city.day); cityRender();
+      const li = document.querySelector('#ctTasks .ct-task[data-scene="tesisatci"]'); const o = { first:city.plan[0], row:!!li, go:!!(li && li.classList.contains('go')) };
+      if(li) li.click(); o.started = !!ct && ct.id === 'tesisatci'; return o; }, [min, pos]);
+    const call = async (min, steps) => {
+      const st = await prep(min); const seen = [];
+      const pat0 = await q.evaluate(() => ct && ct.patience), show = await q.evaluate(() => document.getElementById('ctShow').disabled);
+      for(const s of steps){ const r = await ctSay(q, s); seen.push(r.npc); if(r.next) await ctNext(q); seen.push(await q.evaluate(() => document.getElementById('ctTr').textContent)); }
+      await q.waitForTimeout(150);
+      const r = await q.evaluate(min => { const v = city.home.visit, d = city.done.find(x => x.id === 'tesisatci');
+        return { v, d:v ? v.at - min : null, day:city.day, wins:city.haggleWins, kind:d && d.kind, text:document.getElementById('modalText').textContent, ended:!ct }; }, min);
+      await closeAll(); return Object.assign(r, { st, seen, pat0, show });
+    };
+    // сцена и персонаж
+    const sc = await q.evaluate(() => { const s = SCENES.tesisatci, c = CHARS.tesisatci_nihat, me = charAvatar('tesisatci_nihat');
+      return { phone:s.phone, repair:s.repair, room:s.room, char:s.char, name:c.name, short:c.short, bio:/двадцать лет/.test(c.bio || ''), dm:!!c.dm,
+        avatar:!!AVATARS.tesisatci_nihat && Object.keys(CHARS).filter(k => k !== 'tesisatci_nihat').every(k => charAvatar(k) !== me) }; });
+    eq(sc, { phone:true, repair:true, room:'mutfak', char:'tesisatci_nihat', name:'Нихат-уста', short:'Нихат', bio:true, dm:true, avatar:true }, 'сцена и персонаж');
+    // не дома — строка есть, но начать нельзя (правило клетки)
+    const away = await prep(10 * 60, 3);
+    eq(away, { first:'tesisatci', row:true, go:false, started:false }, 'не дома — звонок не начинается');
+    // точно
+    const ex = await call(10 * 60, ['mutfaktaki musluk damlıyor', 'tamam bekliyorum']);
+    eq([ex.st.go, ex.st.started, ex.show], [true, true, true], 'дома — строка начинает звонок, «Показать» по телефону выключена');
+    ok(/yarım saat içinde gelirim/i.test(ex.seen.join(' | ')) && /Yüz elli lira/.test(ex.seen.join(' | ')), 'точно — полчаса и 150: ' + ex.seen.join(' | '));
+    eq([ex.v && ex.v.id, ex.v && ex.v.price, ex.v && ex.v.day, ex.kind, ex.ended], ['musluk', 150, ex.day, 'ok', true], 'точно: визит');
+    ok(ex.d >= 30 && ex.d <= 40, 'точно — через полчаса: ' + ex.d); { const hm = String(Math.floor(ex.v.at / 60)).padStart(2, '0') + ':' + String(ex.v.at % 60).padStart(2, '0'); ok(ex.text.includes(hm), 'в итоге — время прихода ' + hm + ': ' + ex.text); }
+    // общими словами — переспрос, −1 терпения
+    const vg = await call(10 * 60, ['bir su sorunu var', 'musluk damlıyor', 'tamam bekliyorum']);
+    ok(vg.seen.some(t => /Nasıl bir sorun\? Musluk mu, kombi mi\?/.test(t)), 'переспрос: ' + vg.seen.join(' | '));
+    ok(vg.seen.some(t => /İki yüz lira civarı/.test(t)), 'около двухсот: ' + vg.seen.join(' | '));
+    eq([vg.v && vg.v.price, vg.kind], [200, 'near'], 'общими словами: 200, так себе'); ok(vg.d >= 60 && vg.d <= 70, 'общими словами — через час: ' + vg.d);
+    const patV = await (async () => { await prep(10 * 60); await ctSay(q, 'bir su sorunu var'); return q.evaluate(() => ct && ct.patience); })();
+    eq(patV, ex.pat0 - 1, 'общими словами — минус терпение'); await q.evaluate(() => { cityLeave(); ct = null; });
+    // торг
+    const hx = await call(10 * 60, ['mutfaktaki musluk damlıyor', 'biraz indirim olur mu', 'tamam bekliyorum']);
+    ok(hx.seen.some(t => /Peki, yüz kırk olsun\./.test(t)), hx.seen.join(' | ')); eq([hx.v && hx.v.price, hx.wins], [140, 1], 'торг: 140, торг засчитан');
+    const hv = await call(10 * 60, ['bir su sorunu var', 'musluk damlıyor', 'biraz indirim olur mu', 'tamam bekliyorum']);
+    ok(hv.seen.some(t => /Peki, yüz doksan olsun\./.test(t)), hv.seen.join(' | ')); eq([hv.v && hv.v.price, hv.wins], [190, 1], 'торг общими словами: 190');
+    // поздно (19:40) — завтра в 9:30
+    const lt = await call(19 * 60 + 40, ['mutfaktaki musluk damlıyor', 'tamam bekliyorum']);
+    eq([lt.v && lt.v.day, lt.v && lt.v.at, lt.v && lt.v.price], [lt.day + 1, 570, 150], 'поздно — завтра в 9:30'); ok(/Yarın sabah gelirim/.test(lt.text) && /09:30/.test(lt.text), lt.text);
+    // кончилось терпение — «на работе, перезвоните»; визита нет
+    await prep(10 * 60); for(let k = 0; k < 6 && await q.evaluate(() => !!ct && !ct.resolved); k++) await ctSay(q, ''); await q.waitForTimeout(150);
+    const fl = await q.evaluate(() => ({ v:city.home.visit, kind:(city.done.find(x => x.id === 'tesisatci') || {}).kind, text:document.getElementById('modalText').textContent })); await closeAll();
+    eq([fl.v, fl.kind], [null, 'bad'], 'провал — без визита'); ok(/şu an işteyim/.test(fl.text), fl.text);
+    eq(q.errors, []); await q.close();
   });
   await test('Установка, «Начать сначала», соседи (2026-10-11 20:11–20:13): на телефоне в «Городе» вместо «?» — «Установить» (Android — окно браузера, iPhone — инструкция), на ПК и в тренировке — «?»; «Начать сначала» стирает прогресс после подтверждения; «Соседи: N» из Supabase, отметка устройства раз в день', async () => {
     // ПК: «?» на месте

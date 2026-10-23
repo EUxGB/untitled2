@@ -440,7 +440,11 @@
   "yenikapı": "Еникапы (район)",
   "ye-": "есть, кушать",
   "haftasonu": "выходные (hafta sonu)",
-  "sakal": "борода"
+  "sakal": "борода",
+  "mutfak": "кухня",
+  "iç": "внутренняя часть, внутри",
+  "civar": "окрестности; около",
+  "conta": "прокладка"
  },
  "morph": {
   "acelem": "acele m=poss1s",
@@ -1044,6 +1048,17 @@
   "şikayetimiz": "şikayet imiz=poss1p",
   "şikâyetiniz": "şikâyet iniz=poss2p",
   "şişesi": "şişe si=poss3s",
-  "şuna": "şu n=bn a=dat"
+  "şuna": "şu n=bn a=dat",
+  "sorunu": "sorun u=poss3s",
+  "mutfaktaki": "mutfak ta=loc ki=ki",
+  "mutfakta": "mutfak ta=loc",
+  "içinde": "iç i=poss3s n=bn de=loc",
+  "bakmam": "bak=bakmak ma=vn m=poss1s",
+  "civarı": "civar ı=poss3s",
+  "contayı": "conta yı=acc",
+  "değiştirdim": "değiştir=değiştirmek di=past m=v1s",
+  "tamamdır": "tamam dır=cop3",
+  "işteyim": "iş te=loc yim=cop1s",
+  "arayın": "ara=aramak yın=imp2p"
  }
 }

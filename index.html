@@ -3916,6 +3916,10 @@ function cityPlanFor(day){                       // воскресенье (и �
 // Дом с поломками: city.home.broken[id] = { day } — что сломано и с какого дня; homeBreak ставит поломку (появление — в cityNewDay)
 const homeBroken = id => !!(city.home && city.home.broken && city.home.broken[id]);
 function homeBreak(id){ if(!homeBroken(id)) city.home.broken[id] = { day:city.day }; }
+// Мастер записан: придёт через wait минут от конца звонка; позже 20:00 — завтра в 9:30 (спек §4). Ставит fx.visit концовки звонка (cityFx)
+function homeVisit(v){ let at = city.min + v.wait, day = city.day; if(at > 20 * 60){ day++; at = 9 * 60 + 30; } city.home.visit = { id:v.id, at, day, price:v.price }; }
+// Концовка звонка мастеру: обычная и поздняя (приход вышел бы позже 20:00 — if.late считается в ту же минуту, что и homeVisit)
+function repairEnd(kind, text, lateText, visit){ return { end:{ kind, text, fx:{ visit } }, variants:[{ if:{ late:20 * 60 + 1 - visit.wait }, end:{ kind, text:lateText, fx:{ visit } } }] }; }
 function cityPlanBase(day){
   const week = Math.ceil(day / 7), unlocked = WEEK_SETS.slice(0, Math.min(3, week)).flat().filter(id => SCENES[id] && !SCENES[id].event && !SCENES[id].repair);
   const carry = (city.carry || []).filter(id => SCENES[id]), prev = new Set(city.prevPlan || []);
@@ -4051,6 +4055,7 @@ const CHARS = {
   eczaci_meryem:{ bio:"Мерьем помогает в аптеке и учится на второй курс заочно. Объясняет всё по два раза и пишет дозировку на коробке красным маркером, чтобы никто не забыл. Знает русские слова от бабушки из Баку.", f:1, name:"Мерьем, помощница фармацевта", short:"Мерьем", initial:"M", voice:6, patience:4, trait:"Терпеливо объясняет по два раза, пишет дозировку на коробке.", likes:{ words:["teşekkür ederim", "geçmiş olsun"] }, dm:{ work:[9*60, 19*60], sleep:22*60, contactAt:5 } },
   usta_can:    { bio:"Джан работает в чайной у пристани и носит по три стакана за раз. Всё делает быстро, не любит, когда клиенты долго выбирают, но с запоминающимися гостями шутит. Копит на поездку в Берлин к сестре.", name:"Джан, официант", short:"Джан",  initial:"C", voice:1, patience:2, trait:"Спешит, носит три чашки сразу, не любит долгих раздумий.", likes:{ words:["eline sağlık", "teşekkürler"], firstTry:true }, dm:{ work:[11*60, 22*60], fan:1, sleep:23*60 + 30, contactAt:5 } },
   kapici_ibrahim:{ bio:"Ибрахим дежурит по выходным и заменяет Мехмета, когда тот у дочери. Добродушный, чинит всё скотчем и проволокой, и почему-то работает. Любит кормить уличных кошек в подъезде, а Мехмет делает вид, что не замечает.", name:"Ибрахим, сменщик капыджи", short:"Ибрахим", initial:"İ", voice:5, patience:3, trait:"Дежурит по выходным, добродушный, чинит всё скотчем.", likes:{ words:["kolay gelsin"] }, dm:{ work:[9*60, 17*60], devout:1, sleep:22*60, contactAt:4 } },
+  tesisatci_nihat:{ bio:"Нихат чинит трубы в квартале двадцать лет и помнит, у кого какой кран. Говорит быстро и сразу называет цену. Не любит, когда проблему описывают «вообще», — переспрашивает, пока не поймёт, что именно течёт.", name:"Нихат-уста", short:"Нихат", initial:"N", voice:3, patience:3, trait:"Сантехник: говорит быстро, сразу называет цену, переспрашивает, если описали «вообще».", likes:{ words:["mutfaktaki", "musluk", "damlıyor"] }, dm:{ work:[8*60, 19*60], devout:1, sleep:22*60 } },   // дом с поломками (спек 2026-10-22 §3)
 };
 const contactAt = c => (CHARS[c] && CHARS[c].dm && CHARS[c].dm.contactAt) || 3;       // с какими отношениями человек дал бы номер: по умолчанию «знакомый»; молчуны и строгие — позже
 const POLITE = ["lütfen", "teşekkür", "teşekkürler", "sağ ol", "sağ olun", "kolay gelsin", "iyi günler", "hayırlı işler", "rica ederim"];
@@ -4491,6 +4496,39 @@ const SCENES = {
       door2d:{ npc:"Sularınız geldi! Yüz elli lira.", ru:"Ваша вода приехала! Сто пятьдесят лир.", pay:{ price:150, notes:[100, 200, 500], short:"Yüz elli lira.", shortRu:"Сто пятьдесят лир.", go:"done2" } },
       done:{ end:{ kind:"ok", text:"Бутыль у двери через полчаса. Заказать воду по телефону — первый настоящий экзамен на слух.", fx:{ min:30 } } },
       done2:{ end:{ kind:"near", text:"Две бутыли, но ждали час и заплатили вдвое. Хватит на две недели — если найдёте, куда поставить.", fx:{ min:60 } } },
+    } },
+  // Дом с поломками (спек 2026-10-22, §2 и §5; реплики одобрены пользователем 2026-10-23 13:40): звонок сантехнику. Точно — 150 ₺ и через полчаса,
+  // общими словами — переспрос (−1 терпения), «около двухсот» и через час; торг −10 ₺ (в реплике мастера). Концовка записывает визит (fx.visit → homeVisit).
+  tesisatci:{ title:"Позвонить сантехнику", who:"Нихат-уста", initial:"N", place:"Телефон", phone:true, repair:true, room:"mutfak", char:"tesisatci_nihat",
+    goal:"Объяснить мастеру, что сломалось, и договориться, когда он придёт.",
+    start:"greet",
+    fail:{ text:"Нихат-уста не понял, что у вас течёт: «Kusura bakmayın, şu an işteyim. Biraz sonra arayın.» — и положил трубку. Кран капает дальше; завтра позвоните снова.", fx:{ min:5 } },
+    nodes:{
+      greet:{ npc:"Alo, buyurun?", ru:"Алло, слушаю.", again:"Efendim? Anlamadım.", againRu:"Простите? Не понял.",
+        moves:[
+          { key:["mutfaktaki", "musluk", "damlıyor"], say:["Mutfaktaki musluk damlıyor."], ru:"Кран на кухне капает. (точно)", go:"quote" },
+          { key:["su sorunu", "sorun"], say:["Bir su sorunu var."], ru:"Есть проблема с водой. (общими словами)", go:"ask", fx:{ patience:-1 } },
+        ] },
+      ask:{ npc:"Nasıl bir sorun? Musluk mu, kombi mi?", ru:"Что за проблема? Кран или котёл?", again:"Efendim? Anlamadım.", againRu:"Простите? Не понял.",
+        moves:[ { key:["musluk", "damlıyor"], say:["Musluk. Damlıyor."], ru:"Кран. Капает.", go:"quoteV" } ] },
+      quote:{ npc:"Tamam, yarım saat içinde gelirim. Yüz elli lira.", ru:"Хорошо, приеду в течение получаса. Сто пятьдесят лир.", again:"Tamam, yarım saat içinde gelirim. Yüz elli lira.", againRu:"Хорошо, приеду в течение получаса. Сто пятьдесят лир.",
+        moves:[
+          { key:["tamam", "bekliyorum"], say:["Tamam, bekliyorum."], ru:"Хорошо, жду.", go:"ok150" },
+          { key:["indirim", "olur mu"], say:["Biraz indirim olur mu?"], ru:"Можно немного скидки?", go:"cheap", haggle:true },
+        ] },
+      cheap:{ npc:"Peki, yüz kırk olsun.", ru:"Ладно, пусть будет сто сорок.", again:"Peki, yüz kırk olsun.", againRu:"Ладно, пусть будет сто сорок.",
+        moves:[ { key:["tamam", "bekliyorum"], say:["Tamam, bekliyorum."], ru:"Хорошо, жду.", go:"ok140" } ] },
+      quoteV:{ npc:"Bir saat içinde gelirim, önce bir bakmam lazım. İki yüz lira civarı.", ru:"Приеду в течение часа, сначала надо посмотреть. Около двухсот лир.", again:"Bir saat içinde gelirim, önce bir bakmam lazım. İki yüz lira civarı.", againRu:"Приеду в течение часа, сначала надо посмотреть. Около двухсот лир.",
+        moves:[
+          { key:["tamam", "bekliyorum"], say:["Tamam, bekliyorum."], ru:"Хорошо, жду.", go:"ok200" },
+          { key:["indirim", "olur mu"], say:["Biraz indirim olur mu?"], ru:"Можно немного скидки?", go:"cheapV", haggle:true },
+        ] },
+      cheapV:{ npc:"Peki, yüz doksan olsun.", ru:"Ладно, пусть будет сто девяносто.", again:"Peki, yüz doksan olsun.", againRu:"Ладно, пусть будет сто девяносто.",
+        moves:[ { key:["tamam", "bekliyorum"], say:["Tamam, bekliyorum."], ru:"Хорошо, жду.", go:"ok190" } ] },
+      ok150:repairEnd("ok", "Нихат-уста понял с первого раза: капает кран на кухне. 150 ₺ — когда починит.", "Нихат-уста понял с первого раза, но взглянул на часы: «Yarın sabah gelirim.» Сегодня уже поздно. 150 ₺ — когда починит.", { id:"musluk", wait:30, price:150 }),
+      ok140:repairEnd("ok", "Сказали точно и поторговались: 140 ₺ вместо 150 — когда починит.", "Сказали точно и поторговались: 140 ₺ вместо 150. Но уже поздно: «Yarın sabah gelirim.»", { id:"musluk", wait:30, price:140 }),
+      ok200:repairEnd("near", "Нихату пришлось переспрашивать, что течёт. Цена «около двухсот» — 200 ₺, и раньше чем через час он не придёт: сначала посмотрит.", "Нихату пришлось переспрашивать, что течёт, а вечер уже поздний: «Yarın sabah gelirim.» Цена — 200 ₺.", { id:"musluk", wait:60, price:200 }),
+      ok190:repairEnd("near", "Переспросил, но уступил: 190 ₺ вместо 200. Придёт не раньше чем через час — сначала посмотрит.", "Переспросил, но уступил: 190 ₺ вместо 200. А сегодня уже поздно: «Yarın sabah gelirim.»", { id:"musluk", wait:60, price:190 }),
     } },
   // ---- короткие визиты: на каждой клетке есть что сделать, даже без дела дня (просьба пользователя 22:26) ----
   visit_hastane:{ title:"Больница: спросить дорогу", who:"Охранник", initial:"G", place:"Вход в больницу",
@@ -5500,6 +5538,7 @@ const AVATARS = {
   eczaci_meryem:{ skin:"#E8C4A4", hair:"#2B2A3A", style:"scarf", scarf:"#5B7D8E", shirt:"#F4F6F4", coat:1, f:1, glasses:1 },
   usta_can:    { skin:"#E8C09A", hair:"#3A2A1E", style:"short", shirt:"#222B33", apron:"#F0EEE6" },
   kapici_ibrahim:{ skin:"#D49C70", hair:"#8A8A8A", style:"bald", mus:2, flatcap:"#4B5B4B", shirt:"#6B6B3E" },
+  tesisatci_nihat:{ skin:"#D9A678", hair:"#3A3330", style:"short", beard:1, cap:"#1F4E79", shirt:"#1F4E79" },
 };
 // Люди без имени (симитчи, охранник, кассир…): тоже портрет, не буква; ключ — scene.who
 const ROLE_AV = {
@@ -5787,7 +5826,7 @@ function ctTaxiNode(id, n){
 function ctNodeFor(id){
   let n = ct.scene.nodes[id]; if(!n) return n;
   if(n.variants){
-    const v = n.variants.find(v => { const f = v.if || {}; if(f.late !== undefined && city.min < f.late) return false; if(f.money !== undefined && city.money < f.money) return false; const c = f.rel; if(!c) return true; const who = c.char || ct.char; return (who === ct.char ? ct.rel0 : city.rel[who] || 0) >= c.min; });   // отношения — на начало сцены: заслуженное сегодня действует с завтра; late — после часа
+    const v = n.variants.find(v => { const f = v.if || {}; if(f.late !== undefined && city.min < f.late) return false; if(f.money !== undefined && city.money < f.money) return false; if(f.price !== undefined && !(city.home.visit && city.home.visit.price === f.price)) return false; const c = f.rel; if(!c) return true; const who = c.char || ct.char; return (who === ct.char ? ct.rel0 : city.rel[who] || 0) >= c.min; });   // отношения — на начало сцены: заслуженное сегодня действует с завтра; late — после часа
     if(v){ n = Object.assign({}, n, v); delete n.variants; delete n.if; if(n.pay === null) delete n.pay; }
   }
   if(n.alt && n.alt.length){ const k = ctAltIdx(id, n.alt.length); n = Object.assign({}, n, n.alt[k]); delete n.alt; }
@@ -6110,6 +6149,8 @@ function cityFx(fx){
   if(!fx) return;
   if(fx.money){ city.money += fx.money; if(fx.money < 0 && ct) ct.spent -= fx.money; if(city.money < 0){ city.debt += -city.money; city.money = 0; } }   // провал при пустом кошельке — в долг, не в минус
   if(fx.min) city.min += fx.min;
+  if(fx.patience && ct) ct.patience = Math.max(1, ct.patience + fx.patience);   // переспрос мастера стоит терпения, но разговор не обрывает
+  if(fx.visit) homeVisit(fx.visit);
   if(fx.rel > 0 && ct && ct.dm){ if(ct.dmCap) fx = Object.assign({}, fx, { rel:0 }); else city.dmDay[ct.char] = city.day; }     // чат поднимает отношения только в первом разговоре дня с человеком
   if(fx.rel && ct && ct.char){ city.rel[ct.char] = (city.rel[ct.char] || 0) + fx.rel * (fx.rel > 0 && skillLvl("nezaket") >= 5 ? 2 : 1); }
   if(fx.flag){ (city.flags = city.flags || {})[fx.flag] = city.day; }
@@ -6138,7 +6179,7 @@ function cityEnd(end, failed){
   if(ct.scene.rent){ city.flags = city.flags || {};
     if(failed && city.rentFor !== rentWeek()){ city.debt += RENT; city.rentFor = rentWeek(); }   // провал проверки: аренда в долг (§2б п. 3)
     if(failed) city.flags.evAgain = city.day; else delete city.flags.evAgain; }                 // и повтор разговора, пока не получится
-  const disc = ctDiscount(failed); if(disc){ const toDebt = Math.min(disc, city.debt); city.debt -= toDebt; city.money += disc - toDebt; ct.spent -= disc; }   // уступка сначала гасит долг
+  const disc = ct.scene.repair ? 0 : ctDiscount(failed); if(disc){ const toDebt = Math.min(disc, city.debt); city.debt -= toDebt; city.money += disc - toDebt; ct.spent -= disc; }   // уступка сначала гасит долг; у ремонта уступки Pazarlık нет — скидка в реплике мастера
   const L = CHARS[ct.char] && CHARS[ct.char].likes, quiet = !!(L && L.quiet && !failed && !ct.misses && ct.ok > 0);
   if(quiet) cityFx({ rel:1 });                                               // молчун ценит, когда его ни разу не переспросили
   const kind = end.kind || "ok", short = kind === "ok" ? "получилось" : kind === "near" ? "так себе" : "не вышло";
@@ -6150,10 +6191,11 @@ function cityEnd(end, failed){
   learned.forEach(l => memEnroll(l.tr, l.ru));                                   // сказанное в разговоре — в «Память», повторится по расписанию
   citySave();
   const contactNote = ct.char ? cityContactCheck(ct.char) : "", id = ct.id, ct0 = ct.char, dest = ct.dest, levelUps = ct.levelUps, title = dest !== null ? `Такси до ${BOARD[dest].gen || ("«" + BOARD[dest].title + "»")}` : SCENES[id].title, endText = ctNm(pickLine(end.text));   // текст итога может быть списком — по seed визита
+  const vis = end.fx && end.fx.visit && city.home.visit, visTxt = vis ? ` Мастер придёт ${vis.day > city.day ? "завтра " : ""}в ${fmtClock(vis.at)}.` : "";
   if(dest !== null && kind !== "bad"){ city.pos = dest; city.roll = null; city.visited.push(dest); citySave(); }     // доехали — фишка на месте
   ct = null; cityRender();
   const stats = [["время", `${took} мин`], ["потрачено", `${spent} ₺`], ["реплик верно", `${learned.length}`]];
-  showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: title + " — " + short, text: endText + (disc ? ` Pazarlık: уступили ${disc} ₺.` : "") + contactNote + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
+  showModal({ ic: kind === "ok" ? "Harika!" : kind === "near" ? "Olur." : "Olmadı.", title: title + " — " + short, text: endText + visTxt + (disc ? ` Pazarlık: уступили ${disc} ₺.` : "") + contactNote + (missed.length ? ` Что стоило сказать: «${missed[0].tr.replace(/[.!]$/, "")}».` : ""),
     stats, primary:{ label:"К делам", fn:() => { cityRender(); if(dest !== null && kind !== "bad") cityArrive(dest); } } });
   if(quiet) $("modalText").textContent += ` ${CHARS[ct0].name} оценил: ни одного переспроса.`;
   (levelUps || []).forEach(citySkillModal);                                   // окна уровней — после итога сцены (очередь showModal)
@@ -6214,6 +6256,11 @@ const FORM_GLOSS = {
   iskeleye:"на пристань (куда?)", parka:"в парк (куда?)", teyzeye:"к тётушке (Ayşe teyzeye — к тёте Айше)",
   // «Хозяин квартиры» (2026-10-11)
   kirayı:"аренду, плату за жильё (kira + -yı «кого? что?»)", getirdim:"я принёс", musluk:"кран", damlıyor:"капает", yolunda:"в порядке (her şey yolunda — всё в порядке)", evdeyim:"я дома (ev + -de «где» + -yim «я есть»)", altıdan:"с шести, после шести (altıdan sonra)",
+  // дом с поломками (звонок и приход мастера, спек 2026-10-22 §5)
+  sorunu:"проблема (чего-то) (su sorunu — проблема с водой)", mutfaktaki:"который на кухне (mutfak — кухня + -ta «где» + -ki «который»)", mutfakta:"на кухне (где?)",
+  içinde:"в течение, внутри (yarım saat içinde — в течение получаса)", bakmam:"мне посмотреть (bakmam lazım — мне надо посмотреть; ещё: «я не смотрю»)",
+  civarı:"около, примерно (iki yüz lira civarı — около двухсот лир)", contayı:"прокладку (кого? что?) (conta — прокладка)", değiştirdim:"я поменял, заменил",
+  tamamdır:"готово, всё в порядке", işteyim:"я на работе (iş — работа + -te «где» + -yim «я есть»)", arayın:"позвоните (вы)",
   // ответы на светские вопросы (2026-10-10 10:03)
   içtim:"я выпил(а)", içmedim:"я не пил(а)", fena:"плохой (fena değil — неплохо)", iyiler:"они в порядке, хорошо (iyi + -ler «они»)", dinlendim:"я отдохнул(а)",
   denize:"на море (deniz + -e «куда»)", gittim:"я ездил(а), сходил(а)", duydum:"я слышал(а)", duymadım:"я не слышал(а)", rusyadan:"из России (Rusya + -dan «откуда»)",
@@ -6661,7 +6708,11 @@ const ROOT_GLOSS = {
   "yenikapı":"Еникапы (район)",
   "ye-":"есть, кушать",
   "haftasonu":"выходные (hafta sonu)",
-  "sakal":"борода"
+  "sakal":"борода",
+  "mutfak":"кухня",
+  "iç":"внутренняя часть, внутри",
+  "civar":"окрестности; около",
+  "conta":"прокладка"
 };
 const MORPH = {
   "acelem":"acele m=poss1s",
@@ -7265,7 +7316,18 @@ const MORPH = {
   "şikayetimiz":"şikayet imiz=poss1p",
   "şikâyetiniz":"şikâyet iniz=poss2p",
   "şişesi":"şişe si=poss3s",
-  "şuna":"şu n=bn a=dat"
+  "şuna":"şu n=bn a=dat",
+  "sorunu":"sorun u=poss3s",
+  "mutfaktaki":"mutfak ta=loc ki=ki",
+  "mutfakta":"mutfak ta=loc",
+  "içinde":"iç i=poss3s n=bn de=loc",
+  "bakmam":"bak=bakmak ma=vn m=poss1s",
+  "civarı":"civar ı=poss3s",
+  "contayı":"conta yı=acc",
+  "değiştirdim":"değiştir=değiştirmek di=past m=v1s",
+  "tamamdır":"tamam dır=cop3",
+  "işteyim":"iş te=loc yim=cop1s",
+  "arayın":"ara=aramak yın=imp2p"
 };
 // </MORPH-DATA>
 function wordGloss(raw){
