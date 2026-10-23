@@ -692,6 +692,20 @@ button.badge:hover .medal svg{transform:translateY(-2px)}
 .ct-scene{display:flex; flex-direction:column; gap:calc(8px * var(--fit)); flex:1; min-height:0}
 .ct-goal{margin:0; font-size:13px; color:var(--muted); text-align:left; display:flex; gap:8px; align-items:baseline} .ct-goal > span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
 .ct-npc{display:flex; gap:10px; align-items:flex-start}
+/* Комната дома в сценах ремонта (2026-10-23, макет «Mutfak — кухня»): стена и пол — фоном блока, предметы — одна SVG; высота — от --fit */
+.ct-room{position:relative; flex:0 1 auto; min-height:0; width:100%; aspect-ratio:3 / 1; max-height:calc(88px * var(--fit)); border:1px solid var(--line); border-radius:12px; overflow:hidden; background:linear-gradient(var(--bg) calc(86% - 1px), var(--ink) 0 calc(86% + 1px), var(--seg) 0)}
+.ct-room.tiny{display:none}   /* совсем низкий экран и много ответов (320×568): места на кухню нет — разговор важнее */
+.room-svg{position:absolute; inset:0; width:100%; height:100%}
+.room-svg .rm-line{fill:none; stroke:var(--ink); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round}
+.room-svg .rm-tile{fill:var(--surface); stroke:var(--line)} .room-svg .rm-grid{stroke:var(--line); stroke-width:1}
+.room-svg .rm-ink{fill:var(--ink); stroke:none} .room-svg .rm-cab{fill:var(--surface)} .room-svg .rm-soft{fill:var(--seg)} .room-svg .rm-win{fill:var(--accent-soft)}
+.room-svg .rm-tap{stroke-width:2.6} .room-svg .rm-acc{fill:var(--accent); stroke:none} .room-svg .rm-led{fill:var(--muted); stroke:none}
+.room-svg .rm-drop{fill:var(--accent)} .room-svg .rm-water{fill:color-mix(in srgb, var(--accent) 50%, transparent)}
+.room-svg .rm-drop.fall{transform-box:fill-box; animation:rmDrip 1.6s ease-in infinite}
+@keyframes rmDrip{0%{transform:translateY(-4px); opacity:0} 25%{opacity:1} 80%{opacity:1} 100%{transform:translateY(5px); opacity:0}}
+@media (prefers-reduced-motion: reduce){ .room-svg .rm-drop.fall{animation:none} }
+.ct-room-chip{position:absolute; left:6px; top:6px; padding:4px 8px; border:1px solid; border-radius:999px; font:600 11px/1 var(--body); white-space:nowrap}
+.ct-room-chip.broken{background:var(--near-soft); color:var(--near); border-color:var(--near)} .ct-room-chip.fixed{background:var(--accent-soft); color:var(--accent-ink); border-color:var(--accent)}
 .ct-face{flex:none; width:44px; height:44px; border-radius:50%; border:0; background:var(--accent); color:var(--on-accent); font:700 20px var(--display); display:grid; place-items:center}
 .ct-face:disabled{opacity:.5}
 .ct-bubble{flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); border-radius:4px 16px 16px 16px; padding:8px 12px; display:flex; flex-direction:column; gap:4px; text-align:left}
@@ -1251,6 +1265,7 @@ body:has(#tab-memory[aria-pressed="true"]) .mem-title{display:block}
       </div>
       <div class="ct-scene" id="ctScene" hidden>
         <p class="ct-goal"><span id="ctGoal" title=""></span><button class="linkbtn" id="ctBack">к делам</button></p>
+        <div class="ct-room" id="ctRoom" role="img" hidden></div>
         <div class="ct-npc">
           <button class="ct-face" id="ctReplay" aria-label="Послушать ещё раз" title="Ещё раз (R)"><span id="ctInitial" aria-hidden="true"></span></button>
           <div class="ct-bubble">
@@ -3917,6 +3932,31 @@ function cityPlanFor(day){                       // воскресенье (и �
 }
 // Дом с поломками: city.home.broken[id] = { day } — что сломано и с какого дня; homeBreak ставит поломку (появление — в cityNewDay)
 const homeBroken = id => !!(city.home && city.home.broken && city.home.broken[id]);
+// Комната в шапке сцены ремонта (макет «Mutfak — кухня», одобрен 2026-10-23): предметы — одна SVG по viewBox, цвета — токены :root (стиль .room-svg)
+const ROOMS = { mutfak:{ ru:"Кухня", items:["musluk"], label:{ broken:"кран капает", fixed:"кран починен" }, chip:{ broken:"musluk: damlıyor", fixed:"musluk: kapalı" } } };
+function roomSvg(room, state){
+  if(room !== "mutfak") return "";
+  const drop = (x, y, cls) => `<path class="rm-drop${cls ? " " + cls : ""}" data-drip d="M${x} ${y}c2.8 4.4 4.2 6.4 4.2 8.2a4.2 4.2 0 0 1-8.4 0c0-1.8 1.4-3.8 4.2-8.2z"/>`;
+  const leak = state === "broken" ? `<g class="rm-line">${drop(124, 36, "fall")}${drop(124, 46)}<ellipse class="rm-water" data-puddle cx="104" cy="93" rx="40" ry="4.2" stroke="none"/></g>` : "";
+  return `<svg class="room-svg" viewBox="0 0 300 100" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false"><g class="rm-line">`
+    + `<rect class="rm-tile" x="12" y="30" width="190" height="20" rx="2"/><path class="rm-grid" d="M12 40h190M31 30v10M69 30v10M107 30v10M145 30v10M183 30v10M50 40v10M88 40v10M126 40v10M164 40v10"/>`   // плитка-фартук
+    + `<rect class="rm-win" x="150" y="5" width="52" height="20" rx="2"/><path d="M176 5v20M150 15h52"/>`                                   // окно
+    + `<rect class="rm-cab" x="12" y="55" width="190" height="31"/><path d="M76 55v31M140 55v31"/><rect class="rm-ink" x="8" y="50" width="198" height="5" rx="2"/>`   // шкафы и столешница
+    + `<ellipse class="rm-cab" cx="30" cy="48" rx="10" ry="2.4"/><ellipse class="rm-cab" cx="58" cy="48" rx="10" ry="2.4"/><rect class="rm-soft" x="20" y="63" width="48" height="17" rx="2"/><path d="M27 67h34"/>`   // плита
+    + `<circle class="rm-ink" cx="24" cy="59" r="1.4"/><circle class="rm-ink" cx="32" cy="59" r="1.4"/><circle class="rm-ink" cx="56" cy="59" r="1.4"/><circle class="rm-ink" cx="64" cy="59" r="1.4"/>`
+    + `<path class="rm-soft" d="M84 50h46l-3 6h-40z"/><path class="rm-tap" d="M110 50V30h14v5"/><path d="M105 33h9"/><path d="M108 59v24"/><circle class="rm-ink" cx="103" cy="71" r="1.4"/><circle class="rm-ink" cx="113" cy="71" r="1.4"/>`   // раковина и кран
+    + `<rect class="rm-soft" x="146" y="59" width="50" height="5" rx="1.5"/><circle class="rm-led" cx="190" cy="61.5" r="1.3"/><path d="M153 70h36"/>`   // посудомойка
+    + `<rect class="rm-cab" x="220" y="8" width="54" height="78" rx="5"/><path d="M220 32h54M227 16v9M227 40v16"/><rect class="rm-acc" x="252" y="40" width="9" height="7" rx="1.5"/>`   // холодильник и магнит
+    + `</g>${leak}</svg>`;
+}
+function ctRoomRender(){                                                  // картинка видна только у сцен с room; состояние — по поломке (или мастер уже починил в этой сцене)
+  const e = ctEl("ctRoom"); if(!e) return;
+  const room = ct && ct.scene.room, R = room && ROOMS[room]; e.hidden = !R; if(!R) return;
+  const st = !ct.roomFixed && R.items.some(homeBroken) ? "broken" : "fixed";
+  if(e.dataset.state === st && e.dataset.room === room) return;          // тот же вид — не перерисовывать (капля не начинает падать заново)
+  e.dataset.state = st; e.dataset.room = room; e.setAttribute("aria-label", `${R.ru}: ${R.label[st]}`);
+  e.innerHTML = roomSvg(room, st) + `<span class="ct-room-chip ${st}" lang="tr" translate="no">${R.chip[st]}</span>`;
+}
 function homeBreak(id){ if(!homeBroken(id)) city.home.broken[id] = { day:city.day }; }
 // Мастер записан: придёт через wait минут от конца звонка; позже 20:00 — завтра в 9:30 (спек §4). Ставит fx.visit концовки звонка (cityFx)
 function homeVisit(v){ let at = city.min + v.wait, day = city.day; if(at > 20 * 60){ day++; at = 9 * 60 + 30; } city.home.visit = { id:v.id, at, day, price:v.price }; if(day === city.day) homeRepairSlot("tesisatci_gel"); }
@@ -4554,7 +4594,7 @@ const SCENES = {
     nodes:{
       door:{ npc:"Merhaba, musluk için geldim.", ru:"Здравствуйте, я по поводу крана.", again:"Merhaba, musluk için geldim.", againRu:"Здравствуйте, я по поводу крана.",
         moves:[ { key:["buyurun", "mutfakta"], say:["Buyurun usta, mutfakta."], ru:"Проходите, мастер, (кран) на кухне.", go:"work" } ] },
-      work:{ npc:"Contayı değiştirdim, tamamdır.", ru:"Поменял прокладку, готово.", again:"Contayı değiştirdim, tamamdır.", againRu:"Поменял прокладку, готово.",
+      work:{ roomFixed:true, npc:"Contayı değiştirdim, tamamdır.", ru:"Поменял прокладку, готово.", again:"Contayı değiştirdim, tamamdır.", againRu:"Поменял прокладку, готово.",
         moves:[ { key:["elinize sağlık", "sağlık"], say:["Elinize sağlık."], ru:"Здоровья вашим рукам (спасибо за работу).", go:"pay", fx:{ rel:1 } } ] },
       pay:{ npc:"Yüz elli lira.", ru:"Сто пятьдесят лир.", pay:{ price:150, notes:[100, 200, 500], short:"Yüz elli lira.", shortRu:"Сто пятьдесят лир.", go:"done" },
         variants:[
@@ -5930,6 +5970,7 @@ function cityNode(id, replyHtml){
   if(n0.onlyChar && n0.onlyChar !== ct.char && n0.elseGo) return cityNode(n0.elseGo, replyHtml);      // узел только для этого персонажа (болтливый шофёр)
   const n = ctTaxiNode(id, n0);
   ct.node = n; ct.nodeId = id; ct.tries = 0; ct.revealed = false; ct.sawRu = false; ct.resolved = false; ct.pendingGo = null; ct.polite = false; ct.pick = null; ct.peeked = false;
+  if(n.roomFixed) ct.roomFixed = true; ctRoomRender();                                    // мастер починил — на картинке кран больше не капает
   if(n.end) return cityEnd(n.end);
   const seenKey = ctNpc(n); ct.firstTime = !(city.seen || (city.seen = {}))[seenKey]; city.seen[seenKey] = 1;      // первую встречу с репликой переводим бесплатно
   const tr = ctEl("ctTr"), ru = ctEl("ctRu");
@@ -6223,7 +6264,8 @@ function cityEnd(end, failed){
     if(failed) city.flags.evAgain = city.day; else delete city.flags.evAgain; }                 // и повтор разговора, пока не получится
   if(ct.scene.arrive){ const v = city.home.visit, hid = ct.scene.arrive;                    // мастер пришёл: получилось — починено; нет — визита больше нет, снова звонить
     if((end.kind || "ok") === "ok"){ delete city.home.broken[hid]; city.home.fixed.push({ id:hid, day:city.day, price:v ? v.price : 0 }); city.home.visit = null; }
-    else { city.home.visit = null; homeRepairSlot("tesisatci"); } }
+    else { city.home.visit = null; homeRepairSlot("tesisatci"); ct.roomFixed = false; }
+    ctRoomRender(); }
   const disc = ct.scene.repair ? 0 : ctDiscount(failed); if(disc){ const toDebt = Math.min(disc, city.debt); city.debt -= toDebt; city.money += disc - toDebt; ct.spent -= disc; }   // уступка сначала гасит долг; у ремонта уступки Pazarlık нет — скидка в реплике мастера
   const L = CHARS[ct.char] && CHARS[ct.char].likes, quiet = !!(L && L.quiet && !failed && !ct.misses && ct.ok > 0);
   if(quiet) cityFx({ rel:1 });                                               // молчун ценит, когда его ни разу не переспросили
@@ -8930,16 +8972,21 @@ function autofitHeight(){
   // варианты ответа уходили под подсказку, прокрутки при этом не было)
   const overlap = () => { const k = [...card.children].filter(e => e.offsetParent && getComputedStyle(e).display !== "none");
     for(let i = 0; i + 1 < k.length; i++) if(k[i].getBoundingClientRect().bottom > k[i + 1].getBoundingClientRect().top + 1) return true;
+    // картинка комнаты сжимается последней: пока она меньше своего размера, сначала уменьшаем всё остальное (--fit)
+    const rm = card.querySelector("#ctRoom"); if(rm && rm.offsetParent){ const b = rm.getBoundingClientRect(); if(b.height < Math.min(b.width / 3, parseFloat(getComputedStyle(rm).maxHeight) || 1e9) - 1) return true; }
     // обрезанный текст внутри блока (фраза, перевод, пояснение) — тоже переполнение (было: перевод длинной фразы обрезался)
     if([...card.querySelectorAll("#target, #meaning, #partner, .result, .free-title")].some(e => e.offsetParent && e.scrollHeight > e.clientHeight + 1)) return true;
     return [...card.querySelectorAll(".ls-opt")].some(e => e.scrollHeight > e.clientHeight + 1 || e.getBoundingClientRect().bottom > (e.parentElement.getBoundingClientRect().bottom + 1)); };
   const over = () => card.scrollHeight - card.clientHeight > 0 ||   // без допуска: иначе нижние кнопки (прижаты margin-top:auto) ездят на 1 px от слова к слову (2026-10-21)
     document.documentElement.scrollHeight - innerHeight > 1 || overlap();
-  let lo = .6, hi = 1.15;
-  set(hi); if(!over()) return;
-  set(lo); if(over()) return;                  // совсем низкий экран: минимальный размер, карточка прокручивается
-  for(let k = 0; k < 8; k++){ const m = (lo + hi) / 2; set(m); if(over()) hi = m; else lo = m; }
-  set(lo);
+  const room = card.querySelector("#ctRoom"); if(room) room.classList.remove("tiny");
+  const search = () => { let lo = .6, hi = 1.15;
+    set(hi); if(!over()) return false;
+    set(lo); if(over()) return true;             // совсем низкий экран: минимальный размер, карточка прокручивается
+    for(let k = 0; k < 8; k++){ const m = (lo + hi) / 2; set(m); if(over()) hi = m; else lo = m; }
+    set(lo); return false; };
+  // и при минимальном размере на картинку комнаты осталось меньше 30 px — убираем её и подбираем размер заново (место — разговору)
+  if(search() && room && room.offsetParent && room.getBoundingClientRect().height < 30){ room.classList.add("tiny"); search(); }
 }
 let fitRaf = 0;
 function scheduleFit(){ cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(autofit); }

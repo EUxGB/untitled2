@@ -3212,6 +3212,66 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq([r9.p[0], r9.reps, r9.p.includes('ev_sahibi'), ['bakkal', 'firin', 'simit'].every(x => r9.p.includes(x))], ['tesisatci_gel', ['tesisatci_gel'], true, true], 'план: ' + r9.p.join(','));
     eq(q.errors, []); await q.close();
   });
+  await test('Дом с поломками (2026-10-23): кухня на картинке — в сценах ремонта кран капает (капли, лужа, «musluk: damlıyor»), после починки — починен; в других сценах картинки нет; сцена помещается, кнопки на месте (320–412)', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; });
+    const prep = (id, broken = true, visit = false) => q.evaluate(([id, broken, visit]) => { cityLeave(); ct = null; for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal();
+      city.home = { broken:broken ? { musluk:{ day:city.day } } : {}, visit:visit ? { id:'musluk', at:600, day:city.day, price:150 } : null, fixed:[], soaked:false };
+      city.done = []; city.carry = []; city.pos = 0; city.roll = null; city.min = 600; city.money = 1000; city.debt = 0; city.flags = {}; city.plan = cityPlanFor(city.day); cityRender(); cityStart(id); }, [id, broken, visit]);
+    const look = () => q.evaluate(() => { const e = document.getElementById('ctRoom'), vis = !!e && !e.hidden && !!e.offsetParent;
+      const chip = e && e.querySelector('.ct-room-chip'), npc = document.querySelector('#ctScene .ct-npc').getBoundingClientRect(), b = e ? e.getBoundingClientRect() : null, card = document.getElementById('cityCard').getBoundingClientRect();
+      const probe = (v, p) => { const d = document.createElement('i'); d.style[p] = `var(${v})`; document.body.appendChild(d); const c = getComputedStyle(d)[p]; d.remove(); return c; };
+      return { vis, tiny:!!e && e.classList.contains('tiny'), state:e && e.dataset.state, role:e && e.getAttribute('role'), label:e && e.getAttribute('aria-label'), svg:!!(e && e.querySelector('svg[viewBox]')),
+        drops:e ? e.querySelectorAll('[data-drip]').length : -1, puddle:e ? e.querySelectorAll('[data-puddle]').length : -1,
+        chip:chip && chip.textContent, chipTr:chip && [chip.getAttribute('lang'), chip.getAttribute('translate')],
+        chipBg:chip && getComputedStyle(chip).backgroundColor, chipFg:chip && getComputedStyle(chip).color,
+        near:[probe('--near-soft', 'backgroundColor'), probe('--near', 'color')], acc:[probe('--accent-soft', 'backgroundColor'), probe('--accent-ink', 'color')],
+        h:b && Math.round(b.height), overlap:!!(vis && b.bottom > npc.top + 1), inCard:!!(vis && b.left >= card.left - 1 && b.right <= card.right + 1),
+        pageScroll:document.scrollingElement.scrollHeight > innerHeight + 1, sceneScroll:(() => { const s = document.getElementById('ctScene'); return s.scrollHeight > s.clientHeight + 1; })(),
+        fit:+getComputedStyle(document.querySelector('.app')).getPropertyValue('--fit') }; });
+    const anchors = () => q.evaluate(() => Object.fromEntries(['#ctShow', '#ctSpeak', '#ctNext'].map(s => { const b = document.querySelector(s).getBoundingClientRect(); return [s, [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)]]; })));
+    // данные: у обеих сцен ремонта — кухня; функция рисунка — одна SVG-строка без внешних картинок
+    eq(await q.evaluate(() => [SCENES.tesisatci.room, SCENES.tesisatci_gel.room, typeof roomSvg, /^<svg[\s\S]*<\/svg>$/.test(roomSvg('mutfak', 'broken').trim()), /<image|url\(|https?:/.test(roomSvg('mutfak', 'broken') + roomSvg('mutfak', 'fixed'))]),
+      ['mutfak', 'mutfak', 'function', true, false], 'roomSvg');
+    for(const [w, h] of [[320, 568], [360, 640], [390, 844], [412, 915]]){
+      await q.setViewportSize({ width:w, height:h });
+      await prep('bakkal'); await q.waitForTimeout(150); const nb = await look(), ab = await anchors();
+      eq(nb.vis, false, `${w}×${h}: в bakkal картинки нет`);
+      for(const id of ['tesisatci', 'tesisatci_gel']){
+        await prep(id, true, id === 'tesisatci_gel'); await q.waitForTimeout(150); const r = await look(), ar = await anchors();
+        // 320×568 и три ответа: места нет — картинка убирается (tiny), разговор важнее; на остальных размерах видна
+        const small = w === 320 && id === 'tesisatci';
+        eq([r.vis || (small && r.tiny), r.state, r.role, r.label, r.svg], [true, 'broken', 'img', 'Кухня: кран капает', true], `${w}×${h} ${id}: картинка`);
+        if(!small) eq(r.tiny, false, `${w}×${h} ${id}: картинка не убрана`);
+        ok(r.drops >= 1 && r.puddle >= 1, `${w}×${h} ${id}: капли ${r.drops}, лужа ${r.puddle}`);
+        eq([r.chip, r.chipTr, r.chipBg, r.chipFg], ['musluk: damlıyor', ['tr', 'no'], r.near[0], r.near[1]], `${w}×${h} ${id}: плашка цветом --near`);
+        eq([r.overlap, r.inCard || !r.vis, r.pageScroll, r.sceneScroll], [false, true, false, false], `${w}×${h} ${id}: помещается (h=${r.h}, fit=${r.fit})`);
+        ok(!r.vis || r.h >= 30, `${w}×${h} ${id}: картинка не слишком мала (${r.h} px)`); if(w >= 360) ok(r.h >= 50, `${w}×${h} ${id}: картинка ${r.h} px`);
+        if(id === 'tesisatci') eq(ar, ab, `${w}×${h}: «Показать/Сказать/Дальше» там же, где в bakkal`);
+      }
+    }
+    // высота — от --fit (предел высоты; внутри тесной сцены картинка ещё и сжимается последней)
+    await q.setViewportSize({ width:360, height:640 }); await prep('tesisatci'); await q.waitForTimeout(150);
+    const hf = await q.evaluate(() => { const e = document.getElementById('ctRoom'), app = document.querySelector('.app'), m = f => { app.style.setProperty('--fit', f); return parseFloat(getComputedStyle(e).maxHeight); }; const r = [m(0.6), m(1)]; scheduleFit(); return r; });
+    ok(hf[1] - hf[0] > 10, 'высота растёт с --fit: ' + hf.join(' → '));
+    // мастер пришёл: у двери — капает; «Contayı değiştirdim, tamamdır» (поменял прокладку) — уже не капает; после концовки ok — починен
+    await prep('tesisatci_gel', true, true); await q.waitForTimeout(100);
+    const st = [(await look()).state];
+    for(const s of ['buyurun usta mutfakta', 'elinize sağlık']){ const r = await ctSay(q, s); if(r.next) await ctNext(q); st.push((await look()).state); }
+    const fx = await look();
+    eq([st, fx.drops, fx.puddle, fx.chip, fx.label, fx.chipBg, fx.chipFg], [['broken', 'fixed', 'fixed'], 0, 0, 'musluk: kapalı', 'Кухня: кран починен', fx.acc[0], fx.acc[1]], 'мастер: капает → починен');
+    await q.click('#ctPay .ct-note[data-v="200"]'); await q.waitForTimeout(150);              // 200 ₺ за 150 — сдача
+    for(let k = 0; k < 3 && await q.evaluate(() => !!ct && ct.resolved); k++){ await ctNext(q); await q.waitForTimeout(120); }
+    const after = await q.evaluate(() => ({ broken:homeBroken('musluk'), ended:!ct, state:document.getElementById('ctRoom').dataset.state }));
+    eq(after, { broken:false, ended:true, state:'fixed' }, 'после починки — fixed');
+    await q.evaluate(() => { for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal(); city.home.broken = {}; cityStart('tesisatci'); });
+    eq((await look()).state, 'fixed', 'ничего не сломано — кухня целая');
+    // мастер поменял прокладку, но разговор не вышел (терпение кончилось) — кран не починен, картинка снова «капает»
+    await prep('tesisatci_gel', true, true); { const r = await ctSay(q, 'buyurun usta mutfakta'); if(r.next) await ctNext(q); }
+    const mid = (await look()).state;
+    for(let k = 0; k < 8 && await q.evaluate(() => !!ct); k++){ const r = await ctSay(q, ''); if(r.next) await ctNext(q); }
+    eq([mid, await q.evaluate(() => [!ct, homeBroken('musluk'), document.getElementById('ctRoom').dataset.state])], ['fixed', [true, true, 'broken']], 'не вышло — снова капает');
+    eq(q.errors, []); await q.close();
+  });
   await test('Установка, «Начать сначала», соседи (2026-10-11 20:11–20:13): на телефоне в «Городе» вместо «?» — «Установить» (Android — окно браузера, iPhone — инструкция), на ПК и в тренировке — «?»; «Начать сначала» стирает прогресс после подтверждения; «Соседи: N» из Supabase, отметка устройства раз в день', async () => {
     // ПК: «?» на месте
     const pc = await openPage(browser); await pc.click('#tab-city');
