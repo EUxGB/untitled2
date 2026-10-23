@@ -44,12 +44,14 @@ function cityGraphCheck(sc, nodeForms){
   const endsFrom = id => [...reach(id)].filter(x => nodes[x].end).map(x => x);
   ids.forEach(id => { if(!nodes[id].end && !endsFrom(id).length) errs.push(`${id}: из узла не достижима концовка`); });
   // концовки: ≥ 3 видов (fail сцены — «bad»); развилка по смыслу: два видимых хода одной формы узла ведут к разным концовкам
-  const kinds = new Set([...fromStart].filter(x => nodes[x].end).map(x => nodes[x].end.kind).concat(sc.fail ? ['bad'] : []));
-  if(kinds.size < 3) errs.push(`концовок видов ${kinds.size} (${[...kinds].join(',')}), нужно 3`);
+  // ремонт дома (спек 2026-10-22): исход — цена и время прихода, а не вид концовки; приход мастера — короткая сцена без развилки (других реплик не одобрено) —
+  // поэтому у repair-сцен достаточно двух видов (получилось / fail), развилка не обязательна
+  const kinds = new Set([...fromStart].filter(x => nodes[x].end).map(x => nodes[x].end.kind).concat(sc.fail ? ['bad'] : [])), needK = sc.repair ? 2 : 3;
+  if(kinds.size < needK) errs.push(`концовок видов ${kinds.size} (${[...kinds].join(',')}), нужно ${needK}`);
   const fork = ids.some(id => { const base = nodes[id]; if(base.end) return false;
     return nodeForms(base).some(n => { const sets = [...(n.moves || []), ...(n.extra || [])].filter(m => !m.hide && m.go).map(m => endsFrom(m.go).sort().join('|'));
       return new Set(sets).size >= 2; }); });
-  if(!fork) errs.push('нет развилки по смыслу (два видимых хода → разные концовки)');
+  if(!fork && !sc.repair) errs.push('нет развилки по смыслу (два видимых хода → разные концовки)');
   return errs;
 }
 
@@ -99,7 +101,7 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
   console.log('Сцены «Города»: бот проходит каждую сцену');
   // policy: happy — первый видимый ход сказан верно; last — последний видимый ход (другие ветки, крупная купюра); fail — тишина до конца терпения; phone — «Показать» в каждом узле
   async function playScene(q, id, policy, seed = 0){
-    await q.evaluate(([id, seed]) => { cityLeave(); ct = null; if(!document.getElementById('modal').hidden) closeModal(); city = Object.assign({}, CITY_START, { money:3000 }); cityNormalize(); window.__silent = false; window.__seed = seed; cityStart(id); }, [id, seed]);
+    await q.evaluate(([id, seed]) => { cityLeave(); ct = null; if(!document.getElementById('modal').hidden) closeModal(); city = Object.assign(JSON.parse(JSON.stringify(CITY_START)), { money:3000 }); cityNormalize(); window.__silent = false; window.__seed = seed; cityStart(id); }, [id, seed]);
     const t0 = await q.evaluate(() => [city.money, city.min]);
     // Шаг — ОДИН вызов в странице: прочитать состояние и сразу действовать (2026-10-20). Раньше чтение и действие шли двумя вызовами,
     // и под нагрузкой сцена успевала измениться между ними: ct уже null («reading 'pick'») или «Сказать» снова выключена (30 с ожидания клика).
@@ -163,7 +165,7 @@ const SIZES = [[360, 640], [390, 844], [412, 915]];
     for(const [w, h] of SIZES){
       const q = await open(w, h);
       const r = await q.evaluate(() => { const out = [];
-        Object.entries(SCENES).forEach(([id, sc]) => { ct = null; city = Object.assign({}, CITY_START, { money:3000 }); cityNormalize(); cityStart(id);
+        Object.entries(SCENES).forEach(([id, sc]) => { ct = null; city = Object.assign(JSON.parse(JSON.stringify(CITY_START)), { money:3000 }); cityNormalize(); cityStart(id);
           Object.keys(sc.nodes).forEach(nid => { const base = sc.nodes[nid]; if(base.end) return;
             (base.alt || [null]).forEach((a, k) => { if(a && a.pass) return; window.__alt = a ? { [nid]:k } : undefined; ct.alts = {}; cityNode(nid); const first = document.querySelector('#ctOpts .ct-opt-main'); if(first) first.click(); autofit();
               const card = document.getElementById('cityCard');

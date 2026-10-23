@@ -3107,6 +3107,8 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     // точно
     const ex = await call(10 * 60, ['mutfaktaki musluk damlıyor', 'tamam bekliyorum']);
     eq([ex.st.go, ex.st.started, ex.show], [true, true, true], 'дома — строка начинает звонок, «Показать» по телефону выключена');
+    { const cards = await q.evaluate(() => { cityLeave(); ct = null; city.min = 600; cityStart('tesisatci'); return SCENES.tesisatci.nodes.greet.moves.map(m => m.ru); });
+      ok(cards.every(t => !/точно|общими словами/.test(t)), 'карточки без подсказки, какой ответ лучше (решение 7): ' + cards.join(' | ')); await q.evaluate(() => { cityLeave(); ct = null; }); }
     ok(/yarım saat içinde gelirim/i.test(ex.seen.join(' | ')) && /Yüz elli lira/.test(ex.seen.join(' | ')), 'точно — полчаса и 150: ' + ex.seen.join(' | '));
     eq([ex.v && ex.v.id, ex.v && ex.v.price, ex.v && ex.v.day, ex.kind, ex.ended], ['musluk', 150, ex.day, 'ok', true], 'точно: визит');
     ok(ex.d >= 30 && ex.d <= 40, 'точно — через полчаса: ' + ex.d); { const hm = String(Math.floor(ex.v.at / 60)).padStart(2, '0') + ':' + String(ex.v.at % 60).padStart(2, '0'); ok(ex.text.includes(hm), 'в итоге — время прихода ' + hm + ': ' + ex.text); }
@@ -3114,7 +3116,7 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const vg = await call(10 * 60, ['bir su sorunu var', 'musluk damlıyor', 'tamam bekliyorum']);
     ok(vg.seen.some(t => /Nasıl bir sorun\? Musluk mu, kombi mi\?/.test(t)), 'переспрос: ' + vg.seen.join(' | '));
     ok(vg.seen.some(t => /İki yüz lira civarı/.test(t)), 'около двухсот: ' + vg.seen.join(' | '));
-    eq([vg.v && vg.v.price, vg.kind], [200, 'near'], 'общими словами: 200, так себе'); ok(vg.d >= 60 && vg.d <= 70, 'общими словами — через час: ' + vg.d);
+    eq([vg.v && vg.v.price, vg.kind], [200, 'ok'], 'общими словами: 200, но получилось (последствие — цена и время, решение 6)'); ok(vg.d >= 60 && vg.d <= 70, 'общими словами — через час: ' + vg.d);
     const patV = await (async () => { await prep(10 * 60); await ctSay(q, 'bir su sorunu var'); return q.evaluate(() => ct && ct.patience); })();
     eq(patV, ex.pat0 - 1, 'общими словами — минус терпение'); await q.evaluate(() => { cityLeave(); ct = null; });
     // торг
@@ -3129,6 +3131,76 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     await prep(10 * 60); for(let k = 0; k < 6 && await q.evaluate(() => !!ct && !ct.resolved); k++) await ctSay(q, ''); await q.waitForTimeout(150);
     const fl = await q.evaluate(() => ({ v:city.home.visit, kind:(city.done.find(x => x.id === 'tesisatci') || {}).kind, text:document.getElementById('modalText').textContent })); await closeAll();
     eq([fl.v, fl.kind], [null, 'bad'], 'провал — без визита'); ok(/şu an işteyim/.test(fl.text), fl.text);
+    eq(q.errors, []); await q.close();
+  });
+  await test('Дом с поломками (2026-10-23): ждать, прийти к часу, потом — «Ждать мастера» только дома, мастер ждёт у двери час, оплата (не хватило — в долг), кран капает −40 ₺ за вечер, мокрый потолок у Айше-тейзе один раз', async () => {
+    const q = await openCity(); await q.evaluate(() => { trVoices = []; });
+    const closeAll = () => q.evaluate(() => { for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal(); });
+    // дома/не дома, время, визит в 10:00 за 150 ₺
+    const prep = (min, pos, price = 150, money = 1000) => q.evaluate(([min, pos, price, money]) => { cityLeave(); ct = null; for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal();
+      city.home = { broken:{ musluk:{ day:city.day } }, visit:{ id:'musluk', at:600, day:city.day, price }, fixed:[], soaked:false }; city.done = []; city.carry = []; city.pos = pos; city.roll = null; city.min = min; city.money = money; city.debt = 0; city.flags = {};
+      city.plan = cityPlanFor(city.day); cityRender();
+      const li = document.querySelector('#ctTasks .ct-task[data-scene="tesisatci_gel"]');
+      return { plan:city.plan.slice(), reps:city.plan.filter(x => SCENES[x] && SCENES[x].repair).length, row:!!li, go:!!(li && li.classList.contains('go')), text:li ? li.textContent : '' }; }, [min, pos, price, money]);
+    const tap = () => q.evaluate(() => { const li = document.querySelector('#ctTasks .ct-task[data-scene="tesisatci_gel"]'); if(li) li.click(); return { id:ct && ct.id, min:city.min, modal:document.getElementById('modal').hidden ? '' : document.getElementById('modalIc').textContent }; });
+    // сцена
+    const sc = await q.evaluate(() => { const s = SCENES.tesisatci_gel; return s && { repair:s.repair, room:s.room, char:s.char, phone:!!s.phone, cell:cellOfScene('tesisatci_gel') }; });
+    eq(sc, { repair:true, room:'mutfak', char:'tesisatci_nihat', phone:false, cell:0 }, 'сцена прихода');
+    // дома, ждём: строка «ждать мастера до 10:00» → часы до 10:00 и сцена
+    const w = await prep(545, 0);
+    eq([w.plan[0], w.reps, w.row, w.go], ['tesisatci_gel', 1, true, true], 'дома — строка «ждать»'); ok(/ждать мастера до 10:00/.test(w.text), w.text);
+    eq(await tap(), { id:'tesisatci_gel', min:601, modal:'' }, 'нажатие — ждать до 10:00 и мастер у двери (+1 мин — первая реплика)');
+    // не дома: строка без go, cityWaitUsta ничего не делает
+    const a = await prep(545, 5);
+    eq([a.row, a.go], [true, false], 'не дома — ждать нельзя'); ok(/мастер в 10:00 · дома/.test(a.text), a.text);
+    eq(await q.evaluate(() => { cityWaitUsta(); return [ct && ct.id, city.min]; }), [null, 545], 'cityWaitUsta не дома — ничего');
+    // ушли и вернулись: в окне часа — мастер у двери; позже — ушёл
+    await prep(640, 5);
+    eq(await q.evaluate(() => { city.pos = 0; cityArrive0(0); return ct && ct.id; }), 'tesisatci_gel', 'вернулись в 10:40 — мастер у двери');
+    await prep(700, 5);
+    const ms = await q.evaluate(() => { city.pos = 0; cityArrive0(0); return { id:ct && ct.id, ic:document.getElementById('modalIc').textContent, v:city.home.visit, plan:city.plan.slice(), broken:homeBroken('musluk'), done:cityDoneId('tesisatci') }; });
+    eq([ms.id, ms.ic, ms.v, ms.plan.includes('tesisatci'), ms.plan.includes('tesisatci_gel'), ms.broken, ms.done], [null, 'Olmadı.', null, true, false, true, false], 'вернулись в 11:40 — мастер ушёл, снова звонить');
+    await closeAll();
+    // Review 3: всё время дома, уже 11:40 — нажатие строки начинает сцену (не «ушёл»)
+    const h = await prep(700, 0); ok(/мастер у двери/.test(h.text), h.text);
+    eq(await tap(), { id:'tesisatci_gel', min:701, modal:'' }, 'дома всё время — мастер у двери и после часа');
+    // сцена: «Buyurun usta, mutfakta.» → «Contayı değiştirdim, tamamdır.» → «Elinize sağlık.» → «Yüz elli lira.»; денег 100 — 50 в долг (Review 4)
+    await prep(600, 0, 150, 100); await tap();
+    const seen = [await q.evaluate(() => document.getElementById('ctTr').textContent)];
+    for(const s of ['buyurun usta mutfakta', 'elinize sağlık']){ const r = await ctSay(q, s); if(r.next) await ctNext(q); seen.push(await q.evaluate(() => document.getElementById('ctTr').textContent)); }
+    ok(/Merhaba, musluk için geldim\./.test(seen[0]) && /Contayı değiştirdim, tamamdır\./.test(seen[1]) && /Yüz elli lira\./.test(seen[2]), seen.join(' | '));
+    if(await q.evaluate(() => !!ct && ct.resolved)) await ctNext(q); await q.waitForTimeout(120);
+    const pd = await q.evaluate(() => ({ money:city.money, debt:city.debt, kind:(city.done.find(x => x.id === 'tesisatci_gel') || {}).kind, broken:homeBroken('musluk'), fixed:city.home.fixed.map(f => [f.id, f.price, f.day === city.day]), v:city.home.visit, ended:!ct }));
+    eq(pd, { money:0, debt:50, kind:'ok', broken:false, fixed:[['musluk', 150, true]], v:null, ended:true }, 'оплата: не хватило — в долг, кран починен');
+    await closeAll();
+    // цена из звонка: 140 / 190 / 200
+    for(const [p, t] of [[140, 'Yüz kırk lira.'], [190, 'Yüz doksan lira.'], [200, 'İki yüz lira.']]){
+      await prep(600, 0, p); await tap(); for(const s of ['buyurun usta mutfakta', 'elinize sağlık']){ const r = await ctSay(q, s); if(r.next) await ctNext(q); }
+      const pr = await q.evaluate(() => [document.getElementById('ctTr').textContent, ct && ct.node && ct.node.pay && ct.node.pay.price]);
+      eq(pr, [t, p], 'цена ' + p); await q.evaluate(() => { cityLeave(); ct = null; });
+    }
+    // «потом»: кран капает −40 ₺ каждый вечер; мокрый потолок у Айше-тейзе — только в первый
+    const lk = await q.evaluate(() => { cityLeave(); ct = null; for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal();
+      const close = () => { for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal(); };
+      city.home = { broken:{ musluk:{ day:city.day } }, visit:null, fixed:[], soaked:false }; city.money = 100; city.debt = 0; city.rel.komsu = 3; city.flags = {}; city.done = []; city.carry = []; city.plan = cityPlanFor(city.day);
+      const o = {}; cityDayEnd(); o.d1 = [city.money, city.rel.komsu, city.home.soaked, /Кран капает/.test(document.getElementById('modalText').textContent), /потолок/.test(document.getElementById('modalText').textContent)]; close();
+      cityDayEnd(); o.again = city.money; close();                               // «Итоги дня» открыли снова — второй раз не списывается
+      city.day++; cityDayEnd(); o.d2 = [city.money, city.rel.komsu, /Кран капает/.test(document.getElementById('modalText').textContent), /потолок/.test(document.getElementById('modalText').textContent)]; close();
+      city.day++; cityDayEnd(); o.d3 = [city.money, city.debt]; close();          // денег нет — в долг
+      delete city.home.broken.musluk; city.day++; const m = city.money; cityDayEnd(); o.fixed = [city.money - m, /Кран капает/.test(document.getElementById('modalText').textContent)]; close();
+      return o; });
+    eq(lk, { d1:[60, 2, true, true, true], again:60, d2:[20, 2, true, false], d3:[0, 20], fixed:[0, false] }, '«потом»');
+    // Review 5: 21:00, мастер не дождался — приход переносится на завтра, дело первым
+    const r5 = await q.evaluate(() => { cityLeave(); ct = null; for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal();
+      city.home = { broken:{ musluk:{ day:city.day } }, visit:{ id:'musluk', at:19 * 60, day:city.day, price:150 }, fixed:[], soaked:true }; city.done = []; city.carry = []; city.flags = {}; city.money = 1000; city.pos = 3; city.min = DAY_END;
+      city.plan = cityPlanFor(city.day); cityDayEnd(); const carry = city.carry.slice(), m = city.money;
+      for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal(); cityNewDay(); for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal();
+      return { carry, m, plan0:city.plan[0], reps:city.plan.filter(x => SCENES[x] && SCENES[x].repair).length, v:[city.home.visit.day === city.day, city.home.visit.at], broken:homeBroken('musluk') }; });
+    eq([r5.carry.includes('tesisatci_gel'), r5.m, r5.plan0, r5.reps, r5.v, r5.broken], [true, 960, 'tesisatci_gel', 1, [true, 570], true], '21:00 — мастер завтра в 9:30, первым делом');
+    // Ruling 9: ремонт и хозяин в воскресенье не вытесняют перенесённые дела; ремонтное дело в плане одно
+    const r9 = await q.evaluate(() => { city.home = { broken:{ musluk:{ day:13 } }, visit:{ id:'musluk', at:600, day:14, price:150 }, fixed:[], soaked:true };
+      city.carry = ['tesisatci', 'bakkal', 'firin', 'simit']; const p = cityPlanFor(14); city.carry = []; return { p, reps:p.filter(x => SCENES[x].repair) }; });
+    eq([r9.p[0], r9.reps, r9.p.includes('ev_sahibi'), ['bakkal', 'firin', 'simit'].every(x => r9.p.includes(x))], ['tesisatci_gel', ['tesisatci_gel'], true, true], 'план: ' + r9.p.join(','));
     eq(q.errors, []); await q.close();
   });
   await test('Установка, «Начать сначала», соседи (2026-10-11 20:11–20:13): на телефоне в «Городе» вместо «?» — «Установить» (Android — окно браузера, iPhone — инструкция), на ПК и в тренировке — «?»; «Начать сначала» стирает прогресс после подтверждения; «Соседи: N» из Supabase, отметка устройства раз в день', async () => {

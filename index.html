@@ -3787,7 +3787,7 @@ const CITY_START = { ver:2, day:1, money:1700,   // 3 500 зарплата − 1
 // Поле-настолка (спек §4а): кольцо из 24 клеток по периметру сетки 7×7 (по часовой от дома в левом верхнем углу), две срезки-улицы.
 // kind: home — дом (звонки, визиты мастеров), place — место со сценами, event — клетка «?» (карта из колоды). dat — дательный падеж для такси («Eczaneye lütfen»).
 const BOARD = [
-  { id:"ev",        kind:"home",  title:"Дом",               short:"Ev",      ru:"дом",        ic:"b-ev",        dat:"Eve",            scenes:["su", "ev_sahibi", "cilingir", "kargo", "goc", "tesisatci", "elektrikci"] },
+  { id:"ev",        kind:"home",  title:"Дом",               short:"Ev",      ru:"дом",        ic:"b-ev",        dat:"Eve",            scenes:["su", "ev_sahibi", "cilingir", "kargo", "goc", "tesisatci", "tesisatci_gel", "elektrikci"] },
   { id:"kapici",    kind:"place", title:"Подъезд",           short:"Kapıcı",  ru:"подъезд",   ic:"b-kapici",    dat:"Eve",            gen:"подъезда", scenes:["kapici", "aidat"] },
   { id:"bakkal",    kind:"place", title:"Bakkal",            short:"Bakkal",  ru:"лавка",      ic:"b-bakkal",    dat:"Bakkala",        gen:"лавки", scenes:["bakkal", "mama"] },
   { id:"q3",        kind:"event", title:"Что-то случилось",  short:"?",       ru:"событие",    ic:"b-event" },
@@ -3908,16 +3908,30 @@ function cityOpenNow(id, day = city.day, min = city.min){
   return { open, text: daysTxt + hoursTxt };
 }
 function cityPlanFor(day){                       // воскресенье (и повтор после провала) — первым «Хозяин квартиры»
-  const p = cityPlanBase(day), ev = SCENES.ev_sahibi && ((day - 1) % 7 + 1 === 7 || (city.flags && city.flags.evAgain));
-  const q = ev ? ["ev_sahibi", ...p.filter(id => id !== "ev_sahibi")].slice(0, Math.max(PLAN_SIZE, p.length)) : p;
+  const ev = SCENES.ev_sahibi && ((day - 1) % 7 + 1 === 7 || (city.flags && city.flags.evAgain)) ? "ev_sahibi" : null;
   const rep = homeBroken("musluk") && (city.home.visit ? "tesisatci_gel" : "tesisatci");   // поломка дома — первым делом: позвонить мастеру / дождаться его
-  return rep && SCENES[rep] ? [rep, ...q.filter(id => id !== rep)].slice(0, Math.max(PLAN_SIZE, q.length)) : q;
+  const first = [rep, ev].filter(id => id && SCENES[id]);
+  const p = cityPlanBase(day).filter(id => id !== "ev_sahibi" && !(SCENES[id] && SCENES[id].repair));   // ремонтное дело в плане одно (звонок или приход)
+  const carried = p.filter(id => (city.carry || []).includes(id)).length;              // перенесённое не вытесняется: план длиннее, а не короче (уходят только случайные дела)
+  return first.concat(p).slice(0, Math.max(PLAN_SIZE, first.length + carried));
 }
 // Дом с поломками: city.home.broken[id] = { day } — что сломано и с какого дня; homeBreak ставит поломку (появление — в cityNewDay)
 const homeBroken = id => !!(city.home && city.home.broken && city.home.broken[id]);
 function homeBreak(id){ if(!homeBroken(id)) city.home.broken[id] = { day:city.day }; }
 // Мастер записан: придёт через wait минут от конца звонка; позже 20:00 — завтра в 9:30 (спек §4). Ставит fx.visit концовки звонка (cityFx)
-function homeVisit(v){ let at = city.min + v.wait, day = city.day; if(at > 20 * 60){ day++; at = 9 * 60 + 30; } city.home.visit = { id:v.id, at, day, price:v.price }; }
+function homeVisit(v){ let at = city.min + v.wait, day = city.day; if(at > 20 * 60){ day++; at = 9 * 60 + 30; } city.home.visit = { id:v.id, at, day, price:v.price }; if(day === city.day) homeRepairSlot("tesisatci_gel"); }
+// Одно место в плане под ремонт: звонок → приход мастера (→ снова звонок, если мастер ушёл); то, что ставим, — снова не сделано
+function homeRepairSlot(id){ const p = city.plan || (city.plan = []), k = p.findIndex(x => SCENES[x] && SCENES[x].repair); if(k >= 0) p[k] = id; else p.unshift(id); city.done = city.done.filter(d => d.id !== id); }
+// Мастер сегодня: ещё не пришёл (wait), у двери — час (door), ушёл (missed); «ушёл» — только если вернулись домой позже (cityArrive0), дома он дождётся
+function homeUstaState(){ const v = city.home && city.home.visit; if(!v || v.day !== city.day) return "none"; return city.min < v.at ? "wait" : city.min <= v.at + 60 ? "door" : "missed"; }
+function cityWaitUsta(){                           // «Ждать мастера»: только стоя дома — часы идут до его прихода (спек §4, находка пользователя)
+  const v = city.home && city.home.visit; if(city.pos !== 0 || ct || !v || v.day !== city.day) return;
+  city.min = Math.min(DAY_END, Math.max(city.min, v.at)); citySave(); cityStart("tesisatci_gel");
+}
+function homeUstaMissed(){
+  city.home.visit = null; homeRepairSlot("tesisatci"); citySave(); cityRender();
+  showModal({ ic:"Olmadı.", title:"Мастер ушёл", text:"Нихат-уста ждал у двери час и ушёл. Кран капает дальше — позвоните ему снова.", primary:{ label:"К делам", fn:cityRender } });
+}
 // Концовка звонка мастеру: обычная и поздняя (приход вышел бы позже 20:00 — if.late считается в ту же минуту, что и homeVisit)
 function repairEnd(kind, text, lateText, visit){ return { end:{ kind, text, fx:{ visit } }, variants:[{ if:{ late:20 * 60 + 1 - visit.wait }, end:{ kind, text:lateText, fx:{ visit } } }] }; }
 function cityPlanBase(day){
@@ -4017,6 +4031,7 @@ function cityNewDay(){
   if(payday){ city.money += SALARY; const back = Math.min(city.debt, city.money); city.money -= back; city.debt -= back;   // долг гасится из зарплаты, деньги не уходят в минус
     if(city.rentFor !== Math.ceil(city.day / 7)){ const pay = Math.min(RENT, city.money); city.money -= pay; rentShort = RENT - pay; city.debt += rentShort; } }   // отдали хозяину в воскресенье — не списывается   // аренда; не хватило — хозяин подождёт (долг)
   // кран ломается со 2-й недели кампании, раз в неделю по вторникам (не в первую неделю; не дважды, пока не починен; не в неделю починки)
+  { const v = city.home.visit; if(v && v.day < city.day){ v.day = city.day; v.at = 9 * 60 + 30; } }   // мастера вчера не дождались до вечера — придёт утром
   if(campWeek() >= 2 && cityDow() === 2 && !homeBroken("musluk") && !city.home.fixed.some(f => Math.ceil(f.day / 7) === Math.ceil(city.day / 7))) homeBreak("musluk");
   if(payday) city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) };   // начало недели: снимок для итога (до сохранения — ревью 2026-10-11)
   city.plan = cityPlanFor(city.day); city.carry = []; cityMorning(); citySave(); cityRender();
@@ -4506,8 +4521,8 @@ const SCENES = {
     nodes:{
       greet:{ npc:"Alo, buyurun?", ru:"Алло, слушаю.", again:"Efendim? Anlamadım.", againRu:"Простите? Не понял.",
         moves:[
-          { key:["mutfaktaki", "musluk", "damlıyor"], say:["Mutfaktaki musluk damlıyor."], ru:"Кран на кухне капает. (точно)", go:"quote" },
-          { key:["su sorunu", "sorun"], say:["Bir su sorunu var."], ru:"Есть проблема с водой. (общими словами)", go:"ask", fx:{ patience:-1 } },
+          { key:["mutfaktaki", "musluk", "damlıyor"], say:["Mutfaktaki musluk damlıyor."], ru:"Кран на кухне капает.", go:"quote" },
+          { key:["su sorunu", "sorun"], say:["Bir su sorunu var."], ru:"Есть проблема с водой.", go:"ask", fx:{ patience:-1 } },
         ] },
       ask:{ npc:"Nasıl bir sorun? Musluk mu, kombi mi?", ru:"Что за проблема? Кран или котёл?", again:"Efendim? Anlamadım.", againRu:"Простите? Не понял.",
         moves:[ { key:["musluk", "damlıyor"], say:["Musluk. Damlıyor."], ru:"Кран. Капает.", go:"quoteV" } ] },
@@ -4527,8 +4542,27 @@ const SCENES = {
         moves:[ { key:["tamam", "bekliyorum"], say:["Tamam, bekliyorum."], ru:"Хорошо, жду.", go:"ok190" } ] },
       ok150:repairEnd("ok", "Нихат-уста понял с первого раза: капает кран на кухне. 150 ₺ — когда починит.", "Нихат-уста понял с первого раза, но взглянул на часы: «Yarın sabah gelirim.» Сегодня уже поздно. 150 ₺ — когда починит.", { id:"musluk", wait:30, price:150 }),
       ok140:repairEnd("ok", "Сказали точно и поторговались: 140 ₺ вместо 150 — когда починит.", "Сказали точно и поторговались: 140 ₺ вместо 150. Но уже поздно: «Yarın sabah gelirim.»", { id:"musluk", wait:30, price:140 }),
-      ok200:repairEnd("near", "Нихату пришлось переспрашивать, что течёт. Цена «около двухсот» — 200 ₺, и раньше чем через час он не придёт: сначала посмотрит.", "Нихату пришлось переспрашивать, что течёт, а вечер уже поздний: «Yarın sabah gelirim.» Цена — 200 ₺.", { id:"musluk", wait:60, price:200 }),
-      ok190:repairEnd("near", "Переспросил, но уступил: 190 ₺ вместо 200. Придёт не раньше чем через час — сначала посмотрит.", "Переспросил, но уступил: 190 ₺ вместо 200. А сегодня уже поздно: «Yarın sabah gelirim.»", { id:"musluk", wait:60, price:190 }),
+      ok200:repairEnd("ok", "Нихату пришлось переспрашивать, что течёт. Цена «около двухсот» — 200 ₺, и раньше чем через час он не придёт: сначала посмотрит.", "Нихату пришлось переспрашивать, что течёт, а вечер уже поздний: «Yarın sabah gelirim.» Цена — 200 ₺.", { id:"musluk", wait:60, price:200 }),
+      ok190:repairEnd("ok", "Переспросил, но уступил: 190 ₺ вместо 200. Придёт не раньше чем через час — сначала посмотрит.", "Переспросил, но уступил: 190 ₺ вместо 200. А сегодня уже поздно: «Yarın sabah gelirim.»", { id:"musluk", wait:60, price:190 }),
+    } },
+  // Приход мастера (спек §4, §5 стр. 6, 7, 13–15): дома — «Ждать мастера», вернулись в течение часа — он у двери (cityArrive0). Цена — из звонка (if.price).
+  // Короткая сцена без развилки: других реплик не одобрено (генератор проверяет у repair-сцен два вида концовок). Починено — в cityEnd (scene.arrive).
+  tesisatci_gel:{ title:"Мастер у двери", who:"Нихат-уста", initial:"N", place:"Дверь квартиры", repair:true, arrive:"musluk", room:"mutfak", char:"tesisatci_nihat",
+    goal:"Впустить мастера, показать кран и расплатиться.",
+    start:"door",
+    fail:{ text:"Нихат-уста так и не понял, куда идти, пожал плечами и ушёл. Кран капает дальше — позвоните ему снова.", fx:{ min:10 } },
+    nodes:{
+      door:{ npc:"Merhaba, musluk için geldim.", ru:"Здравствуйте, я по поводу крана.", again:"Merhaba, musluk için geldim.", againRu:"Здравствуйте, я по поводу крана.",
+        moves:[ { key:["buyurun", "mutfakta"], say:["Buyurun usta, mutfakta."], ru:"Проходите, мастер, (кран) на кухне.", go:"work" } ] },
+      work:{ npc:"Contayı değiştirdim, tamamdır.", ru:"Поменял прокладку, готово.", again:"Contayı değiştirdim, tamamdır.", againRu:"Поменял прокладку, готово.",
+        moves:[ { key:["elinize sağlık", "sağlık"], say:["Elinize sağlık."], ru:"Здоровья вашим рукам (спасибо за работу).", go:"pay", fx:{ rel:1 } } ] },
+      pay:{ npc:"Yüz elli lira.", ru:"Сто пятьдесят лир.", pay:{ price:150, notes:[100, 200, 500], short:"Yüz elli lira.", shortRu:"Сто пятьдесят лир.", go:"done" },
+        variants:[
+          { if:{ price:140 }, npc:"Yüz kırk lira.", ru:"Сто сорок лир.", pay:{ price:140, notes:[100, 200, 500], short:"Yüz kırk lira.", shortRu:"Сто сорок лир.", go:"done" } },
+          { if:{ price:190 }, npc:"Yüz doksan lira.", ru:"Сто девяносто лир.", pay:{ price:190, notes:[100, 200, 500], short:"Yüz doksan lira.", shortRu:"Сто девяносто лир.", go:"done" } },
+          { if:{ price:200 }, npc:"İki yüz lira.", ru:"Двести лир.", pay:{ price:200, notes:[100, 200, 500], short:"İki yüz lira.", shortRu:"Двести лир.", go:"done" } },
+        ] },
+      done:{ end:{ kind:"ok", text:"Кран больше не капает: Нихат-уста поменял прокладку за двадцать минут.", fx:{ min:20 } } },
     } },
   // ---- короткие визиты: на каждой клетке есть что сделать, даже без дела дня (просьба пользователя 22:26) ----
   visit_hastane:{ title:"Больница: спросить дорогу", who:"Охранник", initial:"G", place:"Вход в больницу",
@@ -5470,9 +5504,11 @@ function cityBoard(){
   const nextId = (plan.filter(id => !cityDoneId(id) && cityOpenNow(id).open && cellOfScene(id) >= 0).sort((a, b) => boardDist(city.pos, cellOfScene(a)) - boardDist(city.pos, cellOfScene(b)))[0]) || null;
   ctEl("ctTasks").innerHTML = plan.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id), i = cellOfScene(id), op = cityOpenNow(id), dist = i < 0 ? 0 : boardDist(city.pos, i);
     const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? (s.phone ? "звоните отсюда" : "дело здесь") : s.phone ? `звонок · ${BOARD[i].ru}, ${dist} ${plural(dist, "клетка", "клетки", "клеток")}` : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
-    const go = !d && op.open && i >= 0 && i === city.pos && !ct && !city.roll, w2 = go ? (s.phone ? "нажмите, чтобы позвонить" : "нажмите, чтобы начать") : where;
+    const go = !d && op.open && i >= 0 && i === city.pos && !ct && !city.roll, v = s.arrive && city.home.visit;
+    const w2 = v && !d ? (i !== city.pos ? `мастер в ${fmtClock(v.at)} · дома` : homeUstaState() === "wait" ? `ждать мастера до ${fmtClock(v.at)}` : "мастер у двери")   // приход мастера: ждать можно только дома
+      : go ? (s.phone ? "нажмите, чтобы позвонить" : "нажмите, чтобы начать") : where;
     return `<li class="ct-task${d ? " done " + d.kind : !op.open ? " closed" : ""}${go ? " go" : ""}${!go && id === nextId ? " next" : ""}" data-scene="${id}"${go ? ' role="button" tabindex="0"' : ""}><i aria-hidden="true">${d ? '<svg class="ic"><use href="#i-check"/></svg>' : ""}</i><b>${esc(s.title)}</b><span>${w2}</span></li>`; }).join("");
-  ctEl("ctTasks").querySelectorAll(".ct-task.go").forEach(li => { const run = () => cityStart(li.dataset.scene); li.onclick = run; li.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); run(); } }; });
+  ctEl("ctTasks").querySelectorAll(".ct-task.go").forEach(li => { const run = () => SCENES[li.dataset.scene].arrive ? cityWaitUsta() : cityStart(li.dataset.scene); li.onclick = run; li.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); run(); } }; });
   cityInnerTab(cityTab); ctEl("ctChars").innerHTML = cityCharsHtml(); ctEl("ctSkills").innerHTML = citySkillsHtml();
   ctEl("ctChars").querySelectorAll(".ct-char").forEach(b => b.onclick = () => openChar(b.dataset.char));
   ctEl("ctDice").hidden = allDone;   // всё сделано — кубик не нужен; кнопка «Итоги дня» при этом не двигается: строка кнопок прижата к низу поля (2026-10-17 11:02)
@@ -5711,7 +5747,8 @@ function cityArrive0(i){
     if(closed){ const op = cityOpenNow(closed); toast(`${SCENES[closed].title}: закрыто (${op.text}).`); }       // дело закрыто — зайти всё равно можно
     return cityVisit(i); }
   if(c.kind === "event"){ if(!cityDraw()) toast("Тихо. Ничего не случилось — редкость для этого квартала."); return; }     // колода на сегодня пуста — хоть что-то происходит
-  if(c.kind === "home"){ const plan = cityPlanIds().filter(id => SCENES[id]); if(plan.length && plan.every(cityDoneId)) return cityDayEnd(); return cityVisit(i); }   // дом среди дня — в дверь звонят
+  if(c.kind === "home"){ const us = homeUstaState(); if(us === "door") return cityStart("tesisatci_gel"); if(us === "missed") return homeUstaMissed();   // мастер у двери — час; позже — ушёл
+    const plan = cityPlanIds().filter(id => SCENES[id]); if(plan.length && plan.every(cityDoneId)) return cityDayEnd(); return cityVisit(i); }   // дом среди дня — в дверь звонят
 }
 // «Зайти?» на клетке без дела (спек §6а, просьба 07:52 «на все клетки действия»): своя короткая сцена visit_<клетка>; если на клетке есть
 // «свободное» дело (free:true — симит, чай, хлеб…), в половине случаев предлагается оно: купить симит можно и без плана. В тестах — window.__visit.
@@ -5902,6 +5939,9 @@ function cityNode(id, replyHtml){
     if(ct.scene.rent && city.money < n.pay.price){                                     // аренда: не хватило — хозяин подождёт, разговор идёт дальше
       const short = n.pay.price - city.money; city.debt += short; ct.spent += city.money; city.money = 0; city.rentFor = rentWeek(); ct.n++; ct.ok++; count("city", 1);
       return cityResolve(n.pay.go, "near", `<span class="verdict">Не хватило ${short} ₺ — хозяин подождёт.</span><div class="alts">Долг спишется с зарплаты в понедельник.</div>`); }
+    if(ct.scene.repair && city.money < n.pay.price){                                    // мастер: не хватило — остаток в долг, как у хозяина
+      const short = n.pay.price - city.money; city.debt += short; ct.spent += city.money; city.money = 0; ct.n++; ct.ok++; count("city", 1);
+      return cityResolve(n.pay.go, "near", `<span class="verdict">Не хватило ${short} ₺ — Нихат-уста подождёт.</span><div class="alts">Долг спишется с зарплаты в понедельник.</div>`); }
     if(city.money < n.pay.price && ct.char === "bakkal" && (city.rel.bakkal || 0) >= 6){   // свой человек: остаток — в долг, спишется с зарплаты
       const short = n.pay.price - city.money; city.debt += short; ct.spent += city.money; city.money = 0; ct.n++; ct.ok++; count("city", 1);
       ctEl("ctTr").textContent = "Sonra ödersin, komşu."; ctEl("ctTr").classList.remove("veil"); ctEl("ctRu").textContent = "Потом отдашь, сосед."; npcSay("Sonra ödersin, komşu.");
@@ -6179,6 +6219,9 @@ function cityEnd(end, failed){
   if(ct.scene.rent){ city.flags = city.flags || {};
     if(failed && city.rentFor !== rentWeek()){ city.debt += RENT; city.rentFor = rentWeek(); }   // провал проверки: аренда в долг (§2б п. 3)
     if(failed) city.flags.evAgain = city.day; else delete city.flags.evAgain; }                 // и повтор разговора, пока не получится
+  if(ct.scene.arrive){ const v = city.home.visit, hid = ct.scene.arrive;                    // мастер пришёл: получилось — починено; нет — визита больше нет, снова звонить
+    if((end.kind || "ok") === "ok"){ delete city.home.broken[hid]; city.home.fixed.push({ id:hid, day:city.day, price:v ? v.price : 0 }); city.home.visit = null; }
+    else { city.home.visit = null; homeRepairSlot("tesisatci"); } }
   const disc = ct.scene.repair ? 0 : ctDiscount(failed); if(disc){ const toDebt = Math.min(disc, city.debt); city.debt -= toDebt; city.money += disc - toDebt; ct.spent -= disc; }   // уступка сначала гасит долг; у ремонта уступки Pazarlık нет — скидка в реплике мастера
   const L = CHARS[ct.char] && CHARS[ct.char].likes, quiet = !!(L && L.quiet && !failed && !ct.misses && ct.ok > 0);
   if(quiet) cityFx({ rel:1 });                                               // молчун ценит, когда его ни разу не переспросили
@@ -6203,11 +6246,15 @@ function cityEnd(end, failed){
 function cityDayEnd(){
   const plan = cityPlanIds(), dayDone = city.done.filter(d => plan.includes(d.id)), okN = dayDone.filter(d => d.kind === "ok").length, spent = city.done.reduce((a, d) => a + d.spent, 0);   // в счёт дел — только план; заходы «просто так» не в счёт, деньги — все
   const rels = Object.entries(city.rel).filter(([, v]) => v > 0).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} +${v}`).join(", ");
-  city.carry = cityPlanIds().filter(id => SCENES[id] && !cityDoneId(id)); citySave();
+  city.carry = cityPlanIds().filter(id => SCENES[id] && !cityDoneId(id));
+  let dripTxt = "";                                                                     // «потом»: кран капает — каждый вечер 40 ₺ за воду (в долг, если нет); раз в день, даже если итоги открыли снова
+  if(homeBroken("musluk") && (city.flags || (city.flags = {})).drip !== city.day){ city.flags.drip = city.day; cityFx({ money:-40 }); dripTxt = " Кран капает: −40 ₺ за воду.";
+    if(!city.home.soaked){ city.home.soaked = true; city.rel.komsu = (city.rel.komsu || 0) - 1; dripTxt += " Вода просочилась к Айше-тейзе этажом ниже — у неё мокрый потолок, она обиделась."; } }
+  citySave();
   const carryTxt = city.carry.length ? ` Не успели: ${city.carry.map(id => SCENES[id].title).join(", ")} — перенесено на завтра.` : "";
   const wait = !cityCanNewDay(), waitTxt = wait ? " Новые дела откроются завтра. Пока можно заходить к людям, звонить и повторять фразы — квартал открыт." : "";
   const next = wait ? { label:"В квартал", fn:cityRender }   /* 21:10: «Новые дела — завтра» читалось как действие; что дела завтра — сказано в тексте окна */ : { label:"Новый день", fn:cityNewDay };
-  showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${dayDone.length}.${carryTxt} ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}${waitTxt}`,
+  showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${dayDone.length}.${carryTxt}${dripTxt} ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}${waitTxt}`,
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
     primary: city.todaySaid.length ? { label:`Повторить фразы дня (${Math.min(5, city.todaySaid.length)})`, fn:cityReview } : next,
     secondary: city.todaySaid.length ? next : wait ? null : { label:"Остаться", fn:cityRender } });
