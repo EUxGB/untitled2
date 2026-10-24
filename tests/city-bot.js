@@ -58,8 +58,12 @@ async function run(browser, policy, seed = 0, opts = {}){
       city.plan = plan.slice(); return plan; }, [d, seed]);
     const m0 = await q.evaluate(() => [city.money, game.xp]);
     const broken = await q.evaluate(() => homeBroken('musluk'));
-    let queue = plan.slice(), tCall = null;
+    let queue = plan.slice(), tCall = null, tPick = null;
     if(broken && cap){ const extra = await q.evaluate(() => WEEK_SETS[0].filter(id => SCENES[id] && !SCENES[id].event && !city.plan.includes(id))); queue = plan.concat(extra); }
+    if(broken && cap && variant === 'away' && process.env.AWAY_PICK){   // AWAY_PICK=near|far: первым делом идёт ближайшее / самое дальнее от дома дело очереди
+      const dist = await q.evaluate(ids => ids.map(id => { const c = BOARD.findIndex(b => (b.scenes || []).includes(id)); return c < 0 ? 0 : boardDist(0, c); }), queue);
+      const k = dist.reduce((bi, d, i) => (process.env.AWAY_PICK === 'far' ? d > dist[bi] : d < dist[bi]) ? i : bi, 0);
+      queue = [queue[k], ...queue.filter((_, i) => i !== k)]; tPick = queue[0] + ' (' + dist[k] + ' кл.)'; }
     if(broken && variant === 'wait') await repairWait(q, policy);
     if(broken && variant === 'away') tCall = await callUsta(q, policy);
     let nPlan = 0, nAll = 0, tEnd = null, away = null; const trace = []; if(broken) trace.push('после звонка ' + await q.evaluate(() => [city.min, city.home.visit && city.home.visit.at]));
@@ -72,6 +76,7 @@ async function run(browser, policy, seed = 0, opts = {}){
         await q.evaluate(() => { window.__silent = false; cityArrive0(0); });
         const st = await q.evaluate(() => ({ ct:!!ct, modal:!document.getElementById('modal').hidden }));
         if(st.ct){ away.outcome = 'door'; await playScene(q, 'tesisatci_gel', policy, true); }
+        else if(st.modal && away.backAt[2] === 'wait'){ away.outcome = 'early (пришли раньше мастера — ждём дома)'; await q.evaluate(() => closeModal()); await waitUsta(q, policy); }
         else if(st.modal){ away.outcome = 'missed'; await q.click('#modalPrimary'); await q.waitForTimeout(30); await repairWait(q, policy); }
         else { away.outcome = 'early'; await waitUsta(q, policy); }
       }
@@ -83,7 +88,7 @@ async function run(browser, policy, seed = 0, opts = {}){
       if(broken && cap){ nAll++; if(qi < plan.length){ nPlan++; tEnd = await q.evaluate(() => city.min); } }
     }
     if(broken && variant === 'away' && !away && tCall){ away = { outcome:'не дошли до дома (дел меньше, чем AWAY_N)' }; await waitUsta(q, policy); }
-    if(broken) repairLog.push({ trace, day:(await q.evaluate(() => city.day)), variant, plan:nPlan, all:nAll, planDone:tEnd, away, fixed:await q.evaluate(() => !homeBroken('musluk')), endMin:await q.evaluate(() => city.min), money:await q.evaluate(() => city.money) });
+    if(broken) repairLog.push({ pick:tPick, trace, day:(await q.evaluate(() => city.day)), variant, plan:nPlan, all:nAll, planDone:tEnd, away, fixed:await q.evaluate(() => !homeBroken('musluk')), endMin:await q.evaluate(() => city.min), money:await q.evaluate(() => city.money) });
     const r = await q.evaluate(() => ({ day:city.day, dow:cityDow(), money:city.money, debt:city.debt, xp:game.xp, done:city.done.map(x => x.id + ':' + x.kind) }));
     rows.push(Object.assign(r, { spentToday:m0[0] - r.money, xpToday:r.xp - m0[1] }));
     await q.evaluate(() => { cityLeave(); ct = null; if(!document.getElementById('modal').hidden) closeModal(); cityNewDay(); if(!document.getElementById('modal').hidden) closeModal(); });
@@ -112,6 +117,7 @@ async function run(browser, policy, seed = 0, opts = {}){
   for(const variant of ['wait', 'away']){
     const r = await run(browser, 'speak', 1, { variant, capacity:true, days:9 });
     r.repairLog.forEach(x => console.log(`${variant.padEnd(4)}: из 3 дел плана ${x.plan}; всего дел до 21:00 ${x.all}; 3-е дело плана закончено в ${fmt(x.planDone)}; день кончился в ${fmt(x.endMin)}; кран починен ${x.fixed ? 'да' : 'нет'}; деньги ${x.money} ₺` + (x.away ? `; домой в ${x.away.backAt ? fmt(x.away.backAt[0]) : '—'} (мастер к ${x.away.backAt ? fmt(x.away.backAt[1]) : '—'}, ${x.away.backAt ? x.away.backAt[2] : ''}) → ${x.away.outcome}` : '')));
+    r.repairLog.forEach(x => x.pick && console.log('   первое дело: ' + x.pick));
     r.repairLog.forEach(x => console.log('   часы игры: ' + x.trace.join('; ')));
     if(!r.repairLog.length) console.log(`${variant}: кран в день 9 не сломан!`);
     if(r.errs.length) console.log('ошибки JS:', r.errs.slice(0, 3));
