@@ -3109,14 +3109,15 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq([ex.st.go, ex.st.started, ex.show], [true, true, true], 'дома — строка начинает звонок, «Показать» по телефону выключена');
     { const cards = await q.evaluate(() => { cityLeave(); ct = null; city.min = 600; cityStart('tesisatci'); return SCENES.tesisatci.nodes.greet.moves.map(m => m.ru); });
       ok(cards.every(t => !/точно|общими словами/.test(t)), 'карточки без подсказки, какой ответ лучше (решение 7): ' + cards.join(' | ')); await q.evaluate(() => { cityLeave(); ct = null; }); }
-    ok(/yarım saat içinde gelirim/i.test(ex.seen.join(' | ')) && /Yüz elli lira/.test(ex.seen.join(' | ')), 'точно — полчаса и 150: ' + ex.seen.join(' | '));
+    ok(/Tamam, iki saat içinde gelirim\. Yüz elli lira\./.test(ex.seen.join(' | ')) && /Yüz elli lira/.test(ex.seen.join(' | ')), 'точно — два часа и 150: ' + ex.seen.join(' | '));
     eq([ex.v && ex.v.id, ex.v && ex.v.price, ex.v && ex.v.day, ex.kind, ex.ended], ['musluk', 150, ex.day, 'ok', true], 'точно: визит');
-    ok(ex.d >= 30 && ex.d <= 40, 'точно — через полчаса: ' + ex.d); { const hm = String(Math.floor(ex.v.at / 60)).padStart(2, '0') + ':' + String(ex.v.at % 60).padStart(2, '0'); ok(ex.text.includes(hm), 'в итоге — время прихода ' + hm + ': ' + ex.text); }
+    ok(ex.d >= 120 && ex.d <= 130, 'точно — через два часа: ' + ex.d); { const hm = String(Math.floor(ex.v.at / 60)).padStart(2, '0') + ':' + String(ex.v.at % 60).padStart(2, '0'); ok(ex.text.includes(hm), 'в итоге — время прихода ' + hm + ': ' + ex.text); }
     // общими словами — переспрос, −1 терпения
     const vg = await call(10 * 60, ['bir su sorunu var', 'musluk damlıyor', 'tamam bekliyorum']);
     ok(vg.seen.some(t => /Nasıl bir sorun\? Musluk mu, kombi mi\?/.test(t)), 'переспрос: ' + vg.seen.join(' | '));
     ok(vg.seen.some(t => /İki yüz lira civarı/.test(t)), 'около двухсот: ' + vg.seen.join(' | '));
-    eq([vg.v && vg.v.price, vg.kind], [200, 'ok'], 'общими словами: 200, но получилось (последствие — цена и время, решение 6)'); ok(vg.d >= 60 && vg.d <= 70, 'общими словами — через час: ' + vg.d);
+    eq([vg.v && vg.v.price, vg.kind], [200, 'ok'], 'общими словами: 200, но получилось (последствие — цена и время, решение 6)'); ok(vg.d >= 180 && vg.d <= 190, 'общими словами — через три часа: ' + vg.d);
+    ok(vg.seen.some(t => /Üç saat içinde gelirim, önce bir bakmam lazım\./.test(t)), 'три часа: ' + vg.seen.join(' | '));
     const patV = await (async () => { await prep(10 * 60); await ctSay(q, 'bir su sorunu var'); return q.evaluate(() => ct && ct.patience); })();
     eq(patV, ex.pat0 - 1, 'общими словами — минус терпение'); await q.evaluate(() => { cityLeave(); ct = null; });
     // торг

@@ -19,7 +19,7 @@
 - Цвет «тюльпан» `--tulip` — только трудные звуки и запись (для лужи/поломки — `--near` #7A4A00 / `--near-soft` #FFF1D6).
 - Новые ключи хранения — только внутри `soyle-city` (поле `city.home`).
 - Новые опорные кнопки — в `ANCHORS` теста случайных нажатий; новые экраны проходят `monkey`/`STUCK`.
-- Числа из спека: точно — +30 мин, 150 ₺; общими словами — +60 мин, 200 ₺; торг −10 ₺ (140 / 190); окно «мастер ждёт у двери» — 60 мин; позже 20:00 — визит завтра в 9:30; «потом» — −40 ₺ каждый вечер; соседка — отношения `komsu` −1 один раз.
+- Числа из спека: точно — +120 мин, 150 ₺; общими словами — +180 мин, 200 ₺ (изменено пользователем 2026-10-24 08:35); торг −10 ₺ (140 / 190); окно «мастер ждёт у двери» — 60 мин; позже 20:00 — визит завтра в 9:30; «потом» — −40 ₺ каждый вечер; соседка — отношения `komsu` −1 один раз.
 - Появление в фазе 1: со 2-й недели кампании (`campWeek() >= 2`), раз в неделю — во вторник (`cityDow() === 2`), если крана нет в `city.home.broken` и его не чинили на этой неделе. Не в неделе 1.
 - Перед любым push: `npm test` зелёный (кроме «вид совпадает с эталоном» локально — арбитр CI); push в `main` и `main:tts-work`; «опубликовано» — только после CI `test`, `deploy`, `verify` = success и WebFetch https://www.simitci.ru/?check=<…> с новым хэшем.
 
@@ -77,13 +77,13 @@
 
 **Interfaces:**
 - Consumes: `city.home`, `homeBroken` (Task 2).
-- Produces: `SCENES.tesisatci` (`phone:true`, `repair:true`, `room:"mutfak"`, `char:"tesisatci_nihat"`); концовка ok ставит `city.home.visit = { id:"musluk", at: city.min + (vague ? 60 : 30), day: city.day, price }` (`at > 20*60` → `day+1`, `at = 9*60+30`); флаг описания — `ct.flags`/`fx.flag` `"vague"`, торг — ход с `haggle:true` (Pazarlık через `ctDiscount` НЕ брать: цена задана репликой мастера, уступка 10 ₺ — в `price`).
+- Produces: `SCENES.tesisatci` (`phone:true`, `repair:true`, `room:"mutfak"`, `char:"tesisatci_nihat"`); концовка ok ставит `city.home.visit = { id:"musluk", at: city.min + (vague ? 180 : 120), day: city.day, price }` (`at > 20*60` → `day+1`, `at = 9*60+30`); флаг описания — `ct.flags`/`fx.flag` `"vague"`, торг — ход с `haggle:true` (Pazarlık через `ctDiscount` НЕ брать: цена задана репликой мастера, уступка 10 ₺ — в `price`).
 - `CHARS.tesisatci_nihat`: `name:"Нихат-уста"`, `short:"Нихат"`, `bio` — из спека §3, `trait` по характеру (быстро, сразу цена, переспрашивает «вообще»), `likes:{ words:["mutfaktaki","musluk","damlıyor"] }`, `dm` как у других, `contactAt` по умолчанию.
 
 - [ ] **Step 1: Тест (падает).** Хуки `window.__say`, `cityStart`. Утверждения:
   - не дома (`city.pos = 3`): строка дела `tesisatci` без класса `go`, `cityStart` из строки не вызывается (Review: правило клетки);
-  - дома: точно (`'mutfaktaki musluk damlıyor'` → `'tamam bekliyorum'`) → `visit` = `{ at: min0 + 30 (+минуты реплик), price:150 }`; проверять `price` и `at - min0` в [30, 40];
-  - общими словами (`'su sorunu var'` → `'musluk damlıyor'` → `'tamam bekliyorum'`) → `price:200`, `at - min0` в [60, 70];
+  - дома: точно (`'mutfaktaki musluk damlıyor'` → `'tamam bekliyorum'`) → `visit` = `{ at: min0 + 120 (+минуты реплик), price:150 }`; проверять `price` и `at - min0` в [120, 130];
+  - общими словами (`'su sorunu var'` → `'musluk damlıyor'` → `'tamam bekliyorum'`) → `price:200`, `at - min0` в [180, 190];
   - торг (`… 'biraz indirim olur mu'` на 70+) → `price:140` / `190`, `city.haggleWins` +1; через «Показать» → цена без уступки;
   - звонок в 19:40 (точно) → `visit.day === city.day + 1`, `visit.at === 570`;
   - портрет: `charAvatar('tesisatci_nihat')` отличается от всех остальных (тест «больше персонажей» — число 18 → 19).
