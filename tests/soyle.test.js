@@ -3236,6 +3236,11 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     eq([r9.p[0], r9.reps, r9.p.includes('ev_sahibi'), ['bakkal', 'firin', 'simit'].every(x => r9.p.includes(x))], ['tesisatci_gel', ['tesisatci_gel'], true, true], 'план: ' + r9.p.join(','));
     eq(q.errors, []); await q.close();
   });
+  await test('распознавание пришло после ухода в «Город» (item = null) — без ошибки JS (monkey 2026-10-24)', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => { item = null; try { evalPhrase(['merhaba']); return 'ok'; } catch(e){ return String(e); } });
+    eq(r, 'ok', 'evalPhrase без карточки'); eq(q.errors, []); await q.close();
+  });
   await test('Дом с поломками (2026-10-24): финальные правки — хозяин переносится на понедельник, испорченный визит, «+-1», звонок в счёте дня, без светской реплики, вода к соседке раз за поломку', async () => {
     const q = await openCity();
     const r = await q.evaluate(() => { const close = () => { for(let k = 0; k < 6 && !document.getElementById('modal').hidden; k++) closeModal(); }; const o = {};

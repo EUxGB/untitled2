@@ -3085,6 +3085,7 @@ function compareText(targetText, heardText){
   return { score, ok, total: want.length, notes, html: parts.join(" ") };
 }
 function evalPhrase(alts){
+  if(!item) return;                                                  // ушли в «Город» (item = null), пока распознавалась речь (найдено monkey-тестом 2026-10-24)
   const { score, ok, total, html } = compareText(item.target, alts[0]);
   count(item.gid, score);
   const ps = pronScore(item.target, alts), [g, label] = gradeOf(ps.score);
