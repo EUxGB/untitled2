@@ -3056,12 +3056,20 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
         SCENES.tesisatci = { repair:true, phone:true, title:'stub', nodes:{} }; SCENES.tesisatci_gel = { repair:true, phone:true, title:'stub', nodes:{} };
         o.fresh = JSON.stringify(city.home);
         delete city.home; cityNormalize(); o.migrated = JSON.stringify(city.home);
-        city.day = 1; cityNewDay(); closeAll(); o.w1 = [city.day, homeBroken('musluk')];            // день 2 — неделя 1
-        city.camp = { w0:0 }; city.day = 8; city.home = { broken:{}, visit:null, fixed:[], soaked:false }; cityNewDay(); closeAll();
+        // Ruling 13 (решение 2026-10-24 09:00 «ломаться должно редко»): со 2-й недели, не раньше 14 дней после прошлой поломки/починки, в любой день, 15 % в день; в тестах — window.__break
+        const nd = (day, br) => { city.day = day; window.__break = br; cityNewDay(); closeAll(); window.__break = undefined; return [city.day, homeBroken('musluk')]; };
+        o.w1 = nd(1, true);                                                                                  // день 2 — неделя 1: не ломается даже с хуком
+        city.camp = { w0:0 }; city.home = { broken:{}, visit:null, fixed:[], soaked:false };
+        o.noHook = nd(8, undefined);                                                                         // неделя 2, хук не включён — не ломается (по умолчанию false)
+        city.home = { broken:{}, visit:null, fixed:[], soaked:false }; nd(9, true);                          // среда недели 2 — любой день
         o.tue = [city.day, cityDow(), homeBroken('musluk'), city.plan[0], city.home.broken.musluk && city.home.broken.musluk.day];
-        city.day = 15; cityNewDay(); closeAll(); o.tue2 = [city.day, city.plan.filter(x => x === 'tesisatci').length];   // второй вторник: не дублируется
+        nd(15, true); o.tue2 = [city.day, city.plan.filter(x => x === 'tesisatci').length];                 // уже сломан — не дублируется
         city.home.visit = { id:'musluk', at:600, day:9, price:150 }; o.gel = cityPlanFor(16)[0];
-        city.home = { broken:{}, visit:null, fixed:[{ id:'musluk', day:15, price:150 }], soaked:false }; city.day = 15; cityNewDay(); closeAll(); o.fixedWeek = [city.day, homeBroken('musluk')];   // починили на этой неделе
+        city.home = { broken:{}, visit:null, fixed:[{ id:'musluk', day:16, price:150 }], soaked:false };
+        o.pause = [nd(20, true), nd(28, true)];                                                              // 5 и 13 дней после починки — пауза
+        o.after = nd(29, true);                                                                              // 14 дней — может сломаться
+        city.home = { broken:{}, visit:null, fixed:[{ id:'musluk', day:30, price:150 }, { id:'musluk', day:41, price:150 }], soaked:false };
+        o.pause2 = nd(50, true);                                                                             // починки 30 и 41: от последней (41) до дня 51 — 10 дней, пауза
         // repair-сцена не считается делом недели и не попадает в случайный пул
         WEEK_SETS.forEach((a, i) => { a.length = 0; if(i === 1) a.push('tesisatci'); });
         o.ready = campReady(2); o.pool = cityPlanBase(8).includes('tesisatci');
@@ -3072,10 +3080,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       return o; });
     const empty = '{"broken":{},"visit":null,"fixed":[],"soaked":false}';
     eq(r.fresh, empty, 'новая игра'); eq(r.migrated, empty, 'сохранение без home');
-    eq(r.w1, [2, false], 'неделя 1 — поломки нет');
-    eq(r.tue, [9, 2, true, 'tesisatci', 9], 'вторник недели 2: кран сломан, мастер первым в плане');
-    eq(r.tue2, [16, 1], 'второй вторник не дублирует'); eq(r.gel, 'tesisatci_gel', 'мастер записан — ждём его');
-    eq(r.fixedWeek, [16, false], 'в неделю починки не ломается');
+    eq(r.w1, [2, false], 'неделя 1 — поломки нет (и с хуком)');
+    eq(r.noHook, [9, false], 'неделя 2 без хука — в тестах не ломается');
+    eq(r.tue, [10, 3, true, 'tesisatci', 10], 'неделя 2, среда: кран сломан (любой день), мастер первым в плане');
+    eq(r.tue2, [16, 1], 'уже сломан — не дублирует'); eq(r.gel, 'tesisatci_gel', 'мастер записан — ждём его');
+    eq(r.pause, [[21, false], [29, false]], 'меньше 14 дней после починки — не ломается');
+    eq(r.after, [30, true], '14 дней после починки — ломается');
+    eq(r.pause2, [51, false], 'пауза — от последней починки');
     eq([r.ready, r.pool], [false, false], 'сцена repair — не дело недели и не в пуле');
     await q.close();
   });
@@ -3128,6 +3139,14 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     // поздно (19:40) — завтра в 9:30
     const lt = await call(19 * 60 + 40, ['mutfaktaki musluk damlıyor', 'tamam bekliyorum']);
     eq([lt.v && lt.v.day, lt.v && lt.v.at, lt.v && lt.v.price], [lt.day + 1, 570, 150], 'поздно — завтра в 9:30'); ok(/Yarın sabah gelirim/.test(lt.text) && /09:30/.test(lt.text), lt.text);
+    // Ruling 14: границы «позже 20:00 → завтра 9:30» по минуте конца звонка. Точно (+120): 17:59 и 18:00 — сегодня, 18:01 — завтра; общими словами (+180): 16:59 — сегодня, 17:01 — завтра
+    { const ee = ex.d - 120, ev = vg.d - 180, fm = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+      for(const [steps, wait, el, end, today] of [[['mutfaktaki musluk damlıyor', 'tamam bekliyorum'], 120, ee, 17 * 60 + 59, true], [['mutfaktaki musluk damlıyor', 'tamam bekliyorum'], 120, ee, 18 * 60, true], [['mutfaktaki musluk damlıyor', 'tamam bekliyorum'], 120, ee, 18 * 60 + 1, false],
+          [['bir su sorunu var', 'musluk damlıyor', 'tamam bekliyorum'], 180, ev, 16 * 60 + 59, true], [['bir su sorunu var', 'musluk damlıyor', 'tamam bekliyorum'], 180, ev, 17 * 60 + 1, false]]){
+        const b = await call(end - el, steps), tag = `+${wait}, конец звонка ${fm(end)}`;
+        if(today){ eq([b.v && b.v.day, b.v && b.v.at], [b.day, end + wait], tag + ' — сегодня'); ok(b.text.includes(fm(end + wait)) && !/Yarın sabah/.test(b.text), tag + ': ' + b.text); }
+        else { eq([b.v && b.v.day, b.v && b.v.at], [b.day + 1, 570], tag + ' — завтра 9:30'); ok(/Yarın sabah gelirim/.test(b.text) && /завтра в 09:30/.test(b.text), tag + ': ' + b.text); }
+      } }
     // кончилось терпение — «на работе, перезвоните»; визита нет
     await prep(10 * 60); for(let k = 0; k < 6 && await q.evaluate(() => !!ct && !ct.resolved); k++) await ctSay(q, ''); await q.waitForTimeout(150);
     const fl = await q.evaluate(() => ({ v:city.home.visit, kind:(city.done.find(x => x.id === 'tesisatci') || {}).kind, text:document.getElementById('modalText').textContent })); await closeAll();
@@ -3175,13 +3194,13 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
     const h = await prep(700, 0); ok(/мастер у двери/.test(h.text), h.text);
     eq(await tap(), { id:'tesisatci_gel', min:701, modal:'' }, 'дома всё время — мастер у двери и после часа');
     // сцена: «Buyurun usta, mutfakta.» → «Contayı değiştirdim, tamamdır.» → «Elinize sağlık.» → «Yüz elli lira.»; денег 100 — 50 в долг (Review 4)
-    await prep(600, 0, 150, 100); await tap();
+    await prep(600, 0, 150, 100); await q.evaluate(() => { city.home.soaked = true; }); await tap();
     const seen = [await q.evaluate(() => document.getElementById('ctTr').textContent)];
     for(const s of ['buyurun usta mutfakta', 'elinize sağlık']){ const r = await ctSay(q, s); if(r.next) await ctNext(q); seen.push(await q.evaluate(() => document.getElementById('ctTr').textContent)); }
     ok(/Merhaba, musluk için geldim\./.test(seen[0]) && /Contayı değiştirdim, tamamdır\./.test(seen[1]) && /Yüz elli lira\./.test(seen[2]), seen.join(' | '));
     if(await q.evaluate(() => !!ct && ct.resolved)) await ctNext(q); await q.waitForTimeout(120);
-    const pd = await q.evaluate(() => ({ money:city.money, debt:city.debt, kind:(city.done.find(x => x.id === 'tesisatci_gel') || {}).kind, broken:homeBroken('musluk'), fixed:city.home.fixed.map(f => [f.id, f.price, f.day === city.day]), v:city.home.visit, ended:!ct }));
-    eq(pd, { money:0, debt:50, kind:'ok', broken:false, fixed:[['musluk', 150, true]], v:null, ended:true }, 'оплата: не хватило — в долг, кран починен');
+    const pd = await q.evaluate(() => ({ money:city.money, debt:city.debt, kind:(city.done.find(x => x.id === 'tesisatci_gel') || {}).kind, broken:homeBroken('musluk'), fixed:city.home.fixed.map(f => [f.id, f.price, f.day === city.day]), v:city.home.visit, ended:!ct, soaked:city.home.soaked }));
+    eq(pd, { money:0, debt:50, kind:'ok', broken:false, fixed:[['musluk', 150, true]], v:null, ended:true, soaked:false }, 'оплата: не хватило — в долг, кран починен; мокрый потолок — снова возможен при следующей поломке (раз за поломку)');
     await closeAll();
     // цена из звонка: 140 / 190 / 200
     for(const [p, t] of [[140, 'Yüz kırk lira.'], [190, 'Yüz doksan lira.'], [200, 'İki yüz lira.']]){
@@ -3200,17 +3219,60 @@ const setItem = (p, it) => p.evaluate(it => { item = Object.assign({ gid:'o', me
       delete city.home.broken.musluk; city.day++; const m = city.money; cityDayEnd(); o.fixed = [city.money - m, /Кран капает/.test(document.getElementById('modalText').textContent)]; close();
       return o; });
     eq(lk, { d1:[60, 2, true, true, true], again:60, d2:[20, 2, true, false], d3:[0, 20], fixed:[0, false] }, '«потом»');
-    // Review 5: 21:00, мастер не дождался — приход переносится на завтра, дело первым
-    const r5 = await q.evaluate(() => { cityLeave(); ct = null; for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal();
-      city.home = { broken:{ musluk:{ day:city.day } }, visit:{ id:'musluk', at:19 * 60, day:city.day, price:150 }, fixed:[], soaked:true }; city.done = []; city.carry = []; city.flags = {}; city.money = 1000; city.pos = 3; city.min = DAY_END;
-      city.plan = cityPlanFor(city.day); cityDayEnd(); const carry = city.carry.slice(), m = city.money;
-      for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal(); cityNewDay(); for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal();
-      return { carry, m, plan0:city.plan[0], reps:city.plan.filter(x => SCENES[x] && SCENES[x].repair).length, v:[city.home.visit.day === city.day, city.home.visit.at], broken:homeBroken('musluk') }; });
-    eq([r5.carry.includes('tesisatci_gel'), r5.m, r5.plan0, r5.reps, r5.v, r5.broken], [true, 960, 'tesisatci_gel', 1, [true, 570], true], '21:00 — мастер завтра в 9:30, первым делом');
+    // Review 5 → Ruling 14 (2026-10-24): к концу дня мастер был у двери и ушёл (21:00 > 19:00 + час) — как вернуться в 20:30: визита нет, завтра снова звонить;
+    // визит, который ещё впереди (записан на завтра 9:30), переносится молча — без «Не успели: Мастер у двери»
+    const r5 = await q.evaluate(() => { const close = () => { for(let k = 0; k < 4 && !document.getElementById('modal').hidden; k++) closeModal(); }; cityLeave(); ct = null; close();
+      const day = (visit) => { city.home = { broken:{ musluk:{ day:city.day } }, visit, fixed:[], soaked:true }; city.done = [{ id:'tesisatci', kind:'ok', short:'получилось', ok:2, n:2, took:5, spent:0 }]; city.carry = []; city.flags = {}; city.money = 1000; city.pos = 3; city.min = DAY_END;
+        city.plan = cityPlanFor(city.day); cityDayEnd(); const o = { carry:city.carry.slice(), m:city.money, text:document.getElementById('modalText').textContent, v0:city.home.visit && Object.assign({}, city.home.visit) };
+        close(); cityNewDay(); close(); return Object.assign(o, { plan0:city.plan[0], reps:city.plan.filter(x => SCENES[x] && SCENES[x].repair).length, v:city.home.visit && [city.home.visit.day === city.day, city.home.visit.at], broken:homeBroken('musluk') }); };
+      return { missed:day({ id:'musluk', at:19 * 60, day:city.day, price:150 }), ahead:day({ id:'musluk', at:570, day:city.day + 1, price:150 }) }; });
+    eq([r5.missed.carry.includes('tesisatci_gel'), r5.missed.m, r5.missed.v0, r5.missed.plan0, r5.missed.reps, r5.missed.v, r5.missed.broken], [false, 960, null, 'tesisatci', 1, null, true], '21:00, мастер был в 19:00 — ушёл, завтра звонить: ' + r5.missed.text);
+    ok(/Мастер приходил в 19:00 и ушёл/.test(r5.missed.text) && !/Не успели: Мастер у двери/.test(r5.missed.text), r5.missed.text);
+    eq([r5.ahead.carry.includes('tesisatci_gel'), r5.ahead.plan0, r5.ahead.reps, r5.ahead.v, r5.ahead.broken], [false, 'tesisatci_gel', 1, [true, 570], true], 'визит на завтра 9:30 — переносится молча');
+    ok(!/Мастер у двери/.test(r5.ahead.text) && !/ушёл/.test(r5.ahead.text), r5.ahead.text);
     // Ruling 9: ремонт и хозяин в воскресенье не вытесняют перенесённые дела; ремонтное дело в плане одно
     const r9 = await q.evaluate(() => { city.home = { broken:{ musluk:{ day:13 } }, visit:{ id:'musluk', at:600, day:14, price:150 }, fixed:[], soaked:true };
       city.carry = ['tesisatci', 'bakkal', 'firin', 'simit']; const p = cityPlanFor(14); city.carry = []; return { p, reps:p.filter(x => SCENES[x].repair) }; });
     eq([r9.p[0], r9.reps, r9.p.includes('ev_sahibi'), ['bakkal', 'firin', 'simit'].every(x => r9.p.includes(x))], ['tesisatci_gel', ['tesisatci_gel'], true, true], 'план: ' + r9.p.join(','));
+    eq(q.errors, []); await q.close();
+  });
+  await test('Дом с поломками (2026-10-24): финальные правки — хозяин переносится на понедельник, испорченный визит, «+-1», звонок в счёте дня, без светской реплики, вода к соседке раз за поломку', async () => {
+    const q = await openCity();
+    const r = await q.evaluate(() => { const close = () => { for(let k = 0; k < 6 && !document.getElementById('modal').hidden; k++) closeModal(); }; const o = {};
+      // 1. воскресенье: хозяина не застали — перенесён; в понедельник он в плане, план не короче PLAN_SIZE (как в main)
+      city.camp = { w0:0 }; city.day = 14; city.home = { broken:{}, visit:null, fixed:[], soaked:false }; city.flags = {}; city.done = []; city.carry = []; city.rentFor = 3; city.min = DAY_END;
+      city.plan = cityPlanFor(14); o.sun = city.plan.slice(); cityDayEnd(); o.sunText = document.getElementById('modalText').textContent; close(); cityNewDay(); close();
+      o.mon = [city.day, city.plan.slice()];
+      // 1б. понедельник с поломкой и перенесённым хозяином: ремонтное дело одно, перенесённое не теряется
+      city.home = { broken:{ musluk:{ day:15 } }, visit:null, fixed:[], soaked:false }; city.carry = ['ev_sahibi', 'bakkal']; o.monRep = cityPlanFor(15); city.carry = [];
+      // 2. испорченный визит из резервной копии ({}): нормализуется в null — первым звонок, а не «мастер у двери» без выхода
+      city.home = { broken:{ musluk:{ day:city.day } }, visit:{}, fixed:'x', soaked:1 }; cityNormalize(); o.bad = [city.home.visit, Array.isArray(city.home.fixed), city.home.soaked, cityPlanFor(city.day)[0]];
+      city.home = { broken:{ musluk:true, x:null }, visit:{ id:'musluk', at:'10', day:city.day, price:150 }, fixed:[{ id:'musluk', day:3 }, null, { day:'a' }], soaked:false }; cityNormalize();
+      o.bad2 = [city.home.visit, homeBroken('musluk'), city.home.broken.musluk && city.home.broken.musluk.day === city.day, 'x' in city.home.broken, city.home.fixed.length];
+      // 2б. визит на завтра, а строка прихода в плане: «мастер завтра в 09:30», нажать нельзя
+      city.home = { broken:{ musluk:{ day:city.day } }, visit:{ id:'musluk', at:570, day:city.day + 1, price:150 }, fixed:[], soaked:false }; city.pos = 0; city.roll = null; city.min = 600; city.done = [];
+      city.plan = cityPlanFor(city.day); cityRender(); { const li = document.querySelector('#ctTasks .ct-task[data-scene="tesisatci_gel"]'); o.tmr = [!!li, li && li.classList.contains('go'), li && li.textContent]; li && li.click(); o.tmrCt = ct && ct.id; }
+      // 4. отношения −1 (соседка обиделась): в «Людях» без «+-1»; +2 — «+2»
+      city.rel.komsu = -1; city.rel.bakkal_ramiz = 2; cityRender(); o.people = document.getElementById('ctChars').textContent;
+      // 5. звонок получился, мастер придёт в 15:00 — в итоге дня звонок в счёте, «Мастер у двери» не в «не успели»
+      city.home = { broken:{ musluk:{ day:city.day } }, visit:null, fixed:[], soaked:true }; city.flags = {}; city.min = 600;
+      city.plan = ['tesisatci', 'bakkal', 'firin']; city.done = [{ id:'tesisatci', kind:'ok', short:'получилось', ok:2, n:2, took:5, spent:0 }]; homeVisit({ id:'musluk', wait:300, price:150 });
+      o.plan5 = city.plan.slice(); city.min = 700; cityDayEnd(); o.end5 = document.getElementById('modalText').textContent; close();
+      // 6. светской реплики перед мастером нет (у сцены ремонта), у bakkal — есть
+      window.__smalltalk = 0; city.home.visit = { id:'musluk', at:600, day:city.day, price:150 }; city.min = 600; cityStart('tesisatci_gel'); o.small = [!!(ct && ct.node && ct.node.chat), document.getElementById('ctTr').textContent];
+      cityLeave(); ct = null; cityStart('bakkal'); o.smallB = !!(ct && ct.node && ct.node.chat); cityLeave(); ct = null; window.__smalltalk = undefined;
+      return o; });
+    ok(r.sun.includes('ev_sahibi'), 'воскресенье: ' + r.sun.join(','));
+    ok(/Не успели: [^.]*Хозяин квартиры/.test(r.sunText), r.sunText);
+    eq([r.mon[0], r.mon[1].includes('ev_sahibi'), r.mon[1].length >= 3], [15, true, true], 'понедельник: перенесённый хозяин в плане — ' + r.mon[1].join(','));
+    eq([r.monRep[0], r.monRep.filter(x => x === 'tesisatci' || x === 'tesisatci_gel').length, r.monRep.includes('ev_sahibi'), r.monRep.includes('bakkal')], ['tesisatci', 1, true, true], 'поломка + перенос: ' + r.monRep.join(','));
+    eq(r.bad, [null, true, true, 'tesisatci'], 'visit:{} → null, первым — звонок');
+    eq(r.bad2, [null, true, true, false, 1], 'неполные visit/broken/fixed — нормализуются');
+    eq([r.tmr[0], r.tmr[1], r.tmrCt], [true, false, null], 'визит на завтра — строка без нажатия'); ok(/мастер завтра в 09:30/.test(r.tmr[2]), r.tmr[2]);
+    ok(!/\+-/.test(r.people) && /\+2/.test(r.people), 'Люди: ' + r.people);
+    eq(r.plan5[0], 'tesisatci_gel', 'звонок → приход в плане');
+    ok(/Дел сделано хорошо: 1 из 1\./.test(r.end5) && !/Мастер у двери/.test(r.end5), 'итог дня: ' + r.end5);
+    eq(r.small[0], false, 'нет светской реплики перед мастером'); ok(/Merhaba, musluk için geldim\./.test(r.small[1]), r.small[1]); eq(r.smallB, true, 'у bakkal светская реплика есть (хук работает)');
     eq(q.errors, []); await q.close();
   });
   await test('Дом с поломками (2026-10-23): кухня на картинке — в сценах ремонта кран капает (капли, лужа, «musluk: damlıyor»), после починки — починен; в других сценах картинки нет; сцена помещается, кнопки на месте (320–412)', async () => {

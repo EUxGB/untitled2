@@ -3,7 +3,8 @@
 // Запуск: DAYS=14 node tests/city-bot.js   (без сети; страница — file://, как в тестах)
 // Упрощения (честно): поле не проходится кубиком — бот сразу начинает дело дня; карты колоды не тянутся; у такси списывается
 // цена поездки по формуле игры (100 + 10 × расстояние), без самой сцены такси.
-// Дом с поломками (2026-10-23): со 2-й недели кампании во вторник ломается кран. Во ВСЕХ стратегиях бот в этот день сначала звонит
+// Дом с поломками (2026-10-23): кран ломается редко и в случайный день (с 2026-10-24: со 2-й недели, пауза 14 дней, 15 % в день); бот ставит поломку
+// хуком window.__break на вторник недели 2 (день 9), чтобы замер сравнивался с прежним. Во ВСЕХ стратегиях бот в этот день сначала звонит
 // мастеру (точно: «Mutfaktaki musluk damlıyor.»; у phone тоже голосом — в звонке «Показать» нет), стоит дома и ждёт (`cityWaitUsta`), платит, потом идёт дела дня.
 // Сравнение вариантов во вторник ремонта (раздел «вторник ремонта» в конце вывода): `wait` — позвонил и сразу ждать; `away` — позвонил,
 // AWAY_N (2) дела, потом домой (`cityArrive0(0)`: мастер у двери / ушёл; ушёл или пришли раньше — снова звонок и ждать). Время дел — по часам игры
@@ -91,7 +92,7 @@ async function run(browser, policy, seed = 0, opts = {}){
     if(broken) repairLog.push({ pick:tPick, trace, day:(await q.evaluate(() => city.day)), variant, plan:nPlan, all:nAll, planDone:tEnd, away, fixed:await q.evaluate(() => !homeBroken('musluk')), endMin:await q.evaluate(() => city.min), money:await q.evaluate(() => city.money) });
     const r = await q.evaluate(() => ({ day:city.day, dow:cityDow(), money:city.money, debt:city.debt, xp:game.xp, done:city.done.map(x => x.id + ':' + x.kind) }));
     rows.push(Object.assign(r, { spentToday:m0[0] - r.money, xpToday:r.xp - m0[1] }));
-    await q.evaluate(() => { cityLeave(); ct = null; if(!document.getElementById('modal').hidden) closeModal(); cityNewDay(); if(!document.getElementById('modal').hidden) closeModal(); });
+    await q.evaluate(() => { cityLeave(); ct = null; if(!document.getElementById('modal').hidden) closeModal(); window.__break = city.day + 1 === 9; cityNewDay(); window.__break = undefined; if(!document.getElementById('modal').hidden) closeModal(); });   // поломка — случайно (Ruling 13); бот ставит её на вторник недели 2 (день 9) хуком, как раньше
     await q.waitForTimeout(40);
   }
   const errs = q.errors.splice(0); await q.context().close();

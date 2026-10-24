@@ -3926,7 +3926,7 @@ function cityPlanFor(day){                       // воскресенье (и �
   const ev = SCENES.ev_sahibi && ((day - 1) % 7 + 1 === 7 || (city.flags && city.flags.evAgain)) ? "ev_sahibi" : null;
   const rep = homeBroken("musluk") && (city.home.visit ? "tesisatci_gel" : "tesisatci");   // поломка дома — первым делом: позвонить мастеру / дождаться его
   const first = [rep, ev].filter(id => id && SCENES[id]);
-  const p = cityPlanBase(day).filter(id => id !== "ev_sahibi" && !(SCENES[id] && SCENES[id].repair));   // ремонтное дело в плане одно (звонок или приход)
+  const p = cityPlanBase(day).filter(id => id !== ev && !(SCENES[id] && SCENES[id].repair));   // убирается только то, что уже первым (перенесённый хозяин в понедельник остаётся — ревью 2026-10-24); ремонтное дело одно
   const carried = p.filter(id => (city.carry || []).includes(id)).length;              // перенесённое не вытесняется: план длиннее, а не короче (уходят только случайные дела)
   return first.concat(p).slice(0, Math.max(PLAN_SIZE, first.length + carried));
 }
@@ -3958,6 +3958,15 @@ function ctRoomRender(){                                                  // к�
   e.innerHTML = roomSvg(room, st) + `<span class="ct-room-chip ${st}" lang="tr" translate="no">${R.chip[st]}</span>`;
 }
 function homeBreak(id){ if(!homeBroken(id)) city.home.broken[id] = { day:city.day }; }
+// Редко (решение 2026-10-24 09:00 «ломаться должно редко» → «раз в 2–3 недели»): со 2-й недели кампании, не раньше 14 дней после прошлой поломки или починки,
+// в любой день, 15 % в день (в среднем ≈ 3 недели); не дважды, пока не починен. В тестах — только с window.__break === true
+const HOME_PAUSE = 14, HOME_P = 0.15;
+function homeMayBreak(){
+  if(campWeek() < 2 || homeBroken("musluk")) return false;
+  const last = Math.max(0, ...city.home.fixed.map(f => f.day), ...Object.values(city.home.broken).map(b => b.day));
+  if(last && city.day - last < HOME_PAUSE) return false;
+  return TESTMODE ? window.__break === true : Math.random() < HOME_P;
+}
 // Мастер записан: придёт через wait минут от конца звонка; позже 20:00 — завтра в 9:30 (спек §4). Ставит fx.visit концовки звонка (cityFx)
 function homeVisit(v){ let at = city.min + v.wait, day = city.day; if(at > 20 * 60){ day++; at = 9 * 60 + 30; } city.home.visit = { id:v.id, at, day, price:v.price }; if(day === city.day) homeRepairSlot("tesisatci_gel"); }
 // Одно место в плане под ремонт: звонок → приход мастера (→ снова звонок, если мастер ушёл); то, что ставим, — снова не сделано
@@ -4024,7 +4033,7 @@ const SMALLTALK_MOVES = [
 // Приветствие понимается в любой светской реплике (жалоба 2026-10-10 10:03: «на мой ответ "привет" и "лёгкой работы" он не понимает»): карточкой не показывается
 const SMALLTALK_GREET = [{ key:["merhaba", "selam", "kolay gelsin", "günaydın", "iyi günler", "iyi akşamlar"], say:["Merhaba, kolay gelsin."], ru:"Здравствуйте, лёгкой работы.", like:true, xp:false, hide:true }];
 function ctSmalltalk(scene){
-  if(scene.event || scene.phone || (!scene.char && !scene.pool)) return null;
+  if(scene.event || scene.phone || scene.repair || (!scene.char && !scene.pool)) return null;   // мастер у двери — сразу к делу
   const idx = TESTMODE ? (typeof window.__smalltalk === "number" ? window.__smalltalk : -1) : (Math.random() < 0.5 ? Math.floor(Math.random() * SMALLTALK.length) : -1);
   if(idx < 0 || !SMALLTALK[idx]) return null;
   const t = SMALLTALK[idx];
@@ -4070,9 +4079,8 @@ function cityNewDay(){
   let rentShort = 0;
   if(payday){ city.money += SALARY; const back = Math.min(city.debt, city.money); city.money -= back; city.debt -= back;   // долг гасится из зарплаты, деньги не уходят в минус
     if(city.rentFor !== Math.ceil(city.day / 7)){ const pay = Math.min(RENT, city.money); city.money -= pay; rentShort = RENT - pay; city.debt += rentShort; } }   // отдали хозяину в воскресенье — не списывается   // аренда; не хватило — хозяин подождёт (долг)
-  // кран ломается со 2-й недели кампании, раз в неделю по вторникам (не в первую неделю; не дважды, пока не починен; не в неделю починки)
-  { const v = city.home.visit; if(v && v.day < city.day){ v.day = city.day; v.at = 9 * 60 + 30; } }   // мастера вчера не дождались до вечера — придёт утром
-  if(campWeek() >= 2 && cityDow() === 2 && !homeBroken("musluk") && !city.home.fixed.some(f => Math.ceil(f.day / 7) === Math.ceil(city.day / 7))) homeBreak("musluk");
+  { const v = city.home.visit; if(v && v.day < city.day){ v.day = city.day; v.at = 9 * 60 + 30; } }   // визит был ещё впереди (записан на завтра) — придёт утром; ушедшего мастера убирает cityDayEnd
+  if(homeMayBreak()) homeBreak("musluk");
   if(payday) city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) };   // начало недели: снимок для итога (до сохранения — ревью 2026-10-11)
   city.plan = cityPlanFor(city.day); city.carry = []; cityMorning(); citySave(); cityRender();
   toast(payday ? `Pazartesi: maaş +${SALARY} ₺, kira −${RENT} ₺` : `${DOW_RU[cityDow()]}, день ${city.day}`);
@@ -5464,8 +5472,10 @@ function cityNormalize(){
     city.camp = city.day <= 1 ? { w0:0 } : { w0:Math.ceil(city.day / 7), old:true, prologue:true };
     city.wk = { m:cityMasteredN(), rel:Object.assign({}, city.rel) }; }
   { const h = city.home = (city.home && typeof city.home === "object" && !Array.isArray(city.home)) ? city.home : {};
-    if(!h.broken || typeof h.broken !== "object" || Array.isArray(h.broken)) h.broken = {}; if(!h.visit || typeof h.visit !== "object") h.visit = null;
-    if(!Array.isArray(h.fixed)) h.fixed = []; h.soaked = !!h.soaked; }
+    if(!h.broken || typeof h.broken !== "object" || Array.isArray(h.broken)) h.broken = {};
+    Object.keys(h.broken).forEach(k => { const b = h.broken[k]; if(!b) delete h.broken[k]; else if(typeof b !== "object" || !Number.isFinite(b.day)) h.broken[k] = { day:city.day }; });   // сломано — остаётся сломанным, день — сегодня
+    const v = h.visit; if(!(v && typeof v === "object" && typeof v.id === "string" && Number.isFinite(v.at) && Number.isFinite(v.day) && Number.isFinite(v.price))) h.visit = null;   // испорченный визит (копия: {}) запирал ремонт — ревью 2026-10-24
+    h.fixed = Array.isArray(h.fixed) ? h.fixed.filter(f => f && typeof f === "object" && Number.isFinite(f.day)) : []; h.soaked = !!h.soaked; }
   if(!city.feedback || typeof city.feedback !== "object") city.feedback = {};
   if(fresh && !city.calDay) city.calDay = dayStr(new Date());                         // новая игра: день 1 — сегодня; у старых сохранений метки нет — новый день можно сразу
   if(!Array.isArray(city.plan)) city.plan = cityPlanFor(city.day);
@@ -5544,8 +5554,8 @@ function cityBoard(){
   const nextId = (plan.filter(id => !cityDoneId(id) && cityOpenNow(id).open && cellOfScene(id) >= 0).sort((a, b) => boardDist(city.pos, cellOfScene(a)) - boardDist(city.pos, cellOfScene(b)))[0]) || null;
   ctEl("ctTasks").innerHTML = plan.map(id => { const s = SCENES[id], d = city.done.find(x => x.id === id), i = cellOfScene(id), op = cityOpenNow(id), dist = i < 0 ? 0 : boardDist(city.pos, i);
     const where = i < 0 ? "" : d ? esc(d.short) : !op.open ? esc(op.text || "закрыто") : i === city.pos ? (s.phone ? "звоните отсюда" : "дело здесь") : s.phone ? `звонок · ${BOARD[i].ru}, ${dist} ${plural(dist, "клетка", "клетки", "клеток")}` : `${dist} ${plural(dist, "клетка", "клетки", "клеток")}`;
-    const go = !d && op.open && i >= 0 && i === city.pos && !ct && !city.roll, v = s.arrive && city.home.visit;
-    const w2 = v && !d ? (i !== city.pos ? `мастер в ${fmtClock(v.at)} · дома` : homeUstaState() === "wait" ? `ждать мастера до ${fmtClock(v.at)}` : "мастер у двери")   // приход мастера: ждать можно только дома
+    const v = s.arrive && city.home.visit, vNone = v && homeUstaState() === "none", go = !d && op.open && i >= 0 && i === city.pos && !ct && !city.roll && !vNone;   // визит не сегодня — строку не нажать
+    const w2 = v && !d ? (vNone ? `мастер ${v.day > city.day ? "завтра " : ""}в ${fmtClock(v.at)}` : i !== city.pos ? `мастер в ${fmtClock(v.at)} · дома` : homeUstaState() === "wait" ? `ждать мастера до ${fmtClock(v.at)}` : "мастер у двери")   // приход мастера: ждать можно только дома
       : go ? (s.phone ? "нажмите, чтобы позвонить" : "нажмите, чтобы начать") : where;
     return `<li class="ct-task${d ? " done " + d.kind : !op.open ? " closed" : ""}${go ? " go" : ""}${!go && id === nextId ? " next" : ""}" data-scene="${id}"${go ? ' role="button" tabindex="0"' : ""}><i aria-hidden="true">${d ? '<svg class="ic"><use href="#i-check"/></svg>' : ""}</i><b>${esc(s.title)}</b><span>${w2}</span></li>`; }).join("");
   ctEl("ctTasks").querySelectorAll(".ct-task.go").forEach(li => { const run = () => SCENES[li.dataset.scene].arrive ? cityWaitUsta() : cityStart(li.dataset.scene); li.onclick = run; li.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); run(); } }; });
@@ -5580,7 +5590,7 @@ function cityCharsHtml(){
   // вид B (макет V2): портрет · имя (+ значок номера) · под именем роль (место из сцен человека) и уровень · справа 6 точек отношений; внизу — пояснение (на низких экранах — по «?»)
   return list.map(c => { const v = city.rel[c] || 0, lv = relLevel(v), n = Math.max(0, Math.min(6, v)), role = charRole(c);
     return `<button class="ct-char lv${lv}" data-char="${c}"><i aria-hidden="true">${charAvatar(c) || esc(CHARS[c].initial)}</i><span class="ct-char-main"><span class="ct-char-name"><b>${esc(CHARS[c].name)}</b>${city.contacts[c] ? '<svg class="ic ct-num" aria-label="номер есть"><use href="#i-phone"/></svg>' : ""}</span>`
-      + `<span class="ct-char-role">${esc(role)}<span class="ct-char-lvl">${REL_NAME[lv] || (v ? `+${v}` : "")}</span></span></span>`
+      + `<span class="ct-char-role">${esc(role)}<span class="ct-char-lvl">${REL_NAME[lv] || (v > 0 ? `+${v}` : "")}</span></span></span>`
       + `<span class="ct-dots" role="img" aria-label="отношения ${n} из 6">${Array.from({ length:6 }, (_, k) => `<span${k < n ? ' class="on"' : ""}></span>`).join("")}</span></button>`; }).join("")
     + `<p class="hint ct-tab-note">Знакомый с 3 — скидки и долг; свой с 6. Нажмите на имя с номером — позвонить.</p>`;
 }
@@ -6263,7 +6273,7 @@ function cityEnd(end, failed){
     if(failed && city.rentFor !== rentWeek()){ city.debt += RENT; city.rentFor = rentWeek(); }   // провал проверки: аренда в долг (§2б п. 3)
     if(failed) city.flags.evAgain = city.day; else delete city.flags.evAgain; }                 // и повтор разговора, пока не получится
   if(ct.scene.arrive){ const v = city.home.visit, hid = ct.scene.arrive;                    // мастер пришёл: получилось — починено; нет — визита больше нет, снова звонить
-    if((end.kind || "ok") === "ok"){ delete city.home.broken[hid]; city.home.fixed.push({ id:hid, day:city.day, price:v ? v.price : 0 }); city.home.visit = null; }
+    if((end.kind || "ok") === "ok"){ delete city.home.broken[hid]; city.home.fixed.push({ id:hid, day:city.day, price:v ? v.price : 0 }); city.home.visit = null; city.home.soaked = false; }   // вода к соседке — раз за поломку
     else { city.home.visit = null; homeRepairSlot("tesisatci"); ct.roomFixed = false; }
     ctRoomRender(); }
   const disc = ct.scene.repair ? 0 : ctDiscount(failed); if(disc){ const toDebt = Math.min(disc, city.debt); city.debt -= toDebt; city.money += disc - toDebt; ct.spent -= disc; }   // уступка сначала гасит долг; у ремонта уступки Pazarlık нет — скидка в реплике мастера
@@ -6288,9 +6298,10 @@ function cityEnd(end, failed){
   (levelUps || []).forEach(citySkillModal);                                   // окна уровней — после итога сцены (очередь showModal)
 }
 function cityDayEnd(){
-  const plan = cityPlanIds(), dayDone = city.done.filter(d => plan.includes(d.id)), okN = dayDone.filter(d => d.kind === "ok").length, spent = city.done.reduce((a, d) => a + d.spent, 0);   // в счёт дел — только план; заходы «просто так» не в счёт, деньги — все
+  let ustaTxt = ""; { const v = city.home.visit; if(v && v.day === city.day && city.min > v.at + 60){ city.home.visit = null; ustaTxt = ` Мастер приходил в ${fmtClock(v.at)} и ушёл — завтра позвоните ему снова.`; } }   // к концу дня час у двери прошёл — как вернуться в 20:30
+  const plan = cityPlanIds(), dayDone = city.done.filter(d => plan.includes(d.id) || (SCENES[d.id] && SCENES[d.id].repair)), okN = dayDone.filter(d => d.kind === "ok").length, spent = city.done.reduce((a, d) => a + d.spent, 0);   // в счёт дел — только план; заходы «просто так» не в счёт, деньги — все
   const rels = Object.entries(city.rel).filter(([, v]) => v > 0).map(([k, v]) => `${CHARS[k] ? CHARS[k].name : k} +${v}`).join(", ");
-  city.carry = cityPlanIds().filter(id => SCENES[id] && !cityDoneId(id));
+  city.carry = cityPlanIds().filter(id => SCENES[id] && !cityDoneId(id) && !SCENES[id].arrive);   // приход мастера не «не успели»: визит впереди переносится сам (cityNewDay), ушёл — ustaTxt
   let dripTxt = "";                                                                     // «потом»: кран капает — каждый вечер 40 ₺ за воду (в долг, если нет); раз в день, даже если итоги открыли снова
   if(homeBroken("musluk") && (city.flags || (city.flags = {})).drip !== city.day){ city.flags.drip = city.day; cityFx({ money:-40 }); dripTxt = " Кран капает: −40 ₺ за воду.";
     if(!city.home.soaked){ city.home.soaked = true; city.rel.komsu = (city.rel.komsu || 0) - 1; dripTxt += " Вода просочилась к Айше-тейзе этажом ниже — у неё мокрый потолок, она обиделась."; } }
@@ -6298,7 +6309,7 @@ function cityDayEnd(){
   const carryTxt = city.carry.length ? ` Не успели: ${city.carry.map(id => SCENES[id].title).join(", ")} — перенесено на завтра.` : "";
   const wait = !cityCanNewDay(), waitTxt = wait ? " Новые дела откроются завтра. Пока можно заходить к людям, звонить и повторять фразы — квартал открыт." : "";
   const next = wait ? { label:"В квартал", fn:cityRender }   /* 21:10: «Новые дела — завтра» читалось как действие; что дела завтра — сказано в тексте окна */ : { label:"Новый день", fn:cityNewDay };
-  showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${dayDone.length}.${carryTxt}${dripTxt} ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}${waitTxt}`,
+  showModal({ ic:"Günaydın!", title:`День ${city.day} прожит`, text:`Дел сделано хорошо: ${okN} из ${dayDone.length}.${carryTxt}${ustaTxt}${dripTxt} ${rels ? "Вас запомнили: " + rels + "." : "Пока вас никто не запомнил — попробуйте «kolay gelsin»."}${waitTxt}`,
     stats:[["потрачено", `${spent} ₺`], ["осталось", fmtMoney(city.money)], ["домой", fmtClock(city.min)]],
     primary: city.todaySaid.length ? { label:`Повторить фразы дня (${Math.min(5, city.todaySaid.length)})`, fn:cityReview } : next,
     secondary: city.todaySaid.length ? next : wait ? null : { label:"Остаться", fn:cityRender } });
