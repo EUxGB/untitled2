@@ -163,7 +163,64 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .topnav ul::-webkit-scrollbar{display:none}
 .topnav a{display:inline-flex;align-items:center;min-height:48px;padding:0 14px;font-weight:600;font-size:15px;color:var(--fg);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent}
 .topnav a:hover{border-bottom-color:var(--vlad)}
-.topnav a:focus-visible{outline:3px solid var(--vlad);outline-offset:-3px}
+.topnav /* ---- mobile type scale v2: compact ---- */
+@media (max-width:760px){
+  body{font-size:15px;line-height:1.45}
+  .wrap{gap:22px;padding-block:12px 32px}
+  h1{font-size:1.5rem;line-height:1.15}
+  h2{font-size:1.25rem}
+  .lead{font-size:14.5px;line-height:1.45}
+  .facts{gap:6px;margin-top:10px}
+  .chip{font-size:12.5px;padding:3px 9px;gap:6px}
+  .hint{font-size:13px}
+  .topnav ul{gap:0;justify-content:space-between}
+  .topnav a{padding:0 6px;font-size:13.5px;min-height:44px}
+  .mtabs{top:calc(env(safe-area-inset-top,0px) + 45px);gap:3px}
+  .mtabs button{min-height:48px;border-top-width:3px}
+  .mtabs button b{font-size:18px}
+  .mtabs button span{font-size:11px}
+  .mtabs button[aria-selected="true"]{background:var(--c);border-color:var(--c);color:#fff}
+  .mtabs button[aria-selected="true"] span{color:#fff}
+  .mhead{padding:10px 14px;gap:10px}
+  .mhead .num{font-size:2rem}
+  .mhead .wd{font-size:11.5px}
+  .mhead .pl{font-size:16px}
+  .mrow{padding:10px 14px;gap:6px}
+  .mrow h4{font-size:11.5px}
+  .mday .cell{gap:9px}
+  .it .tm{font-size:12.5px}
+  .it .tx{font-size:15px;line-height:1.35}
+  .it .sub{font-size:13px;line-height:1.35}
+  .warn{font-size:13.5px;padding:8px 10px}
+  .warn b{font-size:11.5px}
+  .mday>.warn{margin:10px 14px 14px}
+  .seg{padding:3px;gap:2px}
+  .seg button{font-size:14px;min-height:40px;padding:0 6px}
+  .seg button .d{font-size:11px}
+  .routes button{font-size:13.5px;min-height:40px;padding:6px 12px}
+  .rinfo{padding:12px;gap:8px}
+  .rinfo h3{font-size:16px}
+  .rinfo .meta{font-size:13.5px}
+  .rinfo li{font-size:14px;grid-template-columns:28px 1fr;gap:8px}
+  .rinfo li .n{width:24px;height:24px;font-size:12px}
+  .rinfo li small{font-size:12.5px}
+  .legend2{font-size:13px;gap:10px}
+  .rlist{gap:8px}
+  .rlist button{padding:10px;grid-template-columns:30px 1fr;gap:8px}
+  .rlist .rn{width:26px;height:26px;font-size:12px}
+  .rlist b{font-size:15px}
+  .rlist small{font-size:12.5px}
+  table{font-size:13.5px}
+  th,td{padding:7px 6px}
+  td small{font-size:12px}
+  th:first-child,td:first-child{min-width:132px;max-width:150px}
+  .c{min-width:34px;height:24px;font-size:12px}
+  .tip{padding:12px}
+  .tip b{font-size:15px}
+  .tip p{font-size:14px}
+  .leaflet-popup-content{font-size:14px;margin:10px 12px}
+}
+a:focus-visible{outline:3px solid var(--vlad);outline-offset:-3px}
 /* ---- city switch ---- */
 .seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--road-soft);max-width:100%;overflow-x:auto}
 .seg button{font:600 16px var(--body);min-height:44px;padding:0 16px;border:0;border-radius:9px;background:transparent;color:var(--fg);cursor:pointer;white-space:nowrap}
@@ -431,7 +488,7 @@ a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
       var p=document.createElement('article');p.className='mday';p.id='mp'+d;p.setAttribute('role','tabpanel');p.setAttribute('aria-labelledby','mt'+d);
       p.style.setProperty('--c',c);p.style.setProperty('--c-soft',cs);
       var html='<header class="mhead"><span class="num">'+num+'</span><div><span class="wd">'+wd+'</span><span class="pl">'+pl+'</span></div></header>';
-      for(var r=0;r<3;r++){var cell=k[(r+1)*8+d];html+='<section class="mrow"><h4>'+labels[r]+'</h4><div class="cell">'+cell.innerHTML+'</div></section>'}
+      for(var r=0;r<3;r++){var cell=k[(r+1)*8+d].cloneNode(true);cell.querySelectorAll('.tm').forEach(function(t){var x=t.textContent.trim().toLowerCase();if(!x||x==='утро'||x==='день'||x==='вечер')t.remove()});html+='<section class="mrow"><h4>'+labels[r]+'</h4><div class="cell">'+cell.innerHTML+'</div></section>'}
       html+=k[4*8+d].innerHTML;
       p.innerHTML=html;panels.appendChild(p);
     }
