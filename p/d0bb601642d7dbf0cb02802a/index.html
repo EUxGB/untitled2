@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="googlebot" content="noindex,nofollow">
+<meta name="yandex" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Владимир и Суздаль, 5–11 декабря</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Forum&family=Golos+Text:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: week calendar — days as columns left→right, rows = утро / день / вечер / важно. Then open/closed matrix. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --fg:#141c26; --muted:#3f4b5a; --line:#cfd7e1;
+  --vlad:#1f4f80; --vlad-soft:#dce8f5;
+  --suz:#6a3a7e; --suz-soft:#ece0f2;
+  --bog:#1d6b55; --bog-soft:#d9efe7;
+  --road:#4a5462; --road-soft:#e4e8ed;
+  --party:#9e2f2c; --party-soft:#f6dedc;
+  --ok:#1e6e43; --ok-soft:#dcf0e4; --no:#a3271b; --no-soft:#f8dcd8; --q:#7a4e05; --q-soft:#fbecc9;
+  --display:"Forum","Times New Roman",serif;
+  --body:"Golos Text","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10151c; --surface:#19212b; --fg:#f0f3f7; --muted:#c3ccd8; --line:#334050;
+  --vlad:#9cc4ec; --vlad-soft:#1c2d40; --suz:#d7b2e6; --suz-soft:#2e2238;
+  --bog:#8adcc1; --bog-soft:#173229; --road:#c0c7d1; --road-soft:#262e38;
+  --party:#f5a29e; --party-soft:#3b2120;
+  --ok:#8fe0b2; --ok-soft:#173527; --no:#f6a196; --no-soft:#3d1f1b; --q:#f0c46e; --q-soft:#3a2e17;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10151c; --surface:#19212b; --fg:#f0f3f7; --muted:#c3ccd8; --line:#334050;
+  --vlad:#9cc4ec; --vlad-soft:#1c2d40; --suz:#d7b2e6; --suz-soft:#2e2238;
+  --bog:#8adcc1; --bog-soft:#173229; --road:#c0c7d1; --road-soft:#262e38;
+  --party:#f5a29e; --party-soft:#3b2120;
+  --ok:#8fe0b2; --ok-soft:#173527; --no:#f6a196; --no-soft:#3d1f1b; --q:#f0c46e; --q-soft:#3a2e17;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1600px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:36px}
+h1,h2{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,4.5vw,3rem)}
+h2{font-size:1.9rem}
+.lead{color:var(--muted);max-width:70ch;margin:8px 0 0;font-size:17px}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:15px}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+
+/* week calendar */
+.cal-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.cal{display:grid;grid-template-columns:88px repeat(7,minmax(200px,1fr));min-width:1500px}
+.cal > div{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px;min-width:0}
+.cal > div:nth-child(8n){border-right:0}
+.corner{background:var(--bg)}
+.head{background:var(--c-soft);border-top:8px solid var(--c) !important;display:grid;gap:2px}
+.head .num{font-family:var(--display);font-size:2.6rem;line-height:1}
+.head .wd{font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.head .pl{font-size:17px;font-weight:700;color:var(--c)}
+.rowlab{background:var(--bg);font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:flex-start;padding:14px 10px !important;position:sticky;left:0;z-index:1}
+.corner{position:sticky;left:0;z-index:1}
+.cell{display:grid;align-content:start;gap:12px}
+.it{display:grid;gap:2px}
+.it .tm{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--c)}
+.it .tx{font-size:16px;line-height:1.4}
+.it .sub{font-size:14px;color:var(--muted);line-height:1.4}
+.warn{font-size:15px;line-height:1.4;padding:10px 12px;border-radius:8px;background:var(--q-soft);border-left:4px solid var(--q)}
+.warn.bad{background:var(--no-soft);border-left-color:var(--no)}
+.warn.good{background:var(--ok-soft);border-left-color:var(--ok)}
+.warn b{display:block;font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.empty{color:var(--muted);font-size:15px}
+.hint{font-size:14px;color:var(--muted);margin:6px 0 0}
+
+/* matrix */
+.tblwrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:16px}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:center}
+th:first-child,td:first-child{text-align:left}
+thead th{font-weight:700;font-size:15px;color:var(--fg);background:var(--bg)}
+tr.grp td{background:var(--bg);font-weight:700;text-align:left;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td small{display:block;color:var(--muted);font-size:14px}
+.c{display:inline-grid;place-items:center;min-width:44px;height:30px;padding:0 6px;border-radius:6px;font-weight:700;font-size:14px}
+.c.o{background:var(--ok-soft);color:var(--ok)}
+.c.x{background:var(--no-soft);color:var(--no)}
+.c.q{background:var(--q-soft);color:var(--q)}
+.tips{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.tip{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px;min-width:0}
+.tip b{font-size:17px}
+.tip p{margin:0;font-size:16px;color:var(--muted)}
+.foot{font-size:14px;color:var(--muted)}
+.foot a{color:var(--vlad)}
+/* leaflet core (inlined) */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;-webkit-tap-highlight-color:transparent;font-family:var(--body);touch-action:none}
+.leaflet-container img,.leaflet-container svg{max-width:none!important;max-height:none!important}
+.leaflet-pane{z-index:400}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}
+.leaflet-top{top:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}
+.leaflet-top .leaflet-control{margin-top:10px}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{margin-right:10px;float:right}.leaflet-bottom .leaflet-control{margin-bottom:0}
+.leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:grabbing}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-bar{box-shadow:0 1px 5px rgba(0,0,0,.35);border-radius:6px}
+.leaflet-bar a{display:block;width:40px;height:40px;line-height:40px;text-align:center;text-decoration:none;font:700 22px var(--body);background:var(--surface);color:var(--fg);border-bottom:1px solid var(--line)}
+.leaflet-bar a:first-child{border-radius:6px 6px 0 0}.leaflet-bar a:last-child{border-radius:0 0 6px 6px;border-bottom:0}
+.leaflet-control-attribution{background:var(--surface);color:var(--muted);font-size:12px;padding:2px 6px;border-radius:4px 0 0 0;opacity:.9}
+.leaflet-popup{position:absolute;text-align:center;margin-bottom:20px}
+.leaflet-popup-content-wrapper{padding:2px;text-align:left;border-radius:10px;background:var(--surface);color:var(--fg);box-shadow:0 3px 14px rgba(0,0,0,.35)}
+.leaflet-popup-content{margin:12px 16px;line-height:1.4;font-size:15px;min-width:200px}
+.leaflet-popup-content b{font-size:16px}
+.leaflet-popup-content a{color:var(--vlad);font-weight:600}
+.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-top:-1px;margin-left:-20px;overflow:hidden;pointer-events:none}
+.leaflet-popup-tip{width:17px;height:17px;padding:1px;margin:-10px auto 0;transform:rotate(45deg);background:var(--surface)}
+.leaflet-popup-close-button{position:absolute;top:0;right:0;width:30px;height:30px;font:22px/30px var(--body);text-align:center;text-decoration:none;color:var(--muted)}
+.leaflet-div-icon{background:transparent;border:0}
+/* map ui */
+:root{--map-bg:#eceee8;--map-b:#d3cdc4;--map-bs:#b9b1a5;--map-water:#a9cbe6;--map-park:#cfe5c4;--map-road:#ffffff;--map-roadb:#c9cdd3;--map-rail:#7d8794}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--map-bg:#1a2028;--map-b:#3a424d;--map-bs:#4d5663;--map-water:#1e3a55;--map-park:#1f3426;--map-road:#56606c;--map-roadb:#2a313a;--map-rail:#8a94a1}}
+:root[data-theme="dark"]{--map-bg:#1a2028;--map-b:#3a424d;--map-bs:#4d5663;--map-water:#1e3a55;--map-park:#1f3426;--map-road:#56606c;--map-roadb:#2a313a;--map-rail:#8a94a1}
+.map-layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(280px,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.map-layout{grid-template-columns:1fr}}
+#map{height:620px;border:1px solid var(--line);border-radius:12px;background:var(--map-bg);position:relative}
+@media (max-width:600px){#map{height:480px}}
+.routes{display:flex;flex-wrap:wrap;gap:8px}
+.routes button{font:600 15px var(--body);display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 14px;border-radius:999px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.routes button .sw{width:14px;height:14px;border-radius:50%;background:var(--rc)}
+.routes button[aria-pressed="true"]{border-color:var(--rc);box-shadow:inset 0 0 0 1px var(--rc)}
+.routes button:focus-visible{outline:3px solid var(--vlad);outline-offset:2px}
+.rinfo{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px;min-width:0}
+.rinfo h3{margin:0;font-size:19px}
+.rinfo .meta{font-size:15px;color:var(--muted)}
+.rinfo ol{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.rinfo li{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:start;font-size:15px}
+.rinfo li .n{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--rc);color:#fff;font-weight:700;font-size:14px}
+.rinfo li small{display:block;color:var(--muted);font-size:13.5px}
+.rinfo .yl{font-weight:600;color:var(--vlad);font-size:15px}
+.stopmk{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;color:#fff;font:700 14px var(--body);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)}
+.restmk{display:grid;place-items:center;width:26px;height:26px;border-radius:6px;background:#c45a10;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)}
+.legend2{display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:15px}
+.lg{display:inline-flex;align-items:center;gap:8px}
+.lg input{width:20px;height:20px}
+.legend2 .homemk{display:inline-block;transform:translate(-50%,-50%);padding:4px 10px;border-radius:8px;background:#141c26;color:#fff;font:700 14px var(--body);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);white-space:nowrap}
+.poimk{display:inline-block}
+.sub-h{margin:8px 0 0;font-size:22px}
+.rlist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.rlist button{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer}
+.rlist button:hover{border-color:#c45a10}
+.rlist button:focus-visible{outline:3px solid var(--vlad);outline-offset:2px}
+.rlist .rn{display:grid;place-items:center;width:30px;height:30px;border-radius:6px;background:#c45a10;color:#fff;font-weight:700;font-size:14px}
+.rlist b{font-size:16px}
+.rlist small{display:block;font-size:14px;color:var(--muted);line-height:1.4}
+.rlist .rt{font-weight:700;color:var(--fg)}
+.poimk{width:14px;height:14px;border-radius:50%;background:var(--fg);border:3px solid var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+
+/* ---- navigation ---- */
+html{scroll-padding-top:64px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.topnav{position:sticky;top:env(safe-area-inset-top,0px);z-index:1200;background:var(--surface);border-bottom:1px solid var(--line);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.topnav ul{list-style:none;margin:0 auto;padding:0;max-width:1600px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.topnav ul::-webkit-scrollbar{display:none}
+.topnav a{display:inline-flex;align-items:center;min-height:48px;padding:0 14px;font-weight:600;font-size:15px;color:var(--fg);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent}
+.topnav a:hover{border-bottom-color:var(--vlad)}
+.topnav a:focus-visible{outline:3px solid var(--vlad);outline-offset:-3px}
+/* ---- city switch ---- */
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--road-soft);max-width:100%;overflow-x:auto}
+.seg button{font:600 16px var(--body);min-height:44px;padding:0 16px;border:0;border-radius:9px;background:transparent;color:var(--fg);cursor:pointer;white-space:nowrap}
+.seg button .d{font-weight:500;color:var(--muted);font-size:13px}
+.seg button[aria-selected="true"]{background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.seg button:focus-visible{outline:3px solid var(--vlad);outline-offset:1px}
+.map-col{display:grid;gap:10px;min-width:0}
+/* ---- mobile week ---- */
+.mweek{display:none}
+.mtabs{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 49px);z-index:5;background:var(--bg);padding-block:6px}
+.mtabs button{display:grid;justify-items:center;gap:0;min-height:56px;padding:4px 0;border:1px solid var(--line);border-top:4px solid var(--c);border-radius:10px;background:var(--surface);color:var(--fg);font:inherit;cursor:pointer}
+.mtabs button b{font-family:var(--display);font-weight:400;font-size:22px;line-height:1.1}
+.mtabs button span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.mtabs button[aria-selected="true"]{background:var(--c-soft,var(--surface));background:color-mix(in srgb,var(--c) 16%,var(--surface));border-color:var(--c)}
+.mtabs button:focus-visible{outline:3px solid var(--vlad);outline-offset:2px}
+.mday{background:var(--surface);border:1px solid var(--line);border-top:8px solid var(--c);border-radius:12px;overflow:hidden}
+.mhead{display:flex;gap:12px;align-items:center;padding:14px 16px;background:var(--c-soft)}
+.mhead .num{font-family:var(--display);font-size:2.6rem;line-height:1}
+.mhead .wd{display:block;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.mhead .pl{display:block;font-size:19px;font-weight:700;color:var(--c)}
+.mrow{display:grid;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
+.mrow h4{margin:0;font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.mday .cell{display:grid;gap:12px}
+.mday .it .tm{color:var(--c)}
+.mday>.warn{margin:12px 16px 16px}
+@media (max-width:760px){
+  body{font-size:16px}
+  .wrap{gap:28px;padding-block:16px 40px}
+  h1{font-size:1.9rem}
+  h2{font-size:1.55rem}
+  .lead{font-size:16px}
+  .facts{gap:6px}
+  .chip{font-size:14px;padding:6px 10px}
+  .cal-scroll,.deskonly{display:none}
+  .mweek{display:grid;gap:10px}
+  .routes{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-inline:-4px;padding-inline:4px;scroll-snap-type:x proximity}
+  .routes button{flex:none;scroll-snap-align:start}
+  #map{height:62vh;min-height:360px;max-height:560px}
+  .rlist{grid-template-columns:1fr}
+  .tips{grid-template-columns:1fr}
+  table{font-size:15px}
+  th:first-child,td:first-child{position:sticky;left:0;background:var(--surface);z-index:1;min-width:150px;max-width:170px}
+  thead th:first-child,tr.grp td{background:var(--bg)}
+  .c{min-width:38px;height:28px}
+  .seg{display:flex}
+  .seg button{flex:1;padding:0 8px}
+}
+
+a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+</style>
+
+</head>
+<body>
+<nav class="topnav" aria-label="Разделы" lang="ru"><ul>
+  <li><a href="#plan">План</a></li><li><a href="#maps">Карты</a></li><li><a href="#rest">Где поесть</a></li><li><a href="#closed">Выходные</a></li><li><a href="#tips">Звонки</a></li>
+</ul></nav>
+<div class="wrap" lang="ru">
+  <header>
+    <h1>Владимир и Суздаль, 5–11 декабря</h1>
+    <p class="lead">Живём во Владимире рядом с Музеем хрусталя. Без машины: поезд, такси и автобус. 6 декабря экскурсия по Владимиру, 7 декабря экскурсия в Суздаль, 8 декабря юбилей, 9-го Боголюбово, 10-го Исторический музей.</p>
+    <div class="facts">
+      <span class="chip">Светло ≈ 8:50–16:00</span>
+      <span class="chip">Поезд Москва → Владимир ≈ 2 ч</span>
+      <span class="chip">До соборов пешком ≈ 15–20 мин</span>
+      <span class="chip">Суздаль: автобус ≈ 1 ч, такси ≈ 40 мин, ~1600 ₽</span>
+      <span class="chip">Боголюбово: такси ≈ 30 мин, ~1000 ₽</span>
+    </div>
+  </header>
+
+  <section id="plan" aria-labelledby="h-week" style="display:grid;gap:12px">
+    <h2 id="h-week">Неделя по дням</h2>
+    <div id="mweek" class="mweek"></div>
+    <div class="cal-scroll" tabindex="0" aria-label="Календарь на неделю, прокручивается вбок">
+      <div class="cal">
+        <div class="corner"></div>
+        <div class="head" style="--c:var(--road);--c-soft:var(--road-soft)"><span class="num">5</span><span class="wd">суббота</span><span class="pl">Приезд, прогулка</span></div>
+        <div class="head" style="--c:var(--vlad);--c-soft:var(--vlad-soft)"><span class="num">6</span><span class="wd">воскресенье</span><span class="pl">Экскурсия по Владимиру</span></div>
+        <div class="head" style="--c:var(--suz);--c-soft:var(--suz-soft)"><span class="num">7</span><span class="wd">понедельник</span><span class="pl">Экскурсия в Суздаль</span></div>
+        <div class="head" style="--c:var(--party);--c-soft:var(--party-soft)"><span class="num">8</span><span class="wd">вторник</span><span class="pl">Юбилей, день для себя</span></div>
+        <div class="head" style="--c:var(--bog);--c-soft:var(--bog-soft)"><span class="num">9</span><span class="wd">среда</span><span class="pl">Боголюбово</span></div>
+        <div class="head" style="--c:var(--vlad);--c-soft:var(--vlad-soft)"><span class="num">10</span><span class="wd">четверг</span><span class="pl">Исторический музей</span></div>
+        <div class="head" style="--c:var(--road);--c-soft:var(--road-soft)"><span class="num">11</span><span class="wd">пятница</span><span class="pl">Отъезд</span></div>
+
+        <div class="rowlab">Утро</div>
+        <div class="cell" style="--c:var(--road)">
+          <div class="it"><span class="tm">утро</span><span class="tx">Поезд Москва → Владимир</span><span class="sub">около 2 часов</span></div>
+        </div>
+        <div class="cell" style="--c:var(--vlad)">
+          <div class="it"><span class="tm">10:00</span><span class="tx">Начало экскурсии, 3 часа</span><span class="sub">Место встречи уточнить при звонке 2 декабря</span></div>
+          <div class="it"><span class="tm">10:00</span><span class="tx">Музей хрусталя и стекла</span><span class="sub">Третий объект. Открыт с 10:00</span></div>
+          <div class="it"><span class="tm">11:00</span><span class="tx">Успенский собор</span><span class="sub">Открывается только в 11:00</span></div>
+        </div>
+        <div class="cell" style="--c:var(--suz)">
+          <div class="it"><span class="tm">утро</span><span class="tx">Такси до автовокзала, 5 минут</span><span class="sub">Время автобуса подобрать под встречу с гидом</span></div>
+          <div class="it"><span class="tm"></span><span class="tx">Автобус до Суздаля, около часа</span><span class="sub">На автостанции Суздаля не выходить, ехать до Кремля</span></div>
+          <div class="it"><span class="tm">~10:00</span><span class="tx">Встреча с гидом у Кремля</span></div>
+        </div>
+        <div class="cell" style="--c:var(--party)">
+          <div class="it"><span class="tm">утро</span><span class="tx">Выспаться, без музеев</span></div>
+        </div>
+        <div class="cell" style="--c:var(--bog)">
+          <div class="it"><span class="tm">~10:00</span><span class="tx">Такси в Боголюбово</span><span class="sub">около 30 минут, примерно 1000 ₽</span></div>
+          <div class="it"><span class="tm"></span><span class="tx">Боголюбский монастырь, палаты Андрея Боголюбского</span></div>
+        </div>
+        <div class="cell" style="--c:var(--vlad)">
+          <div class="it"><span class="tm">10:30</span><span class="tx">Исторический музей</span><span class="sub">10:00–18:00, в среду выходной</span></div>
+        </div>
+        <div class="cell" style="--c:var(--road)">
+          <div class="it"><span class="tm">утро</span><span class="tx">Сборы, выезд из жилья</span></div>
+        </div>
+
+        <div class="rowlab">День</div>
+        <div class="cell" style="--c:var(--road)">
+          <div class="it"><span class="tm">14:00</span><span class="tx">Заселение</span></div>
+          <div class="it"><span class="tm">15:00</span><span class="tx">Прогулка: Золотые ворота снаружи, Козлов вал, Георгиевская улица</span><span class="sub">Темнеет к 16:00</span></div>
+        </div>
+        <div class="cell" style="--c:var(--vlad)">
+          <div class="it"><span class="tm">12:00</span><span class="tx">Дмитриевский собор</span></div>
+          <div class="it"><span class="tm">13:00</span><span class="tx">Конец экскурсии, обед</span><span class="sub">Рестораны у Торговых рядов, 5 минут</span></div>
+        </div>
+        <div class="cell" style="--c:var(--suz)">
+          <div class="it"><span class="tm"></span><span class="tx">Кремль, Рождественский собор</span></div>
+          <div class="it"><span class="tm"></span><span class="tx">Спасо-Евфимиев монастырь</span><span class="sub">Тот самый, «на который все смотрят». Комплексный билет</span></div>
+          <div class="it"><span class="tm">~13:30</span><span class="tx">Обед, дальше сами по комплексному билету</span></div>
+        </div>
+        <div class="cell" style="--c:var(--party)">
+          <div class="it"><span class="tm">день</span><span class="tx">Шопинг и прогулка</span><span class="sub">Торговые ряды, Большая Московская</span></div>
+        </div>
+        <div class="cell" style="--c:var(--bog)">
+          <div class="it"><span class="tm"></span><span class="tx">Покрова на Нерли</span><span class="sub">1,5 км пешком по пойме. Экскурсии при храме каждый час</span></div>
+          <div class="it"><span class="tm">~14:30</span><span class="tx">Обед, такси обратно</span></div>
+        </div>
+        <div class="cell" style="--c:var(--vlad)">
+          <div class="it"><span class="tm">13:00</span><span class="tx">Обед</span></div>
+          <div class="it"><span class="tm">14:00</span><span class="tx">По желанию: «Старый Владимир», Рождественский монастырь</span></div>
+        </div>
+        <div class="cell" style="--c:var(--road)">
+          <div class="it"><span class="tm">день</span><span class="tx">Поезд Владимир → Москва</span></div>
+        </div>
+
+        <div class="rowlab">Вечер</div>
+        <div class="cell" style="--c:var(--road)">
+          <div class="it"><span class="tm">16:00</span><span class="tx">«Старый Владимир», водонапорная башня</span><span class="sub">Если будут силы. В субботу до 19:00</span></div>
+          <div class="it"><span class="tm">вечер</span><span class="tx">Ужин</span></div>
+        </div>
+        <div class="cell" style="--c:var(--vlad)">
+          <div class="it"><span class="tm">вечер</span><span class="tx">Свободно</span><span class="sub">По желанию Княгинин монастырь</span></div>
+        </div>
+        <div class="cell" style="--c:var(--suz)">
+          <div class="it"><span class="tm">вечер</span><span class="tx">Обратно автобусом или на такси</span><span class="sub">Такси около 40 минут, примерно 1600 ₽</span></div>
+        </div>
+        <div class="cell" style="--c:var(--party)">
+          <div class="it"><span class="tm">вечер</span><span class="tx">Юбилей в ресторане</span><span class="sub">Список ресторанов ниже, у карты</span></div>
+        </div>
+        <div class="cell" style="--c:var(--bog)">
+          <div class="it"><span class="tm">16:00</span><span class="tx">Отдых или Музей хрусталя, если не попали в воскресенье</span></div>
+        </div>
+        <div class="cell" style="--c:var(--vlad)">
+          <div class="it"><span class="tm">вечер</span><span class="tx">Прощальный ужин</span></div>
+        </div>
+        <div class="cell" style="--c:var(--road)"><span class="empty">Дома</span></div>
+
+        <div class="rowlab">Важно</div>
+        <div class="cell"><div class="warn"><b>Учесть</b>Золотые ворота на реставрации, только снаружи</div></div>
+        <div class="cell"><div class="warn"><b>Позвонить 2 декабря</b>Подтвердить экскурсию. Попросить начать с Музея хрусталя: Успенский собор открывается в 11:00</div></div>
+        <div class="cell"><div class="warn bad"><b>Понедельник</b>Спасо-Евфимиев монастырь может быть закрыт, Музей деревянного зодчества закрыт. Уточнить у гида</div></div>
+        <div class="cell"><div class="warn"><b>Учесть</b>Музей хрусталя во вторник закрыт</div></div>
+        <div class="cell"><div class="warn"><b>Учесть</b>Тёплая непромокаемая обувь для тропы. Исторический музей сегодня закрыт</div></div>
+        <div class="cell"><div class="warn good"><b>Открыто</b>Исторический музей и все музеи Владимира</div></div>
+        <div class="cell"><div class="warn"><b>Учесть</b>Билеты на поезд взять заранее</div></div>
+      </div>
+    </div>
+    <p class="hint deskonly">Если экран узкий, календарь прокручивается вбок.</p>
+  </section>
+
+  <section id="maps" aria-labelledby="h-map" style="display:grid;gap:12px">
+    <h2 id="h-map">Карты и пешие маршруты</h2>
+    <p class="lead" style="margin:0">Дома, улицы и реки из OpenStreetMap. Карту можно двигать и приближать. Маршруты проложены по реальным улицам и тропам, остановки пронумерованы. Нажмите на точку, чтобы увидеть часы работы.</p>
+    <div class="seg" role="tablist" aria-label="Город на карте" id="areaTabs">
+      <button type="button" role="tab" data-area="vlad" aria-selected="true">Владимир</button>
+      <button type="button" role="tab" data-area="suz" aria-selected="false">Суздаль <span class="d">7.12</span></button>
+      <button type="button" role="tab" data-area="bog" aria-selected="false">Боголюбово <span class="d">9.12</span></button>
+    </div>
+    <div class="routes" role="group" aria-label="Выбор маршрута" id="routeBtns"></div>
+    <div class="map-layout">
+      <div class="map-col">
+        <div id="map" aria-label="Интерактивная карта"></div>
+        <div class="legend2">
+          <span class="lg"><span class="homemk" style="transform:none">Старт</span>Начало маршрутов</span>
+          <span class="lg"><span class="poimk"></span>Достопримечательность</span>
+          <span class="lg" id="restLegend"><span class="restmk" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="#fff" d="M7 2v8a2 2 0 0 0 2 2v10h2V12a2 2 0 0 0 2-2V2h-1.5v6h-1V2h-1v6h-1V2zm9 0c-1.7 0-3 2-3 5v6h2v9h2V2z"/></svg></span>Ресторан</span>
+          <label class="lg" id="restToggleWrap"><input type="checkbox" id="restToggle" checked> Рестораны на карте</label>
+        </div>
+      </div>
+      <div id="routeInfo" class="rinfo" aria-live="polite"></div>
+    </div>
+    <p class="hint">Время в пути посчитано по 4 км/ч, без остановок. Данные карты © участники OpenStreetMap (ODbL).</p>
+  </section>
+
+  <section id="rest" aria-labelledby="h-rest" style="display:grid;gap:12px">
+    <h2 id="h-rest">Где поесть</h2>
+    <div class="seg" role="tablist" aria-label="Город" id="restTabs">
+      <button type="button" role="tab" data-area="vlad" aria-selected="true">Владимир</button>
+      <button type="button" role="tab" data-area="suz" aria-selected="false">Суздаль</button>
+      <button type="button" role="tab" data-area="bog" aria-selected="false">Боголюбово</button>
+    </div>
+    <p class="hint" style="margin:0">Оценки из 2ГИС, Яндекс Карт, Tripadvisor, Restaurant Guru и CityRater. Баллы разных сервисов напрямую не сравнить. Где написано «рейтинг не проверял», место выбрано за удобство на маршруте. Нажмите на ресторан, чтобы показать его на карте. На юбилей 8 декабря столик лучше забронировать заранее.</p>
+    <ol class="rlist" id="restList"></ol>
+  </section>
+
+  <section id="closed" aria-labelledby="h-closed" style="display:grid;gap:12px">
+    <h2 id="h-closed">Где выходной</h2>
+    <p class="lead" style="margin:0">По сайту музея-заповедника vladmuseum.ru на 22.11.2026. Зимнее расписание ещё не опубликовано. «?» значит, что источники расходятся.</p>
+    <div class="tblwrap" tabindex="0" aria-label="Таблица выходных">
+      <table>
+        <thead><tr><th scope="col">Объект</th><th scope="col">Сб 5</th><th scope="col">Вс 6</th><th scope="col">Пн 7</th><th scope="col">Вт 8</th><th scope="col">Ср 9</th><th scope="col">Чт 10</th><th scope="col">Пт 11</th></tr></thead>
+        <tbody>
+          <tr class="grp"><td colspan="8">Владимир</td></tr>
+          <tr><td>Успенский собор<small>11:00–17:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Дмитриевский собор<small>10:00–18:00, сб до 19:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c x">нет</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Палаты<small>10:00–18:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c x">нет</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Исторический музей<small>10:00–18:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c x">нет</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Музей хрусталя и стекла<small>10:00–18:00, сб до 19:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c x">нет</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>«Старый Владимир»<small>10:00–18:00, сб до 19:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c x">нет</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Дом-музей Столетовых</td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c x">нет</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Золотые ворота<small>реставрация, только снаружи</small></td><td><span class="c x">нет</span></td><td><span class="c x">нет</span></td><td><span class="c x">нет</span></td><td><span class="c x">нет</span></td><td><span class="c x">нет</span></td><td><span class="c x">нет</span></td><td><span class="c x">нет</span></td></tr>
+          <tr class="grp"><td colspan="8">Боголюбово</td></tr>
+          <tr><td>Боголюбский монастырь<small>действующий; экспозиция закрыта</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Покрова на Нерли<small>снаружи всегда; часы храма не опубликованы</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr class="grp"><td colspan="8">Суздаль</td></tr>
+          <tr><td>Кремль и собор<small>10:00–18:00, вход до 17:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Спасо-Евфимиев монастырь<small>10:00–18:00, вход до 17:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c q">?</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Музей деревянного зодчества<small>10:00–18:00, вход до 17:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c x">нет</span></td><td><span class="c o">да</span></td><td><span class="c q">?</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Покровский монастырь<small>8:00–18:30</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+          <tr><td>Приказная изба<small>10:00–18:00</small></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td><td><span class="c x">нет</span></td><td><span class="c o">да</span></td><td><span class="c o">да</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="tips" id="tips">
+    <div class="tip"><b>2 декабря: позвонить экскурсоводу</b><p>Подтвердить экскурсию 6.12 в 10:00 и третий объект. Предложить начать с Музея хрусталя: Успенский собор открывается только в 11:00.</p></div>
+    <div class="tip"><b>Музей-заповедник</b><p>Бесплатная линия 8 800 100-45-45. Спросить, работает ли Спасо-Евфимиев монастырь в понедельник 7 декабря.</p></div>
+    <div class="tip"><b>Театр и концерты</b><p>Афишу драмтеатра и филармонии на 5–10 декабря посмотрели, ничего не выбрали. Вечера свободные.</p></div>
+  </section>
+
+  <p class="foot">Источники: <a href="https://vladmuseum.ru/ru/posetitelyam/times/">vladmuseum.ru, режим работы</a> · <a href="https://vladmuseum.ru/ru/geografiya-muzeya/suzdal/">объекты Суздаля</a> · <a href="https://www.dramavladimir.ru/playbill">афиша драмтеатра</a> · <a href="https://vladimirkoncert.ru/">Владимир-Концерт</a></p>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function(){
+  /* ---------- mobile week: one day at a time ---------- */
+  (function(){
+    var cal=document.querySelector('.cal'),host=document.getElementById('mweek');
+    if(!cal||!host)return;
+    var k=Array.prototype.slice.call(cal.children),labels=['Утро','День','Вечер'];
+    var tabs=document.createElement('div');tabs.className='mtabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','День поездки');
+    var panels=document.createElement('div');
+    for(var d=1;d<=7;d++){
+      var head=k[d],num=head.querySelector('.num').textContent,wd=head.querySelector('.wd').textContent,pl=head.querySelector('.pl').textContent;
+      var c=head.style.getPropertyValue('--c'),cs=head.style.getPropertyValue('--c-soft');
+      var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.id='mt'+d;b.setAttribute('aria-controls','mp'+d);
+      b.style.setProperty('--c',c);b.innerHTML='<b>'+num+'</b><span>'+['сб','вс','пн','вт','ср','чт','пт'][d-1]+'</span>';
+      tabs.appendChild(b);
+      var p=document.createElement('article');p.className='mday';p.id='mp'+d;p.setAttribute('role','tabpanel');p.setAttribute('aria-labelledby','mt'+d);
+      p.style.setProperty('--c',c);p.style.setProperty('--c-soft',cs);
+      var html='<header class="mhead"><span class="num">'+num+'</span><div><span class="wd">'+wd+'</span><span class="pl">'+pl+'</span></div></header>';
+      for(var r=0;r<3;r++){var cell=k[(r+1)*8+d];html+='<section class="mrow"><h4>'+labels[r]+'</h4><div class="cell">'+cell.innerHTML+'</div></section>'}
+      html+=k[4*8+d].innerHTML;
+      p.innerHTML=html;panels.appendChild(p);
+    }
+    host.appendChild(tabs);host.appendChild(panels);
+    function sel(i){
+      tabs.querySelectorAll('button').forEach(function(b,j){b.setAttribute('aria-selected',j===i?'true':'false');b.tabIndex=j===i?0:-1});
+      panels.querySelectorAll('.mday').forEach(function(p,j){p.hidden=j!==i});
+    }
+    tabs.addEventListener('click',function(e){var b=e.target.closest('button');if(b)sel(Array.prototype.indexOf.call(tabs.children,b))});
+    tabs.addEventListener('keydown',function(e){
+      var i=Array.prototype.indexOf.call(tabs.children,document.activeElement);if(i<0)return;
+      if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();i=(i+(e.key==='ArrowRight'?1:6))%7;sel(i);tabs.children[i].focus()}
+    });
+    var t=new Date(),start=new Date(2026,11,5),idx=Math.floor((t-start)/864e5);
+    sel(idx>=0&&idx<7?idx:0);
+  })();
+
+  /* ---------- maps ---------- */
+  var INFO={
+    home:'Старт маршрутов, рядом с жильём',
+    bus:'Автобус в Суздаль, около часа. От дома на такси 5 мин',
+    rail:'Поезд в Москву, около 2 часов',
+    old:'Пн выходной · 10:00–18:00, сб до 19:00',
+    gate:'На реставрации, смотреть снаружи',
+    crys:'Вт выходной · 10:00–18:00, сб до 19:00',
+    kozl:'Открытая площадка, лучше до 16:00',
+    geo:'Пешеходная улица, смотровая на Клязьму',
+    dolls:'Частные музеи, режим уточнить',
+    usp:'Без выходных · 11:00–17:00, касса до 16:30',
+    push:'Открытый парк, вид на пойму',
+    pal:'Пн выходной · 10:00–18:00',
+    dmi:'Ср выходной · 10:00–18:00, сб до 19:00',
+    hist:'Ср выходной · 10:00–18:00',
+    rozh:'Действующий монастырь',
+    stol:'Пн выходной · 10:00–18:00',
+    nik:'Бульвар',
+    kng:'Действующий монастырь'
+  };
+  var INFO_S={
+    bus:'Автобус из Владимира идёт около часа и дальше по городу до Кремля',
+    kreml:'Без выходных · экспозиции 10:00–18:00, вход до 17:00',
+    wood:'Пн выходной (по другим данным ср) · 10:00–18:00',
+    torg:'Кафе, сувениры, медовуха',
+    nesk:'Частный музей, режим уточнить',
+    rizo:'Действующий монастырь, Святые ворота',
+    alex:'Действующий монастырь, вид на Каменку',
+    spas:'10:00–18:00, вход до 17:00. В понедельник может быть закрыт',
+    pokr:'Действующий · 8:00–18:30',
+    prik:'10:00–18:00, ср выходной'
+  };
+  var INFO_B={
+    mon:'Действующий монастырь, территория открыта',
+    pal:'Палаты Андрея Боголюбского. Экспозиция в соседней церкви закрыта, на месте уточнить',
+    st:'Ж/д станция. Отсюда тропа через пойму',
+    pokrn:'Экскурсии при храме каждый час. Тропа 1,5 км, нужна тёплая обувь'
+  };
+  var AREAS={
+    vlad:{file:'vladimir_map.json',info:INFO,first:'tour6',start:[[56.1220,40.3925],[56.1335,40.4200]],rest:true},
+    suz:{file:'suzdal_map.json',info:INFO_S,first:'sz_tour',rest:false},
+    bog:{file:'bogol_map.json',info:INFO_B,first:'bg_main',rest:false}
+  };
+  var FORK='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#fff" d="M7 2v8a2 2 0 0 0 2 2v10h2V12a2 2 0 0 0 2-2V2h-1.5v6h-1V2h-1v6h-1V2zm9 0c-1.7 0-3 2-3 5v6h2v9h2V2z"/></svg>';
+  function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+  function km(m){return (m/1000).toFixed(1).replace('.',',')+' км'}
+  function ll(ring){return ring.map(function(p){return [p[1],p[0]]})}
+  var map=L.map('map',{preferCanvas:true,zoomSnap:0.5,minZoom:12,maxZoom:19,tap:true});
+  map.attributionControl.setPrefix(false).addAttribution('© участники OpenStreetMap');
+  var base=L.layerGroup().addTo(map),routeLayer=L.layerGroup().addTo(map),poiLayer=L.layerGroup().addTo(map);
+  var cache={},area='vlad',data=null;
+  function drawBase(){
+    if(!data)return;
+    base.clearLayers();
+    var r=L.canvas({padding:0.5}),o={renderer:r,interactive:false};
+    function opt(x){var y={};for(var k in o)y[k]=o[k];for(k in x)y[k]=x[k];return y}
+    function add(l){base.addLayer(l)}
+    data.water.forEach(function(w){add(L.polygon(ll(w),opt({stroke:false,fillColor:css('--map-water'),fillOpacity:1})))});
+    data.rivers.forEach(function(w){add(L.polyline(ll(w),opt({color:css('--map-water'),weight:8})))});
+    data.parks.forEach(function(w){add(L.polygon(ll(w),opt({stroke:false,fillColor:css('--map-park'),fillOpacity:1})))});
+    data.rail.forEach(function(w){add(L.polyline(ll(w),opt({color:css('--map-rail'),weight:3,dashArray:'8 6'})))});
+    var rb=css('--map-roadb'),rw=css('--map-road');
+    data.roads.major.forEach(function(w){add(L.polyline(ll(w),opt({color:rb,weight:11})))});
+    data.roads.major.forEach(function(w){add(L.polyline(ll(w),opt({color:rw,weight:8})))});
+    data.roads.minor.forEach(function(w){add(L.polyline(ll(w),opt({color:rw,weight:4})))});
+    data.roads.foot.forEach(function(w){add(L.polyline(ll(w),opt({color:rw,weight:2,dashArray:'4 4'})))});
+    var bf=css('--map-b'),bs=css('--map-bs');
+    data.b.forEach(function(w){add(L.polygon(ll(w),opt({color:bs,weight:0.8,fillColor:bf,fillOpacity:1})))});
+  }
+  function info(k){return AREAS[area].info[k]||''}
+  function poiPopup(k){
+    var p=data.poi[k];
+    return '<b>'+p.name+'</b><br>'+info(k)+'<br><a href="https://yandex.ru/maps/?pt='+p.lon+','+p.lat+'&z=17" target="_blank" rel="noopener">Открыть в Яндекс Картах</a>';
+  }
+  function drawPois(){
+    poiLayer.clearLayers();
+    Object.keys(data.poi).forEach(function(k){
+      var p=data.poi[k],hm=k==='home';
+      L.marker([p.lat,p.lon],{zIndexOffset:hm?2000:0,title:p.name,icon:L.divIcon({className:'',html:hm?'<div class="homemk">Старт</div>':'<div class="poimk"></div>',iconSize:[22,22],iconAnchor:[11,11]})}).bindPopup(poiPopup(k)).addTo(poiLayer);
+    });
+  }
+  function routeButtons(){
+    var box=document.getElementById('routeBtns');
+    var list=[{id:'all',name:'Все',color:css('--fg')}].concat(data.routes);
+    box.innerHTML=list.map(function(rt){return '<button type="button" data-id="'+rt.id+'" aria-pressed="false" style="--rc:'+rt.color+'"><span class="sw"></span>'+rt.name+(rt.m?' · '+km(rt.m):'')+'</button>'}).join('');
+  }
+  function showRoute(id){
+    routeLayer.clearLayers();
+    document.querySelectorAll('#routeBtns button').forEach(function(b){var on=b.dataset.id===id;b.setAttribute('aria-pressed',on?'true':'false');if(on&&b.scrollIntoView)b.scrollIntoView({block:'nearest',inline:'nearest'})});
+    var box=document.getElementById('routeInfo');
+    if(id==='all'){
+      var all=[];
+      data.routes.forEach(function(rt){var l=ll(rt.line);all=all.concat(l);L.polyline(l,{color:rt.color,weight:5,opacity:.85}).addTo(routeLayer)});
+      box.style.setProperty('--rc',css('--fg'));
+      box.innerHTML='<h3>Все маршруты</h3><div class="meta">Выберите маршрут, чтобы увидеть остановки по порядку.</div><ol>'+data.routes.map(function(rt){return '<li><span class="n" style="background:'+rt.color+'"></span><div><b>'+rt.name+'</b><small>'+km(rt.m)+' · '+rt.desc+'</small></div></li>'}).join('')+'</ol>';
+      map.fitBounds(L.latLngBounds(all),{padding:[24,24]});return;
+    }
+    var rt=data.routes.filter(function(x){return x.id===id})[0],line=ll(rt.line);
+    L.polyline(line,{color:'#ffffff',weight:10,opacity:.9}).addTo(routeLayer);
+    L.polyline(line,{color:rt.color,weight:6}).addTo(routeLayer);
+    rt.stops.forEach(function(k,i){
+      var p=data.poi[k];
+      L.marker([p.lat,p.lon],{zIndexOffset:1000,title:(i+1)+'. '+p.name,icon:L.divIcon({className:'',html:'<div class="stopmk" style="background:'+rt.color+'">'+(i+1)+'</div>',iconSize:[30,30],iconAnchor:[15,15]})}).bindPopup(poiPopup(k)).addTo(routeLayer);
+    });
+    var min=Math.round(rt.m/1000/4*60);
+    var y='https://yandex.ru/maps/?rtext='+rt.stops.map(function(k){return data.poi[k].lat+','+data.poi[k].lon}).join('~')+'&rtt=pd';
+    box.style.setProperty('--rc',rt.color);
+    box.innerHTML='<h3>'+rt.name+'</h3><div class="meta">'+km(rt.m)+' пешком · около '+min+' мин в пути</div><div class="meta">'+rt.desc+'</div><ol>'+rt.stops.map(function(k,i){return '<li><span class="n">'+(i+1)+'</span><div>'+data.poi[k].name+'<small>'+info(k)+'</small></div></li>'}).join('')+'</ol><a class="yl" href="'+y+'" target="_blank" rel="noopener">Открыть маршрут в Яндекс Картах</a>';
+    map.fitBounds(L.latLngBounds(line),{padding:[36,36]});
+  }
+  function load(a){
+    area=a;
+    document.querySelectorAll('#areaTabs button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.area===a?'true':'false')});
+    var A=AREAS[a];
+    var p=cache[a]?Promise.resolve(cache[a]):fetch(A.file).then(function(r){return r.json()}).then(function(d){cache[a]=d;return d});
+    document.getElementById('routeInfo').textContent='Загружаю карту…';
+    return p.then(function(d){
+      data=d;drawBase();drawPois();routeButtons();buildRestMarkers(a);setRest();showRoute(A.first);
+    }).catch(function(){document.getElementById('routeInfo').textContent='Не удалось загрузить карту. Обновите страницу.'});
+  }
+  var REST={
+    vlad:[
+      {n:'Меряне',lat:56.12826,lon:40.40277,a:'Большая Московская, 19 (Торговые ряды)',r:'2ГИС 4,8',k:'Русская кухня по-новому, дровяная печь'},
+      {n:'Панорама',lat:56.12736,lon:40.40546,a:'Большая Московская, 44Б',r:'2ГИС 4,7',k:'Русская кухня, вид на Клязьму'},
+      {n:'Мономах',lat:56.12441,lon:40.39666,a:'Центр, южнее Золотых ворот',r:'Restaurant Guru 4,8',k:'Русская и европейская'},
+      {n:'Питейный дом купца Андреева',lat:56.12735,lon:40.40029,a:'Большая Московская, у Георгиевской',r:'2ГИС 4,8',k:'Кафе-бар, русская и европейская'},
+      {n:'Блэквуд',lat:56.13506,lon:40.42342,a:'Большая Нижегородская, 11',r:'2ГИС 4,9',k:'Ресторан-пивоварня'},
+      {n:'Абажур',lat:56.13075,lon:40.40069,a:'Княгининская, 7',r:'CityRater 4,7',k:'Арт-кафе, русская и европейская'},
+      {n:'Тоня и её пельмени',lat:56.12908,lon:40.40361,a:'Центр, у Торговых рядов',r:'Restaurant Guru 4,9',k:'Пельмени, недорого'},
+      {n:'Бистро «Пельмень»',lat:56.12847,lon:40.40408,a:'Центр, у Торговых рядов',r:'Tripadvisor 4,4',k:'Русская кухня, недорого'},
+      {n:'Гастробар «22А»',lat:56.12707,lon:40.40136,a:'Георгиевская улица',r:'Рекомендация «Т—Ж»',k:'Гастробар, авторская кухня'},
+      {n:'Баринъ',lat:56.13617,lon:40.43005,a:'Восточнее центра, за Рождественским монастырём',r:'Tripadvisor 4,3',k:'Русская и европейская'}
+    ],
+    suz:[
+      {n:'Imperial',lat:56.42748,lon:40.44532,a:'Улица Ленина, 89, между Ризоположенским и Спасо-Евфимиевым',r:'Яндекс 5,0',k:'Ресторан'},
+      {n:'Генеральская дача',lat:56.41686,lon:40.44604,a:'Рядом с Кремлём',r:'Яндекс 5,0',k:'Ресторан'},
+      {n:'Русское подворье',lat:56.41215,lon:40.44026,a:'У Музея деревянного зодчества',r:'CityRater 5,0 · Tripadvisor 4,4',k:'Русская кухня'},
+      {n:'Лепота',lat:56.41324,lon:40.44524,a:'Пушкарская слобода, южнее Кремля',r:'CityRater 5,0',k:'Ресторан'},
+      {n:'Ландыш',lat:56.42363,lon:40.44841,a:'У Ризоположенского монастыря',r:'CityRater 4,9',k:'Кафе'},
+      {n:'Улей',lat:56.41109,lon:40.44588,a:'Южная окраина центра, за Каменкой',r:'Tripadvisor 4,1',k:'Ресторан'},
+      {n:'Харчевня',lat:56.42246,lon:40.44796,a:'Центр, Старая улица',r:'Tripadvisor 4,0',k:'Русская кухня, недорого'},
+      {n:'Трапезная',lat:56.41612,lon:40.44267,a:'В Кремле, в Архиерейских палатах',r:'Рейтинг не проверял',k:'Удобно сразу после экскурсии'},
+      {n:'ГрафинЪ',lat:56.43170,lon:40.44382,a:'Улица Ленина, 146, у Спасо-Евфимиева',r:'Рейтинг не проверял',k:'Удобно на маршруте после обеда'},
+      {n:'Трактир у Прокопа',lat:56.42867,lon:40.43527,a:'У Покровского монастыря',r:'Рейтинг не проверял',k:'Удобно на маршруте после обеда'}
+    ],
+    bog:[
+      {n:'Кафе «Дача»',lat:56.19755,lon:40.53704,a:'Рядом с Боголюбским монастырём',r:'Рейтинг не проверял',k:'Единственное кафе у монастыря в OpenStreetMap. Режим работы зимой уточнить'}
+    ]
+  };
+  var CITY={vlad:'Владимир',suz:'Суздаль',bog:'Боголюбово'};
+  var restLayer=L.layerGroup(),restMarkers=[],restArea='vlad';
+  function buildRestMarkers(a){
+    restLayer.clearLayers();restMarkers=[];
+    REST[a].forEach(function(x,i){
+      restMarkers.push(L.marker([x.lat,x.lon],{zIndexOffset:500,title:(i+1)+'. '+x.n,icon:L.divIcon({className:'',html:'<div class="restmk">'+FORK+'</div>',iconSize:[26,26],iconAnchor:[13,13]})})
+        .bindPopup('<b>'+(i+1)+'. '+x.n+'</b><br>'+x.k+'<br>'+x.r+'<br>'+x.a+'<br><a href="https://yandex.ru/maps/?text='+encodeURIComponent(x.n+' '+CITY[a])+'" target="_blank" rel="noopener">Найти в Яндекс Картах</a>').addTo(restLayer));
+    });
+  }
+  function renderRestList(a){
+    restArea=a;
+    document.querySelectorAll('#restTabs button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.area===a?'true':'false')});
+    document.getElementById('restList').innerHTML=REST[a].map(function(x,i){return '<li><button type="button" data-i="'+i+'"><span class="rn">'+(i+1)+'</span><span><b>'+x.n+'</b><small><span class="rt">'+x.r+'</span> · '+x.k+'</small><small>'+x.a+'</small></span></button></li>'}).join('');
+  }
+  function setRest(){
+    if(document.getElementById('restToggle').checked)restLayer.addTo(map);else map.removeLayer(restLayer);
+  }
+  renderRestList('vlad');
+  document.getElementById('restTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b)renderRestList(b.dataset.area)});
+  document.getElementById('restList').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;var i=+b.dataset.i,a=restArea;
+    document.getElementById('restToggle').checked=true;
+    (area===a?Promise.resolve():load(a)).then(function(){
+      setRest();var x=REST[a][i];map.setView([x.lat,x.lon],17);restMarkers[i].openPopup();
+      document.getElementById('map').scrollIntoView({block:'center'});
+    });
+  });
+  document.getElementById('restToggle').addEventListener('change',setRest);
+  document.getElementById('routeBtns').addEventListener('click',function(e){var b=e.target.closest('button');if(b)showRoute(b.dataset.id)});
+  document.getElementById('areaTabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b&&b.dataset.area!==area)load(b.dataset.area)});
+  map.fitBounds(AREAS.vlad.start);
+  load('vlad');
+  var mq=window.matchMedia('(prefers-color-scheme: dark)');
+  if(mq.addEventListener)mq.addEventListener('change',drawBase);
+  new MutationObserver(drawBase).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+
+</body>
+</html>
