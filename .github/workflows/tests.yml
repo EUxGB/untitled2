@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
   # результат — ветка tts-audio. Сбой этой задачи публикацию не останавливает: на сайте для новых текстов будет голос телефона.
   tts:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     continue-on-error: true
     concurrency: { group: tts-audio, cancel-in-progress: false }
@@ -69,7 +69,7 @@ jobs:
     needs: [test, tts]
     timeout-minutes: 10
     if: always() && needs.test.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -96,7 +96,7 @@ jobs:
     needs: deploy
     timeout-minutes: 15
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Сайт отдаёт новую сборку
         shell: bash
@@ -128,7 +128,7 @@ jobs:
     needs: verify
     timeout-minutes: 35
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
