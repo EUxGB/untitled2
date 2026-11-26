@@ -194,6 +194,10 @@ table.packlist th,table.packlist td{padding:1.1mm 1.3mm;word-wrap:break-word;ove
     </div>
     <div class="totals" id="totals"></div>
     <div class="note" id="validation"></div>
+    <div style="margin-top:10px">
+      <label for="note" style="font-weight:600">Примечание (личное, в опись)</label>
+      <textarea id="note" rows="3" style="width:100%;box-sizing:border-box;resize:vertical;margin-top:4px;font:inherit;padding:8px" placeholder="Служебная информация — не печатается, сохраняется в файле описи"></textarea>
+    </div>
   </section>
 
   <!-- ============ РЕДАКТОР + ЯРЛЫК ============ -->
@@ -453,6 +457,7 @@ const GTIN_MAP={'600-':'14607196440790','600-2×-perem':'24607196440797','600-2�
 function execKey(o){ return o.nCore==='' ? (o.v+'-') : (o.v+'-'+o.nCore+'-'+o.type); }
 function execGtin(o){ return GTIN_MAP[execKey(o)] || GTIN; }
 let BATCH=load('apolaks_batch',{num:1});
+let NOTE=load('apolaks_note','');
 function batchNum(){ return String(BATCH.num).padStart(3,'0'); }
 function updateBatchUI(){ const el=document.getElementById('batchDisplay'); if(el) el.value=batchNum(); }
 function newBatch(){ BATCH.num++; save('apolaks_batch',BATCH); POS.forEach(o=>{o.batchNo=batchNum();}); save('apolaks_pos',POS); renderTable(); renderEditor(); renderSingle(); renderAll(); updateBatchUI(); }
@@ -694,14 +699,15 @@ function autoNumber(){
 
 /* ================= ЭКСПОРТ/ИМПОРТ ================= */
 function expJSON(){
-  const blob=new Blob([JSON.stringify(POS,null,2)],{type:'application/json'});
+  const data={note:NOTE,positions:POS};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   const d=POS.length?String(POS[0].date||'').replace(/[^\d\-.]/g,''):'';
   a.download='опись_'+batchNum()+(d?'_'+d:'')+'.json'; a.click();
 }
 function impJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
-  inp.onchange=()=>{ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!Array.isArray(d)) throw 0; POS=d.map(x=>({...newPos(),...x})); SEL=0; save('apolaks_pos',POS); renderTable(); renderEditor(); renderSingle(); renderAll(); }catch(e){ alert('Не удалось прочитать файл'); } }; r.readAsText(f); };
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); let arr=d, note=''; if(!Array.isArray(d)){ arr=d.positions; note=d.note||''; } if(!Array.isArray(arr)) throw 0; POS=arr.map(x=>({...newPos(),...x})); NOTE=note; save('apolaks_note',NOTE); const ne=document.getElementById('note'); if(ne) ne.value=NOTE; SEL=0; save('apolaks_pos',POS); renderTable(); renderEditor(); renderSingle(); renderAll(); }catch(e){ alert('Не удалось прочитать файл'); } }; r.readAsText(f); };
   inp.click();
 }
 
@@ -1023,6 +1029,8 @@ function downloadTemplate(){
   document.getElementById('packlistNo').value=DOC.packlistNo;
   const gEl=document.getElementById('gtin');
   if(gEl){ gEl.value=GTIN; gEl.oninput=()=>{ let v=gEl.value.replace(/\D/g,''); if(v.length===13) v=v+gs1check(v); if(v.length>14) v=v.slice(0,14); GTIN=v; gEl.value=GTIN; save('apolaks_gtin',GTIN); renderSingle(); renderAll(); }; }
+  const ne=document.getElementById('note');
+  if(ne){ ne.value=NOTE; ne.oninput=()=>{ NOTE=ne.value; save('apolaks_note',NOTE); }; }
 })();
 </script>
 </body>
