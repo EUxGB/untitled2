@@ -1,4 +1,5 @@
 User-agent: *
+Disallow: /p/a050186d53fe4fd6ab8b5aaf/
 Allow: /
 
 Sitemap: https://www.simitci.ru/sitemap.xml
